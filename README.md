@@ -1,0 +1,1 @@
+Core Text Hook Module For [LunaTranslator](https://github.com/HIllya51/LunaTranslator)
