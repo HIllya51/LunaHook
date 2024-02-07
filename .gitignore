@@ -1,0 +1,7 @@
+/build/
+/builds/
+/out/
+*.vs/
+*.user
+*.aps
+.vscode
