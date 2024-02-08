@@ -2,19 +2,49 @@
 #include<filesystem>
 #include"Plugin/plugindef.h"
 #include<fstream>
+#include <commdlg.h>
+#include"LunaHost.h"
 #include"Lang/Lang.h"
-std::vector<char> readfile(const wchar_t* fname) {
+#include"host.h"
+std::string readfile(const wchar_t* fname) {
     FILE* f;
     _wfopen_s(&f, fname, L"rb");
     if (f == 0)return {};
     fseek(f, 0, SEEK_END);
     auto len = ftell(f);
     fseek(f, 0, SEEK_SET);
-    auto buff = std::vector<char>(len);
+    std::string buff;
+    buff.resize(len);
     fread(buff.data(), 1, len, f);
     fclose(f);
     return buff;
 } 
+void appendfile(const wchar_t* fname,const std::wstring& s){
+    auto u8s=WideStringToString(s);
+    FILE* f;
+    _wfopen_s(&f, fname, L"a");
+    fprintf(f,"\n%s",u8s.c_str());
+    fclose(f);
+}
+std::optional<std::wstring>SelectFile(HWND hwnd,LPCWSTR lpstrFilter){
+    OPENFILENAME ofn;
+    wchar_t szFileName[MAX_PATH] = { 0 };
+
+    ZeroMemory(&ofn, sizeof(ofn));
+    ofn.lStructSize = sizeof(ofn);
+    ofn.hwndOwner = hwnd;
+    ofn.lpstrFilter = lpstrFilter;
+    ofn.lpstrFile = szFileName;
+    ofn.nMaxFile = sizeof(szFileName);
+    ofn.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;
+
+    if (GetOpenFileName(&ofn))
+    {
+        return szFileName;
+    }
+    else return {};
+}
+
 std::vector<std::wstring>pluginmanager::readpluginfile(){
     if(!std::filesystem::exists(pluginfilename))
         return{};
@@ -23,13 +53,9 @@ std::vector<std::wstring>pluginmanager::readpluginfile(){
     return pls;
 }
 void pluginmanager::writepluginfile(const std::wstring& plugf){
-    auto u8s=WideStringToString(plugf);
-    FILE* f;
-    _wfopen_s(&f, pluginfilename.c_str(), L"a");
-    fprintf(f,"\n%s",u8s.c_str());
-    fclose(f);
+    appendfile(pluginfilename.c_str(),plugf);
 }
-pluginmanager::pluginmanager(){
+pluginmanager::pluginmanager(LunaHost* _host):host(_host){
     try {
         std::scoped_lock lock(OnNewSentenceSLock);
         pluginfilename=std::filesystem::current_path()/(x64?"plugin64.txt":"plugin32.txt");
@@ -50,7 +76,8 @@ pluginmanager::pluginmanager(){
     }
 }
 
-bool pluginmanager::dispatch(const InfoForExtension* sentenceInfo, std::wstring& sentence){
+bool pluginmanager::dispatch(TextThread& thread, std::wstring& sentence){
+    auto sentenceInfo=GetSentenceInfo(thread).data();
     wchar_t* sentenceBuffer = (wchar_t*)HeapAlloc(GetProcessHeap(), HEAP_GENERATE_EXCEPTIONS, (sentence.size() + 1) * sizeof(wchar_t));
 	wcscpy_s(sentenceBuffer, sentence.size() + 1, sentence.c_str());
     concurrency::reader_writer_lock::scoped_lock_read readLock(OnNewSentenceSLock);
@@ -83,6 +110,10 @@ bool pluginmanager::checkisdump(LPVOID ptr){
     }
     return false;
 }
+
+std::optional<std::wstring>pluginmanager::selectpluginfile(){
+    return SelectFile(host->winId,L"Plugin Files\0*.dll;*.xdll\0");
+}
 bool pluginmanager::addplugin(const std::wstring& p){
     auto plugin=checkisvalidplugin(p);
     if(plugin.has_value()){
@@ -95,7 +126,43 @@ bool pluginmanager::addplugin(const std::wstring& p){
         return true;
     }
     else{
-        MessageBoxW(0,InVaildPlugin,L"Error",0);
+        MessageBoxW(host->winId,InVaildPlugin,L"Error",0);
         return false;
     }
+}
+
+
+std::array<InfoForExtension, 20> pluginmanager::GetSentenceInfo(TextThread& thread)
+{
+    void (*AddText)(int64_t, const wchar_t*) = [](int64_t number, const wchar_t* text)
+    {
+        if (TextThread* thread = Host::GetThread(number)) thread->Push(text);
+    };
+    void (*AddSentence)(int64_t, const wchar_t*) = [](int64_t number, const wchar_t* sentence)
+    {
+        if (TextThread* thread = Host::GetThread(number)) thread->AddSentence(sentence);;
+    };
+    static DWORD SelectedProcessId;
+    auto currthread=Host::GetThread(host->currentselect);
+    SelectedProcessId=(currthread!=0)?currthread->tp.processId:0;
+    DWORD (*GetSelectedProcessId)() = [] { return SelectedProcessId; };
+
+    return
+    { {
+    { "HostHWND",(int64_t)host->winId },
+    { "toclipboard", host->check_toclipboard },
+    { "current select", &thread == currthread },
+    { "text number", thread.handle },
+    { "process id", thread.tp.processId },
+    { "hook address", (int64_t)thread.tp.addr },
+    { "text handle", thread.handle },
+    { "text name", (int64_t)thread.name.c_str() },
+    { "add sentence", (int64_t)AddSentence },
+    { "add text", (int64_t)AddText },
+    { "get selected process id", (int64_t)GetSelectedProcessId },
+    { "void (*AddSentence)(int64_t number, const wchar_t* sentence)", (int64_t)AddSentence },
+    { "void (*AddText)(int64_t number, const wchar_t* text)", (int64_t)AddText },
+    { "DWORD (*GetSelectedProcessId)()", (int64_t)GetSelectedProcessId },
+    { nullptr, 0 } // nullptr marks end of info array
+    } };
 }

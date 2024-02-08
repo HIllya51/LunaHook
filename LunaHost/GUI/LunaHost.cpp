@@ -1,7 +1,6 @@
  
 #include <CommCtrl.h>
 #include <TlHelp32.h>
-#include <commdlg.h>
 #include<stdio.h>
 #include"host.h"
 #include"hookcode.h"
@@ -34,24 +33,7 @@ void LunaHost::on_size(int w,int h){
     g_hListBox_listtext->setgeo(10, 110, w - 20, height/2);
     g_showtexts->setgeo(10, 120+height/2, w - 20, height/2);
 }
-std::optional<std::wstring>SelectFile(HWND hwnd){
-    OPENFILENAME ofn;
-    wchar_t szFileName[MAX_PATH] = { 0 };
 
-    ZeroMemory(&ofn, sizeof(ofn));
-    ofn.lStructSize = sizeof(ofn);
-    ofn.hwndOwner = hwnd;
-    ofn.lpstrFilter = L"Plugin Files\0*.dll;*.xdll\0";
-    ofn.lpstrFile = szFileName;
-    ofn.nMaxFile = sizeof(szFileName);
-    ofn.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;
-
-    if (GetOpenFileName(&ofn))
-    {
-        return szFileName;
-    }
-    else return {};
-}
 LunaHost::LunaHost(){
     settext(WndLunaHostGui);
     g_selectprocessbutton =new button(this,BtnSelectProcess,830, 10, 200, 40) ; 
@@ -59,7 +41,7 @@ LunaHost::LunaHost(){
     g_hEdit_userhook = new textedit(this,L"",10, 60, 600, 40,ES_AUTOHSCROLL);
     btnaddplugin=new button(this,BtnAddPlugin,830,60,200,40);
     btnaddplugin->onclick=[&](){
-        auto f=SelectFile(winId);
+        auto f=plugins->selectpluginfile();
         if(f.has_value()){
             plugins->addplugin(f.value());
         }
@@ -147,7 +129,7 @@ LunaHost::LunaHost(){
     };
     g_showtexts = new textedit(this,L"",10, 330, 200, 200,ES_READONLY|ES_MULTILINE |ES_AUTOVSCROLL| WS_VSCROLL);
     
-    plugins=new pluginmanager;
+    plugins=new pluginmanager(this);
 
     Host::Start(
         [&](DWORD pid) {attachedprocess.push_back(pid);}, 
@@ -160,44 +142,10 @@ LunaHost::LunaHost(){
     ); 
 }
 
-std::array<InfoForExtension, 20> LunaHost::GetSentenceInfo(TextThread& thread)
-{
-    void (*AddText)(int64_t, const wchar_t*) = [](int64_t number, const wchar_t* text)
-    {
-        if (TextThread* thread = Host::GetThread(number)) thread->Push(text);
-    };
-    void (*AddSentence)(int64_t, const wchar_t*) = [](int64_t number, const wchar_t* sentence)
-    {
-        if (TextThread* thread = Host::GetThread(number)) thread->AddSentence(sentence);;
-    };
-    static DWORD SelectedProcessId;
-    auto currthread=Host::GetThread(currentselect);
-    SelectedProcessId=(currthread!=0)?currthread->tp.processId:0;
-    DWORD (*GetSelectedProcessId)() = [] { return SelectedProcessId; };
-
-    return
-    { {
-    { "HostHWND",(int64_t)winId },
-    { "toclipboard", check_toclipboard },
-    { "current select", &thread == currthread },
-    { "text number", thread.handle },
-    { "process id", thread.tp.processId },
-    { "hook address", (int64_t)thread.tp.addr },
-    { "text handle", thread.handle },
-    { "text name", (int64_t)thread.name.c_str() },
-    { "add sentence", (int64_t)AddSentence },
-    { "add text", (int64_t)AddText },
-    { "get selected process id", (int64_t)GetSelectedProcessId },
-    { "void (*AddSentence)(int64_t number, const wchar_t* sentence)", (int64_t)AddSentence },
-    { "void (*AddText)(int64_t number, const wchar_t* text)", (int64_t)AddText },
-    { "DWORD (*GetSelectedProcessId)()", (int64_t)GetSelectedProcessId },
-    { nullptr, 0 } // nullptr marks end of info array
-    } };
-}
 bool LunaHost::on_text_recv(TextThread& thread, std::wstring& output){
     std::lock_guard _(settextmutex);
     std::wstring lfoutput=output;
-    if(!plugins->dispatch(GetSentenceInfo(thread).data(),output))return false;
+    if(!plugins->dispatch(thread,output))return false;
     strReplace(lfoutput,L"\n",L"\r\n");
     savetext.at(thread.handle).push_back(lfoutput);
     if(currentselect==thread.handle){ 

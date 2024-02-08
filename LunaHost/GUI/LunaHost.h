@@ -3,13 +3,10 @@
 #include"processlistwindow.h"
 #include"textthread.h"
 #include"pluginmanager.h"
-#include"Plugin/plugindef.h"
 class LunaHost:public mainwindow{
         
-    int64_t currentselect=0;
     std::map<int64_t,std::vector<std::wstring>>savetext;
     std::vector<int>attachedprocess;
-    bool check_toclipboard=false; 
     std::mutex settextmutex;
     textedit* g_hEdit_userhook;
     button* g_hButton_insert;
@@ -26,8 +23,9 @@ class LunaHost:public mainwindow{
     bool on_text_recv(TextThread& thread, std::wstring& sentence);
     void on_thread_create(TextThread& thread);
     void on_thread_delete(TextThread& thread);
-    std::array<InfoForExtension, 20> GetSentenceInfo(TextThread& thread);
 public:
+    int64_t currentselect=0;
+    bool check_toclipboard=false; 
     void on_size(int w,int h);
     void on_close();
     LunaHost();
