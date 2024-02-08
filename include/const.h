@@ -26,7 +26,7 @@ enum HostNotificationType {
   HOST_SETTEXTTHREADTYPE
 };
 
-enum HookParamType : unsigned
+enum HookParamType : uint64_t
 {
   //默认为CODEC_ANSI_LE&USING_CHAR
   //若使用了text_fun|hook_before，会改为默认USING_STRING，这时若其实是USING_CHAR，需标明USING_STRING
@@ -56,6 +56,7 @@ enum HookParamType : unsigned
 	EMBED_BEFORE_SIMPLE=0x200000,
 	EMBED_AFTER_NEW=0x400000,  
 	EMBED_AFTER_OVERWRITE=0x800000,
+  EMBED_CODEC_UTF16=0x4000000
 };
 
 

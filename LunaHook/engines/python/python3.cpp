@@ -104,7 +104,12 @@ enum PyUnicode_Kind {
         ) \
     ))
 
-  
+    typedef PyObject* (*PyUnicode_FromString_t)(const char *u);
+    PyUnicode_FromString_t PyUnicode_FromString;
+    typedef PyObject* (*PyUnicode_FromKindAndData_t)(int kind,
+        const void *buffer,
+        Py_ssize_t size);
+    PyUnicode_FromKindAndData_t PyUnicode_FromKindAndData;
 }
  #ifdef _WIN64
                 
@@ -123,7 +128,20 @@ bool InsertRenpy3Hook()
                 uintptr_t addr = (uintptr_t)GetProcAddress(module, "PyUnicode_Format");
                 if (addr) {
                     HookParam hp;
+                    PyUnicode_FromString=(PyUnicode_FromString_t)GetProcAddress(module, "PyUnicode_FromString");
+                    PyUnicode_FromKindAndData=(PyUnicode_FromKindAndData_t)GetProcAddress(module, "PyUnicode_FromKindAndData");
                     hp.address = addr;
+                    if(PyUnicode_FromKindAndData)
+                    {
+                        hp.type=EMBED_ABLE|EMBED_BEFORE_SIMPLE|EMBED_CODEC_UTF16;
+                        hp.hook_after=[](hook_stack* stack,void* data, size_t len)
+                            {
+                                auto format=(PyObject *)stack->rcx;
+                                if (format == NULL ) 
+                                    return;
+                                stack->rcx=(uintptr_t)PyUnicode_FromKindAndData(PyUnicode_2BYTE_KIND,data,len/2);
+                            };
+                    }
                     hp.text_fun = [](hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len)
                     {
                         auto format=(PyObject *)stack->rcx;
@@ -141,19 +159,21 @@ bool InsertRenpy3Hook()
                         }
 
                         *data=(uintptr_t)fmtdata;
+                        if(PyUnicode_FromString)
+                            hp->type=EMBED_ABLE|EMBED_BEFORE_SIMPLE|EMBED_CODEC_UTF16;
                         switch (fmtkind)
                         {
                         case PyUnicode_WCHAR_KIND:
                         case PyUnicode_2BYTE_KIND:
-                            hp->type=CODEC_UTF16|USING_STRING|NO_CONTEXT;
+                            hp->type|=CODEC_UTF16|USING_STRING|NO_CONTEXT;
                             *len=fmtcnt*sizeof(Py_UCS2);
                             break;
                         case PyUnicode_1BYTE_KIND:
-                            hp->type=CODEC_UTF8|USING_STRING|NO_CONTEXT;
+                            hp->type|=CODEC_UTF8|USING_STRING|NO_CONTEXT;
                             *len=fmtcnt*sizeof(Py_UCS1);
                             break;
                         case PyUnicode_4BYTE_KIND://Py_UCS4,utf32
-                            hp->type=CODEC_UTF32|USING_STRING|NO_CONTEXT;
+                            hp->type|=CODEC_UTF32|USING_STRING|NO_CONTEXT;
                             *len=fmtcnt*sizeof(Py_UCS4);
                         }
                     };

@@ -99,7 +99,6 @@ bool TextHook::Insert(HookParam hp)
 	local_buffer=new BYTE[PIPE_BUFFER_SIZE];
 	{
 		std::scoped_lock lock(viewMutex);
-		if (hp.type & CODEC_UTF8) hp.codepage = CP_UTF8;
 		this->hp = hp;
 		address = hp.address;
 	}

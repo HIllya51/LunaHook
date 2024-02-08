@@ -172,7 +172,6 @@ bool NewHook(HookParam hp, LPCSTR lpname)
 	ConsoleOutput(INSERTING_HOOK, hp.name);
 	RemoveHook(hp.address, 0);
 	
-	if (hp.type & CODEC_UTF8) hp.codepage = CP_UTF8; 
 	wcscpy_s(hp.hookcode,HOOKCODE_LEN,HookCode::Generate(hp, GetCurrentProcessId()).c_str());
 	if (!(*hooks)[currentHook].Insert(hp))
 	{

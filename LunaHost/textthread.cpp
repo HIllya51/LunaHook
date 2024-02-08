@@ -58,9 +58,7 @@ void TextThread::Push(BYTE* data, int length)
 	}
 
 	if (hp.type & HEX_DUMP) for (int i = 0; i < length; i += sizeof(short)) buffer.append(FormatString(L"%04hX ", *(short*)(data + i)));
-	else if (hp.type & CODEC_UTF16) buffer.append((wchar_t*)data, length / sizeof(wchar_t));
-	else if(hp.type&CODEC_UTF32)buffer.append(std::move(utf32_to_utf16(data,length)));
-	else if (auto converted = StringToWideString(std::string((char*)data, length), hp.codepage ? hp.codepage : Host::defaultCodepage)) buffer.append(converted.value());
+	else if (auto converted = commonparsestring(data,length,&hp,Host::defaultCodepage)) buffer.append(converted.value());
 	else Host::AddConsoleOutput(INVALID_CODEPAGE);
 	if (hp.type & FULL_STRING) buffer.push_back(L'\n');
 	lastPushTime = GetTickCount64();

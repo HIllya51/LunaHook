@@ -53,6 +53,12 @@ namespace {
         auto fmtcnt = PyUnicode_GET_SIZE(uformat);
         return {fmt,fmtcnt};   
     }
+
+    typedef PyObject* (*PyUnicode_FromUnicode_t)(
+        const Py_UNICODE *u,        /* Unicode buffer */
+        Py_ssize_t size             /* size of buffer */
+        );
+    PyUnicode_FromUnicode_t PyUnicode_FromUnicode;
 }
  
 bool InsertRenpyHook(){
@@ -66,11 +72,26 @@ bool InsertRenpyHook(){
             if (HMODULE module = GetModuleHandleW(name))
             {
                 PyUnicode_FromObject=(PyUnicode_FromObject_t)GetProcAddress(module, "PyUnicodeUCS2_FromObject");
+                PyUnicode_FromUnicode=(PyUnicode_FromUnicode_t)GetProcAddress(module, "PyUnicodeUCS2_FromUnicode");
                 auto f1=[=](){
                     HookParam hp;
                     hp.address = (uintptr_t)GetProcAddress(module, "PyUnicodeUCS2_Format");
                     if (!hp.address) return false;
-                    
+                    hp.hook_after=[](hook_stack* stack,void* data, size_t len)
+                            {
+                                #ifndef _WIN64
+                                auto format=(PyObject *)stack->stack[1];
+                                #else
+                                auto format=(PyObject *)stack->rcx;
+                                #endif
+                                if(format==NULL)return;
+                                #ifndef _WIN64
+                                stack->stack[1]=
+                                #else
+                                stack->rcx=
+                                #endif
+                                    (uintptr_t)PyUnicode_FromUnicode((Py_UNICODE *)data,len/2);
+                            };
                     hp.text_fun = [](hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len)
                     {
                         #ifndef _WIN64
@@ -87,6 +108,8 @@ bool InsertRenpyHook(){
                         
                     };
                     hp.type = USING_STRING | CODEC_UTF16 | NO_CONTEXT;
+                    if(PyUnicode_FromUnicode)
+                        hp.type|=EMBED_ABLE|EMBED_BEFORE_SIMPLE;
                     return NewHook(hp, "Ren'py");
                 }();
                 

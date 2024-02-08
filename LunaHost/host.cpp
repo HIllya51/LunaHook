@@ -175,14 +175,12 @@ namespace
 					if(embedcallback){
 						auto & hp=thread->second.hp;
 						if(hp.type&EMBED_ABLE){
-							std::wstring text;
-							if (hp.type & CODEC_UTF16)text=(std::wstring((wchar_t*)data->data, length / sizeof(wchar_t)));
-							else if (auto converted = StringToWideString(std::string((char*)data->data, length), hp.codepage ? hp.codepage : Host::defaultCodepage))text=(converted.value());
-							else text=L"";
-							if(text.size()){
-								embedcallback(text,tp);
-							}
-							 
+							if (auto t=commonparsestring(data->data,length,&hp,Host::defaultCodepage)){
+								auto text=t.value();
+								if(text.size()){
+									embedcallback(text,tp);
+								}
+							} 
 						}
 						
 					}

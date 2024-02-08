@@ -57,5 +57,7 @@ inline std::wstring FormatString(const wchar_t* format, const Args&... args)
 	_swprintf(buffer.data(), format, FormatArg(args)...);
 	return buffer;
 }
+
+std::optional<std::wstring> commonparsestring(void*,size_t,void*,DWORD);
 #pragma warning(pop)
 #endif

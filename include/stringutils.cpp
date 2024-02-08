@@ -170,3 +170,13 @@ size_t u32strlen(uint32_t* data){
 		s++;
 	return s;
 }
+
+#include"const.h"
+#include"types.h"
+std::optional<std::wstring> commonparsestring(void* data,size_t length,void* php,DWORD df){
+  auto hp=(HookParam*)php;
+  if (hp->type & CODEC_UTF16) return std::wstring((wchar_t*)data, length / sizeof(wchar_t));
+	else if(hp->type&CODEC_UTF32)return (std::move(utf32_to_utf16(data,length)));
+	else if (auto converted = StringToWideString(std::string((char*)data, length), hp->codepage ? hp->codepage : ((hp->type&CODEC_UTF8)?CP_UTF8:df))) return (converted.value());
+  else return {};
+}

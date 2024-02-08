@@ -80,7 +80,7 @@ struct HookParam
 	wchar_t module[MAX_MODULE_SIZE];
 
 	char function[MAX_MODULE_SIZE];
-	DWORD type; // flags
+	uint64_t type; // flags
 	UINT codepage; // text encoding
 	short length_offset; // index of the string length
 	ALIGNPTR(uint64_t __1,uintptr_t padding); // padding before string
@@ -184,6 +184,6 @@ struct HookInsertingNotif // From dll
 struct TextOutput_T
 {
 	ThreadParam tp;
-	DWORD type;
+	uint64_t type;
 	BYTE data[0];
 };

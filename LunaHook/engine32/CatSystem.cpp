@@ -215,8 +215,7 @@ bool InsertCatSystem2Hook()
   HookParam hp;
   hp.address = addr;
   hp.offset=get_reg(regs::eax);
-  hp.codepage = 65001;
-  hp.type = USING_STRING;
+  hp.type = USING_STRING|CODEC_UTF8;
   ConsoleOutput("INSERT CatSystem2new");
   
   return NewHook(hp, "CatSystem2new");

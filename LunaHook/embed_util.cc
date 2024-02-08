@@ -8,14 +8,10 @@
 #include"defs.h"
 DynamicShiftJISCodec *dynamiccodec=new DynamicShiftJISCodec(932);
 
-std::wstring cast_a2w(HookParam hp,void*data ,size_t len){
-	if(hp.type&CODEC_UTF16)
-		return std::wstring((wchar_t*)(data),len/2);
-	return StringToWideString(std::string((char*)data,len),hp.codepage?hp.codepage:embedsharedmem->codepage).value();	
-}
 
-void cast_back(HookParam hp,void*data ,size_t *len,std::wstring trans,bool normal){
-	if(hp.type&CODEC_UTF16){
+void cast_back(const HookParam& hp,void*data ,size_t *len,const std::wstring& trans,bool normal){
+  
+	if((hp.type&EMBED_CODEC_UTF16)||(hp.type&CODEC_UTF16)){//renpy
 		wcscpy((wchar_t*)data,trans.c_str());
 		*len=trans.size()*2;
 	}
@@ -25,8 +21,7 @@ void cast_back(HookParam hp,void*data ,size_t *len,std::wstring trans,bool norma
       astr=dynamiccodec->encodeSTD(trans,0);
     }
     else{
-      astr=WideStringToString(trans,hp.codepage?hp.codepage:embedsharedmem->codepage);
-
+      astr=WideStringToString(trans,hp.codepage?hp.codepage:((hp.type&CODEC_UTF8)?CP_UTF8:embedsharedmem->codepage));
     }
 		strcpy((char*)data,astr.c_str());
     *len=astr.size();
@@ -207,11 +202,14 @@ bool waitforevent(UINT32 timems,const ThreadParam& tp,const std::wstring &origin
     return false;
 }
 bool TextHook::waitfornotify(TextOutput_T* buffer,void*data ,size_t*len,ThreadParam tp){
-  
-  auto origin=cast_a2w(hp,data,*len);
+  std::wstring origin;
+  if (auto t=commonparsestring(data,*len,&hp,embedsharedmem->codepage)) origin=t.value();
+	else return false;
 	if(origin.size()>1000)return false; 
-  if(hp.newlineseperator)strReplace(origin,hp.newlineseperator,L"\n");
-  cast_back(hp,data,len,origin,true); 
+  if(hp.newlineseperator){
+    strReplace(origin,hp.newlineseperator,L"\n");
+    cast_back(hp,data,len,origin,true); 
+  }
   TextOutput(tp, buffer, *len);
 
   std::wstring translate;
