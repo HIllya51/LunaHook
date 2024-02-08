@@ -93,7 +93,6 @@
 #include"engine32/ApricoT.h"
 #include"engine32/Triangle.h"
 #include"engine32/AB2Try.h"
-#include"engine32/UnisonShift2.h"
 #include"engine32/GameMaker.h"
 #include"engine32/DxLib.h"
 #include"engine32/CodeX.h"
