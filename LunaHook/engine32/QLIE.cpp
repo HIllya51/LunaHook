@@ -532,8 +532,7 @@ namespace Private {
       }
 
       // Convert to lower case
-      std::string s = t;
-      stolower(s);
+      std::string s = stolower(std::string(t));
       t = s.c_str();
 
       if (::strchr(t, '_')) {

@@ -66,8 +66,7 @@ std::optional<std::pair<std::wstring,LPVOID>> pluginmanager::checkisvalidplugin(
     auto path=std::filesystem::path(pl);
     if (!std::filesystem::exists(path))return{};
     if (!std::filesystem::is_regular_file(path))return{};
-    auto appendix=path.extension().wstring();
-    stolower(appendix);
+    auto appendix=stolower(path.extension().wstring());
     if((appendix!=std::wstring(L".dll"))&&(appendix!=std::wstring(L".xdll")))return {};
     auto dll=LoadLibraryW(pl.c_str());
     if(!dll)return {};
