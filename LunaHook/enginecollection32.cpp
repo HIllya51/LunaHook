@@ -300,6 +300,7 @@ std::vector<ENGINE*> check_engines(){
         new SYSD,
         new IGScript,
         new ScrPlayer,
+        new ElfFunClubFinal
     };
      
 }

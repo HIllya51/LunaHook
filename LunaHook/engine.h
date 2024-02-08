@@ -25,6 +25,7 @@ class ENGINE{
         ALL_TRUE,
         FILE, FILE_ALL,FILE_ANY,
         RESOURCE_STR,
+        RESOURCE_STR_A,
         CUSTOM, 
     };
     CHECK_BY check_by;
@@ -34,7 +35,8 @@ class ENGINE{
     typedef  std::function<bool()> check_by_custom_function;
     typedef  std::vector<const wchar_t*> check_by_list;
     typedef  const wchar_t* check_by_single;
-    std::variant<check_by_single,check_by_list,check_by_custom_function>check_by_target;
+    typedef  const char* check_by_single_A;
+    std::variant<check_by_single_A,check_by_single,check_by_list,check_by_custom_function>check_by_target;
     //virtual bool check_by_target(){return false;};
     virtual bool attach_function()=0;
     virtual const char* getenginename(){

@@ -21,3 +21,15 @@ class Elf2:public ENGINE{
     }; 
      bool attach_function(); 
 };
+
+class ElfFunClubFinal:public ENGINE{
+    public:
+    ElfFunClubFinal(){
+        is_engine_certain=false;
+        check_by=CHECK_BY::CUSTOM;
+        check_by_target=[](){
+            return wcscmp(processName_lower,L"fanclub.exe")==0;
+        };
+    }; 
+     bool attach_function(); 
+};

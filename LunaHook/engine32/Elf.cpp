@@ -402,3 +402,29 @@ bool elf2(){
 bool Elf2::attach_function(){
   return elf2()||Elf2attach_function();
 }
+
+
+bool ElfFunClubFinal::attach_function(){
+  auto entry=Util::FindImportEntry(processStartAddress,(DWORD)TextOutA); 
+    
+  if(entry==0)return false;
+  BYTE bytes[]={0x8b,XX,XX4};//mov reg,ds:TextOutA
+  memcpy(bytes+2,&entry,4);  
+  bool succ=false;
+  for(auto addr:Util::SearchMemory(bytes, sizeof(bytes), PAGE_EXECUTE, processStartAddress, processStopAddress)){
+    BYTE s[]={XX,0xCC,0xCC,0xCC};
+    addr=reverseFindBytes(s,4,addr-0x100,addr);
+    if(addr==0)continue;
+    HookParam hp;
+    hp.address=addr+4;
+    hp.type=CODEC_ANSI_BE|USING_CHAR;
+    hp.text_fun=[](hook_stack* stack, HookParam *hp, uintptr_t* data, uintptr_t* split, size_t* len){
+      *data=(WORD)stack->stack[3];
+      *len=2;
+      *split=stack->stack[2]>8;
+    };
+    succ|= NewHook(hp,"ElfFunClubFinal");
+  }
+  return succ;
+  
+}
