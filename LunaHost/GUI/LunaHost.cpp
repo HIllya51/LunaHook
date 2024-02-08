@@ -1,15 +1,14 @@
  
 #include <CommCtrl.h>
 #include <TlHelp32.h>
+#include <commdlg.h>
 #include<stdio.h>
-
 #include"host.h"
 #include"hookcode.h"
 #include"textthread.h"
 #include"LunaHost.h"
 #include"processlistwindow.h"
 #include"Lang/Lang.h"
-
 void LunaHost::toclipboard(std::wstring& sentence){ 
      
     for (int loop = 0; loop < 10; loop++) {
@@ -35,13 +34,36 @@ void LunaHost::on_size(int w,int h){
     g_hListBox_listtext->setgeo(10, 110, w - 20, height/2);
     g_showtexts->setgeo(10, 120+height/2, w - 20, height/2);
 }
+std::optional<std::wstring>SelectFile(HWND hwnd){
+    OPENFILENAME ofn;
+    wchar_t szFileName[MAX_PATH] = { 0 };
 
+    ZeroMemory(&ofn, sizeof(ofn));
+    ofn.lStructSize = sizeof(ofn);
+    ofn.hwndOwner = hwnd;
+    ofn.lpstrFilter = L"Plugin Files (.dll)\0*.dll\0";
+    ofn.lpstrFile = szFileName;
+    ofn.nMaxFile = sizeof(szFileName);
+    ofn.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;
+
+    if (GetOpenFileName(&ofn))
+    {
+        return szFileName;
+    }
+    else return {};
+}
 LunaHost::LunaHost(){
     settext(WndLunaHostGui);
-    g_selectprocessbutton =new button(this,BtnSelectProcess,780, 10, 200, 40) ; 
+    g_selectprocessbutton =new button(this,BtnSelectProcess,830, 10, 200, 40) ; 
         
     g_hEdit_userhook = new textedit(this,L"",10, 60, 600, 40,ES_AUTOHSCROLL);
-
+    btnaddplugin=new button(this,BtnAddPlugin,830,60,200,40);
+    btnaddplugin->onclick=[&](){
+        auto f=SelectFile(winId);
+        if(f.has_value()){
+            plugins->addplugin(f.value());
+        }
+    };
     g_hButton_insert = new button(this,BtnInsertUserHook,610, 60, 200, 40) ;
 
     g_selectprocessbutton->onclick=[&](){
@@ -107,67 +129,106 @@ LunaHost::LunaHost(){
     };
     g_hListBox_listtext->oncontextmenucallback=[&](WPARAM wparam){
 
-        int handle = g_hListBox_listtext->getdata(g_hListBox_listtext->currentidx());
+        auto handle = g_hListBox_listtext->getdata(g_hListBox_listtext->currentidx());
+        auto tt=Host::GetThread(handle);
+        if(tt==0)return;
         switch (LOWORD(wparam)) {
 
             case IDM_COPY_HOOKCODE:
-                toclipboard(std::wstring(savehooks[handle]->hp.hookcode));
+                toclipboard(std::wstring(tt->hp.hookcode));
                 break;
             case IDM_DETACH_PROCESS:
-                Host::DetachProcess(savehooks[handle]->tp.processId);
+                Host::DetachProcess(tt->tp.processId);
                 break;
             case IDM_REMOVE_HOOK:
-                Host::RemoveHook(savehooks[handle]->tp.processId,savehooks[handle]->tp.addr);
+                Host::RemoveHook(tt->tp.processId,tt->tp.addr);
                 break;
         }
     };
     g_showtexts = new textedit(this,L"",10, 330, 200, 200,ES_READONLY|ES_MULTILINE |ES_AUTOVSCROLL| WS_VSCROLL);
-        
+    
+    plugins=new pluginmanager;
+
     Host::Start(
         [&](DWORD pid) {attachedprocess.push_back(pid);}, 
         [&](DWORD pid) { 
             attachedprocess.erase(std::remove(attachedprocess.begin(), attachedprocess.end(), pid), attachedprocess.end());
         }, 
-        [&](TextThread& thread) {
-            wchar_t buff[65535];
-            swprintf_s(buff,L"[%I64X:%I32X:%I64X:%I64X:%I64X:%s:%s]",
-                thread.handle,
-                thread.tp.processId,
-                thread.tp.addr,
-                thread.tp.ctx,
-                thread.tp.ctx2,
-                thread.name.c_str(),
-                thread.hp.hookcode 
-            );
-            savetext.insert({thread.handle,{}});
-            int index=g_hListBox_listtext->additem(buff); 
-            g_hListBox_listtext->setdata(index,thread.handle);
-            savehooks.insert(std::make_pair(thread.handle,&thread));
-        }, 
-        [&](TextThread& thread) {
-            int count = g_hListBox_listtext->count();
-            for (int i = 0; i < count; i++) {
-                uint64_t handle = g_hListBox_listtext->getdata(i);
-                
-                if (handle== thread.handle) { 
-                    g_hListBox_listtext->deleteitem(i);
-                    break;
-                }
-            } 
-        }, 
-        [&](TextThread& thread, std::wstring& output)
-            { 
-                std::lock_guard _(settextmutex);
-                std::wstring lfoutput=output;
-                strReplace(lfoutput,L"\n",L"\r\n");
-                savetext.at(thread.handle).push_back(lfoutput);
-                if(currentselect==thread.handle){ 
-                    g_showtexts->scrolltoend();
-                    g_showtexts->appendtext(lfoutput);
-                    if(check_toclipboard)
-                        toclipboard(output);
-                }
-                return false;
-        }
+        std::bind(&LunaHost::on_thread_create,this,std::placeholders::_1),
+        std::bind(&LunaHost::on_thread_delete,this,std::placeholders::_1),
+        std::bind(&LunaHost::on_text_recv,this,std::placeholders::_1,std::placeholders::_2)
     ); 
+}
+
+std::array<InfoForExtension, 20> LunaHost::GetSentenceInfo(TextThread& thread)
+{
+    void (*AddText)(int64_t, const wchar_t*) = [](int64_t number, const wchar_t* text)
+    {
+        if (TextThread* thread = Host::GetThread(number)) thread->Push(text);
+    };
+    void (*AddSentence)(int64_t, const wchar_t*) = [](int64_t number, const wchar_t* sentence)
+    {
+        if (TextThread* thread = Host::GetThread(number)) thread->AddSentence(sentence);;
+    };
+    static DWORD SelectedProcessId;
+    auto currthread=Host::GetThread(currentselect);
+    SelectedProcessId=(currthread!=0)?currthread->tp.processId:0;
+    DWORD (*GetSelectedProcessId)() = [] { return SelectedProcessId; };
+
+    return
+    { {
+    { "HostHWND",(int64_t)winId },
+    { "toclipboard", check_toclipboard },
+    { "current select", &thread == currthread },
+    { "text number", thread.handle },
+    { "process id", thread.tp.processId },
+    { "hook address", (int64_t)thread.tp.addr },
+    { "text handle", thread.handle },
+    { "text name", (int64_t)thread.name.c_str() },
+    { "add sentence", (int64_t)AddSentence },
+    { "add text", (int64_t)AddText },
+    { "get selected process id", (int64_t)GetSelectedProcessId },
+    { "void (*AddSentence)(int64_t number, const wchar_t* sentence)", (int64_t)AddSentence },
+    { "void (*AddText)(int64_t number, const wchar_t* text)", (int64_t)AddText },
+    { "DWORD (*GetSelectedProcessId)()", (int64_t)GetSelectedProcessId },
+    { nullptr, 0 } // nullptr marks end of info array
+    } };
+}
+bool LunaHost::on_text_recv(TextThread& thread, std::wstring& output){
+    std::lock_guard _(settextmutex);
+    std::wstring lfoutput=output;
+    if(!plugins->dispatch(GetSentenceInfo(thread).data(),output))return false;
+    strReplace(lfoutput,L"\n",L"\r\n");
+    savetext.at(thread.handle).push_back(lfoutput);
+    if(currentselect==thread.handle){ 
+        g_showtexts->scrolltoend();
+        g_showtexts->appendtext(lfoutput);
+    }
+    return true;
+}
+void LunaHost::on_thread_create(TextThread& thread){
+    wchar_t buff[65535];
+    swprintf_s(buff,L"[%I64X:%I32X:%I64X:%I64X:%I64X:%s:%s]",
+        thread.handle,
+        thread.tp.processId,
+        thread.tp.addr,
+        thread.tp.ctx,
+        thread.tp.ctx2,
+        thread.name.c_str(),
+        thread.hp.hookcode 
+    );
+    savetext.insert({thread.handle,{}});
+    int index=g_hListBox_listtext->additem(buff); 
+    g_hListBox_listtext->setdata(index,thread.handle);
+}
+void LunaHost::on_thread_delete(TextThread& thread){
+    int count = g_hListBox_listtext->count();
+    for (int i = 0; i < count; i++) {
+        uint64_t handle = g_hListBox_listtext->getdata(i);
+        
+        if (handle== thread.handle) { 
+            g_hListBox_listtext->deleteitem(i);
+            break;
+        }
+    } 
 }

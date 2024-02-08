@@ -533,7 +533,7 @@ namespace Private {
 
       // Convert to lower case
       std::string s = t;
-      std::transform(s.begin(), s.end(), s.begin(), ::tolower);
+      stolower(s);
       t = s.c_str();
 
       if (::strchr(t, '_')) {

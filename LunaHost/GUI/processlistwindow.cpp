@@ -30,8 +30,7 @@ std::unordered_map<std::wstring,std::vector<int>> getprocesslist()
             QueryFullProcessImageNameW(handle, 0, buff, &sz);
             
             auto buffs=std::wstring(buff);
-            auto str=std::wstring(buff);
-            std::transform(str.begin(), str.end(), str.begin(), [](wchar_t ch){    return std::tolower(ch, std::locale());});
+            auto str=stolower(buffs);
             if(str.find(L"\\windows\\")!=str.npos || str.find(L"\\microsoft")!=str.npos|| str.find(L"\\windowsapps")!=str.npos)continue;
              
 

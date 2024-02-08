@@ -3,6 +3,11 @@
 
 enum { VNR_TEXT_CAPACITY = 1500 }; // estimated max number of bytes allowed in VNR, slightly larger than VNR's text limit (1000)
 
+template<class StringT>
+StringT& stolower(StringT& s){
+	std::transform(s.begin(), s.end(), s.begin(), tolower);
+	return s;
+}
 
 LPCSTR reverse_search_begin(const char *s, int maxsize = VNR_TEXT_CAPACITY);
 

@@ -46,6 +46,7 @@
 #define BtnRefresh L"Refresh" 
 #define BtnToClipboard L"to clipboard" 
 #define BtnInsertUserHook L"Insert UserHook" 
+#define BtnAddPlugin L"Add Plugin" 
 #define LblFlushDelay L"flushDelay" 
 #define LblCodePage L"CodePage" 
 #define MenuCopyHookCode L"CopyHookCode" 
