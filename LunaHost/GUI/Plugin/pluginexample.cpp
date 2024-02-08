@@ -1,4 +1,4 @@
-#include"plugin.h"
+#include"plugindef.h"
 
 bool ProcessSentence(std::wstring& sentence, SentenceInfo sentenceInfo);
 

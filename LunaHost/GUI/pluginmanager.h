@@ -1,4 +1,4 @@
-#include"plugin.h"
+#include"Plugin/plugindef.h"
 #include"textthread.h"
 class pluginmanager{
     std::vector<std::pair<std::wstring,LPVOID>>OnNewSentenceS;

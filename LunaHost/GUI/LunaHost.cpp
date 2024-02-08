@@ -41,7 +41,7 @@ std::optional<std::wstring>SelectFile(HWND hwnd){
     ZeroMemory(&ofn, sizeof(ofn));
     ofn.lStructSize = sizeof(ofn);
     ofn.hwndOwner = hwnd;
-    ofn.lpstrFilter = L"Plugin Files (.dll)\0*.dll\0";
+    ofn.lpstrFilter = L"Plugin Files\0*.dll;*.xdll\0";
     ofn.lpstrFile = szFileName;
     ofn.nMaxFile = sizeof(szFileName);
     ofn.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;

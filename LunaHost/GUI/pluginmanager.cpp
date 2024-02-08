@@ -1,7 +1,8 @@
 #include"pluginmanager.h"
 #include<filesystem>
-#include"plugin.h"
+#include"Plugin/plugindef.h"
 #include<fstream>
+#include"Lang/Lang.h"
 std::vector<char> readfile(const wchar_t* fname) {
     FILE* f;
     _wfopen_s(&f, fname, L"rb");
@@ -60,13 +61,14 @@ bool pluginmanager::dispatch(const InfoForExtension* sentenceInfo, std::wstring&
 	HeapFree(GetProcessHeap(), 0, sentenceBuffer);
 	return !sentence.empty();
 }
+
 std::optional<std::pair<std::wstring,LPVOID>> pluginmanager::checkisvalidplugin(const std::wstring& pl){
     auto path=std::filesystem::path(pl);
     if (!std::filesystem::exists(path))return{};
     if (!std::filesystem::is_regular_file(path))return{};
     auto appendix=path.extension().wstring();
     stolower(appendix);
-    if(appendix!=std::wstring(L".dll"))return {};
+    if((appendix!=std::wstring(L".dll"))&&(appendix!=std::wstring(L".xdll")))return {};
     auto dll=LoadLibraryW(pl.c_str());
     if(!dll)return {};
     auto OnNewSentence=GetProcAddress(dll,"OnNewSentence");
@@ -94,6 +96,7 @@ bool pluginmanager::addplugin(const std::wstring& p){
         return true;
     }
     else{
+        MessageBoxW(0,InVaildPlugin,L"Error",0);
         return false;
     }
 }

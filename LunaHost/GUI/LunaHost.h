@@ -3,7 +3,7 @@
 #include"processlistwindow.h"
 #include"textthread.h"
 #include"pluginmanager.h"
-#include"plugin.h"
+#include"Plugin/plugindef.h"
 class LunaHost:public mainwindow{
         
     int64_t currentselect=0;

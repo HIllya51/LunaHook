@@ -53,3 +53,4 @@
 #define MenuRemoveHook L"RemoveHook" 
 #define MenuDetachProcess L"DetachProcess" 
 #define DefaultFont L"Arial" 
+#define InVaildPlugin L"InVaild Plugin"
