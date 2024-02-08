@@ -15,6 +15,6 @@ bool sakanagl::attach_function() {
 	HookParam hp;
 	hp.address = (DWORD)addr;
 	hp.offset=get_reg(regs::edx); 
-	hp.type = USING_STRING|CODEC_UTF8|EMBED_ABLE|EMBED_BEFORE_SIMPLE|EMBED_AFTER_NEW;
+	hp.type = USING_STRING|CODEC_UTF8|EMBED_ABLE|EMBED_BEFORE_SIMPLE|EMBED_AFTER_OVERWRITE;
 	return NewHook(hp, "sakanagldll");
 }  
