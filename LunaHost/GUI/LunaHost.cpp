@@ -254,20 +254,17 @@ Pluginwindow::Pluginwindow(mainwindow*p,Pluginmanager* pl):mainwindow(p){
                     auto f=pluginmanager->selectpluginfile();
                     if(f.has_value()){
                         if(pluginmanager->addplugin(f.value(),LOWORD(wparam)==IDM_ADD_QT_PLUGIN)){
-                            listplugins->deleteitem(listplugins->count()-1);
                             listadd(f.value());
-                            listadd(L"InternalClipBoard");
                         }
                     }
                     break;
                 }
             case IDM_REMOVE_PLUGIN:
                 {
-                    
                     auto idx=listplugins->currentidx();
-                    if(idx==listplugins->count()-1)break;printf("??");
+                    if(idx==0)break;
                     pluginmanager->remove((LPCWSTR)listplugins->getdata(idx));
-                    listplugins->deleteitem(idx);
+                    listplugins->deleteitem(idx-1);
                     break;
                 }
         }

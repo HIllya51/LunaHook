@@ -54,7 +54,8 @@ void Pluginmanager::loadqtdlls(std::vector<std::wstring>&collectQtplugs){
 Pluginmanager::Pluginmanager(LunaHost* _host):host(_host){
     try {
         std::scoped_lock lock(OnNewSentenceSLock);
-        
+        PluginRank.push_back(L"InternalClipBoard");
+        OnNewSentenceS[L"InternalClipBoard"]=GetProcAddress(GetModuleHandle(0),"OnNewSentence");//内部链接的剪贴板插件
         auto plgs=host->configs->pluginsget();
         std::vector<std::wstring>collectQtplugs;
         for (auto i=0;i<plgs.size();i++) {
@@ -71,8 +72,7 @@ Pluginmanager::Pluginmanager(LunaHost* _host):host(_host){
         if(collectQtplugs.size()){
             loadqtdlls(collectQtplugs);
         }
-        PluginRank.push_back(L"InternalClipBoard");
-        OnNewSentenceS[L"InternalClipBoard"]=GetProcAddress(GetModuleHandle(0),"OnNewSentence");//内部链接的剪贴板插件
+        
     } catch (const std::exception& ex) {
         std::cerr << "Error: " << ex.what() << std::endl;
     }
