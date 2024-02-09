@@ -57,8 +57,14 @@ processlistwindow::processlistwindow(mainwindow* p):mainwindow(p){
         auto str=g_hEdit->text();
         if(str.size()){
             close();
+            
             for(auto _s:strSplit(str,L",")){
-                Host::InjectProcess(std::stoi(_s));
+                DWORD pid=0;
+                try{
+                    pid=std::stoi(_s);
+                }catch(std::exception&){}
+                if(pid)
+                    Host::InjectProcess(pid);
             }
         }
     };

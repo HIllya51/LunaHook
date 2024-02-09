@@ -16,6 +16,7 @@ public:
     Pluginmanager(LunaHost*);
     bool dispatch(TextThread&, std::wstring& sentence);
     bool addplugin(const std::wstring&,bool isQt=false);
+    void swaprank(int,int);
     void remove(const std::wstring&);
     std::optional<std::wstring>selectpluginfile();
 };

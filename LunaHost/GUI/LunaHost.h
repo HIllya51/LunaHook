@@ -14,8 +14,8 @@ public:
 };
 class Settingwindow:public mainwindow{
     checkbox* ckbfilterrepeat;
-    textedit* g_timeout;
-    textedit* g_codepage;
+    spinbox* g_timeout;
+    spinbox* g_codepage;
     checkbox* g_check_clipboard; 
 public:
 Settingwindow(LunaHost*);

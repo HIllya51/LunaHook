@@ -31,7 +31,17 @@ public:
     void appendtext(const std::wstring&);
     void scrolltoend();
 };
-
+class spinbox:public control{
+    HWND hUpDown;
+    int minv,maxv;
+    public:
+    void dispatch(WPARAM);
+    spinbox(mainwindow*,LPCWSTR,int,int,int,int,DWORD stype=0);
+    void setminmax(int,int);
+    std::pair<int,int>getminmax();
+    void setcurr(int);
+    std::function<void(int)> onvaluechange=[&](int){};
+};
 class label:public control{
 public:
     label(mainwindow*,LPCWSTR,int,int,int,int);
@@ -48,6 +58,7 @@ public:
     int additem(LPCWSTR);
     void deleteitem(int);
     void setdata(int,LONG_PTR);
+    int insertitem(int,LPCWSTR);
     LONG_PTR getdata(int);
     int count();
 };

@@ -59,6 +59,8 @@
 #define MenuAddPlugin L"Add Plugin" 
 #define MenuAddQtPlugin L"Add Qt Plugin" 
 #define MenuRemovePlugin L"Remove Plugin" 
+#define MenuPluginRankUp L"Up" 
+#define MenuPluginRankDown L"Down" 
 #define DefaultFont L"Arial" 
 #define InVaildPlugin L"InVaild Plugin"
 #define CantLoadQtLoader L"Can't Load QtLoader.dll"

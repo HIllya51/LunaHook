@@ -10,6 +10,7 @@ public:
     nlohmann::json pluginsget();
     void pluginsadd(const std::string&,bool);
     void pluginsremove(const std::string&);
+    void pluginrankswap(int,int);
     template<class T>
     T get(const std::string&key,T default1){
         if(configs.find(key)==configs.end())return default1;

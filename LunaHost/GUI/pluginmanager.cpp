@@ -26,17 +26,32 @@ std::optional<std::wstring>SelectFile(HWND hwnd,LPCWSTR lpstrFilter){
     else return {};
 }
 typedef  HMODULE*(*QtLoadLibrary_t)(LPWSTR*,int);
-QtLoadLibrary_t loadqtloader(){
-    auto QtLoaderPath=std::filesystem::current_path()/(x64?"plugin64":"plugin32")/"QtLoader.dll";
+QtLoadLibrary_t loadqtloader(const std::filesystem::path&pluginpath){
+    auto QtLoaderPath=pluginpath/"QtLoader.dll";
     auto helper=LoadLibrary(QtLoaderPath.c_str());
     if(helper==0)return 0;
     auto QtLoadLibrary = (QtLoadLibrary_t)GetProcAddress(helper, "QtLoadLibrary"); 
     return QtLoadLibrary;
 }
+struct pathhelper{
+    wchar_t currdll[MAX_PATH],currdir[MAX_PATH];
+    pathhelper(LPCWSTR p){
+        GetDllDirectoryW(MAX_PATH,currdll);GetCurrentDirectoryW(MAX_PATH,currdll);
+        SetDllDirectoryW(p);SetCurrentDirectoryW(p);
+    }
+    ~pathhelper(){
+        SetDllDirectoryW(currdll);SetCurrentDirectoryW(currdll);
+    }
+};
 void Pluginmanager::loadqtdlls(std::vector<std::wstring>&collectQtplugs){
-    auto QtLoadLibrary = loadqtloader(); 
+    if(collectQtplugs.size()==0)return;
+    auto pluginpath=std::filesystem::current_path()/(x64?"plugin64":"plugin32");
+    auto _h=new pathhelper(pluginpath.c_str());//若加载Qt插件，不需要恢复路径，不然会有很多杂乱的文件。
+    
+    auto QtLoadLibrary = loadqtloader(pluginpath); 
     if(!QtLoadLibrary){
         MessageBoxW(host->winId,CantLoadQtLoader,L"Error",0);
+        delete _h;
         return ;
     }
     std::vector<wchar_t*>saves;
@@ -54,7 +69,7 @@ void Pluginmanager::loadqtdlls(std::vector<std::wstring>&collectQtplugs){
 Pluginmanager::Pluginmanager(LunaHost* _host):host(_host){
     try {
         std::scoped_lock lock(OnNewSentenceSLock);
-        PluginRank.push_back(L"InternalClipBoard");
+        
         OnNewSentenceS[L"InternalClipBoard"]=GetProcAddress(GetModuleHandle(0),"OnNewSentence");//内部链接的剪贴板插件
         auto plgs=host->configs->pluginsget();
         std::vector<std::wstring>collectQtplugs;
@@ -69,9 +84,7 @@ Pluginmanager::Pluginmanager(LunaHost* _host):host(_host){
             }
             OnNewSentenceS[path]=GetProcAddress(LoadLibraryW(path.c_str()),"OnNewSentence");
         }
-        if(collectQtplugs.size()){
-            loadqtdlls(collectQtplugs);
-        }
+        loadqtdlls(collectQtplugs);
         
     } catch (const std::exception& ex) {
         std::cerr << "Error: " << ex.what() << std::endl;
@@ -83,11 +96,17 @@ bool Pluginmanager::dispatch(TextThread& thread, std::wstring& sentence){
     wchar_t* sentenceBuffer = (wchar_t*)HeapAlloc(GetProcessHeap(), HEAP_GENERATE_EXCEPTIONS, (sentence.size() + 1) * sizeof(wchar_t));
 	wcscpy_s(sentenceBuffer, sentence.size() + 1, sentence.c_str());
     concurrency::reader_writer_lock::scoped_lock_read readLock(OnNewSentenceSLock);
-    for (const auto& path : PluginRank){
-        auto funptr=OnNewSentenceS[path];
-        if(funptr==0)continue;
-		if (!*(sentenceBuffer = ((OnNewSentence_t)funptr)(sentenceBuffer, sentenceInfo))) break;
+
+    bool interupt=false;
+    for (const auto& pathl :{std::vector<std::wstring>{L"InternalClipBoard"}, PluginRank}){
+        for(const auto&path:pathl){
+            auto funptr=OnNewSentenceS[path];
+            if(funptr==0)continue;
+            if (!*(sentenceBuffer = ((OnNewSentence_t)funptr)(sentenceBuffer, sentenceInfo))){interupt=true;break;};
+        }
+        if(interupt)break;
     }
+    
 	sentence = sentenceBuffer;
 	HeapFree(GetProcessHeap(), 0, sentenceBuffer);
 	return !sentence.empty();
@@ -124,6 +143,13 @@ void Pluginmanager::remove(const std::wstring& ss){
 }
 std::optional<std::wstring>Pluginmanager::selectpluginfile(){
     return SelectFile(host->winId,L"Plugin Files\0*.dll;*.xdll\0");
+}
+void Pluginmanager::swaprank(int a,int b){
+    std::scoped_lock lock(OnNewSentenceSLock);
+    auto _b=PluginRank[b];
+    PluginRank[b]=PluginRank[a];
+    PluginRank[a]=_b;
+    host->configs->pluginrankswap(a,b);
 }
 bool Pluginmanager::addplugin(const std::wstring& p,bool isQt){
     if(isQt){

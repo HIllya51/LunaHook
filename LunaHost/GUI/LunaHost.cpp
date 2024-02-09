@@ -198,29 +198,20 @@ Settingwindow::Settingwindow(LunaHost* host):mainwindow(host){
     }; 
     g_check_clipboard->setcheck(host->configs->get("ToClipboard",false));
     
-    g_timeout = new textedit(this,std::to_wstring(host->configs->get("flushDelay",TextThread::flushDelay)).c_str(),160, 10, 100, 40) ;
-    g_codepage = new textedit(this,std::to_wstring(host->configs->get("codepage",Host::defaultCodepage)).c_str(),160, 60, 100, 40) ;
-    g_timeout->ontextchange=[=](const std::wstring &text){
-        try{
-            auto fla=std::stoi(text);
-            TextThread::flushDelay=fla;
-            host->configs->set("flushDelay",fla);
-        }
-        catch(std::exception&){}
+    g_timeout = new spinbox(this,std::to_wstring(host->configs->get("flushDelay",TextThread::flushDelay)).c_str(),160, 10, 100, 40) ;
+    g_codepage = new spinbox(this,std::to_wstring(host->configs->get("codepage",Host::defaultCodepage)).c_str(),160, 60, 100, 40) ;
+    g_timeout->onvaluechange=[=](int v){
+        TextThread::flushDelay=v;
+        host->configs->set("flushDelay",v);
     };
-    
-    g_codepage->ontextchange=[=](const std::wstring &text){
-        try {
-            auto cp=std::stoi(text);
-            if(IsValidCodePage(cp)){
-                Host::defaultCodepage= cp;
-                printf("%d",Host::defaultCodepage);
-                host->configs->set("codepage",cp);
+    g_timeout->setminmax(0,9999);
+    g_codepage->onvaluechange=[=](int v){ 
+            if(IsValidCodePage(v)){
+                Host::defaultCodepage= v; 
+                host->configs->set("codepage",v); 
             }
-        }
-        catch (const std::invalid_argument& e) { 
-        }
     }; 
+    g_codepage->setminmax(0,CP_UTF8);
     setcentral(300,300);
     settext(WndSetting);
 }
@@ -233,43 +224,66 @@ Pluginwindow::Pluginwindow(mainwindow*p,Pluginmanager* pl):mainwindow(p){
     new label(this,LblPluginRemove, 10,40,500,30);
     static auto listadd=[&](const std::wstring& s){
         auto idx=listplugins->additem(std::filesystem::path(s).stem().c_str());
-        listplugins->setdata(idx,(LONG_PTR)s.c_str());
+        auto _s=new wchar_t[s.size()+1];wcscpy(_s,s.c_str());
+        listplugins->setdata(idx,(LONG_PTR)_s);
     };
     listplugins = new listbox(this,10, 10,360,340);
 #define IDM_ADD_PLUGIN 1004
 #define IDM_ADD_QT_PLUGIN 1005
 #define IDM_REMOVE_PLUGIN 1006
+#define IDM_RANK_UP 1007
+#define IDM_RANK_DOWN 1008
     listplugins->oncontextmenu=[](){
         HMENU hMenu = CreatePopupMenu();
         AppendMenu(hMenu, MF_STRING, IDM_ADD_PLUGIN, MenuAddPlugin);
         AppendMenu(hMenu, MF_STRING, IDM_ADD_QT_PLUGIN, MenuAddQtPlugin);
         AppendMenu(hMenu, MF_STRING, IDM_REMOVE_PLUGIN, MenuRemovePlugin);
+        AppendMenu(hMenu, MF_STRING, IDM_RANK_UP, MenuPluginRankUp);
+        AppendMenu(hMenu, MF_STRING, IDM_RANK_DOWN, MenuPluginRankDown);
         return hMenu;
     };
     listplugins->oncontextmenucallback=[&](WPARAM wparam){
 
-        listplugins->currentidx() ; 
         switch (LOWORD(wparam)) {
-
+            case IDM_RANK_DOWN:
+            case IDM_RANK_UP:
+            {
+                auto idx=listplugins->currentidx();
+                if(idx==-1)break;
+                auto idx2=idx+(
+                    (LOWORD(wparam)==IDM_RANK_UP)?-1:1
+                );
+                auto a=min(idx,idx2),b=max(idx,idx2);
+                if(a<0||b>=listplugins->count())break;
+                pluginmanager->swaprank(a,b);
+                
+                auto pa=((LPCWSTR)listplugins->getdata(a));
+                auto pb=((LPCWSTR)listplugins->getdata(b));
+                
+                listplugins->deleteitem(a);
+                listplugins->insertitem(b,std::filesystem::path(pa).stem().c_str());
+                listplugins->setdata(b,(LONG_PTR)pa);
+                break;
+            }
             case IDM_ADD_PLUGIN:
             case IDM_ADD_QT_PLUGIN:
-                {
-                    auto f=pluginmanager->selectpluginfile();
-                    if(f.has_value()){
-                        if(pluginmanager->addplugin(f.value(),LOWORD(wparam)==IDM_ADD_QT_PLUGIN)){
-                            listadd(f.value());
-                        }
+            {
+                auto f=pluginmanager->selectpluginfile();
+                if(f.has_value()){
+                    if(pluginmanager->addplugin(f.value(),LOWORD(wparam)==IDM_ADD_QT_PLUGIN)){
+                        listadd(f.value());
                     }
-                    break;
                 }
+                break;
+            }
             case IDM_REMOVE_PLUGIN:
-                {
-                    auto idx=listplugins->currentidx();
-                    if(idx==0)break;
-                    pluginmanager->remove((LPCWSTR)listplugins->getdata(idx));
-                    listplugins->deleteitem(idx-1);
-                    break;
-                }
+            {
+                auto idx=listplugins->currentidx();
+                if(idx==-1)break;
+                pluginmanager->remove((LPCWSTR)listplugins->getdata(idx));
+                listplugins->deleteitem(idx);
+                break;
+            }
         }
     };
     for(int i=0;i<pluginmanager->PluginRank.size();i++){

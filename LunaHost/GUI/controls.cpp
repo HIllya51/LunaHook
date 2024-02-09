@@ -1,5 +1,7 @@
 #include"controls.h"
 #include"window.h"
+#include <CommCtrl.h>
+
 control::control(mainwindow*_parent){
     parent=_parent;
     parent->controls.push_back(this);
@@ -23,6 +25,52 @@ checkbox::checkbox(mainwindow* parent,LPCWSTR text,int x,int y,int w,int h):butt
 }
 void checkbox::setcheck(bool b){
     SendMessage(winId, BM_SETCHECK, (WPARAM)BST_CHECKED*b, 0);
+}
+spinbox::spinbox(mainwindow* parent,LPCWSTR text,int x,int y,int w,int h,DWORD stype):control(parent){
+    winId=CreateWindowEx(0, L"EDIT", text, WS_CHILD | WS_VISIBLE  | WS_BORDER|ES_NUMBER ,
+        x, y, w, h, parent->winId, NULL, NULL, NULL);
+
+    hUpDown = CreateWindowEx(0, UPDOWN_CLASS, NULL,
+        WS_CHILD | WS_VISIBLE | UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_ARROWKEYS | UDS_NOTHOUSANDS ,
+        0, 0, 0, 0,
+        parent->winId, NULL, NULL, NULL);
+    SendMessage(hUpDown, UDM_SETBUDDY, (WPARAM)winId, 0);
+    std::tie(minv,maxv)= getminmax();
+}
+void spinbox::setcurr(int cur){
+    SendMessage(hUpDown, UDM_SETPOS32, 0, cur);
+}
+void spinbox::dispatch(WPARAM wparam){
+    if(HIWORD(wparam)==EN_CHANGE){
+        bool ok=false;int value;
+        try{
+            value=std::stoi(text());
+            ok=true;
+        }
+        catch(std::exception&){}
+        if(ok){
+            if(value>maxv){
+                setcurr(maxv);
+                value=maxv;
+            }
+            else if(value<minv){
+                setcurr(minv);
+                value=minv;
+            }
+            else{
+                onvaluechange(value);
+            }
+        }
+    }
+}
+std::pair<int,int>spinbox::getminmax(){
+    int minValue, maxValue;
+    SendMessage(hUpDown, UDM_GETRANGE32, (WPARAM)&minValue, (LPARAM)&maxValue);
+    return {minValue,maxValue};
+}
+void spinbox::setminmax(int min,int max){
+    SendMessage(hUpDown, UDM_SETRANGE32,min, max);
+    std::tie(minv,maxv)= getminmax();
 }
 textedit::textedit(mainwindow* parent,LPCWSTR text,int x,int y,int w,int h,DWORD stype):control(parent){
     winId=CreateWindowEx(0, L"EDIT", text, WS_CHILD | WS_VISIBLE  | WS_BORDER|stype ,
@@ -55,7 +103,9 @@ listbox::listbox(mainwindow* parent,int x,int y,int w,int h):control(parent){
 }
 void listbox::dispatch(WPARAM wparam){
     if(HIWORD(wparam) == LBN_SELCHANGE){
-        oncurrentchange(currentidx());
+        auto idx=currentidx();
+        if(idx!=-1)
+            oncurrentchange(idx);
     }
 }
 
@@ -85,4 +135,7 @@ LONG_PTR listbox::getdata(int idx){
 }
 int listbox::count(){
     return SendMessage(winId, LB_GETCOUNT, 0, 0); 
+}
+int listbox::insertitem(int i,LPCWSTR t){
+    return SendMessage(winId, LB_INSERTSTRING, i, (LPARAM)t);
 }

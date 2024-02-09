@@ -28,6 +28,11 @@ confighelper::confighelper(){
     catch(std::exception &){
         configs={};
     }
+
+    if(configs.find("plugins")==configs.end()){
+        configs["plugins"]={};
+    }
+    
 }
 confighelper::~confighelper(){
 
@@ -41,18 +46,18 @@ void confighelper::pluginsremove(const std::string&s){
     });
     plgs.erase(it, plgs.end());
 }
+void confighelper::pluginrankswap(int a,int b){
+    auto &plgs=configs["plugins"];
+    auto _b=plgs[b];
+    plgs[b]=plgs[a];
+    plgs[a]=_b;
+}
 void confighelper::pluginsadd(const std::string& p,bool isQt){
-    if(configs.find("plugins")==configs.end()){
-        configs["plugins"]={};
-    }
     configs["plugins"].push_back({
                 {"path",p},
                 {"isQt",isQt}
                 });
 }
 nlohmann::json confighelper::pluginsget(){
-    if(configs.find("plugins")==configs.end()){
-        return {};
-    }
     return configs["plugins"];
 }
