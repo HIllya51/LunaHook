@@ -138,13 +138,12 @@ LunaHost::LunaHost(){
 
 bool LunaHost::on_text_recv(TextThread& thread, std::wstring& output){
     std::lock_guard _(settextmutex);
-    std::wstring lfoutput=output;
     if(!plugins->dispatch(thread,output))return false;
-    strReplace(lfoutput,L"\n",L"\r\n");
-    savetext.at(thread.handle).push_back(lfoutput);
+    strReplace(output,L"\n",L"\r\n");
+    savetext.at(thread.handle).push_back(output);
     if(currentselect==thread.handle){ 
         g_showtexts->scrolltoend();
-        g_showtexts->appendtext(lfoutput);
+        g_showtexts->appendtext(output);
     }
     return true;
 }
