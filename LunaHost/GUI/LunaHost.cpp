@@ -121,7 +121,12 @@ LunaHost::LunaHost(){
     };
     g_showtexts = new textedit(this,L"",10, 330, 200, 200,ES_READONLY|ES_MULTILINE |ES_AUTOVSCROLL| WS_VSCROLL);
     
-
+    
+    TextThread::filterRepetition=configs->get("filterrepeat",false);
+    check_toclipboard=configs->get("ToClipboard",false);
+    TextThread::flushDelay=configs->get("flushDelay",TextThread::flushDelay);
+    Host::defaultCodepage=configs->get("codepage",Host::defaultCodepage);
+             
     Host::Start(
         [&](DWORD pid) {attachedprocess.push_back(pid);}, 
         [&](DWORD pid) { 
@@ -183,19 +188,15 @@ Settingwindow::Settingwindow(LunaHost* host):mainwindow(host){
         TextThread::filterRepetition=ck;
         host->configs->set("filterrepeat",ck);
     };
-    auto frp=host->configs->get("filterrepeat",false);
-    TextThread::filterRepetition=frp;
-    ckbfilterrepeat->setcheck(frp);
+    ckbfilterrepeat->setcheck(host->configs->get("filterrepeat",false));
 
     g_check_clipboard =new checkbox(this,BtnToClipboard,10, 110, 200, 40) ;
     g_check_clipboard->onclick=[=](){
         auto ck=g_check_clipboard->ischecked();
         ((LunaHost*)parent)->check_toclipboard=ck;
         host->configs->set("ToClipboard",ck);
-    };
-    auto toc=host->configs->get("ToClipboard",false);
-    ((LunaHost*)parent)->check_toclipboard=toc;
-    g_check_clipboard->setcheck(toc);
+    }; 
+    g_check_clipboard->setcheck(host->configs->get("ToClipboard",false));
     
     g_timeout = new textedit(this,std::to_wstring(host->configs->get("flushDelay",TextThread::flushDelay)).c_str(),160, 10, 100, 40) ;
     g_codepage = new textedit(this,std::to_wstring(host->configs->get("codepage",Host::defaultCodepage)).c_str(),160, 60, 100, 40) ;
@@ -207,17 +208,19 @@ Settingwindow::Settingwindow(LunaHost* host):mainwindow(host){
         }
         catch(std::exception&){}
     };
+    
     g_codepage->ontextchange=[=](const std::wstring &text){
         try {
             auto cp=std::stoi(text);
             if(IsValidCodePage(cp)){
-                Host::defaultCodepage= cp;  printf("2");
+                Host::defaultCodepage= cp;
+                printf("%d",Host::defaultCodepage);
                 host->configs->set("codepage",cp);
             }
         }
         catch (const std::invalid_argument& e) { 
         }
-    };
+    }; 
     setcentral(300,300);
     settext(WndSetting);
 }
