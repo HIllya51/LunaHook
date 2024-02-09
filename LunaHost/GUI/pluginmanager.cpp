@@ -33,25 +33,21 @@ QtLoadLibrary_t loadqtloader(const std::filesystem::path&pluginpath){
     auto QtLoadLibrary = (QtLoadLibrary_t)GetProcAddress(helper, "QtLoadLibrary"); 
     return QtLoadLibrary;
 }
-struct pathhelper{
-    wchar_t currdll[MAX_PATH],currdir[MAX_PATH];
-    pathhelper(LPCWSTR p){
-        GetDllDirectoryW(MAX_PATH,currdll);GetCurrentDirectoryW(MAX_PATH,currdll);
-        SetDllDirectoryW(p);SetCurrentDirectoryW(p);
-    }
-    ~pathhelper(){
-        SetDllDirectoryW(currdll);SetCurrentDirectoryW(currdll);
-    }
-};
 void Pluginmanager::loadqtdlls(std::vector<std::wstring>&collectQtplugs){
     if(collectQtplugs.size()==0)return;
     auto pluginpath=std::filesystem::current_path()/(x64?"plugin64":"plugin32");
-    auto _h=new pathhelper(pluginpath.c_str());//若加载Qt插件，不需要恢复路径，不然会有很多杂乱的文件。
+    wchar_t env[65535];
+    GetEnvironmentVariableW(L"PATH",env,65535);
+    auto envs=std::wstring(env);
+    envs+=L";";envs+=pluginpath;
+    for(auto&p:collectQtplugs){
+        envs+=L";";envs+=std::filesystem::path(p).parent_path();
+    }
+    SetEnvironmentVariableW(L"PATH",envs.c_str());
     
     auto QtLoadLibrary = loadqtloader(pluginpath); 
     if(!QtLoadLibrary){
         MessageBoxW(host->winId,CantLoadQtLoader,L"Error",0);
-        delete _h;
         return ;
     }
     std::vector<wchar_t*>saves;

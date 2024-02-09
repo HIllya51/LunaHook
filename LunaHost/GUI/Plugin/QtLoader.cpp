@@ -11,8 +11,10 @@ extern "C" __declspec(dllexport) HMODULE* QtLoadLibrary(LPCWSTR* dlls,int num){
     auto hdlls=new HMODULE[num];
     auto mutex=CreateSemaphoreW(0,0,1,0);
     std::thread([=](){
+        for(int i=0;i<num;i++)
+            QApplication::addLibraryPath(QString::fromStdWString(std::filesystem::path(dlls[i]).parent_path()));
+        
         int _=0;
-        QApplication::addLibraryPath(QString::fromStdWString(std::filesystem::path(dlls[0]).parent_path()));
         QApplication app(_, nullptr);
         app.setFont(QFont("MS Shell Dlg 2", 10));
         for(int i=0;i<num;i++)
