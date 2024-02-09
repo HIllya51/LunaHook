@@ -1,4 +1,4 @@
-add_executable(LunaHost confighelper.cpp controls.cpp main.cpp processlistwindow.cpp  LunaHost.cpp window.cpp luna.rc pluginmanager.cpp Plugin/pluginexample.cpp)
+add_executable(LunaHost WIN32 confighelper.cpp controls.cpp main.cpp processlistwindow.cpp  LunaHost.cpp window.cpp luna.rc pluginmanager.cpp Plugin/pluginexample.cpp)
 target_precompile_headers(LunaHost REUSE_FROM pch) 
 set_target_properties(LunaHost PROPERTIES OUTPUT_NAME "LunaHost${bitappendix}")
 
