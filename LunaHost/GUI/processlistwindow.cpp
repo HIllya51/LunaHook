@@ -49,8 +49,7 @@ void processlistwindow::PopulateProcessList(listbox* _listbox,std::unordered_map
     }
 }
 
-processlistwindow::processlistwindow(mainwindow* parent):mainwindow(parent){
-    settext(WndSelectProcess);
+processlistwindow::processlistwindow(mainwindow* p):mainwindow(p){
     g_hEdit = new textedit(this,L"",10, 10, 400, 40,ES_AUTOHSCROLL);
     g_hButton=new button(this,BtnAttach,420, 10, 100, 40);
     g_refreshbutton =new button(this,BtnRefresh,530, 10, 100, 40); 
@@ -80,6 +79,8 @@ processlistwindow::processlistwindow(mainwindow* parent):mainwindow(parent){
         }  
         g_hEdit->settext(_);
     };
+    settext(WndSelectProcess);
+    setcentral(800,400); 
 }
 void processlistwindow::on_show(){
     g_hEdit->settext(L"");

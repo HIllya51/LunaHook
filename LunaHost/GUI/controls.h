@@ -21,6 +21,7 @@ class checkbox:public button{
 public:
     checkbox(mainwindow*,LPCWSTR,int,int,int,int);
     bool ischecked();
+    void setcheck(bool);
 };
 class textedit:public control{
 public:

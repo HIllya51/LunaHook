@@ -1,19 +1,14 @@
 #include"window.h"
 #include"controls.h"
 #include"Lang/Lang.h"
-void SetDefaultFont(HWND hwnd)
-{    
-    EnumChildWindows(hwnd, [](HWND hwndChild, LPARAM lParam)
-    {
-        static auto fnt=CreateFont(28, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
-                            ANSI_CHARSET, OUT_DEFAULT_PRECIS, 
+void basewindow::setfont(int sz,LPCWSTR fn){
+    if(fn==0)fn=DefaultFont;
+    hfont=CreateFont(sz, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
+                            DEFAULT_CHARSET , OUT_DEFAULT_PRECIS, 
                             CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
-                            DEFAULT_PITCH | FF_DONTCARE, DefaultFont);
-        SendMessage(hwndChild, WM_SETFONT, (WPARAM)fnt, TRUE);
-        return TRUE;
-    }, 0);
+                            DEFAULT_PITCH | FF_DONTCARE, fn);
+    SendMessage(winId, WM_SETFONT, (WPARAM)hfont, TRUE);
 }
-
 std::wstring basewindow::text(){
     int textLength = GetWindowTextLength(winId);
     std::vector<wchar_t> buffer(textLength + 1);
@@ -39,7 +34,14 @@ LRESULT mainwindow::wndproc(UINT message, WPARAM wParam, LPARAM lParam){
         case WM_SHOWWINDOW:
         {
             on_show();
-            SetDefaultFont(winId);
+            if(hfont==0)hfont=parent->hfont;
+            if(hfont)
+                EnumChildWindows(winId, [](HWND hwndChild, LPARAM lParam)
+                {
+                    if(0==SendMessage(hwndChild, WM_GETFONT, 0, 0))
+                        SendMessage(hwndChild, WM_SETFONT, lParam, TRUE);
+                    return TRUE;
+                }, (LPARAM)hfont);
             break;
         }
         case WM_SIZE:
@@ -99,7 +101,25 @@ LRESULT mainwindow::wndproc(UINT message, WPARAM wParam, LPARAM lParam){
     
     return 0;
 }
-
+std::pair<int,int>mainwindow::calculateXY(int w,int h){
+    int cx,cy;
+    if(parent==0){
+        int screenWidth = GetSystemMetrics(SM_CXSCREEN);
+        int screenHeight = GetSystemMetrics(SM_CYSCREEN);
+        cx = screenWidth / 2;
+        cy = screenHeight / 2;
+    }
+    else{
+        auto rect=parent->getgeo();
+        cx=(rect.left+rect.right)/2;
+        cy=(rect.top+rect.bottom)/2;
+    }
+    return {cx-w/2,cy-h/2};
+}
+void mainwindow::setcentral(int w,int h){
+    auto [x,y]=calculateXY(w,h);
+    setgeo(x,y,w,h);
+}
 mainwindow::mainwindow(mainwindow* _parent){
     const wchar_t CLASS_NAME[] = L"LunaHostWindow"; 
      

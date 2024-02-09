@@ -7,3 +7,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     _lunahost.show();
     mainwindow::run();
 }
+int main(){
+    SetProcessDPIAware();
+    LunaHost _lunahost;
+    _lunahost.show();
+    mainwindow::run();
+}

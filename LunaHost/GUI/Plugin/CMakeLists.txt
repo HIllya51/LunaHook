@@ -1,4 +1,16 @@
-
+if(0) #仅作为参考范例，实际上已经链接到exe中
 add_library(ToClipboard MODULE pluginexample.cpp) 
 target_precompile_headers(ToClipboard REUSE_FROM pch)
 set_target_properties(ToClipboard PROPERTIES LIBRARY_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/plugin${bitappendix}")
+endif()
+
+
+include(QtUtils.cmake)
+msvc_registry_search()
+find_qt5(Core Widgets)
+#set(CMAKE_AUTOMOC ON)
+add_library(QtLoader MODULE QtLoader.cpp)
+#qt5_wrap_cpp(MOC_SOURCES QtLoader.h)
+#target_sources(QtLoader PRIVATE ${MOC_SOURCES})
+target_link_libraries(QtLoader Qt5::Widgets Qt5::Core)
+set_target_properties(QtLoader PROPERTIES LIBRARY_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/plugin${bitappendix}")

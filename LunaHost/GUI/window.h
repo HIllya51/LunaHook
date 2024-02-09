@@ -3,11 +3,13 @@
 class control;
 class basewindow{
 public:
+    HFONT hfont=0;
     HWND winId;
     void setgeo(int,int,int,int);
     RECT getgeo();
     std::wstring text();
     void settext(const std::wstring&);
+    void setfont(int,LPCWSTR fn=0);
     operator HWND(){return winId;}
 };
 class mainwindow:public basewindow{
@@ -23,5 +25,7 @@ public:
     static void run();
     void show();
     void close();
+    void setcentral(int,int);
+    std::pair<int,int>calculateXY(int w,int h);
 };
 #endif

@@ -19,7 +19,10 @@ bool checkbox::ischecked(){
     int state = SendMessage(winId, BM_GETCHECK, 0, 0);
     return (state == BST_CHECKED);
 }
-checkbox::checkbox(mainwindow* parent,LPCWSTR text,int x,int y,int w,int h):button(parent,text,x,y,w,h,BS_AUTOCHECKBOX){
+checkbox::checkbox(mainwindow* parent,LPCWSTR text,int x,int y,int w,int h):button(parent,text,x,y,w,h,BS_AUTOCHECKBOX|BS_RIGHTBUTTON ){
+}
+void checkbox::setcheck(bool b){
+    SendMessage(winId, BM_SETCHECK, (WPARAM)BST_CHECKED*b, 0);
 }
 textedit::textedit(mainwindow* parent,LPCWSTR text,int x,int y,int w,int h,DWORD stype):control(parent){
     winId=CreateWindowEx(0, L"EDIT", text, WS_CHILD | WS_VISIBLE  | WS_BORDER|stype ,

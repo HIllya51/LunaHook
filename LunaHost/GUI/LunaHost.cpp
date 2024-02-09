@@ -2,6 +2,7 @@
 #include <CommCtrl.h>
 #include <TlHelp32.h>
 #include<stdio.h>
+#include<fstream>
 #include"host.h"
 #include"hookcode.h"
 #include"textthread.h"
@@ -24,30 +25,43 @@ void LunaHost::toclipboard(std::wstring& sentence){
     } 
 } 
 void LunaHost::on_close(){
+    delete configs;
     for(auto pid:attachedprocess){
         Host::DetachProcess(pid);
     }
+    Sleep(100);
 }
 void LunaHost::on_size(int w,int h){
     int height = h-140;
-    g_hListBox_listtext->setgeo(10, 110, w - 20, height/2);
-    g_showtexts->setgeo(10, 120+height/2, w - 20, height/2);
+    w-=20;
+    g_selectprocessbutton->setgeo(10,10,w/3,40);
+    btnshowsettionwindow->setgeo(10+w/3,10,w/3,40);
+    btnplugin->setgeo(10+w*2/3,10,w/3,40);
+    g_hListBox_listtext->setgeo(10, 110, w , height/2);
+    g_showtexts->setgeo(10, 120+height/2, w , height/2);
+    g_hEdit_userhook->setgeo(10,60,w*2/3,40);
+    g_hButton_insert->setgeo(10+w*2/3,60,w/3,40);
 }
 
 LunaHost::LunaHost(){
+    configs=new confighelper;
     settext(WndLunaHostGui);
+    btnshowsettionwindow=new button(this, BtnShowSettingWindow,100,100,100,100);
     g_selectprocessbutton =new button(this,BtnSelectProcess,830, 10, 200, 40) ; 
         
     g_hEdit_userhook = new textedit(this,L"",10, 60, 600, 40,ES_AUTOHSCROLL);
-    btnaddplugin=new button(this,BtnAddPlugin,830,60,200,40);
-    btnaddplugin->onclick=[&](){
-        auto f=plugins->selectpluginfile();
-        if(f.has_value()){
-            plugins->addplugin(f.value());
-        }
+    btnplugin=new button(this,BtnPlugin,830,60,200,40);
+    
+    plugins=new Pluginmanager(this);
+    btnplugin->onclick=[&](){
+        if(pluginwindow==0) pluginwindow=new Pluginwindow(this,plugins);
+        pluginwindow->show();
     };
     g_hButton_insert = new button(this,BtnInsertUserHook,610, 60, 200, 40) ;
-
+    btnshowsettionwindow->onclick=[&](){
+        if(settingwindow==0) settingwindow=new Settingwindow(this);
+        settingwindow->show();
+    };
     g_selectprocessbutton->onclick=[&](){
         if(_processlistwindow==0) _processlistwindow=new processlistwindow(this);
         _processlistwindow->show();
@@ -61,28 +75,6 @@ LunaHost::LunaHost(){
         }
         else{
             g_showtexts->appendtext(NotifyInvalidHookCode);
-        }
-    };
-    g_check_clipboard =new checkbox(this,BtnToClipboard,550, 10, 200, 40) ;
-    g_check_clipboard->onclick=[&](){
-        check_toclipboard=g_check_clipboard->ischecked();
-    };
-    new label(this,LblFlushDelay,10, 10, 150, 40);
-    new label(this,LblCodePage,270, 10, 150, 40);
-
-    g_timeout = new textedit(this,std::to_wstring(TextThread::flushDelay).c_str(),160, 10, 100, 40) ;
-    g_codepage = new textedit(this,L"932",420, 10, 100, 40) ;
-    
-    g_timeout->ontextchange=[&](const std::wstring &text){
-        TextThread::flushDelay=std::stoi(text);
-    };
-    g_codepage->ontextchange=[&](const std::wstring &text){
-        try {
-            auto cp=std::stoi(text);
-            if(IsValidCodePage(cp))
-                Host::defaultCodepage= cp; 
-        }
-        catch (const std::invalid_argument& e) { 
         }
     };
 
@@ -129,7 +121,6 @@ LunaHost::LunaHost(){
     };
     g_showtexts = new textedit(this,L"",10, 330, 200, 200,ES_READONLY|ES_MULTILINE |ES_AUTOVSCROLL| WS_VSCROLL);
     
-    plugins=new pluginmanager(this);
 
     Host::Start(
         [&](DWORD pid) {attachedprocess.push_back(pid);}, 
@@ -140,6 +131,9 @@ LunaHost::LunaHost(){
         std::bind(&LunaHost::on_thread_delete,this,std::placeholders::_1),
         std::bind(&LunaHost::on_text_recv,this,std::placeholders::_1,std::placeholders::_2)
     ); 
+    
+    setfont(25);
+    setcentral(1000,600);
 }
 
 bool LunaHost::on_text_recv(TextThread& thread, std::wstring& output){
@@ -179,4 +173,109 @@ void LunaHost::on_thread_delete(TextThread& thread){
             break;
         }
     } 
+}
+
+Settingwindow::Settingwindow(LunaHost* host):mainwindow(host){
+    new label(this,LblFlushDelay,10, 10, 150, 40);
+    new label(this,LblCodePage,10, 60, 150, 40);
+    ckbfilterrepeat=new checkbox(this,LblFilterRepeat,10, 160, 200, 40);
+    ckbfilterrepeat->onclick=[=](){
+        auto ck=ckbfilterrepeat->ischecked();
+        TextThread::filterRepetition=ck;
+        host->configs->set("filterrepeat",ck);
+    };
+    auto frp=host->configs->get("filterrepeat",false);
+    TextThread::filterRepetition=frp;
+    ckbfilterrepeat->setcheck(frp);
+
+    g_check_clipboard =new checkbox(this,BtnToClipboard,10, 110, 200, 40) ;
+    g_check_clipboard->onclick=[=](){
+        auto ck=g_check_clipboard->ischecked();
+        ((LunaHost*)parent)->check_toclipboard=ck;
+        host->configs->set("ToClipboard",ck);
+    };
+    auto toc=host->configs->get("ToClipboard",false);
+    ((LunaHost*)parent)->check_toclipboard=toc;
+    g_check_clipboard->setcheck(toc);
+    
+    g_timeout = new textedit(this,std::to_wstring(host->configs->get("flushDelay",TextThread::flushDelay)).c_str(),160, 10, 100, 40) ;
+    g_codepage = new textedit(this,std::to_wstring(host->configs->get("codepage",Host::defaultCodepage)).c_str(),160, 60, 100, 40) ;
+    g_timeout->ontextchange=[=](const std::wstring &text){
+        try{
+            auto fla=std::stoi(text);
+            TextThread::flushDelay=fla;
+            host->configs->set("flushDelay",fla);
+        }
+        catch(std::exception&){}
+    };
+    g_codepage->ontextchange=[=](const std::wstring &text){
+        try {
+            auto cp=std::stoi(text);
+            if(IsValidCodePage(cp)){
+                Host::defaultCodepage= cp;  printf("2");
+                host->configs->set("codepage",cp);
+            }
+        }
+        catch (const std::invalid_argument& e) { 
+        }
+    };
+    setcentral(300,300);
+    settext(WndSetting);
+}
+void Pluginwindow::on_size(int w,int h){
+    listplugins->setgeo(10,80,w-20,h-100);
+}
+Pluginwindow::Pluginwindow(mainwindow*p,Pluginmanager* pl):mainwindow(p){
+    pluginmanager=pl;
+    new label(this,LblPluginNotify, 10,10,500,30);
+    new label(this,LblPluginRemove, 10,40,500,30);
+    static auto listadd=[&](const std::wstring& s){
+        auto idx=listplugins->additem(std::filesystem::path(s).stem().c_str());
+        listplugins->setdata(idx,(LONG_PTR)s.c_str());
+    };
+    listplugins = new listbox(this,10, 10,360,340);
+#define IDM_ADD_PLUGIN 1004
+#define IDM_ADD_QT_PLUGIN 1005
+#define IDM_REMOVE_PLUGIN 1006
+    listplugins->oncontextmenu=[](){
+        HMENU hMenu = CreatePopupMenu();
+        AppendMenu(hMenu, MF_STRING, IDM_ADD_PLUGIN, MenuAddPlugin);
+        AppendMenu(hMenu, MF_STRING, IDM_ADD_QT_PLUGIN, MenuAddQtPlugin);
+        AppendMenu(hMenu, MF_STRING, IDM_REMOVE_PLUGIN, MenuRemovePlugin);
+        return hMenu;
+    };
+    listplugins->oncontextmenucallback=[&](WPARAM wparam){
+
+        listplugins->currentidx() ; 
+        switch (LOWORD(wparam)) {
+
+            case IDM_ADD_PLUGIN:
+            case IDM_ADD_QT_PLUGIN:
+                {
+                    auto f=pluginmanager->selectpluginfile();
+                    if(f.has_value()){
+                        if(pluginmanager->addplugin(f.value(),LOWORD(wparam)==IDM_ADD_QT_PLUGIN)){
+                            listplugins->deleteitem(listplugins->count()-1);
+                            listadd(f.value());
+                            listadd(L"InternalClipBoard");
+                        }
+                    }
+                    break;
+                }
+            case IDM_REMOVE_PLUGIN:
+                {
+                    
+                    auto idx=listplugins->currentidx();
+                    if(idx==listplugins->count()-1)break;printf("??");
+                    pluginmanager->remove((LPCWSTR)listplugins->getdata(idx));
+                    listplugins->deleteitem(idx);
+                    break;
+                }
+        }
+    };
+    for(int i=0;i<pluginmanager->PluginRank.size();i++){
+        listadd(pluginmanager->PluginRank[i]);
+    }
+    settext(WndPlugins);
+    setcentral(500,400);
 }

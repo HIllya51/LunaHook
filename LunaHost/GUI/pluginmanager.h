@@ -3,20 +3,20 @@
 #include"Plugin/plugindef.h"
 #include"textthread.h"
 class LunaHost;
-class pluginmanager{
-    std::vector<std::pair<std::wstring,LPVOID>>OnNewSentenceS;
-    std::optional<std::pair<std::wstring,LPVOID>> checkisvalidplugin(const std::wstring&);
-    std::vector<std::wstring>readpluginfile();
-    void writepluginfile(const std::wstring&);
-    std::wstring pluginfilename;
+class Pluginmanager{
+    std::unordered_map<std::wstring,LPVOID>OnNewSentenceS;
+    std::optional<LPVOID> checkisvalidplugin(const std::wstring&);
     concurrency::reader_writer_lock OnNewSentenceSLock;
     bool checkisdump(LPVOID);
     LunaHost* host;
     std::array<InfoForExtension, 20> GetSentenceInfo(TextThread& thread);
+    void loadqtdlls(std::vector<std::wstring>&collectQtplugs);
 public:
-    pluginmanager(LunaHost*);
+    std::vector<std::wstring>PluginRank;
+    Pluginmanager(LunaHost*);
     bool dispatch(TextThread&, std::wstring& sentence);
-    bool addplugin(const std::wstring&);
+    bool addplugin(const std::wstring&,bool isQt=false);
+    void remove(const std::wstring&);
     std::optional<std::wstring>selectpluginfile();
 };
 

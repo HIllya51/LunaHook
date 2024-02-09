@@ -6,26 +6,7 @@
 #include"LunaHost.h"
 #include"Lang/Lang.h"
 #include"host.h"
-std::string readfile(const wchar_t* fname) {
-    FILE* f;
-    _wfopen_s(&f, fname, L"rb");
-    if (f == 0)return {};
-    fseek(f, 0, SEEK_END);
-    auto len = ftell(f);
-    fseek(f, 0, SEEK_SET);
-    std::string buff;
-    buff.resize(len);
-    fread(buff.data(), 1, len, f);
-    fclose(f);
-    return buff;
-} 
-void appendfile(const wchar_t* fname,const std::wstring& s){
-    auto u8s=WideStringToString(s);
-    FILE* f;
-    _wfopen_s(&f, fname, L"a");
-    fprintf(f,"\n%s",u8s.c_str());
-    fclose(f);
-}
+
 std::optional<std::wstring>SelectFile(HWND hwnd,LPCWSTR lpstrFilter){
     OPENFILENAME ofn;
     wchar_t szFileName[MAX_PATH] = { 0 };
@@ -44,52 +25,75 @@ std::optional<std::wstring>SelectFile(HWND hwnd,LPCWSTR lpstrFilter){
     }
     else return {};
 }
-
-std::vector<std::wstring>pluginmanager::readpluginfile(){
-    if(!std::filesystem::exists(pluginfilename))
-        return{};
-    auto u16pl=StringToWideString(readfile(pluginfilename.c_str()).data());
-    auto pls=strSplit(u16pl,L"\n");
-    return pls;
+typedef  HMODULE*(*QtLoadLibrary_t)(LPWSTR*,int);
+QtLoadLibrary_t loadqtloader(){
+    auto QtLoaderPath=std::filesystem::current_path()/(x64?"plugin64":"plugin32")/"QtLoader.dll";
+    auto helper=LoadLibrary(QtLoaderPath.c_str());
+    if(helper==0)return 0;
+    auto QtLoadLibrary = (QtLoadLibrary_t)GetProcAddress(helper, "QtLoadLibrary"); 
+    return QtLoadLibrary;
 }
-void pluginmanager::writepluginfile(const std::wstring& plugf){
-    appendfile(pluginfilename.c_str(),plugf);
+void Pluginmanager::loadqtdlls(std::vector<std::wstring>&collectQtplugs){
+    auto QtLoadLibrary = loadqtloader(); 
+    if(!QtLoadLibrary){
+        MessageBoxW(host->winId,CantLoadQtLoader,L"Error",0);
+        return ;
+    }
+    std::vector<wchar_t*>saves;
+    for(auto&p:collectQtplugs){
+        auto str=new wchar_t[p.size()+1];
+        wcscpy(str,p.c_str());
+        saves.emplace_back(str);
+    }
+    auto modules=QtLoadLibrary(saves.data(),collectQtplugs.size());
+    for(auto str:saves)delete str;
+    for(int i=0;i<collectQtplugs.size();i++){
+        OnNewSentenceS[collectQtplugs[i]]=GetProcAddress(modules[i],"OnNewSentence"); 
+    }
 }
-pluginmanager::pluginmanager(LunaHost* _host):host(_host){
+Pluginmanager::Pluginmanager(LunaHost* _host):host(_host){
     try {
         std::scoped_lock lock(OnNewSentenceSLock);
-        pluginfilename=std::filesystem::current_path()/(x64?"plugin64.txt":"plugin32.txt");
-        OnNewSentenceS.push_back({L"Internal ClipBoard",GetProcAddress(GetModuleHandle(0),"OnNewSentence")});//内部链接的剪贴板插件
         
-        for (auto &pl:readpluginfile()) {
-            
-            auto ret=checkisvalidplugin(pl);
-            if(ret.has_value()){
-                auto v=ret.value();
-                if(!checkisdump(v.second)){
-                    OnNewSentenceS.push_back(v);
-                }
+        auto plgs=host->configs->pluginsget();
+        std::vector<std::wstring>collectQtplugs;
+        for (auto i=0;i<plgs.size();i++) {
+            bool isqt=plgs[i]["isQt"];
+            auto path=StringToWideString(plgs[i]["path"]);
+            PluginRank.push_back(path);
+            OnNewSentenceS[path]=0;
+            if(isqt){
+                collectQtplugs.push_back((path));
+                continue;
             }
+            OnNewSentenceS[path]=GetProcAddress(LoadLibraryW(path.c_str()),"OnNewSentence");
         }
+        if(collectQtplugs.size()){
+            loadqtdlls(collectQtplugs);
+        }
+        PluginRank.push_back(L"InternalClipBoard");
+        OnNewSentenceS[L"InternalClipBoard"]=GetProcAddress(GetModuleHandle(0),"OnNewSentence");//内部链接的剪贴板插件
     } catch (const std::exception& ex) {
         std::cerr << "Error: " << ex.what() << std::endl;
     }
 }
 
-bool pluginmanager::dispatch(TextThread& thread, std::wstring& sentence){
+bool Pluginmanager::dispatch(TextThread& thread, std::wstring& sentence){
     auto sentenceInfo=GetSentenceInfo(thread).data();
     wchar_t* sentenceBuffer = (wchar_t*)HeapAlloc(GetProcessHeap(), HEAP_GENERATE_EXCEPTIONS, (sentence.size() + 1) * sizeof(wchar_t));
 	wcscpy_s(sentenceBuffer, sentence.size() + 1, sentence.c_str());
     concurrency::reader_writer_lock::scoped_lock_read readLock(OnNewSentenceSLock);
-    for (const auto& extension : OnNewSentenceS){
-		if (!*(sentenceBuffer = ((OnNewSentence_t)extension.second)(sentenceBuffer, sentenceInfo))) break;
+    for (const auto& path : PluginRank){
+        auto funptr=OnNewSentenceS[path];
+        if(funptr==0)continue;
+		if (!*(sentenceBuffer = ((OnNewSentence_t)funptr)(sentenceBuffer, sentenceInfo))) break;
     }
 	sentence = sentenceBuffer;
 	HeapFree(GetProcessHeap(), 0, sentenceBuffer);
 	return !sentence.empty();
 }
 
-std::optional<std::pair<std::wstring,LPVOID>> pluginmanager::checkisvalidplugin(const std::wstring& pl){
+std::optional<LPVOID> Pluginmanager::checkisvalidplugin(const std::wstring& pl){
     auto path=std::filesystem::path(pl);
     if (!std::filesystem::exists(path))return{};
     if (!std::filesystem::is_regular_file(path))return{};
@@ -97,31 +101,43 @@ std::optional<std::pair<std::wstring,LPVOID>> pluginmanager::checkisvalidplugin(
     if((appendix!=std::wstring(L".dll"))&&(appendix!=std::wstring(L".xdll")))return {};
     auto dll=LoadLibraryW(pl.c_str());
     if(!dll)return {};
-    auto OnNewSentence=GetProcAddress(dll,"OnNewSentence");
+    auto OnNewSentence=GetProcAddress(LoadLibraryW(pl.c_str()),"OnNewSentence");
     if(!OnNewSentence){
         FreeLibrary(dll);
         return {};
     }
-    return std::make_pair(path.stem(), OnNewSentence);
+    return OnNewSentence ;
 }
-bool pluginmanager::checkisdump(LPVOID ptr){
+bool Pluginmanager::checkisdump(LPVOID ptr){
     for(auto& p:OnNewSentenceS){
         if(p.second==ptr)return true;
     }
     return false;
 }
-
-std::optional<std::wstring>pluginmanager::selectpluginfile(){
+void Pluginmanager::remove(const std::wstring& ss){
+    std::scoped_lock lock(OnNewSentenceSLock);
+    auto it = std::find(PluginRank.begin(), PluginRank.end(), ss);
+    if (it != PluginRank.end()) { 
+        PluginRank.erase(it);
+    }
+    host->configs->pluginsremove(WideStringToString(ss));
+}
+std::optional<std::wstring>Pluginmanager::selectpluginfile(){
     return SelectFile(host->winId,L"Plugin Files\0*.dll;*.xdll\0");
 }
-bool pluginmanager::addplugin(const std::wstring& p){
-    auto plugin=checkisvalidplugin(p);
-    if(plugin.has_value()){
-        auto v=plugin.value();
+bool Pluginmanager::addplugin(const std::wstring& p,bool isQt){
+    if(isQt){
+        host->configs->pluginsadd(WideStringToString(p),isQt);
+        return true;
+    }
+    auto plugin=GetProcAddress(LoadLibraryW(p.c_str()),"OnNewSentence");
+    if(plugin){ 
         std::scoped_lock lock(OnNewSentenceSLock);
-        if(!checkisdump(v.second)){
-            OnNewSentenceS.push_back(v);
-            writepluginfile(p);
+        if(!checkisdump(plugin)){
+            PluginRank.push_back(p);
+            //std::swap(PluginRank.end()-2,PluginRank.end()-1);
+            OnNewSentenceS[p]=plugin;
+            host->configs->pluginsadd(WideStringToString(p),isQt);
         }
         return true;
     }
@@ -132,7 +148,7 @@ bool pluginmanager::addplugin(const std::wstring& p){
 }
 
 
-std::array<InfoForExtension, 20> pluginmanager::GetSentenceInfo(TextThread& thread)
+std::array<InfoForExtension, 20> Pluginmanager::GetSentenceInfo(TextThread& thread)
 {
     void (*AddText)(int64_t, const wchar_t*) = [](int64_t number, const wchar_t* text)
     {
