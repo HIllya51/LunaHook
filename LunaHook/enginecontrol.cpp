@@ -92,7 +92,6 @@ bool checkengine(){
             if(matched==false)continue; 
             ConsoleOutput(MatchedEngine,m->getenginename());
             if(m->dontstop){
-                ConsoleOutput(Attach_Continue,m->getenginename());
                 continue;
             }
 
@@ -132,7 +131,7 @@ void Hijack(){
     __try { 
 			result = checkengine(); 
     }
-    __except (EXCEPTION_EXECUTE_HANDLER) { ConsoleOutput(HijackERROR); }
+    __except (EXCEPTION_EXECUTE_HANDLER) { ConsoleOutput(HIJACK_ERROR); }
      
 
     if(result==false){

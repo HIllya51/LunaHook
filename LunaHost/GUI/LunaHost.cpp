@@ -29,7 +29,8 @@ void LunaHost::on_close(){
     for(auto pid:attachedprocess){
         Host::DetachProcess(pid);
     }
-    Sleep(100);
+    if(attachedprocess.size())
+        Sleep(100);
 }
 void LunaHost::on_size(int w,int h){
     int height = h-140;
