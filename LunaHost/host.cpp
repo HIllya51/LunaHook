@@ -123,13 +123,13 @@ namespace
 					if (auto converted = StringToWideString((char*)info.text, info.hp.codepage))
 						if (converted->size() > STRING) 
 						{
-							//wcscpy_s(info.hp.hookcode,HOOKCODE_LEN, HookCode::Generate(info.hp, GetCurrentProcessId()).c_str());
+							wcscpy_s(info.hp.hookcode,HOOKCODE_LEN, HookCode::Generate(info.hp, GetCurrentProcessId()).c_str());
 							OnHookFound(info.hp, std::move(converted.value()));
 						}
 					if (auto converted = StringToWideString((char*)info.text, info.hp.codepage = CP_UTF8))
 						if (converted->size() > STRING)
 						{
-							//wcscpy_s(info.hp.hookcode,HOOKCODE_LEN, HookCode::Generate(info.hp, GetCurrentProcessId()).c_str());
+							wcscpy_s(info.hp.hookcode,HOOKCODE_LEN, HookCode::Generate(info.hp, GetCurrentProcessId()).c_str());
 							OnHookFound(info.hp, std::move(converted.value()));
 						}
 				}
