@@ -141,7 +141,7 @@ int listbox::insertitem(int i,const std::wstring& t){
 }
 
 listview::listview(mainwindow* parent,int x,int y,int w,int h):control(parent){
-    winId=CreateWindowEx(0, WC_LISTVIEW, NULL, WS_VISIBLE |WS_VSCROLL| WS_CHILD | LVS_REPORT |LVS_SINGLESEL, x, y, w, h, parent->winId, NULL,NULL, NULL);
+    winId=CreateWindowEx(0, WC_LISTVIEW, NULL, WS_VISIBLE |WS_VSCROLL| WS_CHILD | LVS_REPORT |LVS_SINGLESEL|LVS_NOCOLUMNHEADER , x, y, w, h, parent->winId, NULL,NULL, NULL);
     ListView_SetExtendedListViewStyle(winId, LVS_EX_FULLROWSELECT); // Set extended styles
     setfont(22);
     hImageList = ImageList_Create(22,22, //GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON),
