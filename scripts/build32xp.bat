@@ -64,7 +64,6 @@ goto :main
         set target_arch=%host_arch%
     )
     call :activate_msvc "%target_arch%" || goto :eof
-    msbuild C:\Users\wcy\Documents\GitHub\LunaHook\build\x86_xp\LunaHook.sln -p:Configuration=Release
-    msbuild C:\Users\wcy\Documents\GitHub\LunaHook\build\x86_zh_xp\LunaHook.sln -p:Configuration=Release
-    rem C:\Users\wcy\Documents\GitHub\LunaHook\build\x86\LunaHook.sln
+    msbuild ..\build\x86_xp\LunaHook.sln -p:Configuration=Release
+    msbuild ..\build\x86_zh_xp\LunaHook.sln -p:Configuration=Release
     goto :eof
