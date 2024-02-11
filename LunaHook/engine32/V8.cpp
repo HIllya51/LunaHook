@@ -28,6 +28,8 @@ void SpecialHookV8String(hook_stack*, HookParam *hp, uintptr_t* data, uintptr_t*
 	DWORD strPtr = *(DWORD*)ecx;
 	*data = strPtr + 0xb;
 	*len = *(short*)(strPtr + 7);
+	if(wcslen((wchar_t*)*data)*2<*len)*len=0;
+	
 	//if (*len < 12) *split = 1; // To ensure this is caught by cyclic repetition detection, split if there's 6+ wide chars
 	//*split = *(DWORD*)((BYTE*)hp->split + dwDatabase);
 }
