@@ -8,8 +8,8 @@ control::control(mainwindow*_parent){
 }
 void control::dispatch(WPARAM){}
 void control::dispatch_2(WPARAM wParam, LPARAM lParam){};
-button::button(mainwindow* parent,LPCWSTR text,int x,int y,int w,int h,DWORD style):control(parent){
-    winId=CreateWindowEx(0, L"BUTTON", text, WS_CHILD | WS_VISIBLE |style ,
+button::button(mainwindow* parent,const std::wstring& text,int x,int y,int w,int h,DWORD style):control(parent){
+    winId=CreateWindowEx(0, L"BUTTON", text.c_str(), WS_CHILD | WS_VISIBLE |style ,
         x, y, w, h, parent->winId , NULL, NULL, NULL);
 }
 void button::dispatch(WPARAM wparam){
@@ -21,13 +21,13 @@ bool checkbox::ischecked(){
     int state = SendMessage(winId, BM_GETCHECK, 0, 0);
     return (state == BST_CHECKED);
 }
-checkbox::checkbox(mainwindow* parent,LPCWSTR text,int x,int y,int w,int h):button(parent,text,x,y,w,h,BS_AUTOCHECKBOX|BS_RIGHTBUTTON ){
+checkbox::checkbox(mainwindow* parent,const std::wstring& text,int x,int y,int w,int h):button(parent,text,x,y,w,h,BS_AUTOCHECKBOX|BS_RIGHTBUTTON ){
 }
 void checkbox::setcheck(bool b){
     SendMessage(winId, BM_SETCHECK, (WPARAM)BST_CHECKED*b, 0);
 }
-spinbox::spinbox(mainwindow* parent,LPCWSTR text,int x,int y,int w,int h,DWORD stype):control(parent){
-    winId=CreateWindowEx(0, L"EDIT", text, WS_CHILD | WS_VISIBLE  | WS_BORDER|ES_NUMBER ,
+spinbox::spinbox(mainwindow* parent,const std::wstring& text,int x,int y,int w,int h,DWORD stype):control(parent){
+    winId=CreateWindowEx(0, L"EDIT", text.c_str(), WS_CHILD | WS_VISIBLE  | WS_BORDER|ES_NUMBER ,
         x, y, w, h, parent->winId, NULL, NULL, NULL);
 
     hUpDown = CreateWindowEx(0, UPDOWN_CLASS, NULL,
@@ -72,8 +72,8 @@ void spinbox::setminmax(int min,int max){
     SendMessage(hUpDown, UDM_SETRANGE32,min, max);
     std::tie(minv,maxv)= getminmax();
 }
-textedit::textedit(mainwindow* parent,LPCWSTR text,int x,int y,int w,int h,DWORD stype):control(parent){
-    winId=CreateWindowEx(0, L"EDIT", text, WS_CHILD | WS_VISIBLE  | WS_BORDER|stype ,
+textedit::textedit(mainwindow* parent,const std::wstring& text,int x,int y,int w,int h,DWORD stype):control(parent){
+    winId=CreateWindowEx(0, L"EDIT", text.c_str(), WS_CHILD | WS_VISIBLE  | WS_BORDER|stype ,
         x, y, w, h, parent->winId, NULL, NULL, NULL);
 }
 void textedit::scrolltoend(){
@@ -91,8 +91,8 @@ void textedit::dispatch(WPARAM wparam){
         ontextchange(text());
     }
 }
-label::label(mainwindow* parent,LPCWSTR text,int x,int y,int w,int h):control(parent){
-    winId=CreateWindowEx(0, L"STATIC", text, WS_CHILD | WS_VISIBLE,
+label::label(mainwindow* parent,const std::wstring& text,int x,int y,int w,int h):control(parent){
+    winId=CreateWindowEx(0, L"STATIC", text.c_str(), WS_CHILD | WS_VISIBLE,
         x, y, w, h, parent->winId , NULL, NULL, NULL);
 }
 
@@ -121,8 +121,8 @@ std::wstring listbox::text(int idx){
 void listbox::clear(){
     SendMessage(winId, LB_RESETCONTENT, 0, 0);
 }
-int listbox::additem(LPCWSTR text){
-    return SendMessage(winId, LB_ADDSTRING, 0, (LPARAM)text);
+int listbox::additem(const std::wstring& text){
+    return SendMessage(winId, LB_ADDSTRING, 0, (LPARAM)text.c_str());
 }
 void listbox::deleteitem(int i){
     SendMessage(winId, LB_DELETESTRING, (WPARAM)i, (LPARAM)i);
@@ -136,8 +136,8 @@ LONG_PTR listbox::getdata(int idx){
 int listbox::count(){
     return SendMessage(winId, LB_GETCOUNT, 0, 0); 
 }
-int listbox::insertitem(int i,LPCWSTR t){
-    return SendMessage(winId, LB_INSERTSTRING, i, (LPARAM)t);
+int listbox::insertitem(int i,const std::wstring& t){
+    return SendMessage(winId, LB_INSERTSTRING, i, (LPARAM)t.c_str());
 }
 
 listview::listview(mainwindow* parent,int x,int y,int w,int h):control(parent){

@@ -201,8 +201,8 @@ Settingwindow::Settingwindow(LunaHost* host):mainwindow(host){
     }; 
     g_check_clipboard->setcheck(host->configs->get("ToClipboard",false));
     
-    g_timeout = new spinbox(this,std::to_wstring(host->configs->get("flushDelay",TextThread::flushDelay)).c_str(),150, 10, 100, 30) ;
-    g_codepage = new spinbox(this,std::to_wstring(host->configs->get("codepage",Host::defaultCodepage)).c_str(),150, 50, 100, 30) ;
+    g_timeout = new spinbox(this,std::to_wstring(host->configs->get("flushDelay",TextThread::flushDelay)),150, 10, 100, 30) ;
+    g_codepage = new spinbox(this,std::to_wstring(host->configs->get("codepage",Host::defaultCodepage)),150, 50, 100, 30) ;
     g_timeout->onvaluechange=[=](int v){
         TextThread::flushDelay=v;
         host->configs->set("flushDelay",v);
@@ -226,7 +226,7 @@ Pluginwindow::Pluginwindow(mainwindow*p,Pluginmanager* pl):mainwindow(p){
     new label(this,LblPluginNotify, 10,10,500,30);
     new label(this,LblPluginRemove, 10,40,500,30);
     static auto listadd=[&](const std::wstring& s){
-        auto idx=listplugins->additem(std::filesystem::path(s).stem().c_str());
+        auto idx=listplugins->additem(std::filesystem::path(s).stem());
         auto _s=new wchar_t[s.size()+1];wcscpy(_s,s.c_str());
         listplugins->setdata(idx,(LONG_PTR)_s);
     };
@@ -264,7 +264,7 @@ Pluginwindow::Pluginwindow(mainwindow*p,Pluginmanager* pl):mainwindow(p){
                 auto pb=((LPCWSTR)listplugins->getdata(b));
                 
                 listplugins->deleteitem(a);
-                listplugins->insertitem(b,std::filesystem::path(pa).stem().c_str());
+                listplugins->insertitem(b,std::filesystem::path(pa).stem());
                 listplugins->setdata(b,(LONG_PTR)pa);
                 break;
             }

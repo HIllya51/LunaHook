@@ -14,19 +14,19 @@ class control:public basewindow{
 
 class button:public control{
 public:
-    button(mainwindow*,LPCWSTR,int,int,int,int,DWORD=BS_PUSHBUTTON);
+    button(mainwindow*,const std::wstring&,int,int,int,int,DWORD=BS_PUSHBUTTON);
     void dispatch(WPARAM);
     std::function<void()> onclick=[](){};
 };
 class checkbox:public button{
 public:
-    checkbox(mainwindow*,LPCWSTR,int,int,int,int);
+    checkbox(mainwindow*,const std::wstring&,int,int,int,int);
     bool ischecked();
     void setcheck(bool);
 };
 class textedit:public control{
 public:
-    textedit(mainwindow*,LPCWSTR,int,int,int,int,DWORD stype=0);
+    textedit(mainwindow*,const std::wstring&,int,int,int,int,DWORD stype=0);
     void dispatch(WPARAM);
     std::function<void(const std::wstring&)> ontextchange=[&](const std::wstring &text){};
     void appendtext(const std::wstring&);
@@ -37,7 +37,7 @@ class spinbox:public control{
     int minv,maxv;
     public:
     void dispatch(WPARAM);
-    spinbox(mainwindow*,LPCWSTR,int,int,int,int,DWORD stype=0);
+    spinbox(mainwindow*,const std::wstring&,int,int,int,int,DWORD stype=0);
     void setminmax(int,int);
     std::pair<int,int>getminmax();
     void setcurr(int);
@@ -45,7 +45,7 @@ class spinbox:public control{
 };
 class label:public control{
 public:
-    label(mainwindow*,LPCWSTR,int,int,int,int);
+    label(mainwindow*,const std::wstring&,int,int,int,int);
 };
 
 class listbox:public control{
@@ -56,10 +56,10 @@ public:
     std::wstring text(int);
     std::function<void(int)> oncurrentchange=[](int){};
     void clear();
-    int additem(LPCWSTR);
+    int additem(const std::wstring&);
     void deleteitem(int);
     void setdata(int,LONG_PTR);
-    int insertitem(int,LPCWSTR);
+    int insertitem(int,const std::wstring&);
     LONG_PTR getdata(int);
     int count();
 };
@@ -77,6 +77,6 @@ public:
     void setheader(const std::vector<std::wstring>&);
     void autosize();
     int additem(const std::wstring&,HICON hicon);
-    void listview::dispatch_2(WPARAM wParam, LPARAM lParam);
+    void dispatch_2(WPARAM wParam, LPARAM lParam);
 };
 #endif

@@ -47,8 +47,8 @@ std::unordered_map<std::wstring,std::vector<int>> getprocesslist()
 void processlistwindow::PopulateProcessList(listview* _listbox,std::unordered_map<std::wstring,std::vector<int>>&exe_pid){
     _listbox->clear();
     for(auto& exe:exe_pid){
-        auto hicon=GetExeIcon(exe.first.c_str());
-        _listbox->additem(exe.first.c_str(),hicon);
+        auto hicon=GetExeIcon(exe.first);
+        _listbox->additem(exe.first,hicon);
         DestroyIcon(hicon);
     }
 }

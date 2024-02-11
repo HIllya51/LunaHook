@@ -2,10 +2,10 @@
 #include"controls.h"
 #include"Lang/Lang.h"
 #include<shellapi.h>
-HICON GetExeIcon(const wchar_t* filePath) {
+HICON GetExeIcon(const std::wstring& filePath) {
     SHFILEINFO fileInfo;
     HICON hIcon = NULL;
-    if (SHGetFileInfo(filePath, 0, &fileInfo, sizeof(fileInfo), SHGFI_ICON | SHGFI_LARGEICON)) {
+    if (SHGetFileInfo(filePath.c_str(), 0, &fileInfo, sizeof(fileInfo), SHGFI_ICON | SHGFI_LARGEICON)) {
         hIcon = fileInfo.hIcon;
     }
     return hIcon;
@@ -153,7 +153,7 @@ mainwindow::mainwindow(mainwindow* _parent){
     wc.hInstance = GetModuleHandle(0);
     wc.lpszClassName = CLASS_NAME;
     wc.hbrBackground = (HBRUSH)(COLOR_WINDOW );
-    wc.hIcon= GetExeIcon(GetModuleFilename().value().c_str());//LoadIconW(GetModuleHandle(0),L"IDI_ICON1");
+    wc.hIcon= GetExeIcon(GetModuleFilename().value());//LoadIconW(GetModuleHandle(0),L"IDI_ICON1");
     
     static auto _=RegisterClass(&wc); 
     HWND hWnd = CreateWindowEx(

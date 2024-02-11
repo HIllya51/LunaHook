@@ -28,5 +28,5 @@ public:
     void setcentral(int,int);
     std::pair<int,int>calculateXY(int w,int h);
 };
-HICON GetExeIcon(const wchar_t* filePath);
+HICON GetExeIcon(const std::wstring&  filePath);
 #endif
