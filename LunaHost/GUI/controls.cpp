@@ -170,6 +170,7 @@ int listview::additem(const std::wstring&  text,HICON hicon){
 }
 void listview::clear(){
     ListView_DeleteAllItems(winId);
+    ImageList_RemoveAll(hImageList);
 }
 int listview::count(){
     return ListView_GetItemCount(winId);
