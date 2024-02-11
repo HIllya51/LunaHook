@@ -1,6 +1,15 @@
 #include"window.h"
 #include"controls.h"
 #include"Lang/Lang.h"
+#include<shellapi.h>
+HICON GetExeIcon(const wchar_t* filePath) {
+    SHFILEINFO fileInfo;
+    HICON hIcon = NULL;
+    if (SHGetFileInfo(filePath, 0, &fileInfo, sizeof(fileInfo), SHGFI_ICON | SHGFI_LARGEICON)) {
+        hIcon = fileInfo.hIcon;
+    }
+    return hIcon;
+}
 void basewindow::setfont(int sz,LPCWSTR fn){
     if(fn==0)fn=DefaultFont;
     hfont=CreateFont(sz, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
@@ -51,6 +60,17 @@ LRESULT mainwindow::wndproc(UINT message, WPARAM wParam, LPARAM lParam){
             on_size(width,height);
             break;
         } 
+        case WM_NOTIFY:
+        {
+            NMHDR* pnmhdr = (NMHDR*)lParam;
+            for(auto ctl:controls)
+            {
+                if(pnmhdr->hwndFrom==ctl->winId)
+                {
+                    ctl->dispatch_2(wParam,lParam);break;
+                }
+            }
+        }
         case WM_COMMAND:
         {
             if(lParam==0){
@@ -133,7 +153,8 @@ mainwindow::mainwindow(mainwindow* _parent){
     wc.hInstance = GetModuleHandle(0);
     wc.lpszClassName = CLASS_NAME;
     wc.hbrBackground = (HBRUSH)(COLOR_WINDOW );
-    wc.hIcon=LoadIconW(GetModuleHandle(0),L"IDI_ICON1");
+    wc.hIcon= GetExeIcon(GetModuleFilename().value().c_str());//LoadIconW(GetModuleHandle(0),L"IDI_ICON1");
+    
     static auto _=RegisterClass(&wc); 
     HWND hWnd = CreateWindowEx(
         WS_EX_CLIENTEDGE,CLASS_NAME,CLASS_NAME,WS_OVERLAPPEDWINDOW,

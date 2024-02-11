@@ -33,18 +33,21 @@ void LunaHost::on_close(){
         Sleep(100);
 }
 void LunaHost::on_size(int w,int h){
-    int height = h-140;
+    int height = h-110;
     w-=20;
-    g_selectprocessbutton->setgeo(10,10,w/3,40);
-    btnshowsettionwindow->setgeo(10+w/3,10,w/3,40);
-    btnplugin->setgeo(10+w*2/3,10,w/3,40);
-    g_hListBox_listtext->setgeo(10, 110, w , height/2);
-    g_showtexts->setgeo(10, 120+height/2, w , height/2);
-    g_hEdit_userhook->setgeo(10,60,w*2/3,40);
-    g_hButton_insert->setgeo(10+w*2/3,60,w/3,40);
+    auto _w=w-20;
+    g_selectprocessbutton->setgeo(10,10,_w/3,30);
+    btnshowsettionwindow->setgeo(10+10+_w/3,10,_w/3,30);
+    btnplugin->setgeo(10+20+_w*2/3,10,_w/3,30);
+    g_hListBox_listtext->setgeo(10, 90, w , height/2);
+    g_showtexts->setgeo(10, 100+height/2, w , height/2);
+    g_hEdit_userhook->setgeo(10,50,_w*2/3+10,30);
+    g_hButton_insert->setgeo(10+20+_w*2/3,50,_w/3,30);
 }
 
 LunaHost::LunaHost(){
+    
+    setfont(25);
     configs=new confighelper;
     settext(WndLunaHostGui);
     btnshowsettionwindow=new button(this, BtnShowSettingWindow,100,100,100,100);
@@ -138,7 +141,6 @@ LunaHost::LunaHost(){
         std::bind(&LunaHost::on_text_recv,this,std::placeholders::_1,std::placeholders::_2)
     ); 
     
-    setfont(25);
     setcentral(1000,600);
 }
 
@@ -181,9 +183,9 @@ void LunaHost::on_thread_delete(TextThread& thread){
 }
 
 Settingwindow::Settingwindow(LunaHost* host):mainwindow(host){
-    new label(this,LblFlushDelay,10, 10, 150, 40);
-    new label(this,LblCodePage,10, 60, 150, 40);
-    ckbfilterrepeat=new checkbox(this,LblFilterRepeat,10, 160, 200, 40);
+    new label(this,LblFlushDelay,10, 10, 150, 30);
+    new label(this,LblCodePage,10, 50, 150, 30);
+    ckbfilterrepeat=new checkbox(this,LblFilterRepeat,10, 130, 200, 30);
     ckbfilterrepeat->onclick=[=](){
         auto ck=ckbfilterrepeat->ischecked();
         TextThread::filterRepetition=ck;
@@ -191,7 +193,7 @@ Settingwindow::Settingwindow(LunaHost* host):mainwindow(host){
     };
     ckbfilterrepeat->setcheck(host->configs->get("filterrepeat",false));
 
-    g_check_clipboard =new checkbox(this,BtnToClipboard,10, 110, 200, 40) ;
+    g_check_clipboard =new checkbox(this,BtnToClipboard,10, 90, 200, 30) ;
     g_check_clipboard->onclick=[=](){
         auto ck=g_check_clipboard->ischecked();
         ((LunaHost*)parent)->check_toclipboard=ck;
@@ -199,8 +201,8 @@ Settingwindow::Settingwindow(LunaHost* host):mainwindow(host){
     }; 
     g_check_clipboard->setcheck(host->configs->get("ToClipboard",false));
     
-    g_timeout = new spinbox(this,std::to_wstring(host->configs->get("flushDelay",TextThread::flushDelay)).c_str(),160, 10, 100, 40) ;
-    g_codepage = new spinbox(this,std::to_wstring(host->configs->get("codepage",Host::defaultCodepage)).c_str(),160, 60, 100, 40) ;
+    g_timeout = new spinbox(this,std::to_wstring(host->configs->get("flushDelay",TextThread::flushDelay)).c_str(),150, 10, 100, 30) ;
+    g_codepage = new spinbox(this,std::to_wstring(host->configs->get("codepage",Host::defaultCodepage)).c_str(),150, 50, 100, 30) ;
     g_timeout->onvaluechange=[=](int v){
         TextThread::flushDelay=v;
         host->configs->set("flushDelay",v);
@@ -213,11 +215,11 @@ Settingwindow::Settingwindow(LunaHost* host):mainwindow(host){
             }
     }; 
     g_codepage->setminmax(0,CP_UTF8);
-    setcentral(300,300);
+    setcentral(300,240);
     settext(WndSetting);
 }
 void Pluginwindow::on_size(int w,int h){
-    listplugins->setgeo(10,80,w-20,h-100);
+    listplugins->setgeo(10,80,w-20,h-90);
 }
 Pluginwindow::Pluginwindow(mainwindow*p,Pluginmanager* pl):mainwindow(p){
     pluginmanager=pl;

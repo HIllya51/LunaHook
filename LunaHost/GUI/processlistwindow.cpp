@@ -4,6 +4,7 @@
 #include"host.h" 
 #include"processlistwindow.h"
 #include"Lang/Lang.h"
+#include<shellapi.h>
 std::unordered_map<std::wstring,std::vector<int>> getprocesslist()
 {
     std::unordered_map<std::wstring,std::vector<int>>exe_pid;
@@ -42,17 +43,20 @@ std::unordered_map<std::wstring,std::vector<int>> getprocesslist()
     }
     return exe_pid;
 }
-void processlistwindow::PopulateProcessList(listbox* _listbox,std::unordered_map<std::wstring,std::vector<int>>&exe_pid){
+
+void processlistwindow::PopulateProcessList(listview* _listbox,std::unordered_map<std::wstring,std::vector<int>>&exe_pid){
     _listbox->clear();
     for(auto& exe:exe_pid){
-        _listbox->additem(exe.first.c_str());
+        auto hicon=GetExeIcon(exe.first.c_str());
+        _listbox->additem(exe.first.c_str(),hicon);
+        DestroyIcon(hicon);
     }
 }
 
 processlistwindow::processlistwindow(mainwindow* p):mainwindow(p){
-    g_hEdit = new textedit(this,L"",10, 10, 400, 40,ES_AUTOHSCROLL);
-    g_hButton=new button(this,BtnAttach,420, 10, 100, 40);
-    g_refreshbutton =new button(this,BtnRefresh,530, 10, 100, 40); 
+    g_hEdit = new textedit(this,L"",10, 10, 400, 30,ES_AUTOHSCROLL);
+    g_hButton=new button(this,BtnAttach,420, 10, 100, 30);
+    g_refreshbutton =new button(this,BtnRefresh,530, 10, 100, 30); 
     g_hButton->onclick=[&](){
         auto str=g_hEdit->text();
         if(str.size()){
@@ -72,7 +76,8 @@ processlistwindow::processlistwindow(mainwindow* p):mainwindow(p){
         g_exe_pid=getprocesslist();
         PopulateProcessList(g_hListBox,g_exe_pid);
     };
-    g_hListBox = new listbox(this,10, 60, 310, 200);
+    g_hListBox = new listview(this,10, 60, 310, 200);
+    g_hListBox->setheader({L""});
     g_hListBox->oncurrentchange=[&](int idx){
         auto pids=g_exe_pid[g_hListBox->text(idx)];
         
@@ -94,5 +99,11 @@ void processlistwindow::on_show(){
     PopulateProcessList(g_hListBox,g_exe_pid);
 }
 void processlistwindow::on_size(int w,int h){ 
-    g_hListBox->setgeo(10,60,w-20,h-70);
+    w=w-20;
+    auto _w=w-20;
+    g_hEdit->setgeo(10,10,_w/2,30);
+    g_hButton->setgeo(10+_w/2+10,10,_w/4,30);
+    g_refreshbutton->setgeo(10+_w/2+_w/4+20,10,_w/4,30);
+    g_hListBox->setgeo(10,50,w,h-60);
+    g_hListBox->autosize();
 }

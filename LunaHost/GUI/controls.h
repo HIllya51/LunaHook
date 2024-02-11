@@ -1,12 +1,13 @@
 #ifndef LUNA_BASE_CONTROLS_H
 #define LUNA_BASE_CONTROLS_H
 #include"window.h"
+#include <CommCtrl.h>
 class control:public basewindow{
     public:
     mainwindow* parent;
     control(mainwindow*);
     virtual void dispatch(WPARAM);
-    
+    virtual void dispatch_2(WPARAM wParam, LPARAM lParam);
     std::function<HMENU()>oncontextmenu=[](){return (HMENU)nullptr;};
     std::function<void(WPARAM)>oncontextmenucallback=[](WPARAM){};
 };
@@ -61,5 +62,21 @@ public:
     int insertitem(int,LPCWSTR);
     LONG_PTR getdata(int);
     int count();
+};
+class listview:public control{
+    int headernum=1;
+    HIMAGELIST hImageList;
+public:
+    listview(mainwindow*,int,int,int,int);
+    int insertitem(int,const std::wstring&,HICON hicon);
+    int insertcol(int,const std::wstring& );
+    void clear();
+    int count();
+    std::function<void(int)> oncurrentchange=[](int){};
+    std::wstring text(int,int=0);
+    void setheader(const std::vector<std::wstring>&);
+    void autosize();
+    int additem(const std::wstring&,HICON hicon);
+    void listview::dispatch_2(WPARAM wParam, LPARAM lParam);
 };
 #endif
