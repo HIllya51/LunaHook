@@ -25,7 +25,7 @@ bool InsertV8Hook(HMODULE module)
 		{
 			*data=(*(uintptr_t*)(stack->rcx))+23;
 			int len = *(int*)(*data - 4);
-			if(len!=wcslen((wchar_t*)*data))return;
+			if(wcslen((wchar_t*)*data)*2<len)return;
 			*count=len*2;
 		};
 		succ|=NewHook(hp, "JavaScript");
@@ -39,7 +39,7 @@ bool InsertV8Hook(HMODULE module)
 		{
 			*data=(stack->rcx)+11;
 			int len = *(int*)(*data - 4);
-			if(len!=wcslen((wchar_t*)*data))return;
+			if(wcslen((wchar_t*)*data)*2<len)return;
 			*count=len*2;
 		};
 		succ|=NewHook(hp, "JavaScript");

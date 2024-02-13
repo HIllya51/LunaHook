@@ -32,7 +32,7 @@ std::unordered_map<std::wstring,std::vector<int>> getprocesslist()
             
             auto buffs=std::wstring(buff);
             auto str=stolower(buffs);
-            if(str.find(L"\\windows\\")!=str.npos || str.find(L"\\microsoft")!=str.npos|| str.find(L"\\windowsapps")!=str.npos)continue;
+            if(str.find(L":\\windows\\")!=str.npos || str.find(L"\\microsoft")!=str.npos|| str.find(L"\\windowsapps")!=str.npos)continue;
              
 
             if(exe_pid.find(buffs)==exe_pid.end()){
