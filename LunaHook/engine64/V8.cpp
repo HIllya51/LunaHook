@@ -259,18 +259,43 @@ namespace{
 		return innerHTML(module)|| success;
 	}
 }
-bool V8::attach_function() {
-	bool allok=false;
+namespace{
+	bool hookstringlength(HMODULE hm){
+		auto Length=GetProcAddress(hm,"?Length@String@v8@@QEBAHXZ");
+		static uintptr_t WriteUtf8;
+		static uintptr_t Utf8Length;
+		WriteUtf8=(uintptr_t)GetProcAddress(hm,"?WriteUtf8@String@v8@@QEBAHPEADHPEAHH@Z");
+		Utf8Length=(uintptr_t)GetProcAddress(hm,"?Utf8Length@String@v8@@QEBAHXZ");
+		if(Length==0||WriteUtf8==0||Utf8Length==0)return false;
+		HookParam hp;
+		hp.address=(uintptr_t)Length;
+		hp.type=USING_STRING|CODEC_UTF8;
+		hp.text_fun=
+			[](hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len)
+			{
+				auto length=((size_t(*)(void*))Utf8Length)((void*)stack->rcx);
+				auto u8str=new char[length+1];
+				int writen;
+				((size_t(*)(void*,char*,int,int*,int))WriteUtf8)((void*)stack->rcx,u8str,length,&writen,0);
+				*data=(uintptr_t)u8str;
+				*len=length;
+
+			};
+		return NewHook(hp,"v8::String::Length");
+	}
+}
+bool V8::attach_function_() {
 	for (const wchar_t* moduleName : { (const wchar_t*)NULL, L"node.dll", L"nw.dll" }) {
-		bool ok=InsertV8Hook(GetModuleHandleW(moduleName));
-		ok= hookv8exports(GetModuleHandleW(moduleName))||ok;
+		auto hm=GetModuleHandleW(moduleName);
+		if(hm==0)continue;
+		bool ok=InsertV8Hook(hm);
+		ok= hookv8exports(hm)||ok;
+		ok=hookstringlength(hm)||ok;
+		ok=addhooks(hm)||ok;
 		if(ok){
-			allok=true;
-			break;
+			return true;
 		}
 	}
-
-	allok=addhooks((HMODULE)processStartAddress)||allok;
-	return allok;
+	return false;
 } 
 
