@@ -1,6 +1,6 @@
 #include"ScrPlayer.h"
  
-bool ScrPlayer::attach_function() {
+bool ScrPlayer_attach_function1() {
     auto func=MemDbg::findCallerAddress((ULONG)GetGlyphOutlineA,0x90909090,processStartAddress,processStopAddress);
     if(func==0)return false;
     func+=4;
@@ -28,3 +28,40 @@ bool ScrPlayer::attach_function() {
             };
     return NewHook(hp,"ScrPlayer");
 } 
+
+bool ScrPlayer_attach_function2() {
+  //https://vndb.org/v7056
+  //Rendezvous ～ランデブー～
+  // _DWORD *__stdcall sub_41DC10(
+  //       _DWORD *a1,
+  //       int a2,
+  //       int a3,
+  //       int a4,
+  //       int a5,
+  //       unsigned __int8 *a6, <---
+  //       int a7,
+  //       int a8,
+  //       int a9,
+  //       char a10,
+  //       int a11)
+    BYTE bs[]={
+      0x51,
+      0x56,
+      0x8b,0x74,0x24,0x20,
+      0x8a,0x06,
+      0x84,0xc0,
+      0x89,0x4c,0x24,0x04,
+      0x0f,0x84,XX4
+    };
+    auto addr=MemDbg::findBytes(bs,sizeof(bs),processStartAddress,processStopAddress);
+    if(addr==0)return false;
+    HookParam hp;
+    hp.address=addr;
+    hp.offset=get_stack(6);
+    hp.type=USING_STRING;//有内部的multibyte函数使得无法内嵌显示中文字符
+    return NewHook(hp,"ScrPlayer2");
+} 
+bool ScrPlayer::attach_function()
+{
+  return ScrPlayer_attach_function1()||ScrPlayer_attach_function2();
+}
