@@ -597,15 +597,10 @@ bool InsertAquaplus3Hook()
 
   ULONG range = min(processStopAddress - processStartAddress, MAX_REL_ADDR);
   ULONG addr = MemDbg::findBytes(bytes, sizeof(bytes), processStartAddress, processStartAddress + range);
-  if (!addr) {
-    ConsoleOutput("vnreng:Aquaplus3: pattern not found");
-    return false;
-  }
-
-  HookParam hp = {};
+  if (!addr)return false;
+  HookParam hp;
   hp.address = addr + 1;
   hp.offset = get_reg(regs::eax);
-  hp.index = 0;
   hp.type = CODEC_UTF8 | USING_STRING | NO_CONTEXT;
   hp.filter_fun = NewLineCharToSpaceFilterA;
   return NewHook(hp, "Aquaplus3");
