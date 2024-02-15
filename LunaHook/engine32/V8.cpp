@@ -120,6 +120,7 @@ namespace{
 			[](hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len)
 			{
 				auto length=((size_t(__thiscall*)(void*))Utf8Length)((void*)stack->ecx);
+				if(!length)return;
 				auto u8str=new char[length+1];
 				int writen;
 				((size_t(__thiscall*)(void*,char*,int,int*,int))WriteUtf8)((void*)stack->ecx,u8str,length,&writen,0);

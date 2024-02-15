@@ -61,18 +61,45 @@ void unity_ui_string_hook_fun(hook_stack* stack,  HookParam *hp,  uintptr_t *dat
     #endif 
     commonsolemonostring(offset,data,len);
 }
-template<void* text_fun>
+void unity_ui_string_hook_after(hook_stack* stack,void* data, size_t len)
+{ 
+    #ifdef _WIN64
+    uintptr_t offset=stack->rdx;
+    #else
+    uintptr_t offset=stack->stack[2];
+    #endif 
+    MonoString* string = (MonoString*)offset;
+    if(string==0)return;
+    if(wcslen((wchar_t*)string->chars)!=string->length)return;
+    
+    //其实也可以直接覆写到原来的String上，但重新创建一个是更安全的操作。
+    auto newstring=(MonoString*)malloc(sizeof(MonoString)+len+2);
+    memcpy(newstring,string,sizeof(MonoString));
+    wcscpy((wchar_t*)newstring->chars,(wchar_t*)data);
+    newstring->length=len/2;
+    #ifdef _WIN64
+    stack->rdx=(uintptr_t)newstring;
+    #else
+    stack->stack[2]=(uintptr_t)newstring;
+    #endif 
+}
+template<void* text_fun,void* hook_after>
 void MONO_IL2CPP_NEW_HOOK(uintptr_t addr,const char*name){
     if(addr==0)return;
     HookParam hp;
     hp.address = addr;
     hp.type = USING_STRING | CODEC_UTF16|FULL_STRING;
     hp.text_fun =(decltype(hp.text_fun))text_fun;
-        
+    
+    if(hook_after)
+    {
+        hp.type|=EMBED_ABLE|EMBED_BEFORE_SIMPLE;
+        hp.hook_after=(decltype(hp.hook_after))hook_after;
+    }
     NewHook_check(hp, name);
 }
-auto unity_ui_string_hook=MONO_IL2CPP_NEW_HOOK<unity_ui_string_hook_fun>;
-auto mscorlib_system_string_hook=MONO_IL2CPP_NEW_HOOK<mscorlib_system_string_hook_fun>;
+auto unity_ui_string_hook=MONO_IL2CPP_NEW_HOOK<unity_ui_string_hook_fun,unity_ui_string_hook_after>;
+auto mscorlib_system_string_hook=MONO_IL2CPP_NEW_HOOK<mscorlib_system_string_hook_fun,0>;
 
 
 /** jichi 12/26/2014 Mono

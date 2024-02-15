@@ -274,6 +274,7 @@ namespace{
 			[](hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len)
 			{
 				auto length=((size_t(*)(void*))Utf8Length)((void*)stack->rcx);
+				if(!length)return;
 				auto u8str=new char[length+1];
 				int writen;
 				((size_t(*)(void*,char*,int,int*,int))WriteUtf8)((void*)stack->rcx,u8str,length,&writen,0);
