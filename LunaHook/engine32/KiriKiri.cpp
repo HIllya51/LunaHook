@@ -909,19 +909,6 @@ bool NewKiriKiriZHook(DWORD addr)
   
 }
 
-bool KiriKiriZHook1(hook_stack* stack,  HookParam *)
-{
-  DWORD addr = stack->stack[0]; // retaddr
-  addr = MemDbg::findEnclosingAlignedFunction(addr, 0x400); // range is around 0x377c50 - 0x377a40 = 0x210
-  if (!addr) {
-    ConsoleOutput("KiriKiriZ: failed to find enclosing function");
-    return false; // stop looking
-  }
-  NewKiriKiriZHook(addr);
-  ConsoleOutput("KiriKiriZ1 inserted");
-  return false; // stop looking
-}
-
 bool InsertKiriKiriZHook1()
 {
   ULONG addr = MemDbg::findCallerAddressAfterInt3((DWORD)::GetGlyphOutlineW, processStartAddress, processStopAddress);
@@ -932,8 +919,20 @@ bool InsertKiriKiriZHook1()
 
   HookParam hp;
   hp.address = addr;
-  hp.type = HOOK_EMPTY;
-  hp.hook_fun = KiriKiriZHook1;
+  hp.text_fun = 
+    [](hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len)
+    {
+      hp->text_fun=nullptr;
+      hp->type=HOOK_EMPTY;
+      DWORD addr = stack->stack[0]; // retaddr
+      addr = MemDbg::findEnclosingAlignedFunction(addr, 0x400); // range is around 0x377c50 - 0x377a40 = 0x210
+      if (!addr) {
+        ConsoleOutput("KiriKiriZ: failed to find enclosing function");
+        return;
+      }
+      NewKiriKiriZHook(addr);
+      ConsoleOutput("KiriKiriZ1 inserted");
+    };
   ConsoleOutput("INSERT KiriKiriZ1 empty hook");
   
   return NewHook(hp, "KiriKiriZ Hook");

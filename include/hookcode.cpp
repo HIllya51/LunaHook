@@ -287,7 +287,7 @@ namespace
 		if (hp.type & FULL_STRING) HCode += L'F';
 
 		if (hp.type & NO_CONTEXT) HCode += L'N';
-		if (hp.text_fun || hp.filter_fun || hp.hook_fun) HCode += L'X'; // no AGTH equivalent
+		if (hp.text_fun || hp.filter_fun) HCode += L'X'; // no AGTH equivalent
 
 		if (hp.codepage != 0 && !(hp.type & CODEC_UTF16||hp.type & CODEC_UTF32)) HCode += std::to_wstring(hp.codepage) + L'#';
 

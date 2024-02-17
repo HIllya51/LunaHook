@@ -87,7 +87,6 @@ struct HookParam
 	DWORD user_value; // 7/20/2014: jichi additional parameters for PSP games
 	ALIGNPTR(uint64_t __2,void(*text_fun)(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len))
 	ALIGNPTR(uint64_t __3,bool(*filter_fun)(void* data, size_t* len, HookParam* hp)); // jichi 10/24/2014: Add filter function. Return false to skip the text
-	ALIGNPTR(uint64_t __4,bool(*hook_fun)(hook_stack* stack, HookParam* hp)); // jichi 10/24/2014: Add generic hook function, return false if stop execution.
 	ALIGNPTR(uint64_t __6,bool (*hook_before)(hook_stack* stack,void* data, size_t* len,uintptr_t*role));
 	ALIGNPTR(uint64_t __7,void (*hook_after)(hook_stack* stack,void* data, size_t len));
 	ALIGNPTR(uint64_t __8,uintptr_t hook_font);

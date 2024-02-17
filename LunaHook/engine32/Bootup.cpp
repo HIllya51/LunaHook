@@ -169,16 +169,7 @@
  *  011318EC   8B7B 0C          MOV EDI,DWORD PTR DS:[EBX+0xC]
  */
 namespace { // unnamed
-bool BootupGDIHook(hook_stack* stack,  HookParam *hp)
-{
-  DWORD arg2 = stack->stack[2];
-  if ((arg2 & 0xffff0000)) { // if arg2 high bits are there, this is new Bootup game
-    hp->type |= DATA_INDIRECT;
-    hp->offset = get_stack(3);
-    hp->split = get_reg(regs::ebx);
-  }
-  return false; // run once and stop hooking
-}
+
 bool InsertBootupGDIHook()
 {
   bool widechar = true;
@@ -203,7 +194,17 @@ bool InsertBootupGDIHook()
     hp.split = get_reg(regs::edx);
   else
     hp.split = get_stack(1);
-  hp.hook_fun = BootupGDIHook; // adjust hook parameter at runtime
+  hp.text_fun = 
+    [](hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len)
+    {
+      DWORD arg2 = stack->stack[2];
+      if ((arg2 & 0xffff0000)) { // if arg2 high bits are there, this is new Bootup game
+        hp->type |= DATA_INDIRECT;
+        hp->offset = get_stack(3);
+        hp->split = get_reg(regs::ebx);
+      }
+      hp->text_fun=nullptr;
+    };
 
   ConsoleOutput("INSERT BootupGDI");
   

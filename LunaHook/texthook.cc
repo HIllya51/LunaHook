@@ -120,18 +120,15 @@ void TextHook::Send(uintptr_t lpDataBase)
 			if (!current_trigger_fun(location, stack->ebp, stack->esp)) trigger_fun = current_trigger_fun;
 		#endif
 		
+		if (hp.type & HOOK_EMPTY) __leave; // jichi 10/24/2014: dummy hook only for dynamic hook
+		
 		size_t lpCount = 0;
 		uintptr_t lpSplit = 0,
 			lpRetn = stack->retaddr,
 			plpdatain=(lpDataBase + hp.offset),
 			lpDataIn=*(uintptr_t*)plpdatain;
-		
-		// jichi 10/24/2014: generic hook function
-		if (hp.hook_fun && !hp.hook_fun(stack, &hp)) hp.hook_fun = nullptr;
-
-		if (hp.type & HOOK_EMPTY) __leave; // jichi 10/24/2014: dummy hook only for dynamic hook
-
 		bool isstring=false;
+
 		auto use_custom_embed_fun=(hp.type&EMBED_ABLE)&&!(hp.type&EMBED_BEFORE_SIMPLE);
 		if(use_custom_embed_fun)
 		{
