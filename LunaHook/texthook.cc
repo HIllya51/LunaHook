@@ -128,14 +128,12 @@ void TextHook::Send(uintptr_t lpDataBase)
 		
 		buffer->type=hp.type;
 		bool isstring=false;
-		if((hp.type&EMBED_ABLE)&&!(hp.type&EMBED_BEFORE_SIMPLE) )
+		auto use_custom_embed_fun=(hp.type&EMBED_ABLE)&&!(hp.type&EMBED_BEFORE_SIMPLE);
+		if(use_custom_embed_fun)
 		{
 			isstring=true;
-			lpRetn=0;
 			lpSplit=Engine::ScenarioRole;
 			if(hp.hook_before(stack,pbData,&lpCount,&lpSplit)==false)__leave;
-			if (hp.filter_fun && !hp.filter_fun(pbData, &lpCount, &hp) || lpCount <= 0) __leave;
-			
 		}
 		else
 		{
@@ -164,9 +162,16 @@ void TextHook::Send(uintptr_t lpDataBase)
 			
 			//hook_fun&&text_fun change hookparam.type
 			buffer->type=hp.type;
-			
-			if (lpCount <= 0) __leave;
-			if (lpCount > TEXT_BUFFER_SIZE) lpCount = TEXT_BUFFER_SIZE;
+		}
+		if (lpCount <= 0) __leave;
+		if (lpCount > TEXT_BUFFER_SIZE)
+		{
+			ConsoleOutput(InvalidLength, lpCount, hp.name);
+			lpCount = TEXT_BUFFER_SIZE;
+		}
+
+		if(!use_custom_embed_fun)
+		{
 			if ((!(hp.type&USING_CHAR))&&(isstring||(hp.type&USING_STRING))) 
 			{
 				if(lpDataIn == 0)__leave;
@@ -185,11 +190,11 @@ void TextHook::Send(uintptr_t lpDataBase)
 					*(WORD*)pbData = lpDataIn & 0xffff;
 				}
 			} 
-
-			if (hp.filter_fun && !hp.filter_fun(pbData, &lpCount, &hp) || lpCount <= 0) __leave;
-
-			if (hp.type & (NO_CONTEXT | FIXING_SPLIT)) lpRetn = 0;
 		}
+		if (hp.filter_fun && !hp.filter_fun(pbData, &lpCount, &hp) || lpCount <= 0) __leave;
+
+		if (hp.type & (NO_CONTEXT | FIXING_SPLIT)) lpRetn = 0;
+		
 		
 		ThreadParam tp{ GetCurrentProcessId(), address, lpRetn, lpSplit };
 		if((hp.type&EMBED_ABLE)&&(check_embed_able(tp)))

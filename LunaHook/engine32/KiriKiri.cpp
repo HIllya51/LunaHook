@@ -1278,6 +1278,7 @@ namespace Private {
     auto text = (LPCSTR)s->ecx; 
     if (  !text || !*text)
       return false;
+    if(strlen(text)>2000)return false;
     if (all_ascii(text,strlen(text)))return false;
     //"。」』？―！、"
     auto chatflags={"\xe3\x80\x82", "\xe3\x80\x8d","\xe3\x80\x8f","\xef\xbc\x9f","\xe2\x80\x95","\xef\xbc\x81","\xe3\x80\x81"};

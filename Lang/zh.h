@@ -25,7 +25,7 @@
 #define HIJACK_ERROR u8"Hijack 错误" 
 #define COULD_NOT_FIND u8"无法找到文本" 
 #define CONSOLE L"控制台" 
-#define InvalidLength  u8"可能存在错误 (无效的文本长度 %d 出现在Hook地址 %I64d)" 
+#define InvalidLength  u8"可能存在错误 (无效的文本长度 %d 出现 %s)" 
 #define InsertHookFailed u8"钩子注入失败 %s" 
 #define Match_Error u8"匹配 %s 引擎时发生错误" 
 #define Attach_Error u8"连接到 %s 引擎时发送错误" 

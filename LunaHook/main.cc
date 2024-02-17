@@ -95,7 +95,6 @@ DWORD WINAPI Pipe(LPVOID)
 
 void TextOutput(ThreadParam tp, TextOutput_T*buffer, int len)
 {
-	if (len < 0 || len > PIPE_BUFFER_SIZE - sizeof(tp)) ConsoleOutput(InvalidLength, len, tp.addr);
 	buffer->tp=tp;
 	WriteFile(hookPipe, buffer, sizeof(TextOutput_T) + len, DUMMY, nullptr);
 }

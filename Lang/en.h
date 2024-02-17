@@ -25,7 +25,7 @@
 #define HIJACK_ERROR u8"Hijack ERROR" 
 #define COULD_NOT_FIND u8"could not find text" 
 #define CONSOLE L"Console" 
-#define InvalidLength  u8"something went very wrong (invalid length %d at hook address %I64d)" 
+#define InvalidLength  u8"something went very wrong (invalid length %d in %s)" 
 #define InsertHookFailed u8"failed to insert hook %s" 
 #define Match_Error u8"ERROR happened when matching engine %s " 
 #define Attach_Error u8"ERROR happened when attaching engine %s ERROR" 
