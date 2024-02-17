@@ -126,7 +126,11 @@ void TextHook::Send(uintptr_t lpDataBase)
 			plpdatain=(lpDataBase + hp.offset),
 			lpDataIn=*(uintptr_t*)plpdatain;
 		
-		buffer->type=hp.type;
+		// jichi 10/24/2014: generic hook function
+		if (hp.hook_fun && !hp.hook_fun(stack, &hp)) hp.hook_fun = nullptr;
+
+		if (hp.type & HOOK_EMPTY) __leave; // jichi 10/24/2014: dummy hook only for dynamic hook
+
 		bool isstring=false;
 		auto use_custom_embed_fun=(hp.type&EMBED_ABLE)&&!(hp.type&EMBED_BEFORE_SIMPLE);
 		if(use_custom_embed_fun)
@@ -135,34 +139,27 @@ void TextHook::Send(uintptr_t lpDataBase)
 			lpSplit=Engine::ScenarioRole;lpRetn=0;
 			if(hp.hook_before(stack,pbData,&lpCount,&lpSplit)==false)__leave;
 		}
-		else
+		else if (hp.text_fun) 
 		{
-			// jichi 10/24/2014: generic hook function
-			if (hp.hook_fun && !hp.hook_fun(stack, &hp)) hp.hook_fun = nullptr;
-
-			if (hp.type & HOOK_EMPTY) __leave; // jichi 10/24/2014: dummy hook only for dynamic hook
-
-			if (hp.text_fun) {
-				isstring=true;
-				hp.text_fun(stack, &hp, &lpDataIn, &lpSplit, &lpCount);
-			}
-			else {
-				if (hp.type & FIXING_SPLIT) lpSplit = FIXED_SPLIT_VALUE; // fuse all threads, and prevent floating
-				else if (hp.type & USING_SPLIT) {
-					lpSplit = *(uintptr_t *)(lpDataBase + hp.split);
-					if (hp.type & SPLIT_INDIRECT) lpSplit = *(uintptr_t *)(lpSplit + hp.split_index);
-				}
-				if (hp.type & DATA_INDIRECT) {
-					plpdatain=(lpDataIn + hp.index);
-					lpDataIn = *(uintptr_t *)plpdatain;
-				}
-				lpDataIn += hp.padding;
-				lpCount = GetLength(stack, lpDataIn);
-			}
-			
-			//hook_fun&&text_fun change hookparam.type
-			buffer->type=hp.type;
+			isstring=true;
+			hp.text_fun(stack, &hp, &lpDataIn, &lpSplit, &lpCount);
 		}
+		else 
+		{
+			if (hp.type & FIXING_SPLIT) lpSplit = FIXED_SPLIT_VALUE; // fuse all threads, and prevent floating
+			else if (hp.type & USING_SPLIT) {
+				lpSplit = *(uintptr_t *)(lpDataBase + hp.split);
+				if (hp.type & SPLIT_INDIRECT) lpSplit = *(uintptr_t *)(lpSplit + hp.split_index);
+			}
+			if (hp.type & DATA_INDIRECT) {
+				plpdatain=(lpDataIn + hp.index);
+				lpDataIn = *(uintptr_t *)plpdatain;
+			}
+			lpDataIn += hp.padding;
+			lpCount = GetLength(stack, lpDataIn);
+		}
+			
+		 
 		if (lpCount <= 0) __leave;
 		if (lpCount > TEXT_BUFFER_SIZE)
 		{
@@ -177,7 +174,8 @@ void TextHook::Send(uintptr_t lpDataBase)
 				if(lpDataIn == 0)__leave;
 				::memcpy(pbData, (void*)lpDataIn, lpCount);
 			}
-			else{
+			else
+			{
 				if(hp.type &CODEC_UTF32)
 				{
 					*(uint32_t*)pbData=lpDataIn&0xffffffff;
@@ -195,6 +193,7 @@ void TextHook::Send(uintptr_t lpDataBase)
 
 		if (hp.type & (NO_CONTEXT | FIXING_SPLIT)) lpRetn = 0;
 		
+		buffer->type=hp.type;
 		
 		ThreadParam tp{ GetCurrentProcessId(), address, lpRetn, lpSplit };
 		if((hp.type&EMBED_ABLE)&&(check_embed_able(tp)))
