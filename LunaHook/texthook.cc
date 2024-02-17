@@ -132,7 +132,7 @@ void TextHook::Send(uintptr_t lpDataBase)
 		if(use_custom_embed_fun)
 		{
 			isstring=true;
-			lpSplit=Engine::ScenarioRole;
+			lpSplit=Engine::ScenarioRole;lpRetn=0;
 			if(hp.hook_before(stack,pbData,&lpCount,&lpSplit)==false)__leave;
 		}
 		else
