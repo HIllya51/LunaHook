@@ -17,6 +17,7 @@ class Settingwindow:public mainwindow{
     spinbox* g_timeout;
     spinbox* g_codepage;
     checkbox* g_check_clipboard; 
+    checkbox* readonlycheck;
 public:
 Settingwindow(LunaHost*);
 };
@@ -46,4 +47,5 @@ public:
     void on_size(int w,int h);
     void on_close();
     LunaHost();
+    friend class Settingwindow;
 };

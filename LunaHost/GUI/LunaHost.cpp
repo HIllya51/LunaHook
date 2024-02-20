@@ -123,9 +123,9 @@ LunaHost::LunaHost(){
                 break;
         }
     };
-    g_showtexts = new textedit(this,L"",10, 330, 200, 200,ES_READONLY|ES_MULTILINE |ES_AUTOVSCROLL| WS_VSCROLL);
+    g_showtexts = new textedit(this,L"",10, 330, 200, 200,ES_MULTILINE |ES_AUTOVSCROLL| WS_VSCROLL);
     
-    
+    g_showtexts->setreadonly(configs->get("ReadOnly",true));
     TextThread::filterRepetition=configs->get("filterrepeat",false);
     check_toclipboard=configs->get("ToClipboard",false);
     TextThread::flushDelay=configs->get("flushDelay",TextThread::flushDelay);
@@ -200,7 +200,13 @@ Settingwindow::Settingwindow(LunaHost* host):mainwindow(host){
         host->configs->set("ToClipboard",ck);
     }; 
     g_check_clipboard->setcheck(host->configs->get("ToClipboard",false));
-    
+    readonlycheck=new checkbox(this,BtnReadOnly,10,170,200,30);
+    readonlycheck->onclick=[=](){
+        auto ck=readonlycheck->ischecked();
+        ((LunaHost*)parent)->g_showtexts->setreadonly(ck);
+        host->configs->set("ReadOnly",ck);
+    };
+    readonlycheck->setcheck(host->configs->get("ReadOnly",true));
     g_timeout = new spinbox(this,std::to_wstring(host->configs->get("flushDelay",TextThread::flushDelay)),150, 10, 100, 30) ;
     g_codepage = new spinbox(this,std::to_wstring(host->configs->get("codepage",Host::defaultCodepage)),150, 50, 100, 30) ;
     g_timeout->onvaluechange=[=](int v){
@@ -215,7 +221,7 @@ Settingwindow::Settingwindow(LunaHost* host):mainwindow(host){
             }
     }; 
     g_codepage->setminmax(0,CP_UTF8);
-    setcentral(300,240);
+    setcentral(300,300);
     settext(WndSetting);
 }
 void Pluginwindow::on_size(int w,int h){

@@ -75,6 +75,10 @@ void spinbox::setminmax(int min,int max){
 textedit::textedit(mainwindow* parent,const std::wstring& text,int x,int y,int w,int h,DWORD stype):control(parent){
     winId=CreateWindowEx(0, L"EDIT", text.c_str(), WS_CHILD | WS_VISIBLE  | WS_BORDER|stype ,
         x, y, w, h, parent->winId, NULL, NULL, NULL);
+    SendMessage(winId, EM_SETLIMITTEXT, 0, 0);
+}
+void textedit::setreadonly(bool ro){
+    SendMessage(winId, EM_SETREADONLY, ro, 0);
 }
 void textedit::scrolltoend(){
     int textLength = GetWindowTextLength(winId);

@@ -44,6 +44,7 @@
 #define BtnAttach L"Attach" 
 #define BtnRefresh L"Refresh" 
 #define BtnToClipboard L"to clipboard" 
+#define BtnReadOnly L"Text box Read only" 
 #define BtnInsertUserHook L"Insert UserHook" 
 #define BtnPlugin L"Plugins" 
 #define LblFlushDelay L"flushDelay" 

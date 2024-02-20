@@ -31,6 +31,7 @@ public:
     std::function<void(const std::wstring&)> ontextchange=[&](const std::wstring &text){};
     void appendtext(const std::wstring&);
     void scrolltoend();
+    void setreadonly(bool);
 };
 class spinbox:public control{
     HWND hUpDown;

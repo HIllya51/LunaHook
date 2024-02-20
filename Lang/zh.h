@@ -44,6 +44,7 @@
 #define BtnAttach L"注入进程" 
 #define BtnRefresh L"刷新" 
 #define BtnToClipboard L"复制到剪贴板" 
+#define BtnReadOnly L"文本框只读" 
 #define BtnInsertUserHook L"插入特殊码" 
 #define BtnPlugin L"插件" 
 #define LblFlushDelay L"刷新延迟" 
