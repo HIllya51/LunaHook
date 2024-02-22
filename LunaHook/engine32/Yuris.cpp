@@ -341,7 +341,17 @@ bool yuris7(){
 
         return true;
     };
-    return NewHook(hp,"yuris7");
+    auto succ= NewHook(hp,"yuris7");
+    hp.address+=7;
+    hp.filter_fun=nullptr;
+    hp.text_fun = [](hook_stack* stack, HookParam *hp, uintptr_t* data, uintptr_t* split, size_t* len)
+    {
+    //*len = (regof(eax,esp_base) == 0x02 && regof(edi,esp_base) == 0x14) ? 2 : 0; //dialogs without names
+    *len = (stack->eax == 0x02 && stack->edi >= 0x62 && stack->edi <= 0x68) ? 2 : 0; //dialogs with names
+    // if(*len)
+    // ConsoleOutput("%x %x %s",stack->eax,stack->edi,WideStringToString(StringToWideString((char*)stack->edx,932).value()).c_str());
+    };
+    return NewHook(hp,"yuris8")||succ;
 }
 bool yuris8(){
   //けもの道☆ガーリッシュスクエア LOVE+PLUS
