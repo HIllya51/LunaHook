@@ -14,39 +14,45 @@ macro(msvc_registry_search)
 		# assume the latest version will be last alphabetically
 		list(REVERSE QT_VERSIONS)
 
-		list(GET QT_VERSIONS 0 QT_VERSION)
-
-		# fix any double slashes which seem to be common
-		string(REPLACE "//" "/"  QT_VERSION "${QT_VERSION}")
-
-		if(MSVC_VERSION GREATER_EQUAL 1920)
-			set(QT_MSVC 2019)
-		elseif(MSVC_VERSION GREATER_EQUAL 1910)
-			set(QT_MSVC 2017)
-		elseif(MSVC_VERSION GREATER_EQUAL 1900)
-			set(QT_MSVC 2015)
+		list(LENGTH QT_VERSIONS QT_VERSIONS_LENGTH)
+		if(${QT_VERSIONS_LENGTH} EQUAL 0)
+			message(WARNING "Required QT5 toolchain is not installed")
 		else()
-			message(WARNING "Unsupported MSVC toolchain version")
-		endif()
+			list(GET QT_VERSIONS 0 QT_VERSION)
 
-		if(QT_MSVC)
-			if(CMAKE_CL_64)
-				SET(QT_SUFFIX "_64")
+			# fix any double slashes which seem to be common
+			string(REPLACE "//" "/"  QT_VERSION "${QT_VERSION}")
+
+			if(MSVC_VERSION GREATER_EQUAL 1920)
+				set(QT_MSVC 2019)
+			elseif(MSVC_VERSION GREATER_EQUAL 1910)
+				set(QT_MSVC 2017)
+			elseif(MSVC_VERSION GREATER_EQUAL 1900)
+				set(QT_MSVC 2015)
 			else()
-				set(QT_SUFFIX "")
+				message(WARNING "Unsupported MSVC toolchain version")
 			endif()
 
-			# MSVC 2015+ is only backwards compatible
-			if(EXISTS "${QT_VERSION}/msvc${QT_MSVC}${QT_SUFFIX}")
-				set(Qt5_DIR "${QT_VERSION}/msvc${QT_MSVC}${QT_SUFFIX}/lib/cmake/Qt5")
-			elseif(QT_MSVC GREATER_EQUAL 2019 AND EXISTS "${QT_VERSION}/msvc2017${QT_SUFFIX}")
-				set(Qt5_DIR "${QT_VERSION}/msvc2017${QT_SUFFIX}/lib/cmake/Qt5")
-			elseif(QT_MSVC GREATER_EQUAL 2017 AND EXISTS "${QT_VERSION}/msvc2015${QT_SUFFIX}")
-				set(Qt5_DIR "${QT_VERSION}/msvc2015${QT_SUFFIX}/lib/cmake/Qt5")
-			else()
-				message(WARNING "Required QT5 toolchain is not installed")
+			if(QT_MSVC)
+				if(CMAKE_CL_64)
+					SET(QT_SUFFIX "_64")
+				else()
+					set(QT_SUFFIX "")
+				endif()
+
+				# MSVC 2015+ is only backwards compatible
+				if(EXISTS "${QT_VERSION}/msvc${QT_MSVC}${QT_SUFFIX}")
+					set(Qt5_DIR "${QT_VERSION}/msvc${QT_MSVC}${QT_SUFFIX}/lib/cmake/Qt5")
+				elseif(QT_MSVC GREATER_EQUAL 2019 AND EXISTS "${QT_VERSION}/msvc2017${QT_SUFFIX}")
+					set(Qt5_DIR "${QT_VERSION}/msvc2017${QT_SUFFIX}/lib/cmake/Qt5")
+				elseif(QT_MSVC GREATER_EQUAL 2017 AND EXISTS "${QT_VERSION}/msvc2015${QT_SUFFIX}")
+					set(Qt5_DIR "${QT_VERSION}/msvc2015${QT_SUFFIX}/lib/cmake/Qt5")
+				else()
+					message(WARNING "Required QT5 toolchain is not installed")
+				endif()
 			endif()
 		endif()
+		
 	endif()
 endmacro()
 
