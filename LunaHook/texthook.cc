@@ -193,6 +193,11 @@ void TextHook::Send(uintptr_t lpDataBase)
 		buffer->type=hp.type;
 		
 		ThreadParam tp{ GetCurrentProcessId(), address, lpRetn, lpSplit };
+
+		parsenewlineseperator(pbData, &lpCount);
+
+		TextOutput(tp, buffer, lpCount);
+
 		if((hp.type&EMBED_ABLE)&&(check_embed_able(tp)))
 		{
 			auto lpCountsave=lpCount;
@@ -215,10 +220,6 @@ void TextHook::Send(uintptr_t lpDataBase)
 				else
 					hp.hook_after(stack,pbData,lpCount);
 			}
-		}
-		else
-		{
-			TextOutput(tp, buffer, lpCount);
 		}
 	}
 	__except (EXCEPTION_EXECUTE_HANDLER)

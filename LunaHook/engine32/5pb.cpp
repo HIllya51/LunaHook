@@ -519,10 +519,7 @@ bool InsertKaleidoHook()
 
     ULONG range = min(processStopAddress - processStartAddress, MAX_REL_ADDR);
     ULONG addr = MemDbg::findBytes(bytes, sizeof(bytes), processStartAddress, processStartAddress + range);
-    if (!addr) {
-        ConsoleOutput("Kaleido: pattern not found");
-        return false;
-    }
+    if (!addr) return false; 
 
     HookParam hp;
     hp.address = addr + addr_offset;
@@ -605,9 +602,52 @@ namespace
         return NewHook(hp, "5bp");
     }
 } // namespace name
+namespace{
+  bool __2()
+  {
+    //レヱル・ロマネスク origin 多国語版
+    //https://vndb.org/r119877
+    //char __thiscall sub_426B70(float *this, int a2, int a3, int a4, int a5, char a6, char a7)
+    BYTE bytes[]={
+      0x0f,0xb7,0x04,0x72,
+      0x46,
+      0x89,0x85,XX4,
+      0x0f,0xb7,0xc0,
+      0x83,0xc0,0xf6,
+      0x83,0xf8,0x52,
+      0x0f,0x87
+    };
+    auto addr = MemDbg::findBytes(bytes, sizeof(bytes), processStartAddress, processStopAddress);
+    if(!addr)return false;
+    addr=MemDbg::findEnclosingAlignedFunction_strict(addr);
+    if(!addr)return false;
+    HookParam hp;
+    hp.address = addr;
+    hp.offset=get_stack(1);
+    hp.split=get_stack(2);
+    hp.type = USING_SPLIT|USING_STRING | CODEC_UTF16|EMBED_ABLE|EMBED_BEFORE_SIMPLE|EMBED_AFTER_NEW;//中文显示不出来
+    hp.filter_fun = [](LPVOID data, size_t* size, HookParam*) {
+      //そうして、[おひとよ,2]御一夜――\n眼下に広がるこの町も、僕を間違いなく救ってくれた。
+      //「行政に関しての最大の変化は、市長です。\n現在の市長には[ひない,1]雛衣・ポーレットが就任しています」
+      //「なるほど。それゆえ、御一夜は衰退し、\n\x%lエアクラ;#00ffc040;エアクラ%l;#;工場の誘致話が持ち上がったわけか？」
+      //「ナビ。お前も\x%lエアクラ;#00ffc040;エアクラ%l;#;の仲間だったな。\n気を悪くしたか？」
+        auto text = reinterpret_cast<LPWSTR>(data);
+        auto len = reinterpret_cast<size_t*>(size);
+        auto xx=std::wstring(text,*len/2);
+        xx = std::regex_replace(xx, std::wregex(L"\\[(.*?),\\d\\]"), L"$1");
+        xx = std::regex_replace(xx, std::wregex(L"\\\\x%l(.*?);(.*?);(.*?);#;"), L"$1");
+        *len=xx.size()*2;
+        wcscpy(text,xx.c_str());
+        return true;
+    };
+    hp.newlineseperator=L"\\n";
+    return NewHook(hp, "5bp");
+  }
 
+}
 
 bool _5pb_2::attach_function() {
     bool ___1 = __1() || __();
+    ___1|=__2();
     return InsertKaleidoHook() || ___1;
 }

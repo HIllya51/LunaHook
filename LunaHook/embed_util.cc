@@ -6,6 +6,7 @@
 #include"hijackfuns.h"
 #include"winevent.hpp"
 #include"defs.h"
+#include"stringfilters.h"
 DynamicShiftJISCodec *dynamiccodec=new DynamicShiftJISCodec(932);
 
 
@@ -201,16 +202,30 @@ bool waitforevent(UINT32 timems,const ThreadParam& tp,const std::wstring &origin
     }
     return false;
 }
+
+void TextHook::parsenewlineseperator(void*data ,size_t*len)
+{
+  if(!(hp.type&EMBED_ABLE && hp.newlineseperator))return;
+
+  if (hp.type & CODEC_UTF16)
+  {
+    StringReplacer((wchar_t*)data,len,hp.newlineseperator,wcslen(hp.newlineseperator),L"\n",1);
+  }
+  else if(hp.type&CODEC_UTF32) return;
+  else
+  {
+    //ansi/utf8，newlineseperator都是简单字符
+    std::string newlineseperatorA;
+    for(int i=0;i<wcslen(hp.newlineseperator);i++)newlineseperatorA+=(char)hp.newlineseperator[i];
+    StringReplacer((char*)data,len,newlineseperatorA.c_str(),newlineseperatorA.size(),"\n",1);
+  }
+}
+
 bool TextHook::waitfornotify(TextOutput_T* buffer,void*data ,size_t*len,ThreadParam tp){
   std::wstring origin;
   if (auto t=commonparsestring(data,*len,&hp,embedsharedmem->codepage)) origin=t.value();
 	else return false;
 	if(origin.size()>1000)return false; 
-  if(hp.newlineseperator){
-    strReplace(origin,hp.newlineseperator,L"\n");
-    cast_back(hp,data,len,origin,true); 
-  }
-  TextOutput(tp, buffer, *len);
 
   std::wstring translate;
   if(translatecache.find(origin)!=translatecache.end()){

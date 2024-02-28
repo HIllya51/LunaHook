@@ -55,6 +55,7 @@ private:
 	void RemoveHookCode();
 	void RemoveReadCode();
 	bool waitfornotify(TextOutput_T* buffer,void*data ,size_t*len,ThreadParam tp);
+	void parsenewlineseperator(void*data ,size_t*len);
 	volatile DWORD useCount;
 	ALIGNPTR(uint64_t __1,HANDLE readerThread);
 	ALIGNPTR(uint64_t __2,HANDLE readerEvent); 
