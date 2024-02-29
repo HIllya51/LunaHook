@@ -26,6 +26,7 @@
 #include"engine32/IGScript.h"
 #include"engine32/TSSystem.h"
 #include"engine32/ScrPlayer.h"
+#include"engine32/Aksys.h"
 #include"engine32/utawarerumono.h"
 #include"engine32/SideB.h"
 #include"engine32/BGI.h"
@@ -299,7 +300,8 @@ std::vector<ENGINE*> check_engines(){
         new SYSD,
         new IGScript,
         new ScrPlayer,
-        new ElfFunClubFinal
+        new ElfFunClubFinal,
+        new Aksys
     };
      
 }
