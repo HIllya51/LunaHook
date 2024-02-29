@@ -17,6 +17,81 @@ CandySoft hook:
   But the original つよき�is quite different. I handle this case separately.
 
 ********************************************************************************************/
+namespace{
+  //https://vndb.org/v23666
+  //(18禁ゲーム) [180928] [INTERHEART glossy] はらかつ！3 ～子作りビジネス廃業の危機！？～ (iso+mds+rr3)
+  //https://vndb.org/v47957
+  //[240222][1261652][DESSERT Soft] 二股野郎とパパ活姉妹 パッケージ版 (mdf+mds)
+  //https://vndb.org/v20368
+  //[170224] [Sweet HEART] アイドル★クリニック 恋の薬でHな処方 (iso+mds+rr3)
+  bool filter(LPVOID data, size_t* size, HookParam*)
+  {
+    StringFilter((char*)data,size,"$L",2);
+    StringFilter((char*)data,size,"$M",2);
+    StringFilter((char*)data,size,"$S",2);
+    StringFilterBetween((char*)data,size,"[",1,"]",1);
+    StringFilterBetween((char*)data,size,"&",1,";",1);
+    return true;
+    // else
+    // {
+    //   v18 = *v16++;
+    //   switch ( v18 )
+    //   {
+    //     case '$':
+    //       switch ( *v16 )
+    //       {
+    //         case 0:
+    //           goto LABEL_44;
+    //         case 76:
+    //           v15 = 3;
+    //           break;
+    //         case 77:
+    //           if ( v15 < 2 )
+    //             v15 = 2;
+    //           break;
+    //         default:
+    //           if ( *v16 == 83 && !v15 )
+    //             v15 = 1;
+    //           break;
+    //       }
+    //       break;
+    //     case '[':
+    //       for ( i = *v16; i; i = *++v16 )
+    //       {
+    //         if ( i == 93 )
+    //           break;
+    //       }
+    //       break;
+    //     case '&':
+    //       for ( j = *v16; j; j = *++v16 )
+    //       {
+    //         if ( j == 59 )
+    //           break;
+    //       }
+    //       break;
+    //     default:
+    //       goto LABEL_43;
+    //   }
+    //   ++v16;
+    // }
+  }
+  uintptr_t hh()
+  {
+    //void __usercall sub_425580(char *a1@<edx>, int a2@<ecx>, int a3)
+    BYTE bytes[]={
+      0x3c,0x24,
+      0x75,XX,
+      0x80,0x7e,0x01,0x00,
+      0x74,XX,
+      0x83,XX,0x02,
+      0x83,XX,0x02,
+    };
+    auto addr = MemDbg::findBytes(bytes, sizeof(bytes), processStartAddress, processStopAddress);
+    if (!addr) return 0;
+    addr=findfuncstart(addr,0x400);
+    return addr;
+  }
+}
 
 namespace { // unnamed Candy
 
@@ -42,27 +117,48 @@ bool InsertCandyHook1()
   return false;
 }
 
-// jichi 8/23/2013: Process name is NOT "SystemC.exe"
-bool InsertCandyHook2()
+uintptr_t __InsertCandyHook2()
 {
   for (DWORD i = processStartAddress + 0x1000; i < processStopAddress - 4 ;i++)
     if (*(WORD *)i == 0x5b3c || // cmp al,0x5b
         (*(DWORD *)i & 0xfff8fc) == 0x5bf880) // cmp reg,0x5B
       for (DWORD j = i, k = i - 0x100; j > k; j--)
         if ((*(DWORD *)j & 0xffff) == 0x8b55) { // push ebp, mov ebp,esp, sub esp,*
-          HookParam hp;
-          hp.address = j;
-          if(((*(BYTE *)(j+3)))==0x51) //push    ecx ,thiscall
-            hp.offset=get_reg(regs::ecx);      //アイドルクリニック～恋の薬でHな処方～
-          else
-            hp.offset=get_stack(1);    // jichi: text in arg1
-          hp.type = USING_STRING;
-          
-          //RegisterEngineType(ENGINE_CANDY);
-          return NewHook(hp, "SystemC");
+          return j;
         }
-  ConsoleOutput("CandyHook2: failed");
-  return false;
+  return 0;
+}
+// jichi 8/23/2013: Process name is NOT "SystemC.exe"
+bool InsertCandyHook2()
+{
+  auto addr1=hh();//新版本的candy，但是有时会和旧版在同一个地址。当是同一个地址时，避让5个字节
+  auto addr2=__InsertCandyHook2();
+  HookParam hp;
+  hp.type=USING_STRING;
+  hp.filter_fun=filter;
+  if(addr2==0&&addr1==0)return false;
+  else if(addr2==0&&addr1!=0){
+    hp.address=addr1;
+    hp.offset=get_reg(regs::edx);
+    return NewHook(hp, "SystemC");
+  }
+  else if(addr2!=0&&addr1==0){
+    hp.address=addr2;
+    hp.offset=get_stack(1);    // jichi: text in arg1
+    return NewHook(hp, "SystemC");
+  }
+  else{
+    if(addr1==addr2){
+      addr1+=5;
+    }
+    hp.address=addr1;
+    hp.offset=get_reg(regs::edx);
+    auto succ=NewHook(hp, "SystemC");
+    hp.address=addr2;
+    hp.offset=get_stack(1); 
+    succ|=NewHook(hp, "SystemC");
+    return succ;
+  }
 }
 
 /** jichi 10/2/2013: CHECKPOINT
@@ -156,10 +252,7 @@ bool InsertCandyHook3()
 
   ULONG range = min(processStopAddress - processStartAddress, MAX_REL_ADDR);
   ULONG addr = MemDbg::findBytes(bytes, sizeof(bytes), processStartAddress, processStartAddress + range);
-  if (!addr) {
-    ConsoleOutput("SystemC#3: pattern not found");
-    return false;
-  }
+  if (!addr) return false;
   HookParam hp;
   hp.address = addr + 1;
   hp.offset=get_stack(4);
@@ -178,9 +271,9 @@ bool InsertCandyHook()
     return InsertCandyHook1()||candy3();
   else{
     //return InsertCandyHook2();
-    bool b2 = InsertCandyHook2(),
-        b3 = InsertCandyHook3();
-    return b2 || b3;
+    bool b2 = InsertCandyHook2();
+    b2 |= InsertCandyHook3();
+    return b2;
   }
 }
 
