@@ -8,7 +8,7 @@ macro(msvc_registry_search)
 			string(REPLACE "/Tools" ";" QT_ROOT "${QT_ROOT}")
 			list(GET QT_ROOT 0 QT_ROOT)
 		endif()
-		file(GLOB QT_VERSIONS "${QT_ROOT}/5.13*")
+		file(GLOB QT_VERSIONS "${QT_ROOT}/5.1*")
 		list(SORT QT_VERSIONS)
 
 		# assume the latest version will be last alphabetically
