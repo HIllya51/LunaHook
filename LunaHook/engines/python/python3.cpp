@@ -151,14 +151,15 @@ bool InsertRenpy3Hook()
                                     return;
                                 stack->rcx=(uintptr_t)PyUnicode_FromKindAndData(PyUnicode_2BYTE_KIND,data,len/2);
                             };
-                    };
-                    PyGILState_Ensure=(PyGILState_Ensure_t)GetProcAddress(module, "PyGILState_Ensure");
-                    PyGILState_Release=(PyGILState_Release_t)GetProcAddress(module, "PyGILState_Release");
-                    PyRun_SimpleString=(PyRun_SimpleString_t)GetProcAddress(module, "PyRun_SimpleString");
-                    patch_fun=[](){
-                        if(wcslen(embedsharedmem->fontFamily)==0)return;
-                        auto state=PyGILState_Ensure();
-                        PyRun_SimpleString(
+                    
+                        PyGILState_Ensure=(PyGILState_Ensure_t)GetProcAddress(module, "PyGILState_Ensure");
+                        PyGILState_Release=(PyGILState_Release_t)GetProcAddress(module, "PyGILState_Release");
+                        PyRun_SimpleString=(PyRun_SimpleString_t)GetProcAddress(module, "PyRun_SimpleString");
+                        patch_fun=[](){
+                            //由于不知道怎么从字体名映射到ttc/ttf文件名，所以暂时写死arial/msyh
+                            if(wcslen(embedsharedmem->fontFamily)==0)return;
+                            auto state=PyGILState_Ensure();
+                            PyRun_SimpleString(
 R"(
 try:
     import renpy
@@ -184,8 +185,9 @@ try:
 except:
     pass
 )");
-                        PyGILState_Release(state);
-                    }; 
+                            PyGILState_Release(state);
+                        }; 
+                    };
                     hp.text_fun = [](hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len)
                     {
                         auto format=(PyObject *)stack->rcx;
