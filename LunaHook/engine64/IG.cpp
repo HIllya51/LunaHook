@@ -60,7 +60,7 @@ bool InsertIG64Hook2() {
     ConsoleOutput("IG642 %p", addr);
     HookParam hp;
     hp.address = addr;
-    hp.type = CODEC_UTF16 | USING_STRING;
+    hp.type = CODEC_UTF16 | USING_STRING |EMBED_ABLE|EMBED_BEFORE_SIMPLE|EMBED_AFTER_NEW;//可以内嵌英文
     hp.filter_fun = IG64filter;
     hp.offset=get_reg(regs::rdx);//rdx 
     ok|=NewHook(hp, "IG642");
