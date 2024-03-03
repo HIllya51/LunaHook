@@ -1,5 +1,6 @@
 #include"types.h"
 #include"main.h"
+#include"embed_util.h"
 namespace {
     #ifdef Py_TRACE_REFS
 /* Define pointers to support a doubly-linked list of all live heap objects. */
@@ -110,6 +111,15 @@ enum PyUnicode_Kind {
         const void *buffer,
         Py_ssize_t size);
     PyUnicode_FromKindAndData_t PyUnicode_FromKindAndData;
+
+    typedef enum {PyGILState_LOCKED, PyGILState_UNLOCKED}
+        PyGILState_STATE;
+    typedef PyGILState_STATE (*PyGILState_Ensure_t)(void);
+    PyGILState_Ensure_t PyGILState_Ensure;
+    typedef void (*PyGILState_Release_t)(PyGILState_STATE);
+    PyGILState_Release_t PyGILState_Release;
+    typedef int (*PyRun_SimpleString_t)(const char *command);
+    PyRun_SimpleString_t PyRun_SimpleString;
 }
  #ifdef _WIN64
                 
@@ -141,7 +151,41 @@ bool InsertRenpy3Hook()
                                     return;
                                 stack->rcx=(uintptr_t)PyUnicode_FromKindAndData(PyUnicode_2BYTE_KIND,data,len/2);
                             };
-                    }
+                    };
+                    PyGILState_Ensure=(PyGILState_Ensure_t)GetProcAddress(module, "PyGILState_Ensure");
+                    PyGILState_Release=(PyGILState_Release_t)GetProcAddress(module, "PyGILState_Release");
+                    PyRun_SimpleString=(PyRun_SimpleString_t)GetProcAddress(module, "PyRun_SimpleString");
+                    patch_fun=[](){
+                        if(wcslen(embedsharedmem->fontFamily)==0)return;
+                        auto state=PyGILState_Ensure();
+                        PyRun_SimpleString(
+R"(
+try:
+    import renpy
+    import ctypes
+    import os
+    def hook_renpy_text_font_get_font_init(original):
+        def new_init(*args, **kwargs):
+            #ctypes.windll.user32.MessageBoxW(None, str(kwargs), str(args), 0)
+            if os.path.exists(r'C:\Windows\Fonts\msyh.ttc'):
+                font='msyh.ttc'
+            elif os.path.exists(r'C:\Windows\Fonts\arial.ttf'):
+                font='arial.ttf'
+            else:
+                font=None
+            if font:
+                args=(font,)+args[1:]
+                if 'fn' in kwargs:
+                    kwargs['fn']=font
+            return original(*args, **kwargs)
+
+        return new_init
+    renpy.text.font.get_font = hook_renpy_text_font_get_font_init(renpy.text.font.get_font)
+except:
+    pass
+)");
+                        PyGILState_Release(state);
+                    }; 
                     hp.text_fun = [](hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len)
                     {
                         auto format=(PyObject *)stack->rcx;
