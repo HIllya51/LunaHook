@@ -325,27 +325,6 @@ bool yuris7(){
     hp.address = addr; 
     hp.offset=get_reg(regs::edx);
     hp.type = USING_STRING; 
-    hp.filter_fun=[](void* data, size_t* len, HookParam* hp){
-      static std::unordered_set<std::string>filtername;
-        
-        auto text=std::string((char*)data,*len);
-        if(*len!=2)return false;
-        // if(text.find("\x81\x45")!=text.npos)return false;
-        // if(text.find("item")!=text.npos)return false;
-        // if(text==std::string("\x81\x48\x81\x48\x81\x48"))return false;
-        if(all_ascii((char*)data,*len))return false;
-        // if(filtername.find(text)!=filtername.end())return false;
-        // std::regex pattern("\x81\x79([^\x81\x7a]+)\x81\x7a");
-        // std::smatch match;
-        // if(std::regex_search(text, match, pattern)) {
-        //     filtername.insert(match[1]); 
-        // }
-
-        return true;
-    };
-    auto succ= NewHook(hp,"yuris7");
-    hp.address+=7;
-    hp.filter_fun=nullptr;
     hp.text_fun = [](hook_stack* stack, HookParam *hp, uintptr_t* data, uintptr_t* split, size_t* len)
     {
       *len=0;
@@ -360,7 +339,7 @@ bool yuris7(){
       *split=stack->edi;//|(stack->eax*0x100);//会把人名的引号分开
  
     };
-    return NewHook(hp,"yuris8")||succ;
+    return NewHook(hp,"yuris8");
 }
 bool yuris8(){
   //けもの道☆ガーリッシュスクエア LOVE+PLUS
