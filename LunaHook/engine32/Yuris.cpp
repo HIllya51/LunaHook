@@ -306,7 +306,9 @@ bool InsertYuris6Hook()
 bool yuris7(){
   //猫忍えくすはーとSPIN!
   //夏空あすてりずむ
-
+  
+  //https://vndb.org/r111807
+  //[210924][1139364][Liquid] 黒獣2改 ～淫欲に染まる背徳の都、再び～ 多国語版 Chinese-English DL版 (files)
   const BYTE bytes[] = {
     0x57,0x56,0x55,0x53,0x83,0xec,0x10,
     0x8b,0x5c,0x24,0x24,
@@ -346,10 +348,17 @@ bool yuris7(){
     hp.filter_fun=nullptr;
     hp.text_fun = [](hook_stack* stack, HookParam *hp, uintptr_t* data, uintptr_t* split, size_t* len)
     {
-    //*len = (regof(eax,esp_base) == 0x02 && regof(edi,esp_base) == 0x14) ? 2 : 0; //dialogs without names
-    *len = (stack->eax == 0x02 && stack->edi >= 0x62 && stack->edi <= 0x68) ? 2 : 0; //dialogs with names
-    // if(*len)
-    // ConsoleOutput("%x %x %s",stack->eax,stack->edi,WideStringToString(StringToWideString((char*)stack->edx,932).value()).c_str());
+      *len=0;
+      if(stack->edi>0x100)return;
+      //if(stack->eax==1)return;
+      if(stack->edi<0x60||stack->edi>0x80)return;
+      if(strlen((char*)stack->edx)>2)return;
+      if(strcmp((char*)stack->edx,"BG")==0||strcmp((char*)stack->edx,"VO")==0)return;
+
+      *len=min(2,strlen((char*)stack->edx));
+    
+      *split=stack->edi;//|(stack->eax*0x100);//会把人名的引号分开
+ 
     };
     return NewHook(hp,"yuris8")||succ;
 }
