@@ -17,7 +17,7 @@ std::optional<std::wstring>SelectFile(HWND hwnd,LPCWSTR lpstrFilter){
     ofn.lpstrFilter = lpstrFilter;
     ofn.lpstrFile = szFileName;
     ofn.nMaxFile = sizeof(szFileName);
-    ofn.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;
+    ofn.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY | OFN_NOCHANGEDIR;
 
     if (GetOpenFileName(&ofn))
     {
@@ -67,11 +67,11 @@ Pluginmanager::Pluginmanager(LunaHost* _host):host(_host){
         std::scoped_lock lock(OnNewSentenceSLock);
         
         OnNewSentenceS[L"InternalClipBoard"]=GetProcAddress(GetModuleHandle(0),"OnNewSentence");//内部链接的剪贴板插件
-        auto plgs=host->configs->pluginsget();
         std::vector<std::wstring>collectQtplugs;
-        for (auto i=0;i<plgs.size();i++) {
-            bool isqt=plgs[i]["isQt"];
-            auto path=StringToWideString(plgs[i]["path"]);
+        for (auto i=0;i<host->configs->pluginsnum();i++) {
+            auto plg=host->configs->pluginsget(i);
+            bool isqt=plg.isQt;
+            auto path=plg.wpath();
             PluginRank.push_back(path);
             OnNewSentenceS[path]=0;
             if(isqt){
@@ -149,7 +149,7 @@ void Pluginmanager::swaprank(int a,int b){
 }
 bool Pluginmanager::addplugin(const std::wstring& p,bool isQt){
     if(isQt){
-        host->configs->pluginsadd(WideStringToString(p),isQt);
+        host->configs->pluginsadd({p,isQt});
         return true;
     }
     auto plugin=GetProcAddress(LoadLibraryW(p.c_str()),"OnNewSentence");
@@ -159,7 +159,7 @@ bool Pluginmanager::addplugin(const std::wstring& p,bool isQt){
             PluginRank.push_back(p);
             //std::swap(PluginRank.end()-2,PluginRank.end()-1);
             OnNewSentenceS[p]=plugin;
-            host->configs->pluginsadd(WideStringToString(p),isQt);
+            host->configs->pluginsadd({p,isQt});
         }
         return true;
     }

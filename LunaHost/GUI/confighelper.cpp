@@ -1,5 +1,5 @@
 #include"confighelper.h"
-
+#include"stringutils.h"
 std::string readfile(const wchar_t* fname) {
     FILE* f;
     _wfopen_s(&f, fname, L"rb");
@@ -52,12 +52,50 @@ void confighelper::pluginrankswap(int a,int b){
     plgs[b]=plgs[a];
     plgs[a]=_b;
 }
-void confighelper::pluginsadd(const std::string& p,bool isQt){
-    configs["plugins"].push_back({
-                {"path",p},
-                {"isQt",isQt}
-                });
+void confighelper::pluginsadd(const pluginitem& item){
+    configs["plugins"].push_back(item.dump());
 }
-nlohmann::json confighelper::pluginsget(){
-    return configs["plugins"];
+int confighelper::pluginsnum(){
+    return configs["plugins"].size();
+}
+pluginitem confighelper::pluginsget(int i){
+    return pluginitem{configs["plugins"][i]};
+}
+template<typename T>
+T safequeryjson(const nlohmann::json& js,const std::string& key,const T &defaultv){
+    if(js.find(key)==js.end()){
+        return defaultv;
+    }
+    return js[key];
+}
+pluginitem::pluginitem(const nlohmann::json& js){
+    path=js["path"];
+    isQt=safequeryjson(js,"isQt",false);
+    isref=safequeryjson(js,"isref",false);
+}
+std::wstring pluginitem::wpath(){
+    auto wp=StringToWideString(path);
+    if(isref)return std::filesystem::current_path()/wp;
+    else return wp;
+}
+
+std::pair<std::wstring,bool> castabs2ref(const std::wstring&p){
+    auto curr=std::filesystem::current_path().wstring();
+    if(startWith(p,curr)){
+        return {p.substr(curr.size()+1),true};
+    }
+    return {p,false};
+}
+pluginitem::pluginitem(const std::wstring& pabs,bool _isQt){
+    isQt=_isQt;
+    auto [p,_isref]=castabs2ref(pabs);
+    isref=_isref;
+    path=WideStringToString(p);
+}
+nlohmann::json pluginitem::dump() const{
+    return {
+        {"path",path},
+        {"isQt",isQt},
+        {"isref",isref}
+    };
 }
