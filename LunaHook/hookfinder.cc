@@ -165,7 +165,7 @@ void Send(char** stack, uintptr_t address)
 	}
 }
 
-std::vector<uint64_t> GetFunctions(uintptr_t module)
+std::vector<uintptr_t> GetFunctions(uintptr_t module)
 {
 	if (!module) return {};
 	IMAGE_DOS_HEADER* dosHeader = (IMAGE_DOS_HEADER*)module;
@@ -175,14 +175,14 @@ std::vector<uint64_t> GetFunctions(uintptr_t module)
 	DWORD exportAddress = ntHeader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress;
 	if (!exportAddress) return {};
 	IMAGE_EXPORT_DIRECTORY* exportDirectory = (IMAGE_EXPORT_DIRECTORY*)(module + exportAddress);
-	std::vector<uint64_t> functions;
+	std::vector<uintptr_t> functions;
 	for (int i = 0; i < exportDirectory->NumberOfNames; ++i)
 		//char* funcName = (char*)(module + *(DWORD*)(module + exportDirectory->AddressOfNames + i * sizeof(DWORD)));
 		functions.push_back(module + *(DWORD*)(module + exportDirectory->AddressOfFunctions +
 			sizeof(DWORD) * *(WORD*)(module + exportDirectory->AddressOfNameOrdinals + i * sizeof(WORD))));
 	return functions;
 }
-void mergevector(std::vector<uint64_t> &v1,std::vector<uint64_t> &v2){
+void mergevector(std::vector<uintptr_t> &v1,std::vector<uintptr_t> &v2){
 	for(auto addr:v2){
 		auto it = std::find(v1.begin(), v1.end(), addr);  
 		if (it == v1.end()) {  
@@ -206,7 +206,7 @@ void SearchForHooks(SearchParam spUser)
 			catch (std::bad_alloc) { ConsoleOutput(SearchForHooks_ERROR, sp.maxRecords /= 2); }
 		while (!records && sp.maxRecords);
 
-		std::vector<uint64_t> addresses;
+		std::vector<uintptr_t> addresses;
 		if (*sp.boundaryModule) {
 			auto [minaddr,maxaddr]=Util::QueryModuleLimits(GetModuleHandleW(sp.boundaryModule));
 			if(sp.address_method==0){
@@ -225,7 +225,7 @@ void SearchForHooks(SearchParam spUser)
 			auto _addresses = GetFunctions((uintptr_t)GetModuleHandleW(sp.boundaryModule));
 			mergevector(addresses,_addresses);
 		}
-		std::vector<uint64_t> addresses1;
+		std::vector<uintptr_t> addresses1;
 		if(sp.search_method==0){
 			for (auto& addr : addresses1 = Util::SearchMemory(sp.pattern, sp.length, PAGE_EXECUTE, sp.minAddress, sp.maxAddress)) 
 				addr += sp.offset;
@@ -254,11 +254,11 @@ void SearchForHooks(SearchParam spUser)
 		mergevector(addresses,addresses1);
 
 		auto limits = Util::QueryModuleLimits(GetModuleHandleW(LUNA_HOOK_DLL));
-		addresses.erase(std::remove_if(addresses.begin(), addresses.end(), [&](uint64_t addr) { return addr > limits.first && addr < limits.second; }), addresses.end());
+		addresses.erase(std::remove_if(addresses.begin(), addresses.end(), [&](auto addr) { return addr > limits.first && addr < limits.second; }), addresses.end());
 
 		auto trampolines = (decltype(trampoline)*)VirtualAlloc(NULL, sizeof(trampoline) * addresses.size(), MEM_COMMIT, PAGE_READWRITE);
 		VirtualProtect(trampolines, addresses.size() * sizeof(trampoline), PAGE_EXECUTE_READWRITE, DUMMY);
-		std::vector<uint64_t>mherroridx;
+		std::vector<uintptr_t>mherroridx;
 		for (int i = 0; i < addresses.size(); ++i)
 		{
 			void* original; 
@@ -319,7 +319,7 @@ void SearchForText(wchar_t* text, UINT codepage)
 	
 	if (strlen(utf8Text) < 4 || ((codepage!=CP_UTF8)&&(strlen(codepageText) < 4)) || wcslen(text) < 4) return ConsoleOutput(NOT_ENOUGH_TEXT);
 	ConsoleOutput(HOOK_SEARCH_STARTING);
-	auto GenerateHooks = [&](std::vector<uint64_t> addresses, HookParamType type)
+	auto GenerateHooks = [&](std::vector<uintptr_t> addresses, HookParamType type)
 	{
 		for (auto addr : addresses)
 		{

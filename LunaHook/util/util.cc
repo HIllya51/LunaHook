@@ -273,7 +273,7 @@ bool SearchResourceString(LPCWSTR str)
   return false;
 }
 
-std::pair<uint64_t, uint64_t> QueryModuleLimits(HMODULE module,uintptr_t addition,DWORD protect)
+std::pair<uintptr_t, uintptr_t> QueryModuleLimits(HMODULE module,uintptr_t addition,DWORD protect)
 {
 	uintptr_t moduleStartAddress = (uintptr_t)module + addition;
 	uintptr_t moduleStopAddress = moduleStartAddress;
@@ -287,11 +287,11 @@ std::pair<uint64_t, uint64_t> QueryModuleLimits(HMODULE module,uintptr_t additio
 	return { moduleStartAddress, moduleStopAddress };
 }
 
-std::vector<uint64_t> SearchMemory(const void* bytes, short length, DWORD protect, uintptr_t minAddr, uintptr_t maxAddr)
+std::vector<uintptr_t> SearchMemory(const void* bytes, short length, DWORD protect, uintptr_t minAddr, uintptr_t maxAddr)
 {
 	SYSTEM_INFO systemInfo;
 	GetNativeSystemInfo(&systemInfo);
-	std::vector<std::pair<uint64_t, uint64_t>> validMemory;
+	std::vector<std::pair<uintptr_t, uintptr_t>> validMemory;
 	for (BYTE* probe = NULL; probe < systemInfo.lpMaximumApplicationAddress;)
 	{
 		MEMORY_BASIC_INFORMATION info = {};
@@ -302,15 +302,15 @@ std::vector<uint64_t> SearchMemory(const void* bytes, short length, DWORD protec
 		}
 		else
 		{
-			if ((uint64_t)info.BaseAddress + info.RegionSize >= minAddr && info.Protect >= protect && !(info.Protect & PAGE_GUARD))
-				validMemory.push_back({ (uint64_t)info.BaseAddress, info.RegionSize });
+			if ((uintptr_t)info.BaseAddress + info.RegionSize >= minAddr && info.Protect >= protect && !(info.Protect & PAGE_GUARD))
+				validMemory.push_back({ (uintptr_t)info.BaseAddress, info.RegionSize });
 			probe += info.RegionSize;
 		}
 	}
 
-	std::vector<uint64_t> ret;
+	std::vector<uintptr_t> ret;
 	for (auto memory : validMemory)
-		for (uint64_t addr = max(memory.first, minAddr); true;)
+		for (uintptr_t addr = max(memory.first, minAddr); true;)
 			if (addr < maxAddr && (addr = SafeSearchMemory(addr, memory.first + memory.second, (const BYTE*)bytes, length)))
 				ret.push_back(addr++);
 			else break;

@@ -1,6 +1,6 @@
 #include"Sprite.h"
  
-bool Sprite::attach_function() {
+bool Sprite_attach_function() {
   //恋と選挙とチョコレート
   auto m=GetModuleHandle(L"dirapi.dll");
   auto [minAddress, maxAddress] = Util::QueryModuleLimits(m);
@@ -32,3 +32,34 @@ bool Sprite::attach_function() {
   hp.type = USING_STRING;  
   return NewHook(hp, "Sprite");
 } 
+namespace{
+  bool _h1(){
+    //https://vndb.org/v1714
+    //[Selen]はらみこ
+    auto FlashAssetx32=GetModuleHandleW(L"Flash Asset.x32");
+    if(FlashAssetx32==0)return false;
+    auto [s,e]=Util::QueryModuleLimits(FlashAssetx32);
+    const BYTE bytes[] = {
+      0x56,0x57,0x6a,0xff,
+      0xff,0x75,0x08,//ebp+8
+      0x53,
+      0x68,0xe4,0x04,0x00,0x00,
+      0xff,0x15,XX4//MultiByteToWideChar
+	  };
+    auto addr = MemDbg::findBytes(bytes, sizeof(bytes), s, e);
+    if(addr==0)return false;
+    HookParam hp;
+    hp.address = addr+sizeof(bytes);//不知道从哪jump到call MultiByteToWideChar的
+    hp.offset=get_stack(5);
+    hp.type = USING_STRING;
+    hp.filter_fun=[](LPVOID data, size_t *size, HookParam *)->bool
+    {
+      static int idx=0;
+      return (idx++)%2;
+    };
+    return NewHook(hp, "Selen");
+  }
+}
+bool Sprite::attach_function() {
+  return Sprite_attach_function()|_h1();
+}

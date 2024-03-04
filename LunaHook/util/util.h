@@ -38,8 +38,8 @@ bool CheckFile(LPCWSTR name);
 
 bool SearchResourceString(LPCWSTR str);
 
-std::pair<uint64_t, uint64_t> QueryModuleLimits(HMODULE module,uintptr_t addition=0x1000,DWORD protect=PAGE_EXECUTE);
-std::vector<uint64_t> SearchMemory(const void* bytes, short length, DWORD protect = PAGE_EXECUTE, uintptr_t minAddr = 0, uintptr_t maxAddr = -1ULL);
+std::pair<uintptr_t, uintptr_t> QueryModuleLimits(HMODULE module,uintptr_t addition=0x1000,DWORD protect=PAGE_EXECUTE);
+std::vector<uintptr_t> SearchMemory(const void* bytes, short length, DWORD protect = PAGE_EXECUTE, uintptr_t minAddr = 0, uintptr_t maxAddr = -1ULL);
 uintptr_t FindFunction(const char* function);
 
 } // namespace Util
