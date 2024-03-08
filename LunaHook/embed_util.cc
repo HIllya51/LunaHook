@@ -179,7 +179,7 @@ inline UINT64 djb2_n2(const unsigned char * str, size_t len, UINT64 hash =  5381
     }
     return hash;
 }
-std::unordered_map<std::wstring,std::wstring>translatecache;
+std::unordered_map<UINT64,std::wstring>translatecache;
 bool check_is_thread_selected(const ThreadParam& tp){
 	for(int i=0;i<10;i++)
     if(embedsharedmem->use[i])
@@ -220,22 +220,36 @@ void TextHook::parsenewlineseperator(void*data ,size_t*len)
     StringReplacer((char*)data,len,newlineseperatorA.c_str(),newlineseperatorA.size(),"\n",1);
   }
 }
-
+UINT64 texthash(void*data,size_t len)
+{
+  UINT64 sum=0;
+  auto u8data=(UINT8*)data;
+  for(int i=0;i< len;i++){
+    sum+=u8data[i];
+    sum=sum<<1;
+  }
+  return sum;
+}
+bool checktranslatedok(void*data ,size_t len)
+{
+  if(len>1000)return true;
+  return(translatecache.find(texthash(data,len))!=translatecache.end());
+}
 bool TextHook::waitfornotify(TextOutput_T* buffer,void*data ,size_t*len,ThreadParam tp){
   std::wstring origin;
   if (auto t=commonparsestring(data,*len,&hp,embedsharedmem->codepage)) origin=t.value();
 	else return false;
-	if(origin.size()>1000)return false; 
 
   std::wstring translate;
-  if(translatecache.find(origin)!=translatecache.end()){
-    translate=translatecache.at(origin);
+  auto hash=texthash(data,*len);
+  if(translatecache.find(hash)!=translatecache.end()){
+    translate=translatecache.at(hash);
   }
   else{
     if(waitforevent(embedsharedmem->waittime,tp,origin)==false)return false;
     translate=embedsharedmem->text; 
     if((translate.size()==0)||(translate==origin))return false;
-    translatecache.insert(std::make_pair(origin,translate));
+    translatecache.insert(std::make_pair(hash,translate));
   }
 	if(hp.newlineseperator)strReplace(translate,L"\n",hp.newlineseperator);
   translate=adjustSpacesSTD(translate,hp);

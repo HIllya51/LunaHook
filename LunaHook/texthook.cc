@@ -195,6 +195,9 @@ void TextHook::Send(uintptr_t lpDataBase)
 		ThreadParam tp{ GetCurrentProcessId(), address, lpRetn, lpSplit };
 
 		parsenewlineseperator(pbData, &lpCount);
+		
+		if((hp.type&EMBED_ABLE)&&(checktranslatedok(pbData,lpCount)))
+			buffer->type=buffer->type&(~EMBED_ABLE);
 
 		TextOutput(tp, buffer, lpCount);
 
