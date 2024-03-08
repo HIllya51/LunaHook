@@ -4,3 +4,6 @@ charset_Robotics_Notes_Elite CHARSET "resource/charset_Robotics_Notes_Elite.txt"
 compound_chars_default COMPOUND_CHARS "resource/compound_chars_default.txt"
 compound_chars_Robotics_Notes_Elite COMPOUND_CHARS "resource/compound_chars_Robotics_Notes_Elite.txt"
 compound_chars_Robotics_Notes_Dash COMPOUND_CHARS "resource/compound_chars_Robotics_Notes_Dash.txt"
+
+renpy_hook_font PYSOURCE "resource/renpy_hook_font.py"
+renpy_hook_text PYSOURCE "resource/renpy_hook_text.py"
