@@ -20,3 +20,15 @@ class SilkysOld:public ENGINE{
     }; 
      bool attach_function(); 
 };
+
+
+class Siglusold:public ENGINE{
+    public:
+    Siglusold(){
+        //女系家族
+        //https://vndb.org/v5650
+        check_by=CHECK_BY::FILE_ALL;
+        check_by_target=check_by_list{L"*.mfg",L"*.mff",L"*.mfm",L"*.mfs"};
+    };
+     bool attach_function();
+};

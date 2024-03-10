@@ -301,7 +301,8 @@ std::vector<ENGINE*> check_engines(){
         new IGScript,
         new ScrPlayer,
         new ElfFunClubFinal,
-        new Aksys
+        new Aksys,
+        new Siglusold
     };
      
 }

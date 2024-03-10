@@ -448,3 +448,80 @@ bool SilkysOld::attach_function(){
   hp.type=DATA_INDIRECT;
   return NewHook(hp, "SilkysOld");
 }
+
+
+bool Siglusold::attach_function(){
+  //女系家族
+  //https://vndb.org/v5650
+//   int __cdecl sub_410C20(char *a1, _DWORD *a2)
+// {
+//   unsigned __int16 v2; // dx
+//   int v3; // edi
+//   int result; // eax
+//   int v5; // eax
+
+//   HIBYTE(v2) = *a1;
+//   LOBYTE(v2) = a1[1];
+//   v3 = *a1;
+//   *a2 = 24 * (v2 & 0xF);
+//   if ( v2 < 0x8140u || v2 > 0x84FFu )
+//   {
+//     if ( v2 < 0x8740u || v2 > 0x879Fu )
+//     {
+//       if ( v2 < 0x8890u || v2 > 0x88FFu )
+//       {
+//         if ( v2 < 0x8940u || v2 > 0x9FFFu )
+//         {
+//           if ( v2 < 0xE040u || v2 > 0xEAA4u )
+//           {
+//             if ( v2 < 0xFA40u || v2 > 0xFAFCu )
+//             {
+//               if ( v2 < 0xFB40u || v2 > 0xFBFCu )
+//               {
+//                 if ( v2 < 0xFC40u || v2 > 0xFC4Bu )
+//                 {
+  BYTE bytes[]={
+    0x66,XX,0x40,0x87,
+    XX2,
+    0x66,XX,0x9f,0x87,
+  };
+  auto addr = MemDbg::findBytes(bytes, sizeof(bytes), processStartAddress, processStopAddress);
+  if(addr==0)return false;
+  addr=MemDbg::findEnclosingAlignedFunction_strict(addr);
+  if(addr==0)return false;
+  HookParam hp;
+  hp.address = addr; 
+  hp.type=USING_CHAR|DATA_INDIRECT;
+  hp.offset=get_stack(1);
+  auto succ= NewHook(hp, "Siglusold_slow");//文本速度是慢速时这个有用，调成快速以后有无法过滤的重复
+  auto addrs=findxref_reverse_checkcallop(addr,addr-0x1000,addr+0x1000,0xe8);
+  for(auto addr:addrs){
+    //寻找调用者，速度为快速时调用者有正确的文本
+    addr=MemDbg::findEnclosingAlignedFunction_strict(addr);
+    if(addr==0)continue;
+    HookParam hpref;
+    hpref.address=addr;
+    hpref.text_fun=[](hook_stack* stack,  HookParam *hp, uintptr_t *data, uintptr_t *split, size_t*len){
+      auto a2=(DWORD*)stack->stack[2];
+     
+      auto len1=stack->stack[3];//慢速时是1
+      auto len2=a2[7]-a2[6];
+      if(len1==0||len2==0)return;
+      
+      if(len1==1){//慢速
+        hp->type=USING_CHAR;
+        *data=a2[5]+a2[6];
+        *data=*(WORD*)*data;
+        auto check=(BYTE)*data;//换行符
+        *len=1+IsDBCSLeadByteEx(932,check);
+      }
+      else{//快速&&慢速下立即显示
+        *data=a2[5];
+        *len=len1;
+      }
+    };
+    hpref.type=USING_STRING;
+    succ|= NewHook(hpref, "Siglusold_fast");
+  }
+  return succ;
+}
