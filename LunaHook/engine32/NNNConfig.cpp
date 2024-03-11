@@ -29,7 +29,7 @@ bool NNNConfig::attach_function() {
 	HookParam hp;
 	hp.address = funcaddr;
 	hp.offset = offset;
-	hp.type = USING_STRING|FULL_STRING;
+	hp.type = USING_STRING;
 	hp.text_fun=[](hook_stack* stack,  HookParam *, uintptr_t *data, uintptr_t *split, size_t *len){
 		//当前文本可以过滤重复，上一条文本会按照换行符切分不停刷新。
         static std::unordered_map<uintptr_t,std::string>everythreadlast;
