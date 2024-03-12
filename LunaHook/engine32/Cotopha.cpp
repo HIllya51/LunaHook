@@ -596,7 +596,40 @@ namespace Private {
 } // namespace ScenarioHook
 
 } // unnamed namespace
+bool CotophaFilter(LPVOID data, size_t *size, HookParam *)
+{
+  auto text = reinterpret_cast<LPWSTR>(data);
+  auto len = reinterpret_cast<size_t *>(size);
 
+  if (*len<=2 || text[0] != L'\\')
+    return false;
+
+  size_t lenPurged = 0;
+  for (size_t i = 0; i < *len/2; i++) {
+    if (text[i] != L'\\') {
+      text[lenPurged++] = text[i];
+    } else {
+      // start command
+      wchar_t cmd=text[++i];
+      if (cmd == 'r') {  // ruby
+        i++; // skip ';' char
+        while (text[++i] != L':') { 
+          if (text[i] == L';') // when we reach '; ' we have the kanji part
+            break;
+          text[lenPurged++] = text[i];
+        }
+      }
+      else if (cmd == L'n' && lenPurged)  // newline
+        text[lenPurged++] = L' '; // for Western language compatibility
+      while (text[++i] != L':')
+        ;
+    }
+  }
+  if (lenPurged)
+    text[lenPurged++] = L' ';  // for Western language compatibility
+  *len = lenPurged * 2;
+  return true;
+}
 bool InsertCotophaHook1()
 {
   enum : DWORD { ins = 0xec8b55 }; // mov ebp,esp, sub esp,*  ; jichi 7/12/2014
@@ -611,6 +644,7 @@ bool InsertCotophaHook1()
   hp.split = get_reg(regs::ebp);
   hp.type = CODEC_UTF16|USING_SPLIT|USING_STRING|EMBED_ABLE|EMBED_AFTER_NEW;
   hp.hook_before=ScenarioHook::Private::hookBefore;
+  hp.filter_fun = CotophaFilter;
   ConsoleOutput("INSERT Cotopha");
   
   //RegisterEngineType(ENGINE_COTOPHA);
@@ -677,7 +711,7 @@ bool InsertCotophaHook4()
   ULONG range = min(processStopAddress - processStartAddress, MAX_REL_ADDR);
   ULONG addr = MemDbg::findBytes(bytes, sizeof(bytes), processStartAddress, processStartAddress + range);
   if (!addr) {
-    ConsoleOutput("vnreng:Cotopha4: pattern not found");
+    ConsoleOutput("Cotopha4: pattern not found");
     return false;
   }
 
@@ -685,36 +719,7 @@ bool InsertCotophaHook4()
   hp.address = addr + 1;
   hp.offset = get_stack(1);
   hp.type = CODEC_UTF16 | USING_STRING | NO_CONTEXT ;
-  hp.filter_fun = [](void* data, size_t* size, HookParam*)
-  {
-    auto text = reinterpret_cast<LPWSTR>(data);
-    auto len = reinterpret_cast<size_t *>(size);
-
-    if (text[0] != L'\\')
-      return false;
-
-    size_t lenPurged = 0;
-    for (size_t i = 0; i < *len/2; i++) {
-      if (text[i] != L'\\')
-        text[lenPurged++] = text[i];
-      else {
-        // start command
-        wchar_t cmd=text[++i];
-        if (cmd == 'r') {  // ruby
-          i++; // skip ';' char
-          while (text[++i] != L':') { 
-            if (text[i] == L';') // when we reach '; ' we have the kanji part
-              break;
-            text[lenPurged++] = text[i];
-          }
-		}
-        while (text[++i] != L':')
-          ;
-      }
-    }
-    *len = lenPurged * 2;
-    return true;
-  };
+  hp.filter_fun = CotophaFilter;
   NewHook(hp, "Cotopha4");
   return true;
 }
