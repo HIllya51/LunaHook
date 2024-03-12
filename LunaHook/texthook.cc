@@ -106,6 +106,17 @@ bool TextHook::Insert(HookParam hp)
 	return InsertHookCode();
 }
 
+uintptr_t queryrelativeret(uintptr_t retaddr){
+	//不需要区分是相对于哪个module的偏移，只需要得到偏移就可以了，用来确保重启程序后ret值恒定
+	static Synchronized<std::unordered_map<uintptr_t, uintptr_t>> retaddr2relative;
+	auto &re=retaddr2relative.Acquire().contents;
+	if(re.find(retaddr)!=re.end())return re.at(retaddr);
+	uintptr_t relative=retaddr;
+	if (MEMORY_BASIC_INFORMATION info = {}; VirtualQuery((LPCVOID)retaddr, &info, sizeof(info)))
+		relative-=(uintptr_t)info.AllocationBase;
+	re.insert(std::make_pair(retaddr,relative));
+	return relative;
+}
 void TextHook::Send(uintptr_t lpDataBase)
 {
 	auto buffer =(TextOutput_T*) local_buffer;
@@ -192,6 +203,7 @@ void TextHook::Send(uintptr_t lpDataBase)
 		
 		buffer->type=hp.type;
 		
+		lpRetn=queryrelativeret(lpRetn);
 		ThreadParam tp{ GetCurrentProcessId(), address, lpRetn, lpSplit };
 
 		parsenewlineseperator(pbData, &lpCount);
