@@ -84,16 +84,13 @@ std::unordered_map<std::wstring, std::wstring> loadfontfiles() {
 
             auto lpLogfonts = std::make_unique<LOGFONTW[]>(dwFontsLoaded);
             DWORD cbBuffer = dwFontsLoaded * sizeof(LOGFONTW);
-            if (!GetFontResourceInfo(fontfile.c_str(), &cbBuffer, lpLogfonts.get(), QFR_LOGFONT)) {
-                RemoveFontResourceExW(fontfile.c_str(), FR_PRIVATE, 0);
-                continue;
-            }
+            auto succ=GetFontResourceInfo(fontfile.c_str(), &cbBuffer, lpLogfonts.get(), QFR_LOGFONT);
+            RemoveFontResourceExW(fontfile.c_str(), FR_PRIVATE, 0);
+            if (!succ)continue;
             for (int k = 0; k < dwFontsLoaded; k++)
                 fntss[i].insert(std::make_pair(lpLogfonts[k].lfFaceName, fontfile));
-            RemoveFontResourceExW(fontfile.c_str(), FR_PRIVATE, 0);
-
         }
-        };
+    };
     for (int i = 0; i < LOADFONTTHREADNUM; i++) {
         ts.emplace_back(std::thread(singletask,i));
     }
