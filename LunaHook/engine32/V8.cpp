@@ -137,7 +137,7 @@ namespace{
 		hp.address=(uintptr_t)SetClipboardData;
 		hp.type= USING_STRING|CODEC_UTF16|EMBED_ABLE|EMBED_BEFORE_SIMPLE;
 		hp.text_fun=[](hook_stack* stack, HookParam *hp, uintptr_t* data, uintptr_t* split, size_t* len){
-			HGLOBAL hClipboardData=(HGLOBAL)s->stack[2];
+			HGLOBAL hClipboardData=(HGLOBAL)stack->stack[2];
 			*data=(uintptr_t)GlobalLock(hClipboardData);
 			*len=wcslen((wchar_t*)*data)*2;
 			GlobalUnlock(hClipboardData); 
