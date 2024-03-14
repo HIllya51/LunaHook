@@ -131,6 +131,27 @@ namespace{
 		return NewHook(hp,"v8::String::Length");
 	}
 }
+namespace{
+	bool hookClipboard(){
+		HookParam hp;
+		hp.address=(uintptr_t)SetClipboardData;
+		hp.type= USING_STRING|CODEC_UTF16|EMBED_ABLE|EMBED_BEFORE_SIMPLE;
+		hp.text_fun=[](hook_stack* stack, HookParam *hp, uintptr_t* data, uintptr_t* split, size_t* len){
+			HGLOBAL hClipboardData=(HGLOBAL)s->stack[2];
+			*data=(uintptr_t)GlobalLock(hClipboardData);
+			*len=wcslen((wchar_t*)*data)*2;
+			GlobalUnlock(hClipboardData); 
+		};
+		hp.hook_after=[](hook_stack*s,void* data, size_t len){
+			HGLOBAL hClipboardData = GlobalAlloc(GMEM_MOVEABLE, len +2);
+			auto pchData = (wchar_t*)GlobalLock(hClipboardData);
+			wcscpy(pchData, (wchar_t*)data);
+			GlobalUnlock(hClipboardData); 
+			s->stack[2]=(uintptr_t)hClipboardData;
+		};
+		return NewHook(hp,"hookClipboard");
+	}
+}
 bool V8::attach_function_() {
 	for (const wchar_t* moduleName : { (const wchar_t*)NULL, L"node.dll", L"nw.dll" }) {
 		auto hm=GetModuleHandleW(moduleName);
@@ -142,6 +163,7 @@ bool V8::attach_function_() {
 		bool b3=hookv8exports(hm);
 		b1=hookstringlength(hm)||b1;
 		if(b1||b2||b3){
+			hookClipboard();
 			return true;
 		}
 	}
