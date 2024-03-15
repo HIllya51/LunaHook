@@ -1,8 +1,8 @@
 #include"engine.h"
 
-class IG:public ENGINE{
+class lucasystem:public ENGINE{
     public:
-    IG(){
+    lucasystem(){
         
         check_by=CHECK_BY::FILE; 
         is_engine_certain=false;

@@ -1,4 +1,4 @@
-#include"IG.h"
+#include"lucasystem.h"
 
 bool InsertIG64Hook() {
   //���륿���� FHD.exe
@@ -67,7 +67,63 @@ bool InsertIG64Hook2() {
   }
   return ok;
 }
-bool IG::attach_function() { 
-  return InsertIG64Hook2();
+bool InsertLucaSystemHook()
+{
+  /*
+  * Sample games:
+  * https://vndb.org/r108105
+  */
+  const BYTE bytes[] = {
+    0xCC,                                // int 3 
+    0x48, XX4,                           // mov [rsp+18],rbx       <- hook here
+    0x55,                                // push rbp
+    0x56,                                // push rsi
+    0x57,                                // push rdi
+    0x41, 0x54,                          // push r12
+    0x41, 0x55,                          // push r13
+    0x41, 0x56,                          // push r14
+    0x41, 0x57,                          // push r15
+    0x48, 0x8D, 0xAC, 0x24, XX4,         // lea rbp,[rsp-00003810]
+    0xB8, XX4                            // mov eax,00003910
+  };
+
+  auto addr=MemDbg::findBytes(bytes, sizeof(bytes),processStartAddress, processStopAddress);
+  if(!addr)return false;
+  HookParam hp = {};
+  hp.address = addr + 1;
+  hp.offset = get_reg(regs::rdx) ; //RDX
+  hp.filter_fun = [](LPVOID data, size_t *size, HookParam *)
+  {
+    static std::wstring prevText;
+    auto text = reinterpret_cast<LPWSTR>(data);
+    auto len = reinterpret_cast<size_t *>(size);
+
+    if (text[0] == L'\x3000') { //removes space at the beginning of the sentence
+      *len -= 2;
+      ::memmove(text, text + 1, *len);
+    }
+
+    if ( *text == L'@' ) //Name in square brackets instead of '@'
+      if ( wchar_t *match2 = cpp_wcsnchr(text+1, L'@', *len/2-1) ) {
+        *text = L'[';
+        *match2 = L']';
+      }
+
+    StringFilterBetween(text, len, L"$C(", 3, L")", 1);
+    StringFilter(text, len, L"$A", 3); // remove $A followed by 1 char
+    StringCharReplacer(text, len, L"$d", 2, L'\n');
+    CharFilter(text, len, L'\xFF3F');
+    //ruby
+    StringFilter(text, len, L"$[", 2);
+    StringFilterBetween(text, len, L"$/", 2, L"$]", 2);
+
+    return true;
+  };
+  hp.type = CODEC_UTF16 | USING_STRING;
+  NewHook(hp, "LucaSystem");
+  return true;
+}
+bool lucasystem::attach_function() { 
+  return InsertIG64Hook2()|InsertLucaSystemHook();
 }  
  

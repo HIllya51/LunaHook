@@ -11,7 +11,7 @@
 #include"engine64/Suika2.h"
 #include"engine64/CMVS.h"
 #include"engine64/5pb.h"
-#include"engine64/IG.h"
+#include"engine64/lucasystem.h"
 #include"engine64/ENTERGRAM.h"
 #include"engine64/TYPEMOON.h"
 #include"engine64/LightVN.h"
@@ -29,7 +29,7 @@ std::vector<ENGINE*> check_engines(){
         new Artemis,
         new KiriKiri,
         new YOX,
-        new IG,
+        new lucasystem,
         new LightVN,
         new CMVS,
         new Suika2,
