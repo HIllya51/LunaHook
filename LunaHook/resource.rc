@@ -7,3 +7,5 @@ compound_chars_Robotics_Notes_Dash COMPOUND_CHARS "resource/compound_chars_Robot
 
 renpy_hook_font PYSOURCE "resource/renpy_hook_font.py"
 renpy_hook_text PYSOURCE "resource/renpy_hook_text.py"
+
+lunajspatch JSSOURCE "resource/lunajspatch.js"

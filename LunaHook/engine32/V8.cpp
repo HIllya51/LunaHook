@@ -1,5 +1,5 @@
 #include"V8.h"
- 
+#include"v8/v8.h"
 /**
 *  Artikash 7/15/2018: Insert Tyranobuilder hook
 *  Sample game: https://vndb.org/v22252: /HWN-8:-1C@233A54:yuika_t.exe
@@ -105,53 +105,6 @@ bool hookv8exports(HMODULE module) {
 	return NewHook(hp, "Write@String@v8");
 }
 
-namespace{
-	bool hookstringlength(HMODULE hm){
-		auto Length=GetProcAddress(hm,"?Length@String@v8@@QBEHXZ");
-		static uintptr_t WriteUtf8;
-		static uintptr_t Utf8Length;
-		WriteUtf8=(uintptr_t)GetProcAddress(hm,"?WriteUtf8@String@v8@@QBEHPADHPAHH@Z");
-		Utf8Length=(uintptr_t)GetProcAddress(hm,"?Utf8Length@String@v8@@QBEHXZ");
-		if(Length==0||WriteUtf8==0||Utf8Length==0)return false;
-		HookParam hp;
-		hp.address=(uintptr_t)Length;
-		hp.type=USING_STRING|CODEC_UTF8;
-		hp.text_fun=
-			[](hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len)
-			{
-				auto length=((size_t(__thiscall*)(void*))Utf8Length)((void*)stack->ecx);
-				if(!length)return;
-				auto u8str=new char[length+1];
-				int writen;
-				((size_t(__thiscall*)(void*,char*,int,int*,int))WriteUtf8)((void*)stack->ecx,u8str,length,&writen,0);
-				*data=(uintptr_t)u8str;
-				*len=length;
-
-			};
-		return NewHook(hp,"v8::String::Length");
-	}
-}
-namespace{
-	bool hookClipboard(){
-		HookParam hp;
-		hp.address=(uintptr_t)SetClipboardData;
-		hp.type= USING_STRING|CODEC_UTF16|EMBED_ABLE|EMBED_BEFORE_SIMPLE;
-		hp.text_fun=[](hook_stack* stack, HookParam *hp, uintptr_t* data, uintptr_t* split, size_t* len){
-			HGLOBAL hClipboardData=(HGLOBAL)stack->stack[2];
-			*data=(uintptr_t)GlobalLock(hClipboardData);
-			*len=wcslen((wchar_t*)*data)*2;
-			GlobalUnlock(hClipboardData); 
-		};
-		hp.hook_after=[](hook_stack*s,void* data, size_t len){
-			HGLOBAL hClipboardData = GlobalAlloc(GMEM_MOVEABLE, len +2);
-			auto pchData = (wchar_t*)GlobalLock(hClipboardData);
-			wcscpy(pchData, (wchar_t*)data);
-			GlobalUnlock(hClipboardData); 
-			s->stack[2]=(uintptr_t)hClipboardData;
-		};
-		return NewHook(hp,"hookClipboard");
-	}
-}
 bool V8::attach_function_() {
 	for (const wchar_t* moduleName : { (const wchar_t*)NULL, L"node.dll", L"nw.dll" }) {
 		auto hm=GetModuleHandleW(moduleName);
@@ -161,9 +114,8 @@ bool V8::attach_function_() {
 		bool b1= InsertV8Hook(hm);
 		bool b2=hookv8addr(hm);
 		bool b3=hookv8exports(hm);
-		b1=hookstringlength(hm)||b1;
+		b1=tryhookv8(hm)||b1;
 		if(b1||b2||b3){
-			hookClipboard();
 			return true;
 		}
 	}

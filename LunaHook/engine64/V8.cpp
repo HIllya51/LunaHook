@@ -1,6 +1,5 @@
 #include"V8.h"
- 
-
+#include"v8/v8.h"
 // Artikash 6/23/2019: V8 (JavaScript runtime) has rcx = string** at v8::String::Write
 // sample game https://www.freem.ne.jp/dl/win/18963
 bool InsertV8Hook(HMODULE module)
@@ -259,65 +258,16 @@ namespace{
 		return innerHTML(module)|| success;
 	}
 }
-namespace{
-	bool hookstringlength(HMODULE hm){
-		auto Length=GetProcAddress(hm,"?Length@String@v8@@QEBAHXZ");
-		static uintptr_t WriteUtf8;
-		static uintptr_t Utf8Length;
-		WriteUtf8=(uintptr_t)GetProcAddress(hm,"?WriteUtf8@String@v8@@QEBAHPEADHPEAHH@Z");
-		Utf8Length=(uintptr_t)GetProcAddress(hm,"?Utf8Length@String@v8@@QEBAHXZ");
-		if(Length==0||WriteUtf8==0||Utf8Length==0)return false;
-		HookParam hp;
-		hp.address=(uintptr_t)Length;
-		hp.type=USING_STRING|CODEC_UTF8;
-		hp.text_fun=
-			[](hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len)
-			{
-				auto length=((size_t(*)(void*))Utf8Length)((void*)stack->rcx);
-				if(!length)return;
-				auto u8str=new char[length+1];
-				int writen;
-				((size_t(*)(void*,char*,int,int*,int))WriteUtf8)((void*)stack->rcx,u8str,length,&writen,0);
-				*data=(uintptr_t)u8str;
-				*len=length;
 
-			};
-		return NewHook(hp,"v8::String::Length");
-	}
-}
-namespace{
-	bool hookClipboard(){
-		HookParam hp;
-		hp.address=(uintptr_t)SetClipboardData;
-		hp.type= USING_STRING|CODEC_UTF16|EMBED_ABLE|EMBED_BEFORE_SIMPLE;
-		hp.text_fun=[](hook_stack* stack, HookParam *hp, uintptr_t* data, uintptr_t* split, size_t* len){
-			HGLOBAL hClipboardData=(HGLOBAL)stack->rdx;
-			*data=(uintptr_t)GlobalLock(hClipboardData);
-			*len=wcslen((wchar_t*)*data)*2;
-			GlobalUnlock(hClipboardData); 
-		};
-		hp.hook_after=[](hook_stack*s,void* data, size_t len){
-			HGLOBAL hClipboardData = GlobalAlloc(GMEM_MOVEABLE, len +2);
-			auto pchData = (wchar_t*)GlobalLock(hClipboardData);
-			wcscpy(pchData, (wchar_t*)data);
-			GlobalUnlock(hClipboardData); 
-			s->rdx=(uintptr_t)hClipboardData;
-		};
-		return NewHook(hp,"hookClipboard");
-	}
-}
 bool V8::attach_function_() {
 	for (const wchar_t* moduleName : { (const wchar_t*)NULL, L"node.dll", L"nw.dll" }) {
 		auto hm=GetModuleHandleW(moduleName);
 		if(hm==0)continue;
 		bool ok=InsertV8Hook(hm);
 		ok= hookv8exports(hm)||ok;
-		ok=hookstringlength(hm)||ok;
 		ok=addhooks(hm)||ok;
-		if(ok){
-			hookClipboard();
-			return true;
-		}
+		ok=tryhookv8(hm);
+		if(ok) return true;
 	}
 	return false;
 } 
