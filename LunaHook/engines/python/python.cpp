@@ -64,7 +64,7 @@ std::unordered_map<std::wstring, std::wstring> loadfontfiles() {
     
     std::vector< std::wstring>collectfile;
     for (auto fontdir : { std::wstring(LR"(C:\Windows\Fonts)"),std::wstring(localAppDataPath) + LR"(\Microsoft\Windows\Fonts)" }) {
-
+        if (!std::filesystem::exists(fontdir))continue;
         for (auto entry : std::filesystem::directory_iterator(fontdir)) {
             collectfile.emplace_back(entry.path());
         }
