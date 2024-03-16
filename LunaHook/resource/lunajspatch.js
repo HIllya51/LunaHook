@@ -34,19 +34,16 @@ function Electronhook() {
 }
 function retryinject(times){
     if(times==0)return;
-    try{
-        if(window.tyrano && tyrano.plugin){
-            Electronhook();
-        }
-        else if(window.Utils && Utils.RPGMAKER_NAME){
-            NWjshook();
-        }
-        else{ 
-            setTimeout(retryinject,3000,times-1);
-        }
+    
+    if(window && window.tyrano && tyrano.plugin){
+        Electronhook();
     }
-    catch{
-        //非主线程，甚至没有window对象，会弹窗报错
+    else if(window && window.Utils && Utils.RPGMAKER_NAME){
+        NWjshook();
     }
+    else{ 
+        setTimeout(retryinject,3000,times-1);
+    }
+    
 }
 setTimeout(retryinject,3000,3);
