@@ -102,7 +102,6 @@ bool v8runscript_isolate(void* isolate){
 		
 	if(RequestInterrupt==0)return false;
 	RequestInterrupt(isolate,+[](void*isolate,void*){
-		struct TimerDeleter { void operator()(HANDLE h) { DeleteTimerQueueTimer(NULL, h, INVALID_HANDLE_VALUE); } };
 		void* context;
 		void* v8string;
 		void* script;
