@@ -49,4 +49,4 @@ function retryinject(times){
         //非主线程，甚至没有window对象，会弹窗报错
     }
 }
-setTimeout(retryinject,3000,3);
+setTimeout(retryinject,1000,3);

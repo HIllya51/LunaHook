@@ -30,8 +30,11 @@ namespace{
 }
 namespace v8script{
 HMODULE hmodule;
+
+typedef void(*RequestInterrupt_callback)(void*, void*);
 #ifndef _WIN64
 
+#define fnRequestInterrupt "?RequestInterrupt@Isolate@v8@@QAEXP6AXPAV12@PAX@Z1@Z"
 #define fnNewFromUtf8v2 "?NewFromUtf8@String@v8@@SA?AV?$MaybeLocal@VString@v8@@@2@PAVIsolate@2@PBDW4NewStringType@2@H@Z"
 #define fnNewFromUtf8v1 "?NewFromUtf8@String@v8@@SA?AV?$Local@VString@v8@@@2@PAVIsolate@2@PBDW4NewStringType@12@H@Z"
 #define fnGetCurrentContext "?GetCurrentContext@Isolate@v8@@QAE?AV?$Local@VContext@v8@@@2@XZ"
@@ -45,7 +48,9 @@ typedef void*(__thiscall *GetCurrentContextt)(void*, void*);
 typedef void*(__thiscall*Runt1)(void*,void*);
 typedef void*(__thiscall*Runt2)(void*,void*,void*);
 
+typedef void*(__thiscall *RequestInterruptt)(void*, RequestInterrupt_callback, void*);
 #else
+#define fnRequestInterrupt "?RequestInterrupt@Isolate@v8@@QEAAXP6AXPEAV12@PEAX@Z1@Z"
 #define fnNewFromUtf8v2 "?NewFromUtf8@String@v8@@SA?AV?$MaybeLocal@VString@v8@@@2@PEAVIsolate@2@PEBDW4NewStringType@2@H@Z"
 #define fnNewFromUtf8v1 "?NewFromUtf8@String@v8@@SA?AV?$Local@VString@v8@@@2@PEAVIsolate@2@PEBDW4NewStringType@12@H@Z"
 #define fnGetCurrentContext "?GetCurrentContext@Isolate@v8@@QEAA?AV?$Local@VContext@v8@@@2@XZ"
@@ -57,19 +62,24 @@ typedef void*(__thiscall*Runt2)(void*,void*,void*);
 typedef void*(*GetCurrentContextt)(void*, void*);
 typedef void*(*Runt1)(void*,void*);
 typedef void*(*Runt2)(void*,void*,void*);
+
+typedef void*(*RequestInterruptt)(void*, RequestInterrupt_callback, void*);
+
 #endif
 typedef void*(*NewFromUtf8t)(void*, void*, const char*, int, int) ;
 typedef void*(*Compilet)(void*, void*, void*, void*);
-
+RequestInterruptt RequestInterrupt;
+NewFromUtf8t NewFromUtf8=0,NewFromUtf8v2,NewFromUtf8v1;
+GetCurrentContextt GetCurrentContext ;
+Compilet Compile;
+void* Run;
 bool v8runscript_isolate(void* isolate){
 	
 	if(isolate==0)return false;
-	NewFromUtf8t NewFromUtf8=0;
-	GetCurrentContextt GetCurrentContext ;
-	Compilet Compile;
-	void* Run;
-	auto NewFromUtf8v2 = (decltype(NewFromUtf8))GetProcAddress(hmodule, fnNewFromUtf8v2);
-	auto NewFromUtf8v1 = (decltype(NewFromUtf8))GetProcAddress(hmodule, fnNewFromUtf8v1);
+	RequestInterrupt= (decltype(RequestInterrupt))GetProcAddress(hmodule, fnRequestInterrupt);
+	
+	NewFromUtf8v2 = (decltype(NewFromUtf8))GetProcAddress(hmodule, fnNewFromUtf8v2);
+	NewFromUtf8v1 = (decltype(NewFromUtf8))GetProcAddress(hmodule, fnNewFromUtf8v1);
 
 	GetCurrentContext = (decltype(GetCurrentContext))GetProcAddress(hmodule, fnGetCurrentContext);
 		
@@ -77,7 +87,7 @@ bool v8runscript_isolate(void* isolate){
 	{
 		NewFromUtf8=NewFromUtf8v1;
 		Compile = (decltype(Compile))GetProcAddress(hmodule, fnCompilev1);
-        if(!Compile) Compile=(decltype(Compile))GetProcAddress(hmodule, fnCompilev12);
+		if(!Compile) Compile=(decltype(Compile))GetProcAddress(hmodule, fnCompilev12);
 		Run = (decltype(Run))GetProcAddress(hmodule, fnRunv1);
 	}
 	else if(NewFromUtf8v2)
@@ -86,37 +96,42 @@ bool v8runscript_isolate(void* isolate){
 		Compile = (decltype(Compile))GetProcAddress(hmodule, fnCompilev2);
 		Run = (decltype(Run))GetProcAddress(hmodule, fnRunv2);
 	}
-    ConsoleOutput("%p %p",NewFromUtf8v1,NewFromUtf8v2);
-    ConsoleOutput("%p %p %p %p",GetCurrentContext, NewFromUtf8, Compile, Run);
-	if(!(GetCurrentContext && NewFromUtf8 && Compile && Run))return false;
-    
+	ConsoleOutput("%p %p",NewFromUtf8v1,NewFromUtf8v2);
+	ConsoleOutput("%p %p %p %p",GetCurrentContext, NewFromUtf8, Compile, Run);
+	if(!(GetCurrentContext && NewFromUtf8 && Compile && Run && RequestInterrupt))return false;
+		
+	if(RequestInterrupt==0)return false;
+	RequestInterrupt(isolate,+[](void*isolate,void*){
+		struct TimerDeleter { void operator()(HANDLE h) { DeleteTimerQueueTimer(NULL, h, INVALID_HANDLE_VALUE); } };
+		void* context;
+		void* v8string;
+		void* script;
+		void* useless;
+		ConsoleOutput("isolate %p",isolate);
+		GetCurrentContext(isolate,&context);
+		ConsoleOutput("context %p",context);
+		if(context==0)return;
+		NewFromUtf8(&v8string,isolate,LoadResData(L"lunajspatch",L"JSSOURCE").c_str(),1,-1);
+		ConsoleOutput("v8string %p",v8string);
+		if(v8string==0)return;
+		if(NewFromUtf8v1)
+		{	
+			Compile(&script,v8string,0,0);
+			ConsoleOutput("script %p",script);
+			if(script==0)return;
+			((Runt1)Run)(script,&useless);
+		}
+		else if(NewFromUtf8v2)
+		{	
+			Compile(&script,context,v8string,0);
+			ConsoleOutput("script %p",script);
+			if(script==0)return ;
+			((Runt2)Run)(script,&useless,context);
+			ConsoleOutput("useless %p",useless);
+		}
+
+	},0);
 	
-	void* context;
-	void* v8string;
-	void* script;
-	void* useless;
-    ConsoleOutput("isolate %p",isolate);
-	GetCurrentContext(isolate,&context);
-    ConsoleOutput("context %p",context);
-	if(context==0)return false;
-	NewFromUtf8(&v8string,isolate,LoadResData(L"lunajspatch",L"JSSOURCE").c_str(),1,-1);
-    ConsoleOutput("v8string %p",v8string);
-	if(v8string==0)return false;
-	if(NewFromUtf8v1)
-	{	
-		Compile(&script,v8string,0,0);
-        ConsoleOutput("script %p",script);
-		if(script==0)return false;
-		((Runt1)Run)(script,&useless);
-	}
-	else if(NewFromUtf8v2)
-	{	
-		Compile(&script,context,v8string,0);
-        ConsoleOutput("script %p",script);
-		if(script==0)return false;
-		((Runt2)Run)(script,&useless,context);
-        ConsoleOutput("useless %p",useless);
-	}
 	return true;
 }
 
