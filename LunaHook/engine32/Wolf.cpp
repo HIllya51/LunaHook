@@ -177,7 +177,7 @@ namespace{
     HookParam hp;
     hp.address = addr; 
     hp.offset =get_stack(8);
-    hp.type =USING_STRING|CODEC_UTF8;
+    hp.type =USING_STRING|CODEC_UTF8|EMBED_ABLE|EMBED_AFTER_OVERWRITE|EMBED_BEFORE_SIMPLE;
     hp.filter_fun=commonfilter;
     return NewHook(hp, "Wolf5"); 
   }
