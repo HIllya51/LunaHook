@@ -20,7 +20,7 @@ function NWjshook(){
 function Electronhook() {
         
     function Electronsend(s) {
-        const clipboard = require('electron');
+        const clipboard = require('electron').clipboard;
         clipboard.writeText(s);
         return clipboard.readText();
     }
