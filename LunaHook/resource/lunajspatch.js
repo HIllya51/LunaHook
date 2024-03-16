@@ -24,13 +24,14 @@ function Electronhook() {
         clipboard.writeText(s);
         return clipboard.readText();
     }
-    if(tyrano.plugin.kag.tag.text.originshowMessage)return;
-    tyrano.plugin.kag.tag.text.originshowMessage=tyrano.plugin.kag.tag.text.showMessage;
-    tyrano.plugin.kag.tag.text.showMessage = function () {
-        arguments[0]=Electronsend(arguments[0]);
-        return tyrano.plugin.kag.tag.text.originshowMessage.apply(this, arguments);
+    if(tyrano.plugin.kag.tag.text.originstart)return;
+    tyrano.plugin.kag.tag.text.originstart=tyrano.plugin.kag.tag.text.start;
+    tyrano.plugin.kag.tag.text.start = function (pm) {
+        if (1 != this.kag.stat.is_script && 1 != this.kag.stat.is_html) {
+			pm.val=Electronsend(pm.val);
+		}
+        return this.originstart(pm)
     }
-    
 }
 function retryinject(times){
     if(times==0)return;
