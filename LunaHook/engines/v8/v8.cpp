@@ -153,17 +153,20 @@ bool v8runscript(HMODULE _hmodule){
     if(isolate) 
         return v8runscript_isolate(isolate);
 #ifndef _WIN64
-#define isolategetter "?NewFromUtf8@String@v8@@SA?AV?$Local@VString@v8@@@2@PAVIsolate@2@PBDW4NewStringType@12@H@Z"
+#define fnisolategetter "?NewFromUtf8@String@v8@@SA?AV?$Local@VString@v8@@@2@PAVIsolate@2@PBDW4NewStringType@12@H@Z"
+#define fnisolategetter2 fnisolategetter
 #else
-#define isolategetter "?Utf8Length@String@v8@@QEBAHPEAVIsolate@2@@Z"    //旧版没有
-//??0TryCatch@v8@@QEAA@PEAVIsolate@1@@Z也可以，但是有报错
+#define fnisolategetter "?Utf8Length@String@v8@@QEBAHPEAVIsolate@2@@Z"
+#define fnisolategetter2 "?NewFromUtf8@String@v8@@SA?AV?$Local@VString@v8@@@2@PEAVIsolate@2@PEBDW4NewStringType@12@H@Z"
 #endif
-	auto stringlengthisolate=GetProcAddress(_hmodule,isolategetter);
-	if(!stringlengthisolate)return false;
+	auto isolategetter=GetProcAddress(_hmodule,fnisolategetter);
+	if(!isolategetter)
+		 isolategetter=GetProcAddress(_hmodule,fnisolategetter2);
+	if(!isolategetter)return false;
 
     hmodule=_hmodule;
     HookParam hp;
-    hp.address=(uintptr_t)stringlengthisolate;
+    hp.address=(uintptr_t)isolategetter;
     hp.text_fun=v8runscript_isolate_bypass;
     return NewHook(hp,"v8isolate");
       
@@ -209,6 +212,10 @@ namespace{
 				*len=length;
 
 			};
+		hp.filter_fun=[](void* data, size_t* len, HookParam* hp){
+			if(strstr((char*)data,R"(\\?\)")!=0)return false;//过滤路径
+			return true;
+		};
 		return NewHook(hp,"v8::String::Length");
 	}
 }
