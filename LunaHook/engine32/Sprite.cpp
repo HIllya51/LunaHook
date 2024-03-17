@@ -57,9 +57,34 @@ namespace{
       static int idx=0;
       return (idx++)%2;
     };
-    return NewHook(hp, "Selen");
+    return NewHook(hp, "Flash Asset");
+  }
+
+  bool _h2(){
+    auto TextXtra=GetModuleHandleW(L"TextXtra.x32");
+    if(TextXtra==0)return false;
+    auto [s,e]=Util::QueryModuleLimits(TextXtra);
+    const BYTE bytes[] = {
+      0xff,0x75,0x18,
+      0x8d,0x88,0xb8,0x00,0x00,0x00,
+      0xff,0x75,0x14,
+      0xff,0x75,0x10,
+      0xff,0x75,0x0c,
+      0xe8,XX4,
+      0x66,0x85,0xc0,
+      0x74
+	  };
+    auto addr = MemDbg::findBytes(bytes, sizeof(bytes), s, e);
+    if(addr==0)return false;
+    addr=findfuncstart(addr,0x100);
+    if(addr==0)return false;
+    HookParam hp;
+    hp.address = addr;
+    hp.offset=get_stack(2);
+    hp.type = USING_STRING|CODEC_UTF8|EMBED_ABLE|EMBED_AFTER_NEW|EMBED_BEFORE_SIMPLE;
+    return NewHook(hp, "TextXtra");
   }
 }
 bool Sprite::attach_function() {
-  return Sprite_attach_function()|_h1();
+  return Sprite_attach_function()|_h1()|_h2();
 }

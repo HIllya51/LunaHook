@@ -5,7 +5,7 @@ class Sprite:public ENGINE{public:
         is_engine_certain=false;
         check_by=CHECK_BY::CUSTOM;
         check_by_target=[](){
-            return Util::CheckFile(L"*.cct")&&Util::CheckFile(L"*.dcr")&&GetModuleHandle(L"dirapi.dll");
+            return Util::CheckFile(L"*.cct");
         };
     };
      bool attach_function();
