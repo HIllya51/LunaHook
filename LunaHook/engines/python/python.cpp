@@ -6,7 +6,8 @@
 #include"defs.h"
 #include <windows.h>
 #include <shlobj.h>
-
+#include <dwrite.h>
+#include <windowsx.h>
 extern "C" __declspec(dllexport) const wchar_t* internal_renpy_call_host(const wchar_t* text,int split){
     return text;
 }
@@ -102,13 +103,161 @@ std::unordered_map<std::wstring, std::wstring> loadfontfiles() {
     }
     return fnts;
 }
+
+//https://stackoverflow.com/questions/16769758/get-a-font-filename-based-on-the-font-handle-hfont
+HRESULT (*fnDWriteCreateFactory)(
+    _In_ DWRITE_FACTORY_TYPE factoryType,
+    _In_ REFIID iid,
+    _COM_Outptr_ IUnknown **factory
+    );
+std::list<WCHAR*> get_fonts_path(LPCWSTR family_name, BOOL is_bold, BOOL is_italic, BYTE charset)
+{
+    std::list<WCHAR*> fonts_filename_list;
+    HRESULT hr;
+
+    IDWriteFactory* dwrite_factory;
+    hr = fnDWriteCreateFactory(DWRITE_FACTORY_TYPE_ISOLATED, __uuidof(IDWriteFactory), reinterpret_cast<IUnknown**>(&dwrite_factory));
+    if (FAILED(hr))
+    {
+        return fonts_filename_list;
+    }
+
+    IDWriteGdiInterop* gdi_interop;
+    hr = dwrite_factory->GetGdiInterop(&gdi_interop);
+    if (FAILED(hr))
+    {
+        dwrite_factory->Release();
+        return fonts_filename_list;
+    }
+
+    LOGFONT lf;
+    memset(&lf, 0, sizeof(lf));
+    wcscpy_s(lf.lfFaceName, LF_FACESIZE, family_name);
+    lf.lfWeight = is_bold ? FW_BOLD : FW_REGULAR; // TODO Change with the real ass weight
+    lf.lfItalic = is_italic;
+    lf.lfCharSet = charset;
+    lf.lfOutPrecision = OUT_TT_PRECIS;
+    lf.lfClipPrecision = CLIP_DEFAULT_PRECIS;
+    lf.lfQuality = ANTIALIASED_QUALITY;
+    lf.lfPitchAndFamily = DEFAULT_PITCH | FF_DONTCARE;
+
+    HFONT hFont = CreateFontIndirect(&lf);
+    HDC hdc = CreateCompatibleDC(NULL);
+    HFONT hOldFont = SelectFont(hdc, hFont);
+
+    IDWriteFontFace* font_face;
+    hr = gdi_interop->CreateFontFaceFromHdc(hdc, &font_face);
+    if (FAILED(hr))
+    {
+        gdi_interop->Release();
+        dwrite_factory->Release();
+        return fonts_filename_list;
+    }
+
+    UINT file_count;
+    hr = font_face->GetFiles(&file_count, NULL);
+    if (FAILED(hr))
+    {
+        font_face->Release();
+        gdi_interop->Release();
+        dwrite_factory->Release();
+        return fonts_filename_list;
+    }
+
+
+    IDWriteFontFile** font_files = new IDWriteFontFile * [file_count];
+    hr = font_face->GetFiles(&file_count, font_files);
+    if (FAILED(hr))
+    {
+        font_face->Release();
+        gdi_interop->Release();
+        dwrite_factory->Release();
+        return fonts_filename_list;
+    }
+
+    for (int i = 0; i < file_count; i++)
+    {
+        LPCVOID font_file_reference_key;
+        UINT font_file_reference_key_size;
+        hr = font_files[i]->GetReferenceKey(&font_file_reference_key, &font_file_reference_key_size);
+        if (FAILED(hr))
+        {
+            font_files[i]->Release();
+            continue;
+        }
+
+        IDWriteFontFileLoader* loader;
+        hr = font_files[i]->GetLoader(&loader);
+        if (FAILED(hr))
+        {
+            font_files[i]->Release();
+            continue;
+        }
+
+        IDWriteLocalFontFileLoader* local_loader;
+        hr = loader->QueryInterface(__uuidof(IDWriteLocalFontFileLoader), (void**)&local_loader);
+        if (FAILED(hr))
+        {
+            loader->Release();
+            font_files[i]->Release();
+            continue;
+        }
+
+        UINT32 path_length;
+        hr = local_loader->GetFilePathLengthFromKey(font_file_reference_key, font_file_reference_key_size, &path_length);
+        if (FAILED(hr))
+        {
+            local_loader->Release();
+            loader->Release();
+            font_files[i]->Release();
+            continue;
+        }
+
+
+        WCHAR* path = new WCHAR[path_length + 1];
+        hr = local_loader->GetFilePathFromKey(font_file_reference_key, font_file_reference_key_size, path, path_length + 1);
+        if (FAILED(hr))
+        {
+            local_loader->Release();
+            loader->Release();
+            font_files[i]->Release();
+            continue;
+        }
+
+        fonts_filename_list.push_back(path);
+
+        local_loader->Release();
+        loader->Release();
+        font_files[i]->Release();
+
+    }
+
+    font_face->Release();
+    gdi_interop->Release();
+    SelectObject(hdc, hOldFont);
+    ReleaseDC(NULL, hdc);
+    DeleteObject(hFont);
+
+    dwrite_factory->Release();
+
+    return fonts_filename_list;
+}
+
 }
 extern "C" __declspec(dllexport) const wchar_t* internal_renpy_get_font(){
     if(wcslen(embedsharedmem->fontFamily)==0)return NULL;
-    static auto fontname2fontfile=std::move(loadfontfiles());
-    if(fontname2fontfile.find(embedsharedmem->fontFamily)==fontname2fontfile.end())return NULL;
-    else return fontname2fontfile.at(embedsharedmem->fontFamily).c_str();
-
+    
+    fnDWriteCreateFactory=(decltype(fnDWriteCreateFactory))GetProcAddress(LoadLibrary(L"Dwrite.dll"),"DWriteCreateFactory");
+    if(fnDWriteCreateFactory){
+        auto fonts_filename_list = get_fonts_path(embedsharedmem->fontFamily, false, false, DEFAULT_CHARSET);
+        if(fonts_filename_list.size()==0)return NULL;
+        return *fonts_filename_list.begin();
+    }
+    else{
+        static auto fontname2fontfile=std::move(loadfontfiles());
+        if(fontname2fontfile.find(embedsharedmem->fontFamily)==fontname2fontfile.end())return NULL;
+        else return fontname2fontfile.at(embedsharedmem->fontFamily).c_str();
+    }
 }
 void hookrenpy(HMODULE module){
     LoadPyRun(module);
