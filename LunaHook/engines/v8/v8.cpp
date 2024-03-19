@@ -20,13 +20,14 @@ namespace{
 			GlobalUnlock(hClipboardData); 
 		};
 		hp.hook_after=[](hook_stack*s,void* data, size_t len){
-			HGLOBAL hClipboardData = GlobalAlloc(GMEM_MOVEABLE, len +2);
-			auto pchData = (wchar_t*)GlobalLock(hClipboardData);
+			
 			std::wstring transwithfont;
 			transwithfont+=L'\x01';
 			transwithfont+=embedsharedmem->fontFamily;
 			transwithfont+=L'\x01';
 			transwithfont+=std::wstring((wchar_t*)data,len/2);
+			HGLOBAL hClipboardData = GlobalAlloc(GMEM_MOVEABLE, transwithfont.size()*2 +2);
+			auto pchData = (wchar_t*)GlobalLock(hClipboardData);
 			wcscpy(pchData, (wchar_t*)transwithfont.c_str());
 			GlobalUnlock(hClipboardData); 
 			s->arg2=(uintptr_t)hClipboardData;
