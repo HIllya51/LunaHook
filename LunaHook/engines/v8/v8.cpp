@@ -1,6 +1,7 @@
 #include"types.h"
 #include"main.h"
 #include"v8.h"
+#include"embed_util.h"
 #ifndef _WIN64
 #define arg2 stack[2]
 #else
@@ -21,7 +22,12 @@ namespace{
 		hp.hook_after=[](hook_stack*s,void* data, size_t len){
 			HGLOBAL hClipboardData = GlobalAlloc(GMEM_MOVEABLE, len +2);
 			auto pchData = (wchar_t*)GlobalLock(hClipboardData);
-			wcscpy(pchData, (wchar_t*)data);
+			std::wstring transwithfont;
+			transwithfont+=L'\x01';
+			transwithfont+=embedsharedmem->fontFamily;
+			transwithfont+=L'\x01';
+			transwithfont+=std::wstring((wchar_t*)data,len/2);
+			wcscpy(pchData, (wchar_t*)transwithfont.c_str());
 			GlobalUnlock(hClipboardData); 
 			s->arg2=(uintptr_t)hClipboardData;
 		};
