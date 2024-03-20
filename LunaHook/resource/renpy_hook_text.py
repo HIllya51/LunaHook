@@ -7,12 +7,12 @@ def callLunaHost(text,split):
             internal_renpy_call_host=ctypes.CDLL('LunaHook32').internal_renpy_call_host
         internal_renpy_call_host.argstype=ctypes.c_wchar_p,ctypes.c_int
         internal_renpy_call_host.restype=ctypes.c_wchar_p
-        if isinstance(text,str):
-            try:
-                _text=text.decode('utf8')
-            except:
-                _text=text
-            text=internal_renpy_call_host(_text,split)
+    
+        try:
+            _text=text.decode('utf8')
+        except:
+            _text=text
+        text=internal_renpy_call_host(_text,split)
     except:
         pass
     return text
@@ -46,9 +46,9 @@ try:
         def new_init(self, *args, **kwargs):
             if not hasattr(self, "LunaHooked"):
                 if isinstance(self.text, list):
-                    trs = callLunaHost(str(self.text[0]),2)
+                    trs = callLunaHost((self.text[0]),2)
                 else:
-                    trs = callLunaHost(str(self.text),2)
+                    trs = callLunaHost((self.text),2)
                 self.set_text(trs)
                 self.LunaHooked = True
             return original(self, *args, **kwargs)
