@@ -1697,3 +1697,21 @@ bool WillPlus::attach_function() {
     
     return succ;
 } 
+
+
+
+bool Willold::attach_function() {  
+    //https://vndb.org/v17755
+    //凌辱鬼
+    auto addr=MemDbg::findLongJumpAddress((ULONG)TextOutA,processStartAddress,processStopAddress);
+    if(addr==0)return false;
+    addr=MemDbg::findNearCallAddress(addr,processStartAddress,processStopAddress);
+    if(addr==0)return false;
+    addr=findfuncstart(addr,0x200);
+    if(addr==0)return false;
+    HookParam hp;
+    hp.address=addr;
+    hp.type=USING_CHAR|CODEC_ANSI_BE;
+    hp.offset=get_stack(1);
+    return NewHook(hp,"will");
+} 

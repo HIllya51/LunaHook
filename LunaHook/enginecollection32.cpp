@@ -302,7 +302,8 @@ std::vector<ENGINE*> check_engines(){
         new ScrPlayer,
         new ElfFunClubFinal,
         new Aksys,
-        new Siglusold
+        new Siglusold,
+        new Willold
     };
      
 }
