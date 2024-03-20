@@ -1,5 +1,6 @@
 #include"V8.h"
 #include"v8/v8.h"
+#if 0
 /**
 *  Artikash 7/15/2018: Insert Tyranobuilder hook
 *  Sample game: https://vndb.org/v22252: /HWN-8:-1C@233A54:yuika_t.exe
@@ -71,6 +72,7 @@ bool InsertV8Hook(HMODULE module)
 	return succ;
 }
 bool hookv8addr(HMODULE module) {
+	if (GetProcAddress(module, "?Write@String@v8@@QBEHPAGHHH@Z")==0)false;
 	auto [minAddress, maxAddress] = Util::QueryModuleLimits(module);
 	const BYTE bytes[] = {
 		0x89,0xc1,
@@ -92,32 +94,9 @@ bool hookv8addr(HMODULE module) {
 	return NewHook(hp, "electronW");
 }
 		
-bool hookv8exports(HMODULE module) {
-		
-	auto addr = GetProcAddress(module, "?Write@String@v8@@QBEHPAVIsolate@2@PAGHHH@Z");
-	if (addr == 0)return false;
-	HookParam hp;
-	hp.address = (uint64_t)addr;
-	hp.type = USING_STRING | CODEC_UTF16 | DATA_INDIRECT;
-	hp.offset=get_reg(regs::ecx);
-	hp.padding = 11;
-	hp.index = 0;
-	return NewHook(hp, "Write@String@v8");
-}
 
+#endif
 bool V8::attach_function_() {
-	for (const wchar_t* moduleName : { (const wchar_t*)NULL, L"node.dll", L"nw.dll" }) {
-		auto hm=GetModuleHandleW(moduleName);
-		if(hm==0)continue;
-		if (GetProcAddress(hm, "?Write@String@v8@@QBEHPAGHHH@Z")==0)continue;
-
-		bool b1= InsertV8Hook(hm);
-		bool b2=hookv8addr(hm);
-		bool b3=hookv8exports(hm);
-		b1=tryhookv8(hm)||b1;
-		if(b1||b2||b3){
-			return true;
-		}
-	}
-	return false;
+	
+	return tryhookv8();
 } 

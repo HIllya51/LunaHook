@@ -1,3 +1,6 @@
+
+#include"common.h"
+#include"defs.h"
 #include"types.h"
 #include"main.h"
 #include"v8.h"
@@ -142,15 +145,18 @@ bool v8runscript_isolate(void* isolate){
 }
 
 void v8runscript_isolate_bypass(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
-    
+	
     hp->type=HOOK_EMPTY;hp->text_fun=nullptr;
+    static bool runonce=false;
+	if(runonce)return;
+	runonce=true;
 #ifndef _WIN64
 #define isolatearg stack[2]
 #else
 #define isolatearg rdx
 #endif
-	auto isolate=(void*)stack->isolatearg;//测试正确，且和v8::Isolate::GetCurrent结果相同
     
+	auto isolate=(void*)stack->isolatearg;//测试正确，且和v8::Isolate::GetCurrent结果相同
     v8runscript_isolate(isolate);
 }
 void* v8getcurrisolate(HMODULE hmod){
@@ -174,48 +180,51 @@ bool v8runscript(HMODULE _hmodule){
     if(isolate) 
         return v8runscript_isolate(isolate);
 #ifndef _WIN64
-#define fnisolategetter "?NewFromUtf8@String@v8@@SA?AV?$Local@VString@v8@@@2@PAVIsolate@2@PBDW4NewStringType@12@H@Z"
-#define fnisolategetter2 fnisolategetter
+#define fnisolategetters {"?New@Number@v8@@SA?AV?$Local@VNumber@v8@@@2@PEAVIsolate@2@N@Z","?New@Number@v8@@SA?AV?$Local@VNumber@v8@@@2@PAVIsolate@2@N@Z","?NewFromUtf8@String@v8@@SA?AV?$Local@VString@v8@@@2@PAVIsolate@2@PBDW4NewStringType@12@H@Z"}
 #else
-#define fnisolategetter "?Utf8Length@String@v8@@QEBAHPEAVIsolate@2@@Z"
-#define fnisolategetter2 "?NewFromUtf8@String@v8@@SA?AV?$Local@VString@v8@@@2@PEAVIsolate@2@PEBDW4NewStringType@12@H@Z"
+#define fnisolategetters {"?New@Integer@v8@@SA?AV?$Local@VInteger@v8@@@2@PEAVIsolate@2@H@Z","?New@Number@v8@@SA?AV?$Local@VNumber@v8@@@2@PEAVIsolate@2@N@Z","?New@Number@v8@@SA?AV?$Local@VNumber@v8@@@2@PAVIsolate@2@N@Z","?NewFromUtf8@String@v8@@SA?AV?$Local@VString@v8@@@2@PEAVIsolate@2@PEBDW4NewStringType@12@H@Z","?Utf8Length@String@v8@@QEBAHPEAVIsolate@2@@Z"}
 #endif
-	auto isolategetter=GetProcAddress(_hmodule,fnisolategetter);
-	if(!isolategetter)
-		 isolategetter=GetProcAddress(_hmodule,fnisolategetter2);
-	if(!isolategetter)return false;
-
-    hmodule=_hmodule;
-    HookParam hp;
-    hp.address=(uintptr_t)isolategetter;
-    hp.text_fun=v8runscript_isolate_bypass;
-    return NewHook(hp,"v8isolate");
-      
+	bool succ=false;
+	for(auto fnisolategetter:fnisolategetters){
+		auto isolategetter=GetProcAddress(_hmodule,fnisolategetter);
+		if(!isolategetter)continue;
+		hmodule=_hmodule;
+		HookParam hp;
+		hp.address=(uintptr_t)isolategetter;
+		hp.text_fun=v8runscript_isolate_bypass;
+		succ|= NewHook(hp,"isolategetter");
+	}
+	return succ;
 }
 }
 namespace{
-	bool hookstringlength(HMODULE hm){
-        #ifndef _WIN64
-        #define v8StringLength "?Length@String@v8@@QBEHXZ"
-        #define v8StringWriteUtf8 "?WriteUtf8@String@v8@@QBEHPADHPAHH@Z"
-        #define v8StringUtf8Length "?Utf8Length@String@v8@@QBEHXZ"
-        #else
-		#define v8StringLength "?Length@String@v8@@QEBAHXZ"
-        #define v8StringWriteUtf8 "?WriteUtf8@String@v8@@QEBAHPEADHPEAHH@Z"
-        #define v8StringUtf8Length "?Utf8Length@String@v8@@QEBAHXZ"
-        #endif
-        auto Length=GetProcAddress(hm,v8StringLength);
-		static uintptr_t WriteUtf8;
-		static uintptr_t Utf8Length;
+	#ifndef _WIN64
+	#define v8StringLength "?Length@String@v8@@QBEHXZ"
+	#define v8StringWriteUtf8 "?WriteUtf8@String@v8@@QBEHPADHPAHH@Z"
+	#define v8StringUtf8Length "?Utf8Length@String@v8@@QBEHXZ"
+	#define v8StringWrite "?Write@String@v8@@QBEHPAGHHH@Z"
+	#define v8StringWriteIsolate "?Write@String@v8@@QBEHPAVIsolate@2@PAGHHH@Z"
+	#else
+	#define v8StringLength "?Length@String@v8@@QEBAHXZ"
+	#define v8StringWriteUtf8 "?WriteUtf8@String@v8@@QEBAHPEADHPEAHH@Z"
+	#define v8StringUtf8Length "?Utf8Length@String@v8@@QEBAHXZ"
+	#define v8StringWrite "?Write@String@v8@@QEBAHPEAGHHH@Z"
+	#define v8StringWriteIsolate "?Write@String@v8@@QEBAHPEAVIsolate@2@PEAGHHH@Z"
+	#endif
+	uintptr_t WriteUtf8;
+	uintptr_t Utf8Length;
+	bool hookstring(HMODULE hm){
 		WriteUtf8=(uintptr_t)GetProcAddress(hm,v8StringWriteUtf8);
 		Utf8Length=(uintptr_t)GetProcAddress(hm,v8StringUtf8Length);
-		if(Length==0||WriteUtf8==0||Utf8Length==0)return false;
+		if(WriteUtf8==0||Utf8Length==0)return false;
+		
+
 		HookParam hp;
-		hp.address=(uintptr_t)Length;
 		hp.type=USING_STRING|CODEC_UTF8;
 		hp.text_fun=
 			[](hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len)
 			{
+				
                 #ifndef _WIN64
                 auto length=((size_t(__thiscall*)(void*))Utf8Length)((void*)stack->ecx);
                 #else
@@ -237,12 +246,40 @@ namespace{
 			if(strstr((char*)data,R"(\\?\)")!=0)return false;//过滤路径
 			return true;
 		};
-		return NewHook(hp,"v8::String::Length");
+		bool succ=false;
+		
+        auto pv8StringLength=GetProcAddress(hm,v8StringLength);
+		if(pv8StringLength){
+				
+			hp.address=(uintptr_t)pv8StringLength;
+			succ|=NewHook(hp,"v8::String::Length");
+		}
+        auto pv8StringWrite=GetProcAddress(hm,v8StringWrite);
+		if(pv8StringWrite){
+				
+			hp.address=(uintptr_t)pv8StringWrite;
+			succ|=NewHook(hp,"v8::String::Write");
+		}
+        auto pv8StringWriteIsolate=GetProcAddress(hm,v8StringWriteIsolate);
+		if(pv8StringWriteIsolate){
+			hp.address=(uintptr_t)pv8StringWriteIsolate;
+			succ|=NewHook(hp,"v8::String::Write::isolate");
+		}
+		return succ;
 	}
 }
-bool tryhookv8(HMODULE hm){
-    auto succ=hookstringlength(hm);
+bool tryhookv8_internal(HMODULE hm){
+    auto succ=hookstring(hm);
     if(v8script::v8runscript(hm))
 		succ|= hookClipboard();
     return succ;
 }
+bool tryhookv8() {
+	for (const wchar_t* moduleName : { (const wchar_t*)NULL, L"node.dll", L"nw.dll" }) {
+		auto hm=GetModuleHandleW(moduleName);
+		if(hm==0)continue;
+		bool ok=tryhookv8_internal(hm);
+		if(ok) return true;
+	}
+	return false;
+} 

@@ -1,5 +1,6 @@
 #include"V8.h"
 #include"v8/v8.h"
+#if 0
 // Artikash 6/23/2019: V8 (JavaScript runtime) has rcx = string** at v8::String::Write
 // sample game https://www.freem.ne.jp/dl/win/18963
 bool InsertV8Hook(HMODULE module)
@@ -44,58 +45,6 @@ bool InsertV8Hook(HMODULE module)
 		succ|=NewHook(hp, "JavaScript");
 	}
 	return succ;
-}
-
-bool hookv8exports(HMODULE module) {
-	enum { rcx=-0x1c  }; 
-	auto addr = GetProcAddress(module, "?Write@String@v8@@QEBAHPEAVIsolate@2@PEAGHHH@Z");
-	if (addr == 0)return false;
-	HookParam hp;
-	hp.address = (uint64_t)addr ;
-	hp.type = USING_STRING | CODEC_UTF16 |NO_CONTEXT;
-	 
-	hp.text_fun = [](hook_stack* stack, HookParam *hp, uintptr_t* data, uintptr_t* split, size_t* count)
-	{
-		*data=*(uintptr_t*)(stack->rcx)+0xf; 
-		int len = *(uintptr_t*)((uintptr_t)*data - 4);
-		
-		if(strlen((char*)*data)==len){
-			*count = len;
-			hp->type=USING_STRING|CODEC_UTF8| DATA_INDIRECT|NO_CONTEXT;
-			*split = (strchr((char*)*data, '<') != nullptr)&&(strchr((char*)*data, '>') != nullptr);
-			*split+=0x10;
-		
-		}
-		else if((wcslen((wchar_t*)*data)==len)){
-			*count = len*2;
-			*split = (wcschr((wchar_t*)*data, L'<') != nullptr)&&(wcschr((wchar_t*)*data, L'>') != nullptr);
-			hp->type=USING_STRING|CODEC_UTF16| DATA_INDIRECT|NO_CONTEXT;
-		}
-		else{
-			//ConsoleOutput("%d %d %d",len,strlen((char*)*data),wcslen((wchar_t*)*data));
-			return;
-		}
-				
-	};
-	// hp.filter_fun=[](void* data, uintptr_t* size, HookParam*)  {
-		
-	// 	auto text = reinterpret_cast<LPWSTR>(data); 
-	// 	std::wstring str = text;
-	// 	str = str.substr(0, *size / 2);
-	// 	std::wregex reg1(L"<rt>(.*?)</rt>");
-	// 	std::wstring result2 = std::regex_replace(str, reg1, L""); 
-	// 	std::wregex reg12(L"<span(.*?)visibility: visible(.*?)>(.*?)</span>");
-	// 	result2 = std::regex_replace(result2, reg12, L"");  
-	// 	std::wregex reg2(L"<(.*?)>");
-	// 	result2 = std::regex_replace(result2, reg2, L""); 
-	// 	std::wregex reg22(L"\n");
-	// 	result2 = std::regex_replace(result2, reg22, L""); 
-	// 	*size = (result2.size()) * 2;
-	// 	wcscpy(text, result2.c_str());
-	// 	return true;
-	// };
-	
-	return NewHook(hp, "Write@String@v8");
 }
 namespace{
 	uintptr_t forwardsearch(BYTE* b,int size,uintptr_t addr,int range){
@@ -164,6 +113,7 @@ namespace{
 		}
 		return save;
 	}
+	#if 0
 	std::vector<HookParam> v8hook1(HMODULE module) {
 		
 		const BYTE BYTES[] = {
@@ -205,6 +155,7 @@ namespace{
 		}
 		return save;
 	}
+	#endif
 	bool innerHTML(HMODULE module) {
 		//花葬
 		//result = sub_142DF3CA0(a2, v5, 1u, (__int64)"innerHTML", a3);
@@ -249,9 +200,6 @@ namespace{
 	bool addhooks(HMODULE module){
 		if (GetProcAddress(module, "?Write@String@v8@@QEBAHPEAVIsolate@2@PEAGHHH@Z") == 0)return false;
 		bool success=false;
-		for(auto h:v8hook1(module)){
-			success|=NewHook(h,"electronQ");
-		}
 		for(auto h:hookw(module)){
 			success|=NewHook(h,"electronW");
 		}
@@ -259,16 +207,9 @@ namespace{
 	}
 }
 
+#endif
 bool V8::attach_function_() {
-	for (const wchar_t* moduleName : { (const wchar_t*)NULL, L"node.dll", L"nw.dll" }) {
-		auto hm=GetModuleHandleW(moduleName);
-		if(hm==0)continue;
-		bool ok=InsertV8Hook(hm);
-		ok= hookv8exports(hm)||ok;
-		ok=addhooks(hm)||ok;
-		ok=tryhookv8(hm);
-		if(ok) return true;
-	}
-	return false;
+	
+	return tryhookv8();
 } 
 

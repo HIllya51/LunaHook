@@ -1,2 +1,2 @@
 
-bool tryhookv8(HMODULE hm);
+bool tryhookv8();
