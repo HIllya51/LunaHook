@@ -42,13 +42,8 @@ void PyRunScript(const char* script)
 void hook_internal_renpy_call_host(){
     HookParam hp_internal;
     hp_internal.address=(uintptr_t)internal_renpy_call_host;
-    #ifndef _WIN64
-    hp_internal.offset=get_stack(1);
-    hp_internal.split=get_stack(2);
-    #else
-    hp_internal.offset=get_reg(regs::rcx);
-    hp_internal.split=get_reg(regs::rdx);
-    #endif
+    hp_internal.offset=GETARG1;
+    hp_internal.split=GETARG2;
     hp_internal.type=USING_SPLIT|USING_STRING|CODEC_UTF16|EMBED_ABLE|EMBED_BEFORE_SIMPLE|EMBED_AFTER_NEW;
     NewHook(hp_internal, "internal_renpy_call_host");
     PyRunScript(LoadResData(L"renpy_hook_text",L"PYSOURCE").c_str());

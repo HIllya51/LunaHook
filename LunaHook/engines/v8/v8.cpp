@@ -5,11 +5,7 @@
 #include"main.h"
 #include"v8.h"
 #include"embed_util.h"
-#ifndef _WIN64
-#define arg2 stack[2]
-#else
-#define arg2 rdx
-#endif
+#include"stackoffset.hpp"
 namespace{
     
 	bool hookClipboard(){
@@ -17,7 +13,7 @@ namespace{
 		hp.address=(uintptr_t)SetClipboardData;
 		hp.type= USING_STRING|CODEC_UTF16|EMBED_ABLE|EMBED_BEFORE_SIMPLE;
 		hp.text_fun=[](hook_stack* stack, HookParam *hp, uintptr_t* data, uintptr_t* split, size_t* len){
-			HGLOBAL hClipboardData=(HGLOBAL)stack->arg2;
+			HGLOBAL hClipboardData=(HGLOBAL)stack->ARG2;
 			*data=(uintptr_t)GlobalLock(hClipboardData);
 			*len=wcslen((wchar_t*)*data)*2;
 			GlobalUnlock(hClipboardData); 
@@ -33,7 +29,7 @@ namespace{
 			auto pchData = (wchar_t*)GlobalLock(hClipboardData);
 			wcscpy(pchData, (wchar_t*)transwithfont.c_str());
 			GlobalUnlock(hClipboardData); 
-			s->arg2=(uintptr_t)hClipboardData;
+			s->ARG2=(uintptr_t)hClipboardData;
 		};
 		return NewHook(hp,"hookClipboard");
 	}
@@ -53,12 +49,7 @@ typedef void(*RequestInterrupt_callback)(void*, void*);
 #define fnRunv1 "?Run@Script@v8@@QAE?AV?$Local@VValue@v8@@@2@XZ"
 #define fnCompilev2 "?Compile@Script@v8@@SA?AV?$MaybeLocal@VScript@v8@@@2@V?$Local@VContext@v8@@@2@V?$Local@VString@v8@@@2@PAVScriptOrigin@2@@Z"
 #define fnRunv2 "?Run@Script@v8@@QAE?AV?$MaybeLocal@VValue@v8@@@2@V?$Local@VContext@v8@@@2@@Z"
-typedef void*(__thiscall *GetCurrentContextt)(void*, void*);
 
-typedef void*(__thiscall*Runt1)(void*,void*);
-typedef void*(__thiscall*Runt2)(void*,void*,void*);
-
-typedef void*(__thiscall *RequestInterruptt)(void*, RequestInterrupt_callback, void*);
 #else
 #define fnRequestInterrupt "?RequestInterrupt@Isolate@v8@@QEAAXP6AXPEAV12@PEAX@Z1@Z"
 #define fnNewFromUtf8v2 "?NewFromUtf8@String@v8@@SA?AV?$MaybeLocal@VString@v8@@@2@PEAVIsolate@2@PEBDW4NewStringType@2@H@Z"
@@ -69,13 +60,13 @@ typedef void*(__thiscall *RequestInterruptt)(void*, RequestInterrupt_callback, v
 #define fnRunv1 "?Run@Script@v8@@QEAA?AV?$Local@VValue@v8@@@2@XZ"
 #define fnCompilev2 "?Compile@Script@v8@@SA?AV?$MaybeLocal@VScript@v8@@@2@V?$Local@VContext@v8@@@2@V?$Local@VString@v8@@@2@PEAVScriptOrigin@2@@Z"
 #define fnRunv2 "?Run@Script@v8@@QEAA?AV?$MaybeLocal@VValue@v8@@@2@V?$Local@VContext@v8@@@2@@Z"
-typedef void*(*GetCurrentContextt)(void*, void*);
-typedef void*(*Runt1)(void*,void*);
-typedef void*(*Runt2)(void*,void*,void*);
-
-typedef void*(*RequestInterruptt)(void*, RequestInterrupt_callback, void*);
 
 #endif
+typedef void*(THISCALL *GetCurrentContextt)(void*, void*);
+typedef void*(THISCALL *Runt1)(void*,void*);
+typedef void*(THISCALL *Runt2)(void*,void*,void*);
+typedef void*(THISCALL *RequestInterruptt)(void*, RequestInterrupt_callback, void*);
+
 typedef void*(*NewFromUtf8t)(void*, void*, const char*, int, int) ;
 typedef void*(*Compilet)(void*, void*, void*, void*);
 RequestInterruptt RequestInterrupt;
@@ -151,13 +142,8 @@ void v8runscript_isolate_bypass(hook_stack* stack, HookParam* hp, uintptr_t* dat
     static bool runonce=false;
 	if(runonce)return;
 	runonce=true;
-#ifndef _WIN64
-#define isolatearg stack[2]
-#else
-#define isolatearg rdx
-#endif
-    
-	auto isolate=(void*)stack->isolatearg;//测试正确，且和v8::Isolate::GetCurrent结果相同
+
+	auto isolate=(void*)stack->ARG2;//测试正确，且和v8::Isolate::GetCurrent结果相同
     v8runscript_isolate(isolate);
 }
 void* v8getcurrisolate(HMODULE hmod){
@@ -226,20 +212,12 @@ namespace{
 			[](hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len)
 			{
 				
-                #ifndef _WIN64
-                auto length=((size_t(__thiscall*)(void*))Utf8Length)((void*)stack->ecx);
-                #else
-				auto length=((size_t(*)(void*))Utf8Length)((void*)stack->rcx);
-                #endif
+				auto length=((size_t(THISCALL *)(void*))Utf8Length)((void*)stack->THISCALLTHIS);
 				if(!length)return;
 				auto u8str=new char[length+1];
 				int writen;
-                #ifndef _WIN64
-                ((size_t(__thiscall*)(void*,char*,int,int*,int))WriteUtf8)((void*)stack->ecx,u8str,length,&writen,0);
-                #else
-				((size_t(*)(void*,char*,int,int*,int))WriteUtf8)((void*)stack->rcx,u8str,length,&writen,0);
-                #endif
-				*data=(uintptr_t)u8str;
+				((size_t(THISCALL *)(void*,char*,int,int*,int))WriteUtf8)((void*)stack->THISCALLTHIS,u8str,length,&writen,0);
+                *data=(uintptr_t)u8str;
 				*len=length;
 
 			};

@@ -1,6 +1,7 @@
 #include"types.h"
 #include"python.h"
 #include"main.h"
+#include"stackoffset.hpp"
 namespace {
     typedef wchar_t Py_UNICODE ;
     typedef size_t         Py_ssize_t;
@@ -82,11 +83,7 @@ bool InsertRenpyHook(){
                     
                     hp.text_fun = [](hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len)
                     {
-                        #ifndef _WIN64
-                        auto format=(PyObject *)stack->stack[1];
-                        #else
-                        auto format=(PyObject *)stack->rcx;
-                        #endif
+                        auto format=(PyObject *)stack->ARG1;
                         auto [strptr,strlen]=GetPyUnicodeString(format);
                         *data=(uintptr_t)strptr;
                         *len=0;
@@ -101,18 +98,9 @@ bool InsertRenpyHook(){
                         hp.type|=EMBED_ABLE|EMBED_BEFORE_SIMPLE;
                         hp.hook_after=[](hook_stack* stack,void* data, size_t len)
                             {
-                                #ifndef _WIN64
-                                auto format=(PyObject *)stack->stack[1];
-                                #else
-                                auto format=(PyObject *)stack->rcx;
-                                #endif
+                                auto format=(PyObject *)stack->ARG1;
                                 if(format==NULL)return;
-                                #ifndef _WIN64
-                                stack->stack[1]=
-                                #else
-                                stack->rcx=
-                                #endif
-                                    (uintptr_t)PyUnicode_FromUnicode((Py_UNICODE *)data,len/2);
+                                stack->ARG1=(uintptr_t)PyUnicode_FromUnicode((Py_UNICODE *)data,len/2);
                             };
                         hookrenpy(module);
                     }

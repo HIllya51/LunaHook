@@ -82,3 +82,21 @@ inline uintptr_t regof(regs reg,hook_stack* stack){
 	}
   return 0;
 }
+
+#ifndef _WIN64
+#define ARG1	stack[1]
+#define ARG2	stack[2]
+#define ARG3	stack[3]
+#define THISCALL __thiscall
+#define THISCALLTHIS ecx
+#define GETARG1	get_stack(1)
+#define GETARG2	get_stack(2)
+#else
+#define ARG1	rcx
+#define ARG2	rdx
+#define ARG3	r8
+#define THISCALLTHIS rcx
+#define THISCALL 
+#define GETARG1	get_reg(regs::rcx)
+#define GETARG2	get_reg(regs::rdx)
+#endif

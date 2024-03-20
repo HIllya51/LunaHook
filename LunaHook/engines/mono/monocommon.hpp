@@ -33,24 +33,13 @@ void commonsolvemonostring(uintptr_t offset,uintptr_t *data,  size_t*len){
 } 
 void mscorlib_system_string_hook_fun(hook_stack* stack,  HookParam *hp, uintptr_t *data, uintptr_t *split, size_t*len)
 { 
-    #ifdef _WIN64
-    uintptr_t offset=stack->rcx;
-    #else
-    uintptr_t offset=stack->stack[1];
-    #endif 
-    commonsolvemonostring(offset,data,len);
+    commonsolvemonostring(stack->ARG1,data,len);
 }
 void mscorlib_system_string_InternalSubString_hook_fun(hook_stack* stack,  HookParam *hp, uintptr_t *data, uintptr_t *split, size_t*len)
 { 
-    #ifdef _WIN64
-    uintptr_t offset=stack->rcx;
-    uintptr_t startIndex=stack->rdx;
-    uintptr_t length=stack->r8;
-    #else
-    uintptr_t offset=stack->stack[1];
-    uintptr_t startIndex=stack->stack[2];
-    uintptr_t length=stack->stack[3];
-    #endif 
+    uintptr_t offset=stack->ARG1;
+    uintptr_t startIndex=stack->ARG2;
+    uintptr_t length=stack->ARG3;
 
     MonoString* string = (MonoString*)offset;
     if(string==0)return;
@@ -73,21 +62,11 @@ auto mscorlib_system_string_funcs=std::unordered_map<std::string,void*>{
                 };
 void unity_ui_string_hook_fun(hook_stack* stack,  HookParam *hp,  uintptr_t *data, uintptr_t *split, size_t*len)
 { 
-    #ifdef _WIN64
-    uintptr_t offset=stack->rdx;
-    #else
-    uintptr_t offset=stack->stack[2];
-    #endif 
-    commonsolvemonostring(offset,data,len);
+    commonsolvemonostring(stack->ARG2,data,len);
 }
 void unity_ui_string_hook_after(hook_stack* stack,void* data, size_t len)
 { 
-    #ifdef _WIN64
-    uintptr_t offset=stack->rdx;
-    #else
-    uintptr_t offset=stack->stack[2];
-    #endif 
-    MonoString* string = (MonoString*)offset;
+    MonoString* string = (MonoString*)stack->ARG2;
     if(string==0)return;
     if(wcslen((wchar_t*)string->chars)!=string->length)return;
     
@@ -96,11 +75,7 @@ void unity_ui_string_hook_after(hook_stack* stack,void* data, size_t len)
     memcpy(newstring,string,sizeof(MonoString));
     wcscpy((wchar_t*)newstring->chars,(wchar_t*)data);
     newstring->length=len/2;
-    #ifdef _WIN64
-    stack->rdx=(uintptr_t)newstring;
-    #else
-    stack->stack[2]=(uintptr_t)newstring;
-    #endif 
+    stack->ARG2=(uintptr_t)newstring;
 }
 
 void MONO_IL2CPP_NEW_HOOK(void* text_fun,void* hook_after, uintptr_t addr,const char*name){
