@@ -129,6 +129,7 @@ bool v8runscript_isolate(void* isolate){
 			ConsoleOutput("script %p",script);
 			if(script==0)return;
 			((Runt1)Run)(script,&useless);
+			ConsoleOutput("useless %p",useless);
 		}
 		else if(NewFromUtf8v2)
 		{	

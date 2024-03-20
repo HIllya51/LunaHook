@@ -1,4 +1,5 @@
 var fontface='';
+
 function splitfonttext(transwithfont){
     if(transwithfont[0]=='\x01'){
         transwithfont=transwithfont.substr(1)
@@ -12,14 +13,27 @@ function splitfonttext(transwithfont){
         return transwithfont;
     }
 }
-function NWjshook(){
-    function NWjssend(s) {
+function clipboardsender(s){
+    try{
         const _clipboard = require('nw.gui').Clipboard.get();
         _clipboard.set(s, 'text'); 
         transwithfont=_clipboard.get('text');
-        if(transwithfont.length==0)return s;
-        return splitfonttext(transwithfont)
     }
+    catch(err){
+        try{
+                
+            const clipboard = require('electron').clipboard;
+            clipboard.writeText(s);
+            transwithfont= clipboard.readText();
+        }
+        catch(err2){
+            return s;
+        }
+    }
+    if(transwithfont.length==0)return s;
+    return splitfonttext(transwithfont)
+}
+function rpgmakerhook(){
     
     if(Window_Message.prototype.originstartMessage)return;
     Window_Message.prototype.originstartMessage=Window_Message.prototype.startMessage;
@@ -32,26 +46,19 @@ function NWjshook(){
     Window_Message.prototype.startMessage = function() 
     {
         gametext = $gameMessage.allText();
-        resp=NWjssend(gametext);
+        resp=clipboardsender(gametext);
         $gameMessage._texts=[resp]
         this.originstartMessage();
     };
 }
 
-function Electronhook() {
+function tyranohook() {
         
-    function Electronsend(s) {
-        const clipboard = require('electron').clipboard;
-        clipboard.writeText(s);
-        transwithfont= clipboard.readText();
-        if(transwithfont.length==0)return s;
-        return splitfonttext(transwithfont)
-    }
     if(tyrano.plugin.kag.tag.text.originstart)return;
     tyrano.plugin.kag.tag.text.originstart=tyrano.plugin.kag.tag.text.start;
     tyrano.plugin.kag.tag.text.start = function (pm) {
         if (1 != this.kag.stat.is_script && 1 != this.kag.stat.is_html) {
-			pm.val=Electronsend(pm.val);
+			pm.val=clipboardsender(pm.val);
             if(fontface!=''){
                 this.kag.stat.font.face=fontface
             }
@@ -63,10 +70,10 @@ function retryinject(times){
     if(times==0)return;
     try{
         if(window.tyrano && tyrano.plugin){
-            Electronhook();
+            tyranohook();
         }
         else if(window.Utils && Utils.RPGMAKER_NAME){
-            NWjshook();
+            rpgmakerhook();
         }
         else{ 
             setTimeout(retryinject,3000,times-1);
