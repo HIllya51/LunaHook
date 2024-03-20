@@ -15,18 +15,6 @@ void NewHook_check(HookParam& hp,LPCSTR n){
         inserted_addr.insert(hp.address);
     }
 } 
-auto mscorlib_system_string_funcs={
-                    "ToCharArray",
-                    "Replace",
-                    "ToString",
-                    "IndexOf",
-                    "Substring",
-                    "op_Inequality",//[230901] [ILLGAMES] ハニカム
-                   "InternalSubString", //[1000-REKA] 早咲きのくろゆり
-                   //https://learn.microsoft.com/zh-cn/dotnet/api/system.string.join?view=net-7.0
-                   // "Join",  "IndexOfAnyUnchecked",  "LastIndexOfAny", "Split",  "IndexOfAny", "Compare", "Concat", "TrimEnd", "op_Inequality", "InternalSplitKeepEmptyEntries", "CreateString", "FormatHelper", "FastAllocateString", "EndsWith", "ReplaceInternal",  "CopyTo", "IndexOfUnchecked", "ConcatArray", "Trim", "ToLower", "MakeSeparatorList", ".ctor", "SplitInternal", "CharCopy", "LastIndexOfAnyUnchecked", "IsNullOrWhiteSpace", "CtorCharPtrStartLength", "FillStringChecked", "op_Equality", "StartsWith", "Contains", "ToLowerInvariant", "TrimHelper", "Equals", "wstrcpy", "CtorCharArrayStartLength", "ReplaceUnchecked", "InternalSplitOmitEmptyEntries", "LastIndexOf", "Format"
-                    //String还有其他函数，但一般这几个就可以了
-                };
 std::vector<std::vector<char*>> unity_ui_text={
         {"TMPro","TMP_Text"},
         {"UnityEngine.UI","Text"},
@@ -36,7 +24,7 @@ std::vector<std::vector<char*>> unity_ui_text={
         {"UnityEngine.UIElements","TextElement"},
         {"UnityEngine.UIElements","TextField","value"}
     }; 
-void commonsolemonostring(uintptr_t offset,uintptr_t *data,  size_t*len){
+void commonsolvemonostring(uintptr_t offset,uintptr_t *data,  size_t*len){
     MonoString* string = (MonoString*)offset;
     if(string==0)return;
     *data = (uintptr_t)string->chars;
@@ -50,8 +38,39 @@ void mscorlib_system_string_hook_fun(hook_stack* stack,  HookParam *hp, uintptr_
     #else
     uintptr_t offset=stack->stack[1];
     #endif 
-    commonsolemonostring(offset,data,len);
+    commonsolvemonostring(offset,data,len);
 }
+void mscorlib_system_string_InternalSubString_hook_fun(hook_stack* stack,  HookParam *hp, uintptr_t *data, uintptr_t *split, size_t*len)
+{ 
+    #ifdef _WIN64
+    uintptr_t offset=stack->rcx;
+    uintptr_t startIndex=stack->rdx;
+    uintptr_t length=stack->r8;
+    #else
+    uintptr_t offset=stack->stack[1];
+    uintptr_t startIndex=stack->stack[2];
+    uintptr_t length=stack->stack[3];
+    #endif 
+
+    MonoString* string = (MonoString*)offset;
+    if(string==0)return;
+    *data = (uintptr_t)(startIndex+string->chars);
+    if(wcslen((wchar_t*)*data)<length)return;
+    *len = length * 2;
+    
+}
+auto mscorlib_system_string_funcs=std::unordered_map<std::string,void*>{
+                    {"ToCharArray",mscorlib_system_string_hook_fun},
+                    {"Replace",mscorlib_system_string_hook_fun},
+                    {"ToString",mscorlib_system_string_hook_fun},
+                    {"IndexOf",mscorlib_system_string_hook_fun},
+                    {"Substring",mscorlib_system_string_hook_fun},
+                    {"op_Inequality",mscorlib_system_string_hook_fun},//[230901] [ILLGAMES] ハニカム
+                   {"InternalSubString",mscorlib_system_string_InternalSubString_hook_fun} //[1000-REKA] 早咲きのくろゆり   不这样文本会很多会很卡
+                   //https://learn.microsoft.com/zh-cn/dotnet/api/system.string.join?view=net-7.0
+                   // "Join",  "IndexOfAnyUnchecked",  "LastIndexOfAny", "Split",  "IndexOfAny", "Compare", "Concat", "TrimEnd", "op_Inequality", "InternalSplitKeepEmptyEntries", "CreateString", "FormatHelper", "FastAllocateString", "EndsWith", "ReplaceInternal",  "CopyTo", "IndexOfUnchecked", "ConcatArray", "Trim", "ToLower", "MakeSeparatorList", ".ctor", "SplitInternal", "CharCopy", "LastIndexOfAnyUnchecked", "IsNullOrWhiteSpace", "CtorCharPtrStartLength", "FillStringChecked", "op_Equality", "StartsWith", "Contains", "ToLowerInvariant", "TrimHelper", "Equals", "wstrcpy", "CtorCharArrayStartLength", "ReplaceUnchecked", "InternalSplitOmitEmptyEntries", "LastIndexOf", "Format"
+                    //String还有其他函数，但一般这几个就可以了
+                };
 void unity_ui_string_hook_fun(hook_stack* stack,  HookParam *hp,  uintptr_t *data, uintptr_t *split, size_t*len)
 { 
     #ifdef _WIN64
@@ -59,7 +78,7 @@ void unity_ui_string_hook_fun(hook_stack* stack,  HookParam *hp,  uintptr_t *dat
     #else
     uintptr_t offset=stack->stack[2];
     #endif 
-    commonsolemonostring(offset,data,len);
+    commonsolvemonostring(offset,data,len);
 }
 void unity_ui_string_hook_after(hook_stack* stack,void* data, size_t len)
 { 
@@ -83,8 +102,8 @@ void unity_ui_string_hook_after(hook_stack* stack,void* data, size_t len)
     stack->stack[2]=(uintptr_t)newstring;
     #endif 
 }
-template<void* text_fun,void* hook_after>
-void MONO_IL2CPP_NEW_HOOK(uintptr_t addr,const char*name){
+
+void MONO_IL2CPP_NEW_HOOK(void* text_fun,void* hook_after, uintptr_t addr,const char*name){
     if(addr==0)return;
     HookParam hp;
     hp.address = addr;
@@ -98,8 +117,10 @@ void MONO_IL2CPP_NEW_HOOK(uintptr_t addr,const char*name){
     }
     NewHook_check(hp, name);
 }
-auto unity_ui_string_hook=MONO_IL2CPP_NEW_HOOK<unity_ui_string_hook_fun,unity_ui_string_hook_after>;
-auto mscorlib_system_string_hook=MONO_IL2CPP_NEW_HOOK<mscorlib_system_string_hook_fun,0>;
+auto unity_ui_string_hook=std::bind(MONO_IL2CPP_NEW_HOOK,unity_ui_string_hook_fun,unity_ui_string_hook_after,std::placeholders::_1,std::placeholders::_2);
+auto mscorlib_system_string_hook=[](uintptr_t addr,std::pair<std::string,void*>func){
+    MONO_IL2CPP_NEW_HOOK(func.second,0,addr,func.first.c_str());
+};
 
 
 /** jichi 12/26/2014 Mono
@@ -128,7 +149,7 @@ namespace il2cpp_func{
         GetProcAddressXX(module,il2cpp_class_get_method_from_name); 
         if(il2cpp_class_get_method_from_name==0)return ;
         for(auto func:mscorlib_system_string_funcs){
-            auto ToCharArray= il2cpp_class_get_method_from_name(klass,func,-1);
+            auto ToCharArray= il2cpp_class_get_method_from_name(klass,func.first.c_str(),-1);
             if(ToCharArray==0)continue;
             mscorlib_system_string_hook(ToCharArray->methodPointer,func); 
         }
@@ -269,7 +290,7 @@ void MonoCallBack(uintptr_t assembly, void* userData) {
                 std::string cln = name;
                 if(cln=="String"){
                     for(auto func:mscorlib_system_string_funcs){
-                        auto ToCharArray= mono_class_get_method_from_name(klass,func,-1);
+                        auto ToCharArray= mono_class_get_method_from_name(klass,func.first.c_str(),-1);
                         if(ToCharArray==0)continue;
                         auto ToCharArrayAddr=mono_compile_method((uintptr_t)ToCharArray);
                         mscorlib_system_string_hook((uint64_t)ToCharArrayAddr,func); 
