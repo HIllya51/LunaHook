@@ -72,6 +72,7 @@ public:
 struct emfuncinfo{
     const char* hookname;
     void* hookfunc;
+	void* filterfun;
     const wchar_t* _id;
 };
 std::unordered_map<uintptr_t,emfuncinfo>emfunctionhooks;
@@ -106,6 +107,7 @@ bool hookPPSSPPDoJit(){
 			hpinternal.address=ret;
 			hpinternal.type=CODEC_UTF16|USING_STRING|NO_CONTEXT;
 			hpinternal.text_fun=(decltype(hpinternal.text_fun))op.hookfunc;
+			hpinternal.filter_fun=(decltype(hpinternal.filter_fun))op.filterfun;
 			NewHook(hpinternal,op.hookname);
 		};
 		NewHook(hpinternal,"DoJitPtrRet");
@@ -130,13 +132,16 @@ void ULJS00403(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* spl
      hp->type=USING_STRING|NO_CONTEXT;
 	 hp->codepage=932;
 	 auto address= emu_arg(stack)[1];
-	 
-     std::string result = std::string((char*)address);
+	 *data=address;
+	*len=strlen((char*)address);
+}
+bool ULJS00403_filter(void* data, size_t* len, HookParam* hp){
+     std::string result = std::string((char*)data,*len);
     std::regex newlinePattern(R"((\\n)+)");
 	result = std::regex_replace(result, newlinePattern, " ");
     std::regex pattern(R"((\\d$|^\@[a-z]+|#.*?#|\$))");
     result = std::regex_replace(result, pattern, "");
-	write_string_new(data,len,result);
+	return write_string_overwrite(data,len,result);
 }
 
 // @name         [ULJS00339] Amagami
@@ -217,8 +222,11 @@ void NPJH50909(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* spl
      hp->type=USING_STRING|NO_CONTEXT;
 	 hp->codepage=932;
 	 auto address= emu_arg(stack)[0];
-	 
-     std::string result = std::string((char*)address);
+	 *data=address;
+	*len=strlen((char*)address);
+}
+bool NPJH50909_filter(void* data, size_t* len, HookParam* hp){
+     std::string result = std::string((char*)data,*len);
 
     // Remove single line markers
     result = std::regex_replace(result, std::regex("(\\%N)+"), " ");
@@ -233,7 +241,7 @@ void NPJH50909(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* spl
         result = std::regex_replace(result, std::regex("^[^「]+"), "");
         result = name + "\n" + result;
     }
-	write_string_new(data,len,result);
+	return write_string_overwrite(data,len,result);
 }
 
 // @name         [ULJM06119] Dunamis15
@@ -245,8 +253,11 @@ void NPJH50909(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* spl
 void ULJM06119(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
      hp->type=USING_STRING|NO_CONTEXT|CODEC_UTF8;
 	 auto address= emu_arg(stack)[0];
-	
-     std::string s = std::string((char*)address);
+	*data=address;
+	*len=strlen((char*)address);
+}
+bool ULJM06119_filter(void* data, size_t* len, HookParam* hp){
+     std::string s = std::string((char*)data,*len);
 
     std::regex pattern(R"(/\[[^\]]+./g)");
     s = std::regex_replace(s, pattern, "");
@@ -259,7 +270,7 @@ void ULJM06119(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* spl
 
     std::regex newlinePattern(R"(/\n+)");
     s = std::regex_replace(s, newlinePattern, " ");
-	write_string_new(data,len,s);
+	return write_string_overwrite(data,len,s);
 }
 // @name         [ULJM06036] Princess Evangile Portable
 // @version      0.1
@@ -268,23 +279,26 @@ void ULJM06119(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* spl
 void ULJM06036(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
      hp->type=USING_STRING|NO_CONTEXT|CODEC_UTF16;
 	 auto address= emu_arg(stack)[2];
-	
-     std::wstring result = std::wstring((wchar_t*)address);
+	*data=address;
+	*len=wcslen((wchar_t*)address)*2;
+}
+bool ULJM06036_filter(void* data, size_t* len, HookParam* hp){
+     std::wstring result = std::wstring((wchar_t*)data,*len/2);
     std::wregex pattern(LR"(<R([^\/]+).([^>]+).>)");
     result = std::regex_replace(result, pattern, L"$2");
     std::wregex tagPattern(LR"(<[A-Z]+>)");
     result = std::regex_replace(result, tagPattern, L"");
-	write_string_new(data,len,result);
+	return write_string_overwrite(data,len,result);
 }
 namespace{
 auto _=[](){
     emfunctionhooks={
-            {0x883bf34,{"Shinigami to Shoujo",ULJS00403,L"PCSG01282"}},
-            {0x0886775c,{"Amagami",ULJS00339,L"ULJS00339"}},
-            {0x8814adc,{"Sekai de Ichiban Dame na Koi",NPJH50909,L"NPJH50909"}},
-            {0x8850b2c,{"Sekai de Ichiban Dame na Koi",NPJH50909,L"NPJH50909"}},
-            {0x0891D72C,{"Dunamis15",ULJM06119,L"ULJM06119"}},
-            {0x88506d0,{"Princess Evangile Portable",ULJM06036,L"ULJM06036"}},
+            {0x883bf34,{"Shinigami to Shoujo",ULJS00403,ULJS00403_filter,L"PCSG01282"}},
+            {0x0886775c,{"Amagami",ULJS00339,0,L"ULJS00339"}},
+            {0x8814adc,{"Sekai de Ichiban Dame na Koi",NPJH50909,NPJH50909_filter,L"NPJH50909"}},
+            {0x8850b2c,{"Sekai de Ichiban Dame na Koi",NPJH50909,NPJH50909_filter,L"NPJH50909"}},
+            {0x0891D72C,{"Dunamis15",ULJM06119,ULJM06119_filter,L"ULJM06119"}},
+            {0x88506d0,{"Princess Evangile Portable",ULJM06036,ULJM06036_filter,L"ULJM06036"}},
     };
     return 1;
 }();
