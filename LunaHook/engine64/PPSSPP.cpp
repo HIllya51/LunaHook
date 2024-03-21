@@ -486,24 +486,34 @@ void QNPJH50909_2(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* 
 namespace{
 auto _=[](){
     emfunctionhooks={
+			/*
+			0x883b0bc: mainHandler.bind_(null, 2), // a2 - choices (un-formated)
+			0x883cf04: mainHandler.bind_(null, 3), // a3 - choices + nameX2
+			0x883bf34: mainHandler.bind_(null, 1), // a1 - choices + dialogue + nameX2 <----
+			0x8836984: mainHandler.bind_(null, 1), // a1 - dialogue
+			0x883cecc: mainHandler.bind_(null, 3), // a3 - dialogue
+			*/
             {0x883bf34,{"Shinigami to Shoujo",ULJS00403,ULJS00403_filter,L"PCSG01282"}},
-            {0x0886775c,{"Amagami",ULJS00339,0,L"ULJS00339"}},
-            {0x8814adc,{"Sekai de Ichiban Dame na Koi",NPJH50909,NPJH50909_filter,L"NPJH50909"}},
-            {0x8850b2c,{"Sekai de Ichiban Dame na Koi",NPJH50909,NPJH50909_filter,L"NPJH50909"}},
+            {0x0886775c,{"Amagami",ULJS00339,0,L"ULJS00339"}},// String.length()
+            {0x8814adc,{"Sekai de Ichiban Dame na Koi",NPJH50909,NPJH50909_filter,L"NPJH50909"}},// name + dialouge
+            {0x8850b2c,{"Sekai de Ichiban Dame na Koi",NPJH50909,NPJH50909_filter,L"NPJH50909"}},// onscreen toast
             {0x0891D72C,{"Dunamis15",ULJM06119,ULJM06119_filter,L"ULJM06119"}},
-            {0x88506d0,{"Princess Evangile Portable",ULJM06036,ULJM06036_filter,L"ULJM06036"}},
+            {0x88506d0,{"Princess Evangile Portable",ULJM06036,ULJM06036_filter,L"ULJM06036"}},// [0x88506d0(2)...0x088507C0(?)] // name text text (line doubled)
             {0x89b59dc,{"Kin'iro no Corda 2f",ULJM05428,0,L"ULJM05428"}},
-            {0x886162c,{"Kin'iro no Corda",ULJM05054,0,L"ULJM05054"}},
-            {0x8899e90,{"Kin'iro no Corda",ULJM05054,0,L"ULJM05054"}},
-            {0x8952cfc,{"Sol Trigger",NPJH50619<0>,NPJH50619F,L"NPJH50619"}},
-            {0x884aad4,{"Sol Trigger",NPJH50619<0>,NPJH50619F,L"NPJH50619"}},
-            {0x882e1b0,{"Sol Trigger",NPJH50619<0>,NPJH50619F,L"NPJH50619"}},
-            {0x88bb108,{"Sol Trigger",NPJH50619<2>,NPJH50619F,L"NPJH50619"}},
-            {0x89526a0,{"Sol Trigger",NPJH50619<0>,NPJH50619F,L"NPJH50619"}},
-            {0x88bcef8,{"Sol Trigger",NPJH50619<1>,NPJH50619F,L"NPJH50619"}},
+            {0x886162c,{"Kin'iro no Corda",ULJM05054,0,L"ULJM05054"}},// dialogue: 0x886162c (x1), 0x889d5fc-0x889d520(a2) fullLine
+            {0x8899e90,{"Kin'iro no Corda",ULJM05054,0,L"ULJM05054"}},// name 0x88da57c, 0x8899ca4 (x0, oneTime), 0x8899e90
+            {0x8952cfc,{"Sol Trigger",NPJH50619<0>,NPJH50619F,L"NPJH50619"}},//dialog
+            {0x884aad4,{"Sol Trigger",NPJH50619<0>,NPJH50619F,L"NPJH50619"}},//description
+            {0x882e1b0,{"Sol Trigger",NPJH50619<0>,NPJH50619F,L"NPJH50619"}},//system
+            {0x88bb108,{"Sol Trigger",NPJH50619<2>,NPJH50619F,L"NPJH50619"}},//battle tutorial
+            {0x89526a0,{"Sol Trigger",NPJH50619<0>,NPJH50619F,L"NPJH50619"}},//battle info
+            {0x88bcef8,{"Sol Trigger",NPJH50619<1>,NPJH50619F,L"NPJH50619"}},//battle talk
             {0x8958490,{"Fate/EXTRA CCC",NPJH50505,NPJH50505F,L"NPJH50505"}},
-            {0x088630f8,{"Kamigami no Asobi InFinite",QNPJH50909,0,L"NPJH50909"}},
-            {0x0887813c,{"Kamigami no Asobi InFinite",QNPJH50909_2,0,L"NPJH50909"}},
+            {0x088630f8,{"Kamigami no Asobi InFinite",QNPJH50909,0,L"NPJH50909"}}, // text, choice (debounce trailing 400ms), TODO: better hook
+            {0x0887813c,{"Kamigami no Asobi InFinite",QNPJH50909_2,0,L"NPJH50909"}}, // Question YN
+			
+            {0x88eeba4,{"Gekka Ryouran Romance",ULJM05943<0,0>,ULJM05943F,L"ULJM05943"}},// a0 - monologue text
+            {0x8875e0c,{"Gekka Ryouran Romance",ULJM05943<1,6>,ULJM05943F,L"ULJM05943"}},// a1 - dialogue text
     };
     return 1;
 }();
