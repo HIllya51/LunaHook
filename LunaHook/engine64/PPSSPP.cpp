@@ -366,6 +366,32 @@ void ULJM05054(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* spl
 	*split=haveNamve;
 	write_string_new(data,len,s);
 }
+
+// @name         [ULJM05943] Gekka Ryouran Romance
+// @version      0.1
+// @author       Koukdw
+// @description  PPSSPP x64
+// * Otomate & Rejet
+// * Idea Factory (アイディアファクトリー)
+// *
+template<int index, int offset>
+void ULJM05943(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
+     hp->type=USING_STRING|NO_CONTEXT;
+	 hp->codepage=932;
+	auto address= emu_arg(stack)[index]+offset;
+	*data=address;*len=strlen((char*)address);
+}
+
+bool ULJM05943F(void* data, size_t* len, HookParam* hp){
+    auto s = std::string((char*)data,*len);
+    std::regex pattern1("#n+");
+    std::string replacement1 = " ";
+    std::string result1 = std::regex_replace(s, pattern1, replacement1);
+    std::regex pattern2("#[A-Za-z]+\\[(\\d*\\.)?\\d+\\]+");
+    std::string replacement2 = "";
+    std::string result2 = std::regex_replace(result1, pattern2, replacement2);
+	return write_string_overwrite(data,len,result2);
+}
 namespace{
 auto _=[](){
     emfunctionhooks={
@@ -378,6 +404,8 @@ auto _=[](){
             {0x89b59dc,{"Kin'iro no Corda 2f",ULJM05428,0,L"ULJM05428"}},
             {0x886162c,{"Kin'iro no Corda",ULJM05054,0,L"ULJM05054"}},
             {0x8899e90,{"Kin'iro no Corda",ULJM05054,0,L"ULJM05054"}},
+            {0x88eeba4,{"Gekka Ryouran Romance",ULJM05943<0,0>,ULJM05943F,L"ULJM05943"}},
+            {0x8875e0c,{"Gekka Ryouran Romance",ULJM05943<1,6>,ULJM05943F,L"ULJM05943"}},
     };
     return 1;
 }();
