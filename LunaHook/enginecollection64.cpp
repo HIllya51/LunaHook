@@ -21,7 +21,6 @@ std::vector<ENGINE*> unsafe_check_atlast(){   return{ }; }
 
 std::vector<ENGINE*> check_engines(){ 
     return  { 
-        new PPSSPP,
         new Godot,
         new V8,
         new Renpy,
@@ -38,7 +37,8 @@ std::vector<ENGINE*> check_engines(){
         new _5pb,
         new TYPEMOON,
         new ENTERGRAM,
-        new yuzusuyu
+        new yuzusuyu,
+        new PPSSPP,
     };
      
 }

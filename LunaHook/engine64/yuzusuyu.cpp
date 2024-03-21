@@ -89,12 +89,16 @@ std::unordered_map<uintptr_t,emfuncinfo>emfunctionhooks;
 }
 bool yuzusuyu::attach_function()
 {
+    
+    ConsoleOutput("[Compatibility]");
+    ConsoleOutput("Yuzu 1616+");
+    ConsoleOutput("[Mirror] Download: https://github.com/koukdw/emulators/releases");
    auto DoJitPtr=getDoJitAddress();
    if(DoJitPtr==0)return false;
+   ConsoleOutput("DoJitPtr %p",DoJitPtr);
    HookParam hp;
    hp.address=DoJitPtr;
    hp.text_fun=[](hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
-        //hp->text_fun=nullptr;hp->type=HOOK_EMPTY;
         auto descriptor = *argidx(stack,idxDescriptor); // r8
         auto entrypoint = *argidx(stack,idxEntrypoint); // r9
         auto em_address = *(uintptr_t*)descriptor;
@@ -103,7 +107,6 @@ bool yuzusuyu::attach_function()
     
         auto op=emfunctionhooks.at(em_address);
         
-
         DWORD _;
         VirtualProtect((LPVOID)entrypoint,0x10,PAGE_EXECUTE_READWRITE,&_);
         HookParam hpinternal;
@@ -126,6 +129,7 @@ void _0100978013276000(hook_stack* stack, HookParam* hp, uintptr_t* data, uintpt
     auto s=mages::readString(emu_arg(stack)[0],0);
     write_string_new(data,len,s);
 }
+namespace{
 auto _=[](){
     emfunctionhooks={
             {0x8003eeac - 0x80004000,{"Memories Off",_0100978013276000,L"0100978013276000",L"1.0.0"}},
@@ -133,3 +137,4 @@ auto _=[](){
     };
     return 1;
 }();
+}
