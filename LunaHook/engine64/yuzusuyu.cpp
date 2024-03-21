@@ -78,7 +78,13 @@ public:
         return base+args[idx];
     }
 };
-std::unordered_map<uintptr_t,std::pair<LPCSTR,void*>>emfunctionhooks;
+struct emfuncinfo{
+    const char* hookname;
+    void* hookfunc;
+    const wchar_t* _id;
+    const wchar_t* _version;
+};
+std::unordered_map<uintptr_t,emfuncinfo>emfunctionhooks;
 
 }
 bool yuzusuyu::attach_function()
@@ -93,17 +99,19 @@ bool yuzusuyu::attach_function()
         auto entrypoint = *argidx(stack,idxEntrypoint); // r9
         auto em_address = *(uintptr_t*)descriptor;
         em_address-=0x80004000;
-        if(emfunctionhooks.find(em_address)!=emfunctionhooks.end() && entrypoint){
-            auto op=emfunctionhooks.at(em_address);
-            DWORD _;
-            VirtualProtect((LPVOID)entrypoint,0x10,PAGE_EXECUTE_READWRITE,&_);
-            HookParam hpinternal;
-            hpinternal.address=entrypoint;
-            hpinternal.type=CODEC_UTF16|USING_STRING|NO_CONTEXT;
-            hpinternal.text_fun=(decltype(hpinternal.text_fun))op.second;
-            NewHook(hpinternal,op.first);
-        }
-         
+        if(emfunctionhooks.find(em_address)==emfunctionhooks.end() || !entrypoint)return;
+    
+        auto op=emfunctionhooks.at(em_address);
+        
+
+        DWORD _;
+        VirtualProtect((LPVOID)entrypoint,0x10,PAGE_EXECUTE_READWRITE,&_);
+        HookParam hpinternal;
+        hpinternal.address=entrypoint;
+        hpinternal.type=CODEC_UTF16|USING_STRING|NO_CONTEXT;
+        hpinternal.text_fun=(decltype(hpinternal.text_fun))op.hookfunc;
+        NewHook(hpinternal,op.hookname);
+    
    };
   return NewHook(hp,"YuzuDoJit");
 } 
@@ -120,8 +128,8 @@ void _0100978013276000(hook_stack* stack, HookParam* hp, uintptr_t* data, uintpt
 }
 auto _=[](){
     emfunctionhooks={
-            {0x8003eeac - 0x80004000,{"Memories Off 1.0.0",_0100978013276000}},
-            {0x8003eebc - 0x80004000,{"Memories Off 1.0.1",_0100978013276000}},
+            {0x8003eeac - 0x80004000,{"Memories Off",_0100978013276000,L"0100978013276000",L"1.0.0"}},
+            {0x8003eebc - 0x80004000,{"Memories Off",_0100978013276000,L"0100978013276000",L"1.0.1"}},
     };
     return 1;
 }();
