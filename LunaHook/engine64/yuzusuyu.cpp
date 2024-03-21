@@ -89,10 +89,7 @@ std::unordered_map<uintptr_t,emfuncinfo>emfunctionhooks;
 }
 bool yuzusuyu::attach_function()
 {
-    
-    ConsoleOutput("[Compatibility]");
-    ConsoleOutput("Yuzu 1616+");
-    ConsoleOutput("[Mirror] Download: https://github.com/koukdw/emulators/releases");
+    ConsoleOutput("[Compatibility] Yuzu 1616+");
    auto DoJitPtr=getDoJitAddress();
    if(DoJitPtr==0)return false;
    ConsoleOutput("DoJitPtr %p",DoJitPtr);

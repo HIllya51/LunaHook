@@ -79,9 +79,7 @@ std::unordered_map<uintptr_t,emfuncinfo>emfunctionhooks;
 std::unordered_set<uintptr_t>breakpoints;
 }
 bool hookPPSSPPDoJit(){
-	ConsoleOutput("[Compatibility]");
-    ConsoleOutput("PPSSPP 1.12.3-867 -> v1.16.1-35");
-    ConsoleOutput("[Mirror] Download: https://github.com/koukdw/emulators/releases");
+    ConsoleOutput("[Compatibility] PPSSPP 1.12.3-867 -> v1.16.1-35");
 	auto DoJitPtr=getDoJitAddress();
    if(DoJitPtr==0)return false;
    HookParam hp;
