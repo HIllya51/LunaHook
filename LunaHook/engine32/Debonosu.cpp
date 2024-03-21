@@ -56,16 +56,7 @@ bool InsertDebonosuScenarioHook()
             hp.hook_font=F_MultiByteToWideChar|F_GetTextExtentPoint32A;
             hp.type = USING_STRING|NO_CONTEXT|USING_SPLIT|FIXING_SPLIT|EMBED_ABLE|EMBED_BEFORE_SIMPLE|EMBED_DYNA_SJIS; // there is only one thread
             hp.filter_fun=[](void* data, size_t* len, HookParam* hp){
-              auto text = reinterpret_cast<LPSTR>(data);
-              std::string str = text;
-              str = str.substr(0,  *len); 
-
-              std::regex reg1("\\{(.*?)/(.*?)\\}");
-              std::string result1 = std::regex_replace(str, reg1, "$1");
-              *len = result1.size(); 
-              strcpy(text, result1.c_str());
-              return true;
-
+              return write_string_overwrite(data,len,std::regex_replace(std::string((char*)data,*len), std::regex("\\{(.*?)/(.*?)\\}"), "$1"));
             };
             ConsoleOutput("INSERT Debonosu");
             

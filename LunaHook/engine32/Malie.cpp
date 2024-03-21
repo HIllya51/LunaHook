@@ -1192,8 +1192,7 @@ namespace Private {
         data.append(oldData);
       else {
         std::wstring oldText = std::wstring(oldTextAddress, trimmedSize);
-        wcscpy((LPWSTR)data1,oldText.c_str());
-        *len=oldText.size()*2;
+        write_string_overwrite(data1,len,oldText);
         update=true;
       }
     }
@@ -1628,10 +1627,7 @@ namespace{
       static std::wstring _ws;
       if(_ws==str)return;
       _ws=str;
-      auto _s=new wchar_t[str.size()+1];
-      wcscpy(_s,str.c_str());
-      *data=(DWORD)_s;
-      *len=str.size()*2;
+      write_string_new(data,len,str);
       *split=0; 
   }
   bool malie_light(){

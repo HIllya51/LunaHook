@@ -537,9 +537,7 @@ namespace Private {
           
           DWORD retaddr = s->stack[0]; // retaddr
           * role = Engine::ScenarioRole;
-          strcpy((char*)data,(LPCSTR)s->stack[textIndex_]);
-      *len=strlen((LPCSTR)s->stack[textIndex_]);
-    return true;
+      return write_string_overwrite(data,len,(LPCSTR)s->stack[textIndex_]);
       }
 
     static std::string data_; // persistent storage, which makes this function not thread-safe
@@ -594,10 +592,7 @@ namespace Private {
         break;
       } break;
     }
-strcpy((char*)data,(LPCSTR)s->stack[textIndex_]);
-      *len=strlen((LPCSTR)s->stack[textIndex_]);
-     
-    return true;
+    return write_string_overwrite(data,len,(LPCSTR)s->stack[textIndex_]);
   }
 
 }
@@ -1200,8 +1195,8 @@ bool InsertBGI2Hook()
     static const std::regex rx("<r.+?>(.+?)</r>", std::regex_constants::icase);
     std::string result = std::string((char*)data,*len);
     result = std::regex_replace(result, rx, "$1");
-    *len = (result.size());
-    strcpy((char*)data, result.c_str());return true;
+    
+    return write_string_overwrite(data,len,result);
   } ;
   
   hp.split = get_stack(8); // pseudo arg8

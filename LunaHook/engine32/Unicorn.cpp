@@ -199,9 +199,7 @@ namespace Private {
         strReplace(oldData, "\x81\x40", "");
       //oldData.replace("\x81\x40", ""); // remove spaces in the middle of names
     
-    strcpy((CHAR*)data,oldData.c_str());
-    *len1=oldData.size();
-    return true;
+    return write_string_overwrite(data,len1,oldData);
     
   }
   void hookafter2(hook_stack*s,void* data, size_t len){
@@ -588,10 +586,8 @@ namespace Private {
         //|| isSkippedText(text))
       return false;
     enum { role = Engine::OtherRole };
-    std::string oldData = text;
-     strcpy((char*)data,oldData.c_str());
-    *len=oldData.size();
-    return true;
+    
+    return write_string_overwrite(data,len,text);
 /*    //oldData.replace("\\n", "\n"); // Remove new line. FIXME: automatically adjust line width
     std::string newData = EngineController::instance()->dispatchTextASTD(oldData, role, retaddr);
     if (newData == oldData)

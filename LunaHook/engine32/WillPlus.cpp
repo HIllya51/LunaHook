@@ -271,10 +271,7 @@ bool WillPlus_extra_filter(void* data, size_t* size, HookParam*) {
   std::wregex reg2(L"%[A-Z]+");
   result1 = std::regex_replace(result1, reg2, L"");
 
-    
-
-  *size = result1.size() * 2; 
-  wcscpy(text, result1.c_str());
+  write_string_overwrite(data,size,result1);
   return true;
 };
 bool InsertWillPlusAHook()
@@ -532,8 +529,8 @@ bool hookBefore(hook_stack*s,void* data, size_t* len,uintptr_t*role)
       std::wregex reg11(L"\\{(.*?);(.*?)\\}");
       str = std::regex_replace(str, reg11, L"$1");
 
-      wcscpy((wchar_t*)data,str.c_str());
-      *len=str.size()*2;
+      write_string_overwrite(data,len,str);
+      
       return true;
       
 }
@@ -777,8 +774,7 @@ namespace TextHookW
     if (!trimmedSize || !*trimmedText)
       return false;
     std::wstring oldText = std::wstring(trimmedText, trimmedSize);
-    wcscpy((LPWSTR)data,oldText.c_str());*len=oldText.size()*2;
-      
+    write_string_overwrite(data,len,oldText);
     return true;
   }
   template<int idx>
@@ -1260,9 +1256,7 @@ namespace Private {
       return false;
     std::string oldData(trimmedText, trimmedSize);
 
-    strcpy((char*)data,oldData.c_str());
-    *len=oldData.size();
-    return true;
+    return write_string_overwrite(data,len,oldData);
     /*newData = EngineController::instance()->dispatchTextASTD(oldData, role, sig);
     if (newData == oldData)
       return;
@@ -1555,9 +1549,8 @@ namespace Private {
     if (!Engine::isAddressReadable(text) || !*text || ::strlen(text) <= 2) // do not translate single character
       return false;
    *role = Engine::OtherRole ;
-     strcpy((char*)data,text);*len=strlen(text);
-    
-    return true;
+   
+    return write_string_overwrite(data,len,text);
   }
 
 } // namespace Private

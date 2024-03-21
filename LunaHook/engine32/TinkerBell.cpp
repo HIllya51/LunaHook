@@ -82,8 +82,7 @@ bool WendyBell_filter(void* data, size_t* len, HookParam* hp){
       
     }
   } 
-  *len=wc.size()*2; 
-  wcscpy(reinterpret_cast<LPWSTR>(data),wc.c_str()); 
+  write_string_overwrite(data,len,wc);
   return true;
 }
 }
@@ -99,8 +98,7 @@ bool tkbl_filter(void* data, size_t* len, HookParam* hp){
   if(last==str)return false;
   last=str;  
    
-  *len=str.size()*2;
-  wcscpy(reinterpret_cast<LPWSTR>(data),str.c_str());
+  write_string_overwrite(data,len,str);
   return true;
 }
 bool tkbl(){

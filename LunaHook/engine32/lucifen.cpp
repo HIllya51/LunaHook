@@ -53,8 +53,7 @@ namespace{
       if(text[text.size()-1]=='$')
         text=text.substr(0,text.size()-1);
        
-      strcpy((char*)data,text.c_str());
-      *len=text.size();
+      write_string_overwrite(data,len,text);
       return true;
   }
  void hookafter_navel(hook_stack*s,void* data, size_t len)
@@ -293,8 +292,7 @@ namespace Private {
     if (!*text)
       return false;
  
-    std::string oldData = text;
-    strcpy((char*)data,oldData.c_str());*len1=oldData.size();
+    write_string_overwrite(data,len1,text);
     return true;
   }
 
@@ -313,7 +311,7 @@ namespace Private {
     if (!*text)
       return false;
     std::string oldData = parseScenarioText(text, scenarioEnd);
-    strcpy((char*)data,oldData.c_str());*len1=oldData.size();
+    write_string_overwrite(data,len1,oldData);
     return true;
   }
 bool dispatchNameTextafter(char *text, ULONG split,hook_stack*s,void* data, uintptr_t  len1 )
@@ -761,8 +759,7 @@ namespace Private {
     if (!text || !*text)
       return text;
     *role=Engine::ChoiceRole;
-    std::string oldData =text;
-    strcpy((char*)data,oldData.c_str());*len1=oldData.size();
+    write_string_overwrite(data,len1,text);
     return true; 
   }
    void hookafter(hook_stack*s,void* data, size_t len1){

@@ -630,9 +630,7 @@ namespace Private {
 */
     //auto split = s->stack[0]; // retaddr is always the same anyway
     std::string oldData(trimmedText, trimmedSize);
-    
-    strcpy((char*)data1,oldData.c_str());
-    *len=oldData.size();
+    write_string_overwrite(data1,len,oldData);
     return true;
   }
   void hookafter(hook_stack*s,void* data1, size_t len)
@@ -916,11 +914,7 @@ bool attach(ULONG startAddress, ULONG stopAddress)
   hp.type=EMBED_ABLE|EMBED_DYNA_SJIS|USING_STRING;
   hp.hook_font=F_ExtTextOutA|F_GetTextExtentPoint32A;
         hp.filter_fun=[](void* data, size_t* len, HookParam* hp){
-                    
-            static std::regex rx("\\[rb,(.*?),.+\\]"); 
-             auto _=std::regex_replace(std::string((char*)data,*len), rx, "$1");  
-             
-             strcpy((char*)data,_.c_str());*len=_.size();
+             write_string_overwrite(data,len,std::regex_replace(std::string((char*)data,*len), std::regex("\\[rb,(.*?),.+\\]"), "$1"));
           return true;
         };
   return NewHook(hp,"EmbedQLIE");

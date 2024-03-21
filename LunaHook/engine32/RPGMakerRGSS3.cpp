@@ -657,8 +657,7 @@ namespace Private {
         //ULONG split = arg->unknown2[0]; // always 2
         //ULONG split = s->stack[0]; // return address
         std::wstring newText;
-        std::wstring old=trimmedText;
-        wcscpy((LPWSTR)data1,old.c_str());*len1=old.size()*2;
+        write_string_overwrite(data1,len1,trimmedText);
         return 1;
 
         if (newText != trimmedText) {
@@ -766,8 +765,7 @@ namespace Private {
     if (arg->isValid()) {
       auto oldText =StringToWideString(std::string(arg->text),CP_UTF8).value();
       auto split = s->stack[0]; // return address
-        std::wstring old=oldText;
-        wcscpy((LPWSTR)data1,old.c_str());*len1=old.size()*2;
+        write_string_overwrite(data1,len1,oldText);
         return 1;
     //   std::wstring newText = EngineController::instance()->dispatchTextWSTD(oldText, role, sig);
     //   if (newText != oldText) {
@@ -919,7 +917,7 @@ namespace Private {
     if (text && *text) {
       std::wstring oldText(text);
       if (oldText.size() > 1) { 
-        wcscpy((LPWSTR)data1,oldText.c_str());*len1=oldText.size()*2;
+        write_string_overwrite(data1,len1,oldText);
         return 1;
        
       }

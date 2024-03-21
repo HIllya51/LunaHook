@@ -1739,8 +1739,7 @@ bool text_fun(hook_stack*s,void* data, size_t* len,uintptr_t*role){
     if (!arg || !arg->isValid())
       return false; 
  
-    wcscpy((wchar_t*)data,arg->getText());
-    *len=arg->size *2;
+    write_string_overwrite(data,len,std::wstring(arg->getText(),arg->size));
     return true;
 }
 void hookafter(hook_stack*s,void* data, size_t len){
@@ -1805,8 +1804,7 @@ namespace Private {
     //auto sig = Engine::hashThreadSignature(role, split);
   
     std::wstring oldText = std::wstring(text, arg->size);//,
-    wcscpy((wchar_t*)data,oldText.c_str());
-  *len=oldText.size()*2;
+  write_string_overwrite(data,len,oldText);
   return true;
  //           newText = EngineController::instance()->dispatchTextWSTD(oldText, role, sig);
     

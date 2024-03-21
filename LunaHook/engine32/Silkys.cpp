@@ -253,7 +253,7 @@ static void SpecialHookSilkys(hook_stack* stack,  HookParam *, uintptr_t *data, 
       Engine::ScenarioRole;
  
     std::string oldData(arg->getText(), arg->size);
-    strcpy((char*)data1,oldData.c_str());*len=oldData.size();return 1;
+    return write_string_overwrite(data1,len,oldData);
   }
   TextUnionA *arg_,
              argValue_;

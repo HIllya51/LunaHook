@@ -155,9 +155,7 @@ bool libcefhook(HMODULE module) {
 					s += c;
 				}
 			}
-			wcscpy((LPWSTR)data, s.c_str());
-			*size = i * 2;
-			return true;
+			return write_string_overwrite(data,size,s);
 		};
 		hp.type = USING_STRING | CODEC_UTF16|NO_CONTEXT; 
 		ConsoleOutput("v8libcefhook %p", addr);

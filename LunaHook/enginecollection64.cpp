@@ -15,6 +15,7 @@
 #include"engine64/ENTERGRAM.h"
 #include"engine64/TYPEMOON.h"
 #include"engine64/LightVN.h"
+#include"engine64/yuzusuyu.h"
 std::vector<ENGINE*> ignore_engines(){ return{ }; }
 std::vector<ENGINE*> unsafe_check_atlast(){   return{ }; }
 
@@ -36,7 +37,8 @@ std::vector<ENGINE*> check_engines(){
         new AGES7,
         new _5pb,
         new TYPEMOON,
-        new ENTERGRAM
+        new ENTERGRAM,
+        new yuzusuyu
     };
      
 }

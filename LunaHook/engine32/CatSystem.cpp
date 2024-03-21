@@ -574,9 +574,8 @@ static bool containsNamePunct_(const char *text)
     }
      
     std::string oldData(trimmedText, trimmedSize);
-    strcpy((char*)data,oldData.c_str());
-    *len=oldData.size();
-    return true;
+    
+    return write_string_overwrite(data,len,oldData);
   }
   void hookafter(hook_stack*s,void* data, size_t len){
       
@@ -773,8 +772,7 @@ bool attach(ULONG startAddress, ULONG stopAddress)
                     
             static std::regex rx(R"(\[(.+?)/.+\])");
              auto _=std::regex_replace(std::string((char*)data,*len), rx, "$1");  
-             strcpy((char*)data,_.c_str());*len=_.size();return true;
-
+             return write_string_overwrite(data,len,_);
         };
   
   static ULONG p;

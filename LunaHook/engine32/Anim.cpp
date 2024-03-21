@@ -37,8 +37,7 @@ bool InsertAnim2Hook() {
         static const std::regex rx("@\\[(.*?):(.*?)\\]", std::regex_constants::icase);
         std::string result = std::string((char*)data,*len);
         result = std::regex_replace(result, rx, "$1");
-        *len = (result.size());
-        strcpy((char*)data, result.c_str());return true;
+        return write_string_overwrite(data,len,result);
     };
     myhp.newlineseperator=L"@n";
     myhp.type = USING_STRING | NO_CONTEXT|EMBED_ABLE|EMBED_AFTER_OVERWRITE|EMBED_BEFORE_SIMPLE|EMBED_DYNA_SJIS; 

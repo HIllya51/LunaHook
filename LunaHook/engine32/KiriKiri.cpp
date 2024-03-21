@@ -1222,9 +1222,8 @@ namespace{
         }
       }
     }
-    wcscpy((wchar_t*)data,innner.c_str());
-      *len=innner.size()*2;
-    return true;
+    
+    return write_string_overwrite(data,len,innner);
   }
  
 bool attachkr2(ULONG startAddress, ULONG stopAddress)
@@ -1300,9 +1299,8 @@ namespace Private {
     strReplace(utf8save, "#00ff0000;", "\\#FF0000");
     strReplace(utf8save, "%p-1;%f\xef\xbc\xad\xef\xbc\xb3 \xe3\x82\xb4\xe3\x82\xb7\xe3\x83\x83\xe3\x82\xaf;", ""); //"%p-1;%fＭＳ ゴシック;"
     strReplace(utf8save, "%p;%fuser;", "");
-    strcpy((char*)data,utf8save.c_str());
-      *len=utf8save.size();
-    return true;
+    
+    return write_string_overwrite(data,len,utf8save);
     
   }
  void after(hook_stack*s,void* data, size_t len){
@@ -1316,9 +1314,8 @@ namespace Private {
         strReplace(res, "\\#FFFFFF", "#;");
         strReplace(res, "\\#FF0000", "#00ff0000;");
       res=WideStringToString(ConvertToFullWidth((StringToWideString(res))));
-    auto cs = new char[res.size() + 1];
-        strcpy(cs, res.c_str());
-        s->ecx = (DWORD)cs;
+   
+   write_string_new(&s->ecx,0,res);
     
  }
 bool attach(ULONG startAddress, ULONG stopAddress)
@@ -1464,7 +1461,7 @@ namespace{
         t=std::regex_replace(t,std::wregex(L"\\[ruby text=\"(.*?)\"\\]"),L"");
         t=std::regex_replace(t,std::wregex(L"\\[ch text=\"(.*?)\"\\]"),L"$1"); 
         if(std::any_of(t.begin(),t.end(),[](wchar_t c){return (c<=127)&&((c!=L'[')||c!=L']');}))return false;
-        wcscpy((wchar_t*) data,t.c_str());*size=t.size()*2;return true;
+        return write_string_overwrite(data,size,t);
       }; 
       hp.hook_after=[](hook_stack*s,void* data, size_t len){ 
         auto t=std::wstring((wchar_t*)s->stack[off/4]);

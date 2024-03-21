@@ -1187,10 +1187,8 @@ bool attach(const uint8_t pattern[],int patternSize,DWORD startAddress,DWORD sto
 
               std::regex reg1("\\{(.*?)/(.*?)\\}");
               std::string result1 = std::regex_replace(str, reg1, "$1");
-              *len = result1.size(); 
-              strcpy(text, result1.c_str());
-              return true;
-
+              
+              return write_string_overwrite(text,len,result1);
             };
     
     return NewHook(hp, "EmbedCMVS");

@@ -181,9 +181,8 @@ namespace Private {
 
     //auto sig = Engine::hashThreadSignature(role, reladdr);
     std::string oldData = arg->getText();
-    strcpy((LPSTR)data,oldData.c_str());
-    *len=oldData.size();
-    return true;
+    
+    return write_string_overwrite(data,len,oldData);
   }
   void hookafter(hook_stack*s,void* data, size_t len){
       

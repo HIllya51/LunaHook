@@ -1,20 +1,19 @@
-﻿#include"engine.h"
+﻿#include"mages/mages.h"
+
 namespace mages{
   
-    regs reg=regs::invalid;
-    int gametype=0;
-    std::map<WORD, std::wstring> createTable() { 
+    std::map<WORD, std::wstring> createTable(int _idx) { 
        
         auto compound_charsA=LoadResData(std::vector<const wchar_t*>{
           L"compound_chars_default",
           L"compound_chars_Robotics_Notes_Elite",
           L"compound_chars_Robotics_Notes_Dash"
-        }[gametype],L"COMPOUND_CHARS");
+        }[_idx],L"COMPOUND_CHARS");
         auto charsetA=LoadResData(std::vector<const wchar_t*>{
           L"charset_default",
           L"charset_Robotics_Notes_Elite",
           L"charset_Robotics_Notes_Dash"
-        }[gametype],L"CHARSET");
+        }[_idx],L"CHARSET");
 
         
         auto compound_chars=StringToWideString(compound_charsA);
@@ -48,8 +47,8 @@ namespace mages{
         return table;
     }
     
-std::wstring mages_decode(WORD charCode) {
-    static auto table = createTable();
+std::wstring mages_decode(WORD charCode,int _idx) {
+    static auto table = createTable(_idx);
     if (table.find(charCode) == table.end()) {
         std::wstringstream _;
         _ << std::hex << charCode;
@@ -59,10 +58,8 @@ std::wstring mages_decode(WORD charCode) {
         return table[charCode];
     }
 }
-template<int filter>
-void SpecialHookMAGES(hook_stack* stack, HookParam*, uintptr_t* data, uintptr_t* split, size_t* len)
-{
-    auto edx = regof(reg,stack);//regof(edx, esp_base); 
+std::wstring readString(uintptr_t address,int _idx) {
+    auto edx=address;
     std::wstring s = L"", bottom = L"";
     while (1) {
         auto c = *(BYTE*)edx;
@@ -74,7 +71,7 @@ void SpecialHookMAGES(hook_stack* stack, HookParam*, uintptr_t* data, uintptr_t*
         if (c >= 0x80) {// readChar
             auto charCode = *(WORD*)edx;
             edx += 2;
-            s += mages_decode(charCode);
+            s += mages_decode(charCode,_idx);
         }
         else {// readControl
             edx += 1;
@@ -93,7 +90,7 @@ void SpecialHookMAGES(hook_stack* stack, HookParam*, uintptr_t* data, uintptr_t*
                     else {
                         auto charCode = *(WORD*)edx;
                         edx += 2;
-                        bottom += mages_decode(charCode);
+                        bottom += mages_decode(charCode,_idx);
                     }
                 }
                 if(bottom.size()) s = s + bottom + L": ";
@@ -164,7 +161,7 @@ void SpecialHookMAGES(hook_stack* stack, HookParam*, uintptr_t* data, uintptr_t*
                             auto charCode = *(WORD*)edx;
                             edx+=2;
 
-                            rubi += mages_decode(charCode);
+                            rubi += mages_decode(charCode,_idx);
                         }
                     } // end while
                 }
@@ -179,7 +176,7 @@ void SpecialHookMAGES(hook_stack* stack, HookParam*, uintptr_t* data, uintptr_t*
                     auto charCode = *(WORD*)edx;
                     edx+=2;
 
-                    auto cc = mages_decode(charCode);
+                    auto cc = mages_decode(charCode,_idx);
                     bottom += cc;
                     s += cc;
                 }
@@ -193,20 +190,35 @@ void SpecialHookMAGES(hook_stack* stack, HookParam*, uintptr_t* data, uintptr_t*
             // do nothing (one byte control)
         }
     }
+    }
+    return s;
 }
+
+}
+
+namespace hookmages{
+    
+    regs reg=regs::invalid;
+    int gametype=0;
+
+template<int filter>
+void SpecialHookMAGES(hook_stack* stack, HookParam*, uintptr_t* data, uintptr_t* split, size_t* len)
+{
+    auto edx = regof(reg,stack);//regof(edx, esp_base); 
+    
+    auto s=mages::readString(edx,gametype);
+
     if(filter){
         static std::wstring last=L"";
         if(last==s)return;
         last=s;
     }
     
-    wchar_t* _data=new wchar_t[s.size()+1];
-    wcscpy(_data,s.c_str());
-    *data=(uintptr_t)_data;
-    *len=s.size()*2;
+    write_string_new(data,len,s);
 }
-#ifndef _WIN64
+
 bool MAGES() {
+#ifndef _WIN64
     auto dialogSigOffset = 2;
     BYTE dialogSig1 []={
         0x85,XX,0x74,XX,0x83,XX,0x01,0x74,XX,0x83,XX,0x04,0x74,XX,0xc7,0x05,XX,XX,XX,XX,0x01,0x00,0x00,0x00
@@ -287,11 +299,9 @@ bool MAGES() {
     hp.text_fun = SpecialHookMAGES<1>;
     _|=NewHook(hp, "5pb_MAGES");
     return _;
-}
 
 #else
 
-bool MAGES() {
     auto dialogSigOffset = 2;
     BYTE dialogSig1 []={
         0x85,XX,0x74,XX,0x41,0x83,XX,0x01,0x74,XX,0x41,0x83,XX,0x04,0x74,XX,0x41
@@ -326,9 +336,10 @@ bool MAGES() {
     hp.text_fun = SpecialHookMAGES<0>;
     hp.type = CODEC_UTF16 | USING_STRING|NO_CONTEXT;
     return NewHook(hp, "5pb_MAGES");
-}
+
 
 #endif
+}
 
 
 }

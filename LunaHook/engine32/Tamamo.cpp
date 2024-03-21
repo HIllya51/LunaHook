@@ -305,9 +305,8 @@ namespace{
     
     s = std::regex_replace(s, std::regex("(.*)\x81u([\\s\\S]*?)\x81v(.*)"), "\x81u$2\x81v"); //「  」
     s = std::regex_replace(s, std::regex("(.*)\x81i([\\s\\S]*?)\x81j(.*)"), "\x81i$2\x81j"); //（  ）
-    *size = s.size(); 
-    strcpy((char*)data, s.c_str());
-    return true;
+    
+    return write_string_overwrite(data,size,s);
   }
   bool Tamamogetname(LPVOID data, size_t *size, HookParam *)
   {
@@ -320,9 +319,7 @@ namespace{
     else if (s.find("\x81i")!=s.npos && s.find("\x81j")!=s.npos)
     s = std::regex_replace(s, std::regex("(.*)\x81i([\\s\\S]*?)\x81j(.*)"), "$1"); //（  ）
     else return false;
-    *size = s.size(); 
-    strcpy((char*)data, s.c_str());
-    return true;
+    return write_string_overwrite(data,size,s);
   }
    bool tamamo3(){
     //閃光の騎士 ～カリスティアナイト～

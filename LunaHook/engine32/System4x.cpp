@@ -1086,23 +1086,7 @@ namespace Private {
       else if (split >= 2 && split <= 0x14 && split != 3 && split != 0xb || split == 0x22)
         *role = Engine::ScenarioRole;
     }
-    std::string oldData = arg->text;
-     std::string newData = oldData+"XX";
-    strcpy((char*)data,oldData.c_str());*len1=oldData.size();
-    return true;
-    if (*role == Engine::NameRole || oldData == newData) // do not translate name
-      return false;
-    
-    data_ = newData;
-
-    arg_ = arg;
-    argValue_ = *arg;
-
-    arg->text = data_.c_str();
-    arg->size = data_.size() + 1;
-    arg->capacity = arg->size;
-
-    hashes_.insert(hashCharArray(arg->text));
+    write_string_overwrite(data,len1,arg->text);
     return true;
   }
   bool hookAfter(hook_stack*s,void* data, size_t* len1,uintptr_t*role)
@@ -1587,20 +1571,7 @@ public:
       return false;
 
     *role = Engine::ScenarioRole ;
-    strcpy((char*)data,text);*len=strlen(text);
-    /*
-    auto sig = Engine::hashThreadSignature(role, split);
-    //int size = arg->size; // size not used as not needed
-    buffer_ = EngineController::instance()->dispatchTextASTD(text, role, sig);
-
-    if (editable_) {
-      arg_ = arg;
-      text_ = arg->text;
-      size_ = arg->size;
-      arg->text = buffer_.c_str(); // reset arg3
-      arg->size = buffer_.size() + 1; // +1 for the nullptr
-    }*/
-    return true;
+    return write_string_overwrite(data,len,text);
   }
 
   bool hookAfter(hook_stack*s,void* data, size_t* len,uintptr_t*role)
@@ -1638,19 +1609,7 @@ public:
     LPCSTR text = arg->text;
     if (arg->size <= 1 || !text || !*text ||   all_ascii(text))
       return false;
-    strcpy((char*)data,text);*len=strlen(text);
-   /* enum { role = Engine::OtherRole };
-    auto sig = Engine::hashThreadSignature(role, split2);
-    buffer_ = g->dispatchTextASTD(text, role, sig);
-
-    if (editable_) {
-      arg_ = arg;
-      text_ = arg->text;
-      size_ = arg->size;
-      arg->text = buffer_.c_str(); // reset arg3
-      arg->size = buffer_.size() + 1; // +1 for the nullptr
-    }*/
-    return true;
+    return write_string_overwrite(data,len,text);
   }
 
   bool hookAfter(hook_stack*s,void* data, size_t* len,uintptr_t*role)
@@ -1693,11 +1652,7 @@ bool fixedTextHook(hook_stack*s,void* data, size_t* len,uintptr_t*role)
     *role = Engine::OtherRole;
     
   }
-  strcpy((char*)data,text);*len=strlen(text);
-  /*std::string buffer_ = EngineController::instance()->dispatchTextASTD(text, role, sig);
-  ::strncpy(text, buffer_.c_str(), FixedSize - 1);
-  text[FixedSize - 1] = 0;*/
-  return true;
+  return write_string_overwrite(data,len,text);
 }
 
 } // unnamed namespace

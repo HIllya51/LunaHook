@@ -212,7 +212,7 @@ namespace Private {
       auto text = arg->scenarioText;
       if (!Engine::isAddressReadable(text))
         return 0;
-      strcpy((LPSTR)data,text);*len=strlen(text);return 1;
+      return write_string_overwrite(data,len,text);
       // data_ = q->dispatchTextASTD(text, role, sig);
       // scenarioArg_ = arg;
       // scenarioText_ = arg->scenarioText;
@@ -220,8 +220,7 @@ namespace Private {
     } else if (arg->nameFlag == 0) {
       * role = Engine::NameRole;
       auto text = arg->nameText; 
-      
-      strcpy((LPSTR)data,text);*len=strlen(text);return 1;
+      return write_string_overwrite(data,len,text);
       //  ::memcpy(text, newData.constData(), qMin(oldData.size(), newData.size()));
       //int left = oldData.size() - newData.size();
       //if (left > 0)

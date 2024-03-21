@@ -27,8 +27,8 @@ void SpecialHookLightvnA(hook_stack*, HookParam*, uintptr_t* data, uintptr_t* sp
 		_=std::string(match[2]);
 		*split=2;
 	}  
-	auto _s=new char[_.size()+1];strcpy(_s,_.c_str());
-	*data=(uintptr_t)_s;*len=_.size();
+	
+	write_string_new(data,len,_);
 }
 
 void SpecialHookLightvnW(hook_stack*, HookParam*, uintptr_t* data, uintptr_t* split, size_t* len)
@@ -48,8 +48,7 @@ void SpecialHookLightvnW(hook_stack*, HookParam*, uintptr_t* data, uintptr_t* sp
 		_=std::wstring(match[2]);
 		*split=2;
 	}  
-	auto _s=new wchar_t[_.size()+1];wcscpy(_s,_.c_str());
-	*data=(uintptr_t)_s;*len=_.size()*2;
+	write_string_new(data,len,_);
 }
 bool InsertLightvnHook()
 {

@@ -141,10 +141,8 @@ bool InsertYukaSystem2Hook()
         (wc=='"')||(wc=='.')||(wc=='-')||(wc=='#')||
         (wc==65533)||(wc==2))return false;
     }
- 
-    *len = (str.size())  ;
-    strcpy(reinterpret_cast<char*>(data), str.c_str());
-    return true; 
+
+    return write_string_overwrite(data,len,str);
   };
   //hp.text_fun = SpecialHookYukaSystem2;
   ConsoleOutput("INSERT YukaSystem2");

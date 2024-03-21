@@ -123,8 +123,7 @@ bool before(hook_stack*s,void* data, size_t* len,uintptr_t*role){
     if (*(WORD *)(retaddr - 8) == 0x088b) // 8b08  mov ecx,dword ptr ds:[eax]
       *role = s->stack[3] ? Engine::ScenarioRole : Engine::NameRole;
       std::string oldData(trimmedText, trimmedSize);
-       strcpy((char*)data,oldData.c_str());
-      *len=oldData.size();
+      write_string_overwrite(data,len,oldData);
       return true;
 }  
 void after(hook_stack*s,void* data, size_t len){
@@ -177,8 +176,7 @@ static bool InsertNewPal1Hook()
   hp.filter_fun=[](void* data, size_t* len, HookParam* hp){
       auto s=std::string((char*)data,*len);
       s=rubyRemove(s);
-      strcpy((LPSTR)data,s.c_str());*len=s.size();
-
+      write_string_overwrite(data,len,s);
       return true;
   };
   hp.hook_font=F_CreateFontIndirectA|F_CreateFontA;
@@ -238,7 +236,7 @@ const BYTE bytes[] = {
   hp.filter_fun=[](void* data, size_t* len, HookParam* hp){
     auto s=std::string((char*)data,*len);
     s=rubyRemove(s);
-    strcpy((LPSTR)data,s.c_str());*len=s.size(); 
+    write_string_overwrite(data,len,s);
     return true;
   };
   return NewHook(hp, "Pal");

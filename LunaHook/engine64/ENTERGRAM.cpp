@@ -8,9 +8,7 @@ bool ENTERGRAMfilter(void* data, size_t* size, HookParam* hp) {
   std::wstring result1 = std::regex_replace(str, reg1, L"$1");
   std::wregex reg2(L"\x3000|\n");
   std::wstring result2 = std::regex_replace(result1, reg2, L"");
-     
-  *size = (result2.size()) * 2;
-  wcscpy(text, result2.c_str());
+  write_string_overwrite(text,size,result2);
   return true;
 };
 bool InsertENTERGRAM() {

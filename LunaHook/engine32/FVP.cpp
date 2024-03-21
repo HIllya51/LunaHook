@@ -476,10 +476,7 @@ bool attach(ULONG startAddress, ULONG stopAddress)
     hp.hook_font=F_DrawTextA|F_GetGlyphOutlineA;
     hp.filter_fun=[](void* data, size_t* len, HookParam* hp){
      
-    static std::regex rx("\\[.+\\|(.+?)\\]");
-    auto x= std::regex_replace(std::string((LPSTR)data,*len), rx, "$1");
-    strcpy((LPSTR)data,x.c_str());
-    *len=x.size();return true;
+    return write_string_overwrite(data,len,std::regex_replace(std::string((LPSTR)data,*len), std::regex("\\[.+\\|(.+?)\\]"), "$1"));
 };
     
     return NewHook(hp,"EmbedFVP");

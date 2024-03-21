@@ -339,22 +339,7 @@ namespace Private {
     auto text = arg->getText();
     if (isBadText(text))
       return 0;
-    std::wstring oldText = std::wstring(text);//,
-    wcscpy((LPWSTR)data1,oldText.c_str());*len=oldText.size()*2;
-    return 1;
-    //         newText = EngineController::instance()->dispatchTextWSTD(oldText, role, reladdr);
-    // if (newText == oldText)
-    //   return true;
-    // text_ = newText;
-
-    // arg_ = arg;
-    // argValue_ = *arg;
-
-    // arg->setText(text_);
-
-    // //if (arg->size)
-    // //  hashes_.insert(Engine::hashWCharArray(arg->text, arg->size));
-    // return true;
+    return write_string_overwrite(data1,len,text);
   }
   void hook2a(hook_stack*s,void* data1, size_t len)
   { 
@@ -447,9 +432,9 @@ namespace Private {
     auto text = arg->getText();
     if (isBadText(text))
       return 0; 
-    std::wstring oldText = std::wstring(text);//,
-    wcscpy((LPWSTR)data1,oldText.c_str());*len=oldText.size()*2;
-    return 1;}
+    return write_string_overwrite(data1,len,text);
+    
+  }
     void hook2a(hook_stack*s,void* data1, size_t len)
   { 
     auto text_=new wchar_t[len/2+1];

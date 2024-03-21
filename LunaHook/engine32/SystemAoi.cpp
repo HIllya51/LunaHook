@@ -246,7 +246,8 @@ namespace{
       return false;
 
     *role = Engine::OtherRole ;
-    wcscpy((wchar_t*)data,text);*len=wcslen(text)*2;
+    
+    write_string_overwrite(data,len,text);
     return true;
   }
   void afterAgsSpriteCreateTextExW(hook_stack*s,void* data1, size_t len)
@@ -282,7 +283,7 @@ namespace{
           *role = Engine::ScenarioRole;
         break;
       }
-    wcscpy((wchar_t*)data,text);*len=wcslen(text)*2;
+    write_string_overwrite(data,len,text);
     return true;
   }
   void afterAgsSpriteCreateTextW(hook_stack*s,void* data1, size_t len)
@@ -325,8 +326,7 @@ namespace{
           *role = Engine::ScenarioRole;
         break;
       }
-    strcpy((char*)data,text);*len=strlen(text);
-    return true;
+    return write_string_overwrite(data,len,text);
   }
 }
 // jichi 7/26/2015: Backport logic in vnragent to vnrhook

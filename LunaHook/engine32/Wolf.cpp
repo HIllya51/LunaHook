@@ -264,7 +264,8 @@ namespace Private {
           bool timeout;
           int prefixSize = text - self->text,
               capacity = self->capacity - prefixSize;
-          strcpy((char*)data1,data.c_str());*len1=data.size();return 1;
+              return write_string_overwrite(data1,len1,data);
+              
           // data = EngineController::instance()->dispatchTextASTD(data, role, sig, capacity, SendAllowed, &timeout);
           // if (timeout)
           //   return true;

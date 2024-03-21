@@ -68,8 +68,7 @@ _BYTE *__fastcall sub_18005B290(
            
           std::regex_search(str, match,std::wregex(L" Text:(.*?)Next:(.*?)") );
           result1= match[1].str();
-          *len = (result1.size()) * 2;
-          wcscpy((LPWSTR)data, result1.c_str());
+          write_string_overwrite(data,len,result1);
         }
         return true;
       };

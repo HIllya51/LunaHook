@@ -261,27 +261,8 @@ namespace Private {
       // They should be escaped here.
       // Escaping not implemented since I am lazy.
     }
-    strcpy((char*)data,oldData.c_str());*len1=oldData.size();
+    write_string_overwrite(data,len1,oldData);
     return true;
-    std::string newData = oldData+"xx";
-    if (newData.empty() || newData == oldData)
-      return false;
-
-    if (containsZeros)
-        strReplace(newData, zero_str, zero_bytes);
-      //newData.replace(zero_str, zero_bytes);
-
-    int prefixSize = trimmedText - text,
-        suffixSize = size - prefixSize - trimmedSize;
-    if (prefixSize)
-      newData.insert(0,std::string(text, prefixSize));
-    if (suffixSize)
-      newData.append(trimmedText + trimmedSize, suffixSize);
-
-    data_ = newData;
-    s->eax = data_.size() + 1;
-    return true;
-     
   } 
   void hookafter(hook_stack*s,void* data, size_t len1){
     

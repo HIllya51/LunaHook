@@ -1,5 +1,5 @@
 ﻿#include"5pb.h"
-#include"mages/mages.hpp"
+#include"mages/mages.h"
 /** jichi 12/2/2014 5pb
  *
  *  Sample game: [140924] CROSS�CHANNEL 〜FINAL COMPLETE� *  See: http://sakuradite.com/topic/528
@@ -530,7 +530,7 @@ bool StuffScript_attach_function() {
 bool _5pb::attach_function() {
     bool b1 = Insert5pbHook();
     bool b2 = Insert5pbHookex();
-    bool b3=mages::MAGES();
+    bool b3=hookmages::MAGES();
     bool sf=StuffScript_attach_function();
     return b1 || b2 || b3||sf;
 }
@@ -687,9 +687,7 @@ namespace{
         auto xx=std::wstring(text,*len/2);
         xx = std::regex_replace(xx, std::wregex(L"\\[(.*?),\\d\\]"), L"$1");
         xx = std::regex_replace(xx, std::wregex(L"\\\\x%l(.*?);(.*?);(.*?);#;"), L"$1");
-        *len=xx.size()*2;
-        wcscpy(text,xx.c_str());
-        return true;
+        return write_string_overwrite(data,size,xx);
     };
     hp.newlineseperator=L"\\n";
     return NewHook(hp, "5bp");

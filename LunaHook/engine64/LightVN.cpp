@@ -88,8 +88,7 @@ bool _2(){
                             if(str.find(_)!=str.npos)
                                 return false;
                         str = std::regex_replace(str, std::wregex(L"\\[(.*?)\\]<(.*?)>"), L"$1");
-                        wcscpy((wchar_t*)data,str.c_str());
-                        *len=str.size()*2;
+                        write_string_overwrite(data,len,str);
                         return true;
                     };
 		return NewHook(hp, "LightVN2");

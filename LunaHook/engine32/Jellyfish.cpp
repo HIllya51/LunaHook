@@ -26,12 +26,8 @@ bool Jellyfish_attach_function() {
     if(*size==2)return false;
     StringCharReplacer(reinterpret_cast<char*>(data), size, "\\n", 2, '\n');
     StringCharReplacer(reinterpret_cast<char*>(data), size, "\\N", 2, '\n');
-    auto str=std::string(reinterpret_cast<char*>(data),*size);
-    str = std::regex_replace(str, std::regex("\\\\[0-7a-zA-Z]"), "");
-
-    *size = str.size() ;
-    strcpy(reinterpret_cast<char*>(data), str.c_str()); 
-    return true;
+    
+    return write_string_overwrite(data,size,std::regex_replace(std::string(reinterpret_cast<char*>(data),*size), std::regex("\\\\[0-7a-zA-Z]"), ""));
   };
   
   return NewHook(hp, "Jellyfish");

@@ -126,10 +126,8 @@ namespace Private {
            trimmedText = ltrim(text);
       if (trimmedText != text)
         newData.insert(0,std::string(text, trimmedText - text));
-      auto ss=new char[newData.size()+1];
-      strcpy(ss,newData.c_str());
-      s->stack[2] =(ULONG)ss; // reset arg2
       
+      write_string_new(&s->stack[2],0,newData);
   }
   bool hookBefore(hook_stack*s,void* data, size_t* len,uintptr_t*role)
   {
@@ -149,10 +147,7 @@ namespace Private {
                 //? Engine::NameRole : // retaddr+3 is jmp
                 //Engine::ScenarioRole;
      
-    std::string oldData = trimmedText;
-    strcpy((char*)data,oldData.c_str());
-    *len=oldData.size();
-    return true;
+    return write_string_overwrite(data,len,trimmedText);
   }
 
   // Alternatively, using the following pattern bytes also works:

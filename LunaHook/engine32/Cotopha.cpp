@@ -568,9 +568,7 @@ namespace Private {
       // 004B521B   33ED             XOR EBP,EBP
       *role = s->stack[5] == 0 ? Engine::NameRole : Engine::ScenarioRole;
     }
-    wcscpy((LPWSTR)data,text);
-    *len=wcslen(text)*2;
-    return true;
+    return write_string_overwrite(data,len,text);
   }
 
   bool hookAfterCaller(hook_stack*s,void* data, size_t* len,uintptr_t*role)

@@ -177,9 +177,7 @@ bool InsertShinaHook(int ver )
             {
               StringFilter(reinterpret_cast<LPSTR>(data), reinterpret_cast<size_t *>(size), "_r",2);
                   
-              static std::regex rx("_t!.*?[/>]"); 
-              auto _=std::regex_replace(std::string((char*)data,*size), rx, "");  
-              strcpy((char*)data,_.c_str());*size=_.size();
+              write_string_overwrite(data,size,std::regex_replace(std::string((char*)data,*size), std::regex("_t!.*?[/>]"), ""));
               return true;
             };
 					  ConsoleOutput("triggered: adding dynamic reader");
@@ -324,10 +322,7 @@ namespace Private {
       //     && text[NameCapacity - 1] == 0 && text[NameCapacity])
       //   *role = Engine::NameRole;
       
-      std::string oldData = text;
-      strcpy((char*)data,oldData.c_str());
-      *len=oldData.size();
- 
+      write_string_overwrite(data,len,text);
           
     }
     void dispatchText2(LPSTR text, bool paddingSpace,std::string newData)
@@ -404,8 +399,7 @@ namespace Private {
       
         
       }
-      strcpy((char*)data,save.c_str());
-      *len=save.size();
+      write_string_overwrite(data,len,save);
     }
 
     //void dispatch(LPSTR text)
@@ -673,9 +667,7 @@ namespace Private {
     *role=argaddr;
     auto arg = (HookArgument *)argaddr;
     if(Engine::isAddressReadable((argaddr + textOffset_))==false){
-      auto _=(LPSTR)s->stack[2];
-      strcpy((char*)data,_);
-      *len=strlen(_);
+      write_string_overwrite(data,len,(LPSTR)s->stack[2]);
       return true;
     }
     LPSTR textAddress = (LPSTR)*(DWORD *)(argaddr + textOffset_),
@@ -930,11 +922,9 @@ bool attach(int ver)
   hp.newlineseperator=L"_r";
   hp.hook_font=F_GetGlyphOutlineA;
  hp.filter_fun=[](void* data, size_t* len, HookParam* hp){
-                    
-            static std::regex rx("_t!.*?[/>]"); 
-             auto _=std::regex_replace(std::string((char*)data,*len), rx, "");  
-             strcpy((char*)data,_.c_str());*len=_.size();return true; 
-        };
+      write_string_overwrite(data,len,std::regex_replace(std::string((char*)data,*len), std::regex("_t!.*?[/>]"), ""));
+      return true; 
+  };
  return NewHook(hp,"EmbedShario");
 }
 

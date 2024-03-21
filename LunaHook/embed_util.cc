@@ -7,14 +7,14 @@
 #include"winevent.hpp"
 #include"defs.h"
 #include"stringfilters.h"
+#include"util.h"
 DynamicShiftJISCodec *dynamiccodec=new DynamicShiftJISCodec(932);
 
 
 void cast_back(const HookParam& hp,void*data ,size_t *len,const std::wstring& trans,bool normal){
   
 	if((hp.type&EMBED_CODEC_UTF16)||(hp.type&CODEC_UTF16)){//renpy
-		wcscpy((wchar_t*)data,trans.c_str());
-		*len=trans.size()*2;
+    write_string_overwrite(data,len,trans);
 	}
 	else{
     std::string astr;
@@ -24,8 +24,7 @@ void cast_back(const HookParam& hp,void*data ,size_t *len,const std::wstring& tr
     else{
       astr=WideStringToString(trans,hp.codepage?hp.codepage:((hp.type&CODEC_UTF8)?CP_UTF8:embedsharedmem->codepage));
     }
-		strcpy((char*)data,astr.c_str());
-    *len=astr.size();
+    write_string_overwrite(data,len,astr);
 	}
 }
 

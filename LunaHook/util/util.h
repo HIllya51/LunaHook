@@ -77,3 +77,7 @@ inline bool isAddressWritable(const void *addr) { return isAddressWritable((cons
 inline bool isAddressWritable(uintptr_t addr) { return isAddressWritable((const void *)addr); }
 }
 
+void write_string_new(uintptr_t* data, size_t* len,const std::wstring& s);
+void write_string_new(uintptr_t* data, size_t* len,const std::string& s);
+bool write_string_overwrite(void* data, size_t* len,const std::wstring& s);
+bool write_string_overwrite(void* data, size_t* len,const std::string& s);

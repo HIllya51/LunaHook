@@ -189,8 +189,8 @@ namespace Private {
       *role = Engine::ScenarioRole;
     else if (ins == 0x5f) // 0047D5A4   5F               POP EDI
       *role = Engine::NameRole;
-      strcpy((char*)data,text);
-      *len1=strlen(text);
+      
+      write_string_overwrite(data,len1,text);
     return true;
   }
 } // namespace Private

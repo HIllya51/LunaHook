@@ -395,19 +395,12 @@ bool hook2(hook_stack*s,void* data1, size_t* len,uintptr_t*role)
     strReplace(save,"\\k","");
     static std::regex rx("<R(.+?)\\|.+>");
     save= std::regex_replace(save, rx, "$1");
-    strcpy((char*)data1,save.c_str());*len=save.size(); 
-    // if (!data_.empty()) {
-    //   s->ecx = (ULONG)data_.c_str(); 
-    // }ConsoleOutput("3");
+    write_string_overwrite(data1,len,save);
     return save.size();
   }
   void hook2a(hook_stack*s,void* data1, size_t len)
   { 
-     
-    std::string newdata = std::string((char*)data1,len);
-    auto xx=new char[newdata.size()+1];
-    strcpy(xx,newdata.c_str());
-    s->ecx=(ULONG)xx;
+    write_string_new(&s->ecx,0,std::string((char*)data1,len));
   }
 }
 bool InsertLeafHook()

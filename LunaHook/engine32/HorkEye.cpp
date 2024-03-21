@@ -211,9 +211,7 @@ namespace{
           str=stop+2;
     } // = u'�.encode('sjis')
       auto old=std::string(str,len);
-    strcpy((char*)data,old.c_str());*len1=old.size();
-    return true; 
-
+     return write_string_overwrite(data,len1,old);
   }
   template<int offset=1>
   void hookafter(hook_stack*s,void* data, size_t len1){

@@ -215,9 +215,7 @@ bool hook_before(hook_stack*s,void* data, size_t* len,uintptr_t*role){
       return false;
     trimmedText = _escudeltrim(arg->text);
     * role = arg->role();
-    strcpy((char*)data,trimmedText);
-    *len=strlen(trimmedText);
-    return true;
+    return write_string_overwrite(data,len,trimmedText);
 }
 void hook_after(hook_stack*s,void* data, size_t len){
   static std::string data_;

@@ -192,7 +192,8 @@ namespace Private {
     * role = Engine::OtherRole;
     if (*(DWORD *)retaddr == 0x5010458b)
       *role = Engine::ScenarioRole;
-    strcpy((char*)data1,oldData.c_str());*len=oldData.size();
+      
+    write_string_overwrite(data1,len,oldData);
     return 1;
      
   }

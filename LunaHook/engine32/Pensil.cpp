@@ -24,11 +24,7 @@ bool InsertPensilHook()
 namespace{
   bool pensilfilter(void* data, size_t* len, HookParam* hp){
       //「馬鹿な、\{軌道護符|サテラ}が封じられるとは！　ハーリーの仕業か。連中の魔法科学はそこまで進んだのか！？」
-      auto str=std::string(reinterpret_cast<char*>(data),*len);
-      str = std::regex_replace(str, std::regex("\\\\\\{(.*?)\\|(.*?)\\}"), "$1");
-
-      *len = (str.size())  ;
-      strcpy(reinterpret_cast<char*>(data), str.c_str());
+      write_string_overwrite(data,len,std::regex_replace(std::string(reinterpret_cast<char*>(data),*len), std::regex("\\\\\\{(.*?)\\|(.*?)\\}"), "$1"));
       return true;
     };
 }

@@ -415,8 +415,9 @@ std::unordered_map<uintptr_t,int>addr_role;
     *role=addr_role[retaddr];
     if (*role == Engine::NameRole)
       strReplace(oldData,"\x81\x40", ""); // remove spaces in the middle of names
-    strcpy((char*)data1,oldData.c_str());
-    *len=oldData.size();return true;
+    
+    write_string_overwrite(data1,len,oldData);
+    return true;
     
   }
   void hookafter(hook_stack*s,void* data1, size_t len){
@@ -666,9 +667,8 @@ bool attach(ULONG startAddress, ULONG stopAddress)
         hp.hook_font=F_GetGlyphOutlineA;
         hp.filter_fun=[](void* data, size_t* len, HookParam* hp){
                     
-            static std::regex rx("\\{.*?\\}");
-             auto _=std::regex_replace(std::string((char*)data,*len), rx, "");  
-             strcpy((char*)data,_.c_str());*len=_.size();return true;
+             write_string_overwrite(data,len,std::regex_replace(std::string((char*)data,*len), std::regex("\\{.*?\\}"), ""));
+             return true;
 
         };
         count|=NewHook(hp,"EmbedMinori");

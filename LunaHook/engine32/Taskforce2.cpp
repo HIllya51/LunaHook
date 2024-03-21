@@ -198,10 +198,8 @@ namespace Private {
     //auto split = s->edx;
     //auto sig = Engine::hashThreadSignature(role, split);
     enum { sig = 0 }; // split not used
-    strcpy((char*)data1,text);
-    *len=strlen(text);return true;
-   
-    return true;
+    
+    return write_string_overwrite(data1,len,text);
   } 
   void hookafter(hook_stack*s,void* data1, size_t len)
   {

@@ -10,9 +10,8 @@ bool CodeXFilter(LPVOID data, size_t *size, HookParam *)
   //|晒[さら]
   std::string result = std::string((char*)data,*len);
   result = std::regex_replace(result, std::regex("\\|(.+?)\\[(.+?)\\]"), "$1");
-  *len = (result.size());
-  strcpy((char*)data, result.c_str());return true;
-  return true;
+  
+  return write_string_overwrite(data,len,result);
 }
 
 bool InsertCodeXHook() 
