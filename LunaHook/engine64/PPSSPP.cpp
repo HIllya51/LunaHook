@@ -272,6 +272,24 @@ bool ULJM06119_filter(void* data, size_t* len, HookParam* hp){
     s = std::regex_replace(s, newlinePattern, " ");
 	return write_string_overwrite(data,len,s);
 }
+// @name         [ULJM06036] Princess Evangile Portable
+// @version      0.1
+// @author       [DC]
+// @description  PPSSPP x64
+void ULJM06036(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
+     hp->type=USING_STRING|NO_CONTEXT|CODEC_UTF16;
+	 auto address= emu_arg(stack)[2];
+	*data=address;
+	*len=wcslen((wchar_t*)address)*2;
+}
+bool ULJM06036_filter(void* data, size_t* len, HookParam* hp){
+     std::wstring result = std::wstring((wchar_t*)data,*len/2);
+    std::wregex pattern(LR"(<R([^\/]+).([^>]+).>)");
+    result = std::regex_replace(result, pattern, L"$2");
+    std::wregex tagPattern(LR"(<[A-Z]+>)");
+    result = std::regex_replace(result, tagPattern, L"");
+	return write_string_overwrite(data,len,result);
+}
 namespace{
 auto _=[](){
     emfunctionhooks={
@@ -280,6 +298,7 @@ auto _=[](){
             {0x8814adc,{"Sekai de Ichiban Dame na Koi",NPJH50909,NPJH50909_filter,L"NPJH50909"}},
             {0x8850b2c,{"Sekai de Ichiban Dame na Koi",NPJH50909,NPJH50909_filter,L"NPJH50909"}},
             {0x0891D72C,{"Dunamis15",ULJM06119,ULJM06119_filter,L"ULJM06119"}},
+            {0x88506d0,{"Princess Evangile Portable",ULJM06036,ULJM06036_filter,L"ULJM06036"}},
     };
     return 1;
 }();
