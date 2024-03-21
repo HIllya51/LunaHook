@@ -75,7 +75,7 @@ struct emfuncinfo{
     const wchar_t* _id;
 };
 std::unordered_map<uintptr_t,emfuncinfo>emfunctionhooks;
-
+std::unordered_set<uintptr_t>breakpoints;
 }
 bool hookPPSSPPDoJit(){
 	ConsoleOutput("[Compatibility]");
@@ -90,6 +90,7 @@ bool hookPPSSPPDoJit(){
    hp.text_fun=[](hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
         auto em_address=stack->ARG2;
 		if(emfunctionhooks.find(em_address)==emfunctionhooks.end())return;
+		
 		static emfuncinfo op;
 		op=emfunctionhooks.at(em_address);
 		HookParam hpinternal;
@@ -97,6 +98,8 @@ bool hookPPSSPPDoJit(){
 		hpinternal.text_fun=[](hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
 			hp->text_fun=nullptr;hp->type=HOOK_EMPTY;
 			auto ret=stack->rax;
+			if(breakpoints.find(ret)!=breakpoints.end())return;
+			breakpoints.insert(ret);
 			DWORD _;
 			VirtualProtect((LPVOID)ret,0x10,PAGE_EXECUTE_READWRITE,&_);
 			HookParam hpinternal;
