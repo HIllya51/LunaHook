@@ -1,4 +1,4 @@
-#include"PPSSPP.h"
+﻿#include"PPSSPP.h"
 #include<queue>
 /** Artikash 6/7/2019
 *   PPSSPP JIT code has pointers, but they are all added to an offset before being used.
@@ -72,6 +72,7 @@ public:
 struct emfuncinfo{
     const char* hookname;
     void* hookfunc;
+	void* filterfun;
     const wchar_t* _id;
 };
 std::unordered_map<uintptr_t,emfuncinfo>emfunctionhooks;
@@ -89,6 +90,10 @@ bool hookPPSSPPDoJit(){
    
    hp.text_fun=[](hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
         auto em_address=stack->ARG2;
+	
+		if(breakpoints.find(em_address)!=breakpoints.end())return;
+		breakpoints.insert(em_address);
+
 		if(emfunctionhooks.find(em_address)==emfunctionhooks.end())return;
 		
 		static emfuncinfo op;
@@ -98,14 +103,13 @@ bool hookPPSSPPDoJit(){
 		hpinternal.text_fun=[](hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
 			hp->text_fun=nullptr;hp->type=HOOK_EMPTY;
 			auto ret=stack->rax;
-			if(breakpoints.find(ret)!=breakpoints.end())return;
-			breakpoints.insert(ret);
 			DWORD _;
 			VirtualProtect((LPVOID)ret,0x10,PAGE_EXECUTE_READWRITE,&_);
 			HookParam hpinternal;
 			hpinternal.address=ret;
 			hpinternal.type=CODEC_UTF16|USING_STRING|NO_CONTEXT;
 			hpinternal.text_fun=(decltype(hpinternal.text_fun))op.hookfunc;
+			hpinternal.filter_fun=(decltype(hpinternal.filter_fun))op.filterfun;
 			NewHook(hpinternal,op.hookname);
 		};
 		NewHook(hpinternal,"DoJitPtrRet");
@@ -119,7 +123,6 @@ bool PPSSPP::attach_function()
 	return PPSSPPinithooksearch()| hookPPSSPPDoJit();
 }
 
-// ==UserScript==
 // @name         [ULJS00403] Shinigami to Shoujo
 // @version      0.1
 // @author       [DC]
@@ -135,7 +138,6 @@ void ULJS00403(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* spl
 	*len=strlen((char*)address);
 }
 
-// ==UserScript==
 // @name         [ULJS00339] Amagami
 // @version      v1.02
 // @author       [DC]
@@ -205,12 +207,44 @@ void ULJS00339(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* spl
 	write_string_new(data,len,s);
 }
 
+// @name         [NPJH50909] Sekai de Ichiban Dame na Koi
+// @version      0.1
+// @author       [DC]
+// @description  PPSSPP x64
+// * 
+void NPJH50909(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
+     hp->type=USING_STRING|NO_CONTEXT;
+	 hp->codepage=932;
+	 auto address= emu_arg(stack)[0];
+	 *data=address;
+	*len=strlen((char*)address);
+}
+bool NPJH50909_filter(void* data, size_t* len, HookParam* hp){
+     std::string result = std::string((char*)data,*len);
+
+    // Remove single line markers
+    result = std::regex_replace(result, std::regex("(\\%N)+"), " ");
+
+    // Remove scale marker
+    result = std::regex_replace(result, std::regex("\\%\\@\\%\\d+"), "");
+
+    // Reformat name
+    std::smatch match;
+    if (std::regex_search(result, match, std::regex("(^[^「]+)「"))) {
+        std::string name = match[1].str();
+        result = std::regex_replace(result, std::regex("^[^「]+"), "");
+        result = name + "\n" + result;
+    }
+	return write_string_overwrite(data,len,result);
+}
 
 namespace{
 auto _=[](){
     emfunctionhooks={
-            {0x883bf34,{"Shinigami to Shoujo",ULJS00403,L"PCSG01282"}},
-            {0x0886775c,{"Amagami",ULJS00339,L"ULJS00339"}},
+            {0x883bf34,{"Shinigami to Shoujo",ULJS00403,0,L"PCSG01282"}},
+            {0x0886775c,{"Amagami",ULJS00339,0,L"ULJS00339"}},
+            {0x8814adc,{"Sekai de Ichiban Dame na Koi",NPJH50909,NPJH50909_filter,L"NPJH50909"}},
+            {0x8850b2c,{"Sekai de Ichiban Dame na Koi",NPJH50909,NPJH50909_filter,L"NPJH50909"}},
     };
     return 1;
 }();

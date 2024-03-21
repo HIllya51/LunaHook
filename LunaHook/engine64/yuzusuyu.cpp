@@ -118,7 +118,6 @@ bool yuzusuyu::attach_function()
    };
   return NewHook(hp,"YuzuDoJit");
 } 
-// ==UserScript==
 // @name         [0100978013276000] Memories Off
 // @version      1.0.0 - 1.0.1
 // @author       Koukdw
