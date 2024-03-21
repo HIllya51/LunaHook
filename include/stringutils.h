@@ -30,8 +30,8 @@ std::optional<std::wstring> StringToWideString(const std::string& text, UINT enc
 size_t u32strlen(uint32_t* data);
 inline bool disable_mbwc=false;
 inline bool disable_wcmb=false;
-
-inline void Trim(std::wstring& text)
+template<class ST>
+inline void Trim(ST& text)
 {
 	text.erase(text.begin(), std::find_if_not(text.begin(), text.end(), iswspace));
 	text.erase(std::find_if_not(text.rbegin(), text.rend(), iswspace).base(), text.end());

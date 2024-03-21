@@ -88,23 +88,25 @@ bool hookPPSSPPDoJit(){
    
    hp.text_fun=[](hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
         auto em_address=stack->ARG2;
-	
-		if(breakpoints.find(em_address)!=breakpoints.end())return;
-		breakpoints.insert(em_address);
 
 		if(emfunctionhooks.find(em_address)==emfunctionhooks.end())return;
 		
 		static emfuncinfo op;
 		op=emfunctionhooks.at(em_address);
 		HookParam hpinternal;
+		hpinternal.user_value=em_address;
 		hpinternal.address=stack->retaddr;
 		hpinternal.text_fun=[](hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
 			hp->text_fun=nullptr;hp->type=HOOK_EMPTY;
+			
 			auto ret=stack->rax;
+			if(breakpoints.find(ret)!=breakpoints.end())return;
+			breakpoints.insert(ret);
 			DWORD _;
 			VirtualProtect((LPVOID)ret,0x10,PAGE_EXECUTE_READWRITE,&_);
 			HookParam hpinternal;
 			hpinternal.address=ret;
+			hpinternal.user_value=hp->user_value;
 			hpinternal.type=CODEC_UTF16|USING_STRING|NO_CONTEXT;
 			hpinternal.text_fun=(decltype(hpinternal.text_fun))op.hookfunc;
 			hpinternal.filter_fun=(decltype(hpinternal.filter_fun))op.filterfun;
@@ -290,6 +292,80 @@ bool ULJM06036_filter(void* data, size_t* len, HookParam* hp){
     result = std::regex_replace(result, tagPattern, L"");
 	return write_string_overwrite(data,len,result);
 }
+
+namespace Corda{
+	std::string readBinaryString(uintptr_t address,bool* haveName){
+		* haveName=false;
+		if ((*(WORD*)address & 0xF0FF) == 0x801b) {
+			*haveName = true;
+			address = address+2; // (1)
+    	}
+		std::string s;int i=0;uint8_t c;
+		while ((c = *(uint8_t*)(address+i)) != 0) {
+			if (c == 0x1b) {
+				if (*haveName)
+					return s; // (1) skip junk after name
+
+				c = *(uint8_t*)(address+(i + 1));
+				if (c == 0x7f)
+					i += 5;
+				else
+					i += 2;
+			}
+			else if (c == 0x0a) {
+				s += '\n';
+				i += 1;
+			}
+			else if (c == 0x20) {
+				s += ' ';
+				i += 1;
+			}
+			else {
+				auto len=1+(IsDBCSLeadByteEx(932,*(BYTE*)(address+i)));
+				s += std::string((char*)(address+i),len);
+				i += len;//encoder.encode(c).byteLength;
+			}
+		}
+		return s;
+	}
+}
+// @name         [ULJM05428] Kin'iro no Corda 2f
+// @version      0.1
+// @author       [DC]
+// @description  PPSSPP x64
+// * 
+// * Koei
+
+void ULJM05428(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
+     hp->type=USING_STRING|NO_CONTEXT;
+	 hp->codepage=932;
+	auto address= emu_arg(stack)[1];
+	bool haveNamve;
+	auto s=Corda::readBinaryString(address,&haveNamve);
+	*split=haveNamve;
+	write_string_new(data,len,s);
+}
+// @name         [ULJM05054] Kin'iro no Corda
+// @version      0.1
+// @author       [DC]
+// @description  PPSSPP x64
+// * 
+// * Koei
+
+void ULJM05054(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
+     hp->type=USING_STRING|NO_CONTEXT;
+	 hp->codepage=932;
+	 if (hp->user_value != 0x886162c) {
+		auto addr=emu_arg(stack)[0]+0x3c;
+		*data=addr;*len=strlen((char*)addr);
+        return;
+    }
+	auto address= emu_arg(stack)[1];
+	bool haveNamve;
+	auto s=Corda::readBinaryString(address,&haveNamve);
+	*split=haveNamve;
+	write_string_new(data,len,s);
+}
 namespace{
 auto _=[](){
     emfunctionhooks={
@@ -299,6 +375,9 @@ auto _=[](){
             {0x8850b2c,{"Sekai de Ichiban Dame na Koi",NPJH50909,NPJH50909_filter,L"NPJH50909"}},
             {0x0891D72C,{"Dunamis15",ULJM06119,ULJM06119_filter,L"ULJM06119"}},
             {0x88506d0,{"Princess Evangile Portable",ULJM06036,ULJM06036_filter,L"ULJM06036"}},
+            {0x89b59dc,{"Kin'iro no Corda 2f",ULJM05428,0,L"ULJM05428"}},
+            {0x886162c,{"Kin'iro no Corda",ULJM05054,0,L"ULJM05054"}},
+            {0x8899e90,{"Kin'iro no Corda",ULJM05054,0,L"ULJM05054"}},
     };
     return 1;
 }();
