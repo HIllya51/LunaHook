@@ -137,6 +137,14 @@ void ULJS00403(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* spl
 	 *data=address;
 	*len=strlen((char*)address);
 }
+bool ULJS00403_filter(void* data, size_t* len, HookParam* hp){
+     std::string result = std::string((char*)data,*len);
+    std::regex newlinePattern(R"((\\n)+)");
+	result = std::regex_replace(result, newlinePattern, " ");
+    std::regex pattern(R"((\\d$|^\@[a-z]+|#.*?#|\$))");
+    result = std::regex_replace(result, pattern, "");
+	return write_string_overwrite(data,len,result);
+}
 
 // @name         [ULJS00339] Amagami
 // @version      v1.02
@@ -269,7 +277,7 @@ bool ULJM06119_filter(void* data, size_t* len, HookParam* hp){
 namespace{
 auto _=[](){
     emfunctionhooks={
-            {0x883bf34,{"Shinigami to Shoujo",ULJS00403,0,L"PCSG01282"}},
+            {0x883bf34,{"Shinigami to Shoujo",ULJS00403,ULJS00403_filter,L"PCSG01282"}},
             {0x0886775c,{"Amagami",ULJS00339,0,L"ULJS00339"}},
             {0x8814adc,{"Sekai de Ichiban Dame na Koi",NPJH50909,NPJH50909_filter,L"NPJH50909"}},
             {0x8850b2c,{"Sekai de Ichiban Dame na Koi",NPJH50909,NPJH50909_filter,L"NPJH50909"}},
