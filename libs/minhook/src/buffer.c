@@ -33,7 +33,7 @@
 #define MEMORY_BLOCK_SIZE 0x1000
 
 // Max range for seeking a memory block. (= 1024MB)
-#define MAX_MEMORY_RANGE 0x40000000
+#define MAX_MEMORY_RANGE 0x7f000000 //0x40000000    https://github.com/TsudaKageyu/minhook/issues/107
 
 // Memory protection flags to check the executable address.
 #define PAGE_EXECUTE_FLAGS \
