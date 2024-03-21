@@ -392,6 +392,97 @@ bool ULJM05943F(void* data, size_t* len, HookParam* hp){
     std::string result2 = std::regex_replace(result1, pattern2, replacement2);
 	return write_string_overwrite(data,len,result2);
 }
+// @name         [NPJH50619] Sol Trigger
+// @version      1.0.1
+// @author       [Enfys]
+// @description  PPSSPP x64
+// * Imageepoch
+template<int index>
+void NPJH50619(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
+     hp->type=USING_STRING|NO_CONTEXT|CODEC_UTF8;
+	auto address= emu_arg(stack)[index];
+	*data=address;*len=strlen((char*)address);
+}
+bool NPJH50619F(void* data, size_t* len, HookParam* hp){
+    auto s = std::string((char*)data,*len);
+    std::regex pattern1("[\\r\\n]+");
+    std::string replacement1 = "";
+    std::string result1 = std::regex_replace(s, pattern1, replacement1);
+    std::regex pattern2("^(.*?)\\)+");
+    std::string replacement2 = "";
+    std::string result2 = std::regex_replace(result1, pattern2, replacement2);
+    std::regex pattern3("#ECL+");
+    std::string replacement3 = "";
+    std::string result3 = std::regex_replace(result2, pattern3, replacement3);
+    std::regex pattern4("(#.+?\\))+");
+    std::string replacement4 = "";
+    std::string result4 = std::regex_replace(result3, pattern4, replacement4);
+	return write_string_overwrite(data,len,result4);
+}
+
+// @name         [NPJH50505] Fate/EXTRA CCC
+// @version      0.1
+// @author       [DC]
+// @description  PPSSPP x64
+
+void NPJH50505(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
+     hp->type=USING_STRING|NO_CONTEXT;
+	 hp->codepage=932;
+	auto address= emu_arg(stack)[0];
+	*data=address;*len=strlen((char*)address);
+}
+bool NPJH50505F(void* data, size_t* len, HookParam* hp){
+    auto s = std::string((char*)data,*len);
+    
+    std::regex pattern2("#RUBS(#[A-Z0-9]+)*[^#]+");
+    std::string replacement2 = "";
+    std::string result2 = std::regex_replace(s, pattern2, replacement2);
+
+    std::regex pattern3("#FAMILY");
+    std::string replacement3 = "$FAMILY";
+    std::string result3 = std::regex_replace(result2, pattern3, replacement3);
+
+    std::regex pattern4("#GIVE");
+    std::string replacement4 = "$GIVE";
+    std::string result4 = std::regex_replace(result3, pattern4, replacement4);
+
+    std::regex pattern5("(#[A-Z0-9\\-]+)+");
+    std::string replacement5 = "";
+    std::string result5 = std::regex_replace(result4, pattern5, replacement5);
+
+    std::regex pattern6("\\n+");
+    std::string replacement6 = " ";
+    std::string result6 = std::regex_replace(result5, pattern6, replacement6);
+
+	return write_string_overwrite(data,len,result6);
+}
+
+// @name         [NPJH50909] Kamigami no Asobi InFinite
+// @version      0.1
+// @author       [DC]
+// @description  PPSSPP x64
+// * 
+// * 
+// KnownIssue: missed choice (2nd+)
+
+void QNPJH50909(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
+     hp->type=USING_STRING|NO_CONTEXT;
+	 hp->codepage=932;
+	auto base=stack->rbx;
+	 auto addr = (base+0x08975110);
+	 auto adr=addr+0x20;
+	 auto len1=*(DWORD*)(addr+0x14)*2;
+	 
+	 *data=adr+len1-2;*len=2;
+	 if(0x6e87==*(WORD*)*data)*len=0;
+	 if(0x000a==*(WORD*)*data)*len=0;
+}
+void QNPJH50909_2(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
+     hp->type=USING_STRING|NO_CONTEXT;
+	 hp->codepage=932;
+	auto adr= emu_arg(stack)[3]+4;
+	*data=adr;*len=strlen((char*)adr);
+}
 namespace{
 auto _=[](){
     emfunctionhooks={
@@ -404,8 +495,15 @@ auto _=[](){
             {0x89b59dc,{"Kin'iro no Corda 2f",ULJM05428,0,L"ULJM05428"}},
             {0x886162c,{"Kin'iro no Corda",ULJM05054,0,L"ULJM05054"}},
             {0x8899e90,{"Kin'iro no Corda",ULJM05054,0,L"ULJM05054"}},
-            {0x88eeba4,{"Gekka Ryouran Romance",ULJM05943<0,0>,ULJM05943F,L"ULJM05943"}},
-            {0x8875e0c,{"Gekka Ryouran Romance",ULJM05943<1,6>,ULJM05943F,L"ULJM05943"}},
+            {0x8952cfc,{"Sol Trigger",NPJH50619<0>,NPJH50619F,L"NPJH50619"}},
+            {0x884aad4,{"Sol Trigger",NPJH50619<0>,NPJH50619F,L"NPJH50619"}},
+            {0x882e1b0,{"Sol Trigger",NPJH50619<0>,NPJH50619F,L"NPJH50619"}},
+            {0x88bb108,{"Sol Trigger",NPJH50619<2>,NPJH50619F,L"NPJH50619"}},
+            {0x89526a0,{"Sol Trigger",NPJH50619<0>,NPJH50619F,L"NPJH50619"}},
+            {0x88bcef8,{"Sol Trigger",NPJH50619<1>,NPJH50619F,L"NPJH50619"}},
+            {0x8958490,{"Fate/EXTRA CCC",NPJH50505,NPJH50505F,L"NPJH50505"}},
+            {0x088630f8,{"Kamigami no Asobi InFinite",QNPJH50909,0,L"NPJH50909"}},
+            {0x0887813c,{"Kamigami no Asobi InFinite",QNPJH50909_2,0,L"NPJH50909"}},
     };
     return 1;
 }();
