@@ -238,6 +238,34 @@ bool NPJH50909_filter(void* data, size_t* len, HookParam* hp){
 	return write_string_overwrite(data,len,result);
 }
 
+// @name         [ULJM06119] Dunamis15
+// @version      0.1
+// @author       [DC]
+// @description  PPSSPP x64
+// * Division ZERO & MAGES. GAME
+// * Kaleido ADV Workshop
+void ULJM06119(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
+     hp->type=USING_STRING|NO_CONTEXT|CODEC_UTF8;
+	 auto address= emu_arg(stack)[0];
+	*data=address;
+	*len=strlen((char*)address);
+}
+bool ULJM06119_filter(void* data, size_t* len, HookParam* hp){
+     std::string s = std::string((char*)data,*len);
+
+    std::regex pattern(R"(/\[[^\]]+./g)");
+    s = std::regex_replace(s, pattern, "");
+
+    std::regex tagPattern(R"(/\\k|\\x|%C|%B)");
+    s = std::regex_replace(s, tagPattern, "");
+
+    std::regex colorPattern(R"(/\%\d+\#[0-9a-fA-F]*\;)");
+    s = std::regex_replace(s, colorPattern, "");
+
+    std::regex newlinePattern(R"(/\n+)");
+    s = std::regex_replace(s, newlinePattern, " ");
+	return write_string_overwrite(data,len,s);
+}
 namespace{
 auto _=[](){
     emfunctionhooks={
@@ -245,6 +273,7 @@ auto _=[](){
             {0x0886775c,{"Amagami",ULJS00339,0,L"ULJS00339"}},
             {0x8814adc,{"Sekai de Ichiban Dame na Koi",NPJH50909,NPJH50909_filter,L"NPJH50909"}},
             {0x8850b2c,{"Sekai de Ichiban Dame na Koi",NPJH50909,NPJH50909_filter,L"NPJH50909"}},
+            {0x0891D72C,{"Dunamis15",ULJM06119,ULJM06119_filter,L"ULJM06119"}},
     };
     return 1;
 }();
