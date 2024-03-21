@@ -56,35 +56,7 @@ uintptr_t getDoJitAddress() {
     }
     return 0;
 }
-template<class T>
-class lockedqueue{
-  std::mutex lock;
-  std::queue<T>data;
-  HANDLE hsema;
-  public:
-  lockedqueue(){
-    hsema=CreateSemaphore(NULL,0,65535,NULL);
-  }
-  ~lockedqueue(){
-    CloseHandle(hsema);
-  }
-  void push(T&& _){
-    std::lock_guard _l(lock);
-    data.push(std::move(_));
-    ReleaseSemaphore(hsema,1,NULL);
-  }
-  T pop(){
-    WaitForSingleObject(hsema,INFINITE);
-    std::lock_guard _l(lock);
-    auto _=data.front();
-    data.pop();
-    return _;
-  }
-  bool empty(){
-    std::lock_guard _l(lock);
-    return data.empty();
-  }
-};
+
 class emu_arg{
     hook_stack* stack;
 public:
@@ -115,30 +87,25 @@ bool hookPPSSPPDoJit(){
    hp.address=DoJitPtr;//Jit::DoJit
    ConsoleOutput("DoJitPtr %p",DoJitPtr);
    
-	static lockedqueue<std::pair<uintptr_t,emfuncinfo>> message;
-	
    hp.text_fun=[](hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
         auto em_address=stack->ARG2;
 		if(emfunctionhooks.find(em_address)==emfunctionhooks.end())return;
-		auto op=emfunctionhooks.at(em_address);
-		auto GetCodePtr=(*(__int64 (__fastcall **)(__int64))(*(uintptr_t *)stack->THISCALLTHIS + 8LL))(stack->THISCALLTHIS);
-		GetCodePtr+=0x12;
-		message.push({GetCodePtr,op});
+		static emfuncinfo op;
+		op=emfunctionhooks.at(em_address);
 		HookParam hpinternal;
 		hpinternal.address=stack->retaddr;
 		hpinternal.text_fun=[](hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
 			hp->text_fun=nullptr;hp->type=HOOK_EMPTY;
-			auto [GetCodePtr,op]=message.pop();
-			ConsoleOutput("%p",GetCodePtr);
+			auto ret=stack->rax;
 			DWORD _;
-			VirtualProtect((LPVOID)GetCodePtr,0x10,PAGE_EXECUTE_READWRITE,&_);
+			VirtualProtect((LPVOID)ret,0x10,PAGE_EXECUTE_READWRITE,&_);
 			HookParam hpinternal;
-			hpinternal.address=GetCodePtr;
+			hpinternal.address=ret;
 			hpinternal.type=CODEC_UTF16|USING_STRING|NO_CONTEXT;
 			hpinternal.text_fun=(decltype(hpinternal.text_fun))op.hookfunc;
 			NewHook(hpinternal,op.hookname);
 		};
-		NewHook(hpinternal,"doonce");//必须退出Dojit再newhook，否则无效，原因不明。
+		NewHook(hpinternal,"DoJitPtrRet");
    };
    
   return NewHook(hp,"PPSSPPDoJit");
