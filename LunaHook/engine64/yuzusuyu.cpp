@@ -199,6 +199,12 @@ bool F0100A1200CA3C000(void* data, size_t* len, HookParam* hp){
     }
 	return write_string_overwrite(data,len,s);
 }
+bool F0100C29017106000(void* data, size_t* len, HookParam* hp){
+    auto s = std::wstring((wchar_t*)data,*len/2);
+    std::wregex pattern(L"\\n+|(\\n)+");
+    s = std::regex_replace(s, pattern, L" ");
+	return write_string_overwrite(data,len,s);
+}
 namespace{
 auto _=[](){
     emfunctionhooks={
@@ -226,8 +232,8 @@ auto _=[](){
 
             
             {0x80095010 - 0x80004000,{"Chou no Doku Hana no Kusari Taishou Tsuya Koi Ibun",simpleutf16getter<1>,F0100A1200CA3C000,L"0100A1200CA3C000",L"2.0.1"}},//Main Text + Names
-            
-            {0x80db5d34 - 0x80004000,{"Chou no Doku Hana no Kusari Taishou Tsuya Koi Ibun",simpleutf16getter<1>,F0100A1200CA3C000,L"0100A1200CA3C000",L"1.1.0"}},//Main Text + Names
+
+            {0x80a05170 - 0x80004000,{"Live a Live",simpleutf16getter<0>,F0100C29017106000,L"0100C29017106000",L"1.0.0"}},
     };
     return 1;
 }();
