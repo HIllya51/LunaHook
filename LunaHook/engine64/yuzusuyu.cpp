@@ -130,6 +130,7 @@ bool yuzusuyu::attach_function()
 
         HookParam hpinternal;
         hpinternal.address=entrypoint;
+        hpinternal.type=CODEC_UTF16|USING_STRING|NO_CONTEXT;
         hpinternal.text_fun=(decltype(hpinternal.text_fun))op.hookfunc;
 		hpinternal.filter_fun=(decltype(hpinternal.filter_fun))op.filterfun;
         NewHook(hpinternal,op.hookname);
