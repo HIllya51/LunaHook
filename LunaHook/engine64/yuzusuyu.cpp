@@ -81,11 +81,20 @@ public:
 struct emfuncinfo{
     const char* hookname;
     void* hookfunc;
+	void* filterfun;
     const wchar_t* _id;
     const wchar_t* _version;
 };
 std::unordered_map<uintptr_t,emfuncinfo>emfunctionhooks;
 
+
+bool checkiscurrentgame(const emfuncinfo& em){
+	auto wininfos=get_proc_windows();
+	for(auto&& info:wininfos){
+		if(info.title.find(em._version)!=info.title.npos)return true;
+	}
+	return false;
+}
 }
 bool yuzusuyu::attach_function()
 {
@@ -101,15 +110,14 @@ bool yuzusuyu::attach_function()
         auto em_address = *(uintptr_t*)descriptor;
         em_address-=0x80004000;
         if(emfunctionhooks.find(em_address)==emfunctionhooks.end() || !entrypoint)return;
-    
         auto op=emfunctionhooks.at(em_address);
-        
-        DWORD _;
-        VirtualProtect((LPVOID)entrypoint,0x10,PAGE_EXECUTE_READWRITE,&_);
+        if(!(checkiscurrentgame(op)))return;
+
         HookParam hpinternal;
         hpinternal.address=entrypoint;
         hpinternal.type=CODEC_UTF16|USING_STRING|NO_CONTEXT;
         hpinternal.text_fun=(decltype(hpinternal.text_fun))op.hookfunc;
+		hpinternal.filter_fun=(decltype(hpinternal.filter_fun))op.filterfun;
         NewHook(hpinternal,op.hookname);
     
    };
@@ -125,11 +133,34 @@ void _0100978013276000(hook_stack* stack, HookParam* hp, uintptr_t* data, uintpt
     auto s=mages::readString(emu_arg(stack)[0],0);
     write_string_new(data,len,s);
 }
+
+// @name         [0100A460141B8000] Shiro to Kuro no Alice
+// @version      1.0.0
+// @author       Koukdw
+// @description  
+// * Kogado Girls Project
+// * Idea Factory (アイディアファクトリー) & Otomate
+// * AliceNX_MPA (string inside binary)
+// *
+void _0100A460141B8000(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
+    auto address=emu_arg(stack)[0];
+    hp->type=USING_STRING|CODEC_UTF8|NO_CONTEXT;
+    *data=address;*len=strlen((char*)address);
+}
 namespace{
 auto _=[](){
     emfunctionhooks={
-            {0x8003eeac - 0x80004000,{"Memories Off",_0100978013276000,L"0100978013276000",L"1.0.0"}},
-            {0x8003eebc - 0x80004000,{"Memories Off",_0100978013276000,L"0100978013276000",L"1.0.1"}},
+            {0x8003eeac - 0x80004000,{"Memories Off",_0100978013276000,0,L"0100978013276000",L"1.0.0"}},
+            {0x8003eebc - 0x80004000,{"Memories Off",_0100978013276000,0,L"0100978013276000",L"1.0.1"}},
+            
+            // Shiro to Kuro no Alice
+            {0x80013f20 - 0x80004000,{"Shiro to Kuro no Alice",_0100A460141B8000,NewLineCharFilterW,L"0100A460141B8000",L"1.0.0"}},
+            {0x80013f94 - 0x80004000,{"Shiro to Kuro no Alice",_0100A460141B8000,NewLineCharFilterW,L"0100A460141B8000",L"1.0.0"}},
+            {0x8001419c - 0x80004000,{"Shiro to Kuro no Alice",_0100A460141B8000,NewLineCharFilterW,L"0100A460141B8000",L"1.0.0"}},
+            // Shiro to Kuro no Alice -Twilight line-
+            {0x80014260 - 0x80004000,{"Shiro to Kuro no Alice -Twilight line-",_0100A460141B8000,NewLineCharFilterW,L"0100A460141B8000",L"1.0.0"}},
+            {0x800142d4 - 0x80004000,{"Shiro to Kuro no Alice -Twilight line-",_0100A460141B8000,NewLineCharFilterW,L"0100A460141B8000",L"1.0.0"}},
+            {0x800144dc - 0x80004000,{"Shiro to Kuro no Alice -Twilight line-",_0100A460141B8000,NewLineCharFilterW,L"0100A460141B8000",L"1.0.0"}},
     };
     return 1;
 }();

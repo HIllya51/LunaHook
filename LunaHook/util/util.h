@@ -81,3 +81,10 @@ void write_string_new(uintptr_t* data, size_t* len,const std::wstring& s);
 void write_string_new(uintptr_t* data, size_t* len,const std::string& s);
 bool write_string_overwrite(void* data, size_t* len,const std::wstring& s);
 bool write_string_overwrite(void* data, size_t* len,const std::string& s);
+
+
+struct WindowInfo {
+  HWND handle;
+  std::wstring title;
+};
+std::vector<WindowInfo>get_proc_windows();

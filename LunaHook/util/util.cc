@@ -605,3 +605,28 @@ void write_string_new(uintptr_t* data, size_t* len,const std::string& s){write_s
 
 bool write_string_overwrite(void* data, size_t* len,const std::wstring& s){return write_string_overwrite_impl<wchar_t>(data,len,s);}
 bool write_string_overwrite(void* data, size_t* len,const std::string& s){return write_string_overwrite_impl<char>(data,len,s);}
+
+
+
+BOOL CALLBACK EnumWindowsProc(HWND hwnd, LPARAM lParam) {
+    std::vector<WindowInfo>* windowList = reinterpret_cast<std::vector<WindowInfo>*>(lParam);
+    DWORD processId;
+    GetWindowThreadProcessId(hwnd, &processId);
+    if (processId == GetCurrentProcessId()) {
+        auto length=GetWindowTextLengthW(hwnd);
+        auto title=std::vector<WCHAR>(length+1);
+        GetWindowTextW(hwnd, title.data(), title.size());
+
+        WindowInfo windowInfo;
+        windowInfo.handle = hwnd;
+        windowInfo.title = title.data();
+
+        windowList->push_back(windowInfo);
+    }
+    return TRUE;
+}
+std::vector<WindowInfo>get_proc_windows(){
+  std::vector<WindowInfo> windows;
+  EnumWindows(EnumWindowsProc, reinterpret_cast<LPARAM>(&windows));
+  return windows;
+}

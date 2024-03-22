@@ -77,6 +77,14 @@ struct emfuncinfo{
 };
 std::unordered_map<uintptr_t,emfuncinfo>emfunctionhooks;
 std::unordered_set<uintptr_t>breakpoints;
+
+bool checkiscurrentgame(const emfuncinfo& em){
+	auto wininfos=get_proc_windows();
+	for(auto&& info:wininfos){
+		if(info.title.find(em._id)!=info.title.npos)return true;
+	}
+	return false;
+}
 }
 bool hookPPSSPPDoJit(){
     ConsoleOutput("[Compatibility] PPSSPP 1.12.3-867 -> v1.16.1-35");
@@ -90,7 +98,9 @@ bool hookPPSSPPDoJit(){
         auto em_address=stack->ARG2;
 
 		if(emfunctionhooks.find(em_address)==emfunctionhooks.end())return;
-		
+	
+		if(!(checkiscurrentgame(emfunctionhooks.at(em_address))))return;
+
 		HookParam hpinternal;
 		hpinternal.user_value=em_address;
 		hpinternal.address=stack->retaddr;
@@ -104,8 +114,6 @@ bool hookPPSSPPDoJit(){
 			auto em_address=hp->user_value;
 			auto op=emfunctionhooks.at(em_address);
 
-			DWORD _;
-			VirtualProtect((LPVOID)ret,0x10,PAGE_EXECUTE_READWRITE,&_);
 			HookParam hpinternal;
 			hpinternal.address=ret;
 			hpinternal.user_value=em_address;
