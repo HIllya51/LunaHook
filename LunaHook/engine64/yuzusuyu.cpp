@@ -1,4 +1,4 @@
-#include"yuzusuyu.h"
+﻿#include"yuzusuyu.h"
 #include"mages/mages.h"
 namespace{
         
@@ -147,6 +147,32 @@ void _0100A460141B8000(hook_stack* stack, HookParam* hp, uintptr_t* data, uintpt
     hp->type=USING_STRING|CODEC_UTF8|NO_CONTEXT;
     *data=address;*len=strlen((char*)address);
 }
+// @name         [0100A3A00CC7E000] CLANNAD
+// @version      1.0.0
+// @author       [DC]
+// @description  Yuzu
+// * PROTOTYPE
+// * 
+//
+// Warnning: Dual language
+void _0100A3A00CC7E000(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
+    auto address=emu_arg(stack)[1];
+    hp->type|=FULL_STRING;//multilanguages in multilines;
+    *data=address;*len=wcslen((wchar_t*)address)*2;
+}
+
+bool F0100A3A00CC7E000(void* data, size_t* len, HookParam* hp){
+    auto s = std::wstring((wchar_t*)data,*len/2);
+    
+    std::wregex pattern1(L"^`([^@]+).");
+    s = std::regex_replace(s, pattern1, L"$1: ");
+
+    s = std::regex_replace(s, std::wregex(L"\\$[A-Z]\\d*(,\\d*)*"), L"");
+
+    std::wregex pattern2(L"\\$\\[([^$]+)..([^$]+)..");
+    s = std::regex_replace(s, pattern2, L"$1");
+	return write_string_overwrite(data,len,s);
+}
 namespace{
 auto _=[](){
     emfunctionhooks={
@@ -161,6 +187,9 @@ auto _=[](){
             {0x80014260 - 0x80004000,{"Shiro to Kuro no Alice -Twilight line-",_0100A460141B8000,NewLineCharFilterW,L"0100A460141B8000",L"1.0.0"}},
             {0x800142d4 - 0x80004000,{"Shiro to Kuro no Alice -Twilight line-",_0100A460141B8000,NewLineCharFilterW,L"0100A460141B8000",L"1.0.0"}},
             {0x800144dc - 0x80004000,{"Shiro to Kuro no Alice -Twilight line-",_0100A460141B8000,NewLineCharFilterW,L"0100A460141B8000",L"1.0.0"}},
+            
+            {0x80072d00 - 0x80004000,{"CLANNAD",_0100A3A00CC7E000,F0100A3A00CC7E000,L"0100A3A00CC7E000",L"1.0.0"}},
+            {0x80072d30 - 0x80004000,{"CLANNAD",_0100A3A00CC7E000,F0100A3A00CC7E000,L"0100A3A00CC7E000",L"1.0.7"}},
     };
     return 1;
 }();
