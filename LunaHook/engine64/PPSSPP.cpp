@@ -91,8 +91,6 @@ bool hookPPSSPPDoJit(){
 
 		if(emfunctionhooks.find(em_address)==emfunctionhooks.end())return;
 		
-		static emfuncinfo op;
-		op=emfunctionhooks.at(em_address);
 		HookParam hpinternal;
 		hpinternal.user_value=em_address;
 		hpinternal.address=stack->retaddr;
@@ -102,11 +100,15 @@ bool hookPPSSPPDoJit(){
 			auto ret=stack->rax;
 			if(breakpoints.find(ret)!=breakpoints.end())return;
 			breakpoints.insert(ret);
+
+			auto em_address=hp->user_value;
+			auto op=emfunctionhooks.at(em_address);
+
 			DWORD _;
 			VirtualProtect((LPVOID)ret,0x10,PAGE_EXECUTE_READWRITE,&_);
 			HookParam hpinternal;
 			hpinternal.address=ret;
-			hpinternal.user_value=hp->user_value;
+			hpinternal.user_value=em_address;
 			hpinternal.type=CODEC_UTF16|USING_STRING|NO_CONTEXT;
 			hpinternal.text_fun=(decltype(hpinternal.text_fun))op.hookfunc;
 			hpinternal.filter_fun=(decltype(hpinternal.filter_fun))op.filterfun;
