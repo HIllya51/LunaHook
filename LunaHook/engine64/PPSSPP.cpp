@@ -85,6 +85,26 @@ bool checkiscurrentgame(const emfuncinfo& em){
 	}
 	return false;
 }
+
+template<int index,int offset=0>
+void simple932getter(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
+     hp->type=USING_STRING|NO_CONTEXT;
+	 hp->codepage=932;
+	 auto address= emu_arg(stack)[index]+offset;
+	*data=address;*len=strlen((char*)address);
+}
+template<int index>
+void simpleutf8getter(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
+    auto address=emu_arg(stack)[index];
+    hp->type=USING_STRING|CODEC_UTF8|NO_CONTEXT;
+    *data=address;*len=strlen((char*)address);
+}
+template<int index,DWORD _type=0>
+void simpleutf16getter(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
+    auto address=emu_arg(stack)[index];
+    hp->type=USING_STRING|CODEC_UTF16|NO_CONTEXT|_type;
+    *data=address;*len=wcslen((wchar_t*)address)*2;
+}
 }
 bool hookPPSSPPDoJit(){
     ConsoleOutput("[Compatibility] PPSSPP 1.12.3-867 -> v1.16.1-35");
@@ -117,7 +137,6 @@ bool hookPPSSPPDoJit(){
 			HookParam hpinternal;
 			hpinternal.address=ret;
 			hpinternal.user_value=em_address;
-			hpinternal.type=CODEC_UTF16|USING_STRING|NO_CONTEXT;
 			hpinternal.text_fun=(decltype(hpinternal.text_fun))op.hookfunc;
 			hpinternal.filter_fun=(decltype(hpinternal.filter_fun))op.filterfun;
 			NewHook(hpinternal,op.hookname);
@@ -133,20 +152,7 @@ bool PPSSPP::attach_function()
 	return PPSSPPinithooksearch()| hookPPSSPPDoJit();
 }
 
-// @name         [ULJS00403] Shinigami to Shoujo
-// @version      0.1
-// @author       [DC]
-// @description  PPSSPP x64
-// * TAKUYO
-// * TAKUYO
-// *
-void ULJS00403(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
-     hp->type=USING_STRING|NO_CONTEXT;
-	 hp->codepage=932;
-	 auto address= emu_arg(stack)[1];
-	 *data=address;
-	*len=strlen((char*)address);
-}
+
 bool ULJS00403_filter(void* data, size_t* len, HookParam* hp){
      std::string result = std::string((char*)data,*len);
     std::regex newlinePattern(R"((\\n)+)");
@@ -156,12 +162,7 @@ bool ULJS00403_filter(void* data, size_t* len, HookParam* hp){
 	return write_string_overwrite(data,len,result);
 }
 
-// @name         [ULJS00339] Amagami
-// @version      v1.02
-// @author       [DC]
-// @description  
-// * Kadokawa
-// * K2X_Script
+
 void ULJS00339(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
      hp->type=USING_STRING|NO_CONTEXT;
 	 hp->codepage=932;
@@ -225,18 +226,7 @@ void ULJS00339(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* spl
 	write_string_new(data,len,s);
 }
 
-// @name         [NPJH50909] Sekai de Ichiban Dame na Koi
-// @version      0.1
-// @author       [DC]
-// @description  PPSSPP x64
-// * 
-void NPJH50909(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
-     hp->type=USING_STRING|NO_CONTEXT;
-	 hp->codepage=932;
-	 auto address= emu_arg(stack)[0];
-	 *data=address;
-	*len=strlen((char*)address);
-}
+
 bool NPJH50909_filter(void* data, size_t* len, HookParam* hp){
      std::string result = std::string((char*)data,*len);
 
@@ -256,18 +246,6 @@ bool NPJH50909_filter(void* data, size_t* len, HookParam* hp){
 	return write_string_overwrite(data,len,result);
 }
 
-// @name         [ULJM06119] Dunamis15
-// @version      0.1
-// @author       [DC]
-// @description  PPSSPP x64
-// * Division ZERO & MAGES. GAME
-// * Kaleido ADV Workshop
-void ULJM06119(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
-     hp->type=USING_STRING|NO_CONTEXT|CODEC_UTF8;
-	 auto address= emu_arg(stack)[0];
-	*data=address;
-	*len=strlen((char*)address);
-}
 bool ULJM06119_filter(void* data, size_t* len, HookParam* hp){
      std::string s = std::string((char*)data,*len);
 
@@ -284,16 +262,7 @@ bool ULJM06119_filter(void* data, size_t* len, HookParam* hp){
     s = std::regex_replace(s, newlinePattern, " ");
 	return write_string_overwrite(data,len,s);
 }
-// @name         [ULJM06036] Princess Evangile Portable
-// @version      0.1
-// @author       [DC]
-// @description  PPSSPP x64
-void ULJM06036(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
-     hp->type=USING_STRING|NO_CONTEXT|CODEC_UTF16;
-	 auto address= emu_arg(stack)[2];
-	*data=address;
-	*len=wcslen((wchar_t*)address)*2;
-}
+
 bool ULJM06036_filter(void* data, size_t* len, HookParam* hp){
      std::wstring result = std::wstring((wchar_t*)data,*len/2);
     std::wregex pattern(LR"(<R([^\/]+).([^>]+).>)");
@@ -339,12 +308,6 @@ namespace Corda{
 		return s;
 	}
 }
-// @name         [ULJM05428] Kin'iro no Corda 2f
-// @version      0.1
-// @author       [DC]
-// @description  PPSSPP x64
-// * 
-// * Koei
 
 void ULJM05428(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
      hp->type=USING_STRING|NO_CONTEXT;
@@ -355,12 +318,6 @@ void ULJM05428(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* spl
 	*split=haveNamve;
 	write_string_new(data,len,s);
 }
-// @name         [ULJM05054] Kin'iro no Corda
-// @version      0.1
-// @author       [DC]
-// @description  PPSSPP x64
-// * 
-// * Koei
 
 void ULJM05054(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
      hp->type=USING_STRING|NO_CONTEXT;
@@ -377,20 +334,6 @@ void ULJM05054(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* spl
 	write_string_new(data,len,s);
 }
 
-// @name         [ULJM05943] Gekka Ryouran Romance
-// @version      0.1
-// @author       Koukdw
-// @description  PPSSPP x64
-// * Otomate & Rejet
-// * Idea Factory (アイディアファクトリー)
-// *
-template<int index, int offset>
-void ULJM05943(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
-     hp->type=USING_STRING|NO_CONTEXT;
-	 hp->codepage=932;
-	auto address= emu_arg(stack)[index]+offset;
-	*data=address;*len=strlen((char*)address);
-}
 
 bool ULJM05943F(void* data, size_t* len, HookParam* hp){
     auto s = std::string((char*)data,*len);
@@ -402,17 +345,7 @@ bool ULJM05943F(void* data, size_t* len, HookParam* hp){
     std::string result2 = std::regex_replace(result1, pattern2, replacement2);
 	return write_string_overwrite(data,len,result2);
 }
-// @name         [NPJH50619] Sol Trigger
-// @version      1.0.1
-// @author       [Enfys]
-// @description  PPSSPP x64
-// * Imageepoch
-template<int index>
-void NPJH50619(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
-     hp->type=USING_STRING|NO_CONTEXT|CODEC_UTF8;
-	auto address= emu_arg(stack)[index];
-	*data=address;*len=strlen((char*)address);
-}
+
 bool NPJH50619F(void* data, size_t* len, HookParam* hp){
     auto s = std::string((char*)data,*len);
     std::regex pattern1("[\\r\\n]+");
@@ -430,17 +363,7 @@ bool NPJH50619F(void* data, size_t* len, HookParam* hp){
 	return write_string_overwrite(data,len,result4);
 }
 
-// @name         [NPJH50505] Fate/EXTRA CCC
-// @version      0.1
-// @author       [DC]
-// @description  PPSSPP x64
 
-void NPJH50505(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
-     hp->type=USING_STRING|NO_CONTEXT;
-	 hp->codepage=932;
-	auto address= emu_arg(stack)[0];
-	*data=address;*len=strlen((char*)address);
-}
 bool NPJH50505F(void* data, size_t* len, HookParam* hp){
     auto s = std::string((char*)data,*len);
     
@@ -467,14 +390,6 @@ bool NPJH50505F(void* data, size_t* len, HookParam* hp){
 	return write_string_overwrite(data,len,result6);
 }
 
-// @name         [NPJH50909] Kamigami no Asobi InFinite
-// @version      0.1
-// @author       [DC]
-// @description  PPSSPP x64
-// * 
-// * 
-// KnownIssue: missed choice (2nd+)
-
 void QNPJH50909(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
      hp->type=USING_STRING|NO_CONTEXT;
 	 hp->codepage=932;
@@ -487,12 +402,8 @@ void QNPJH50909(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* sp
 	 if(0x6e87==*(WORD*)*data)*len=0;
 	 if(0x000a==*(WORD*)*data)*len=0;
 }
-void QNPJH50909_2(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
-     hp->type=USING_STRING|NO_CONTEXT;
-	 hp->codepage=932;
-	auto adr= emu_arg(stack)[3]+4;
-	*data=adr;*len=strlen((char*)adr);
-}
+
+
 namespace{
 auto _=[](){
     emfunctionhooks={
@@ -503,27 +414,27 @@ auto _=[](){
 			0x8836984: mainHandler.bind_(null, 1), // a1 - dialogue
 			0x883cecc: mainHandler.bind_(null, 3), // a3 - dialogue
 			*/
-            {0x883bf34,{"Shinigami to Shoujo",ULJS00403,ULJS00403_filter,L"PCSG01282"}},
+            {0x883bf34,{"Shinigami to Shoujo",simple932getter<1>,ULJS00403_filter,L"ULJS00403"}},
             {0x0886775c,{"Amagami",ULJS00339,0,L"ULJS00339"}},// String.length()
-            {0x8814adc,{"Sekai de Ichiban Dame na Koi",NPJH50909,NPJH50909_filter,L"NPJH50909"}},// name + dialouge
-            {0x8850b2c,{"Sekai de Ichiban Dame na Koi",NPJH50909,NPJH50909_filter,L"NPJH50909"}},// onscreen toast
-            {0x0891D72C,{"Dunamis15",ULJM06119,ULJM06119_filter,L"ULJM06119"}},
-            {0x88506d0,{"Princess Evangile Portable",ULJM06036,ULJM06036_filter,L"ULJM06036"}},// [0x88506d0(2)...0x088507C0(?)] // name text text (line doubled)
+            {0x8814adc,{"Sekai de Ichiban Dame na Koi",simple932getter<0>,NPJH50909_filter,L"ULJM05878"}},// name + dialouge
+            {0x8850b2c,{"Sekai de Ichiban Dame na Koi",simple932getter<0>,NPJH50909_filter,L"ULJM05878"}},// onscreen toast
+            {0x0891D72C,{"Dunamis15",simpleutf8getter<0>,ULJM06119_filter,L"ULJM06119"}},
+            {0x88506d0,{"Princess Evangile Portable",simpleutf16getter<2>,ULJM06036_filter,L"ULJM06036"}},// [0x88506d0(2)...0x088507C0(?)] // name text text (line doubled)
             {0x89b59dc,{"Kin'iro no Corda 2f",ULJM05428,0,L"ULJM05428"}},
             {0x886162c,{"Kin'iro no Corda",ULJM05054,0,L"ULJM05054"}},// dialogue: 0x886162c (x1), 0x889d5fc-0x889d520(a2) fullLine
             {0x8899e90,{"Kin'iro no Corda",ULJM05054,0,L"ULJM05054"}},// name 0x88da57c, 0x8899ca4 (x0, oneTime), 0x8899e90
-            {0x8952cfc,{"Sol Trigger",NPJH50619<0>,NPJH50619F,L"NPJH50619"}},//dialog
-            {0x884aad4,{"Sol Trigger",NPJH50619<0>,NPJH50619F,L"NPJH50619"}},//description
-            {0x882e1b0,{"Sol Trigger",NPJH50619<0>,NPJH50619F,L"NPJH50619"}},//system
-            {0x88bb108,{"Sol Trigger",NPJH50619<2>,NPJH50619F,L"NPJH50619"}},//battle tutorial
-            {0x89526a0,{"Sol Trigger",NPJH50619<0>,NPJH50619F,L"NPJH50619"}},//battle info
-            {0x88bcef8,{"Sol Trigger",NPJH50619<1>,NPJH50619F,L"NPJH50619"}},//battle talk
-            {0x8958490,{"Fate/EXTRA CCC",NPJH50505,NPJH50505F,L"NPJH50505"}},
+            {0x8952cfc,{"Sol Trigger",simpleutf8getter<0>,NPJH50619F,L"NPJH50619"}},//dialog
+            {0x884aad4,{"Sol Trigger",simpleutf8getter<0>,NPJH50619F,L"NPJH50619"}},//description
+            {0x882e1b0,{"Sol Trigger",simpleutf8getter<0>,NPJH50619F,L"NPJH50619"}},//system
+            {0x88bb108,{"Sol Trigger",simpleutf8getter<2>,NPJH50619F,L"NPJH50619"}},//battle tutorial
+            {0x89526a0,{"Sol Trigger",simpleutf8getter<0>,NPJH50619F,L"NPJH50619"}},//battle info
+            {0x88bcef8,{"Sol Trigger",simpleutf8getter<1>,NPJH50619F,L"NPJH50619"}},//battle talk
+            {0x8958490,{"Fate/EXTRA CCC",simple932getter<0>,NPJH50505F,L"NPJH50505"}},
             {0x088630f8,{"Kamigami no Asobi InFinite",QNPJH50909,0,L"NPJH50909"}}, // text, choice (debounce trailing 400ms), TODO: better hook
-            {0x0887813c,{"Kamigami no Asobi InFinite",QNPJH50909_2,0,L"NPJH50909"}}, // Question YN
+            {0x0887813c,{"Kamigami no Asobi InFinite",simple932getter<3,4>,0,L"NPJH50909"}}, // Question YN
 			
-            {0x88eeba4,{"Gekka Ryouran Romance",ULJM05943<0,0>,ULJM05943F,L"ULJM05943"}},// a0 - monologue text
-            {0x8875e0c,{"Gekka Ryouran Romance",ULJM05943<1,6>,ULJM05943F,L"ULJM05943"}},// a1 - dialogue text
+            {0x88eeba4,{"Gekka Ryouran Romance",simple932getter<0,0>,ULJM05943F,L"ULJM05943"}},// a0 - monologue text
+            {0x8875e0c,{"Gekka Ryouran Romance",simple932getter<1,6>,ULJM05943F,L"ULJM05943"}},// a1 - dialogue text
     };
     return 1;
 }();

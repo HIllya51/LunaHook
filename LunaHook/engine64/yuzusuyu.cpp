@@ -95,6 +95,21 @@ bool checkiscurrentgame(const emfuncinfo& em){
 	}
 	return false;
 }
+
+
+template<int index>
+void simpleutf8getter(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
+    auto address=emu_arg(stack)[index];
+    hp->type=USING_STRING|CODEC_UTF8|NO_CONTEXT;
+    *data=address;*len=strlen((char*)address);
+}
+template<int index,DWORD _type=0>
+void simpleutf16getter(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
+    auto address=emu_arg(stack)[index];
+    hp->type=USING_STRING|CODEC_UTF16|NO_CONTEXT|_type;
+    *data=address;*len=wcslen((wchar_t*)address)*2;
+}
+
 }
 bool yuzusuyu::attach_function()
 {
@@ -115,7 +130,6 @@ bool yuzusuyu::attach_function()
 
         HookParam hpinternal;
         hpinternal.address=entrypoint;
-        hpinternal.type=CODEC_UTF16|USING_STRING|NO_CONTEXT;
         hpinternal.text_fun=(decltype(hpinternal.text_fun))op.hookfunc;
 		hpinternal.filter_fun=(decltype(hpinternal.filter_fun))op.filterfun;
         NewHook(hpinternal,op.hookname);
@@ -123,43 +137,12 @@ bool yuzusuyu::attach_function()
    };
   return NewHook(hp,"YuzuDoJit");
 } 
-// @name         [0100978013276000] Memories Off
-// @version      1.0.0 - 1.0.1
-// @author       Koukdw
-// @description  Yuzu
-// * MAGES. inc.
-// * MAGES Engine
+
 void _0100978013276000(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
     auto s=mages::readString(emu_arg(stack)[0],0);
     write_string_new(data,len,s);
 }
 
-// @name         [0100A460141B8000] Shiro to Kuro no Alice
-// @version      1.0.0
-// @author       Koukdw
-// @description  
-// * Kogado Girls Project
-// * Idea Factory (アイディアファクトリー) & Otomate
-// * AliceNX_MPA (string inside binary)
-// *
-void _0100A460141B8000(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
-    auto address=emu_arg(stack)[0];
-    hp->type=USING_STRING|CODEC_UTF8|NO_CONTEXT;
-    *data=address;*len=strlen((char*)address);
-}
-// @name         [0100A3A00CC7E000] CLANNAD
-// @version      1.0.0
-// @author       [DC]
-// @description  Yuzu
-// * PROTOTYPE
-// * 
-//
-// Warnning: Dual language
-void _0100A3A00CC7E000(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
-    auto address=emu_arg(stack)[1];
-    hp->type|=FULL_STRING;//multilanguages in multilines;
-    *data=address;*len=wcslen((wchar_t*)address)*2;
-}
 
 bool F0100A3A00CC7E000(void* data, size_t* len, HookParam* hp){
     auto s = std::wstring((wchar_t*)data,*len/2);
@@ -173,6 +156,48 @@ bool F0100A3A00CC7E000(void* data, size_t* len, HookParam* hp){
     s = std::regex_replace(s, pattern2, L"$1");
 	return write_string_overwrite(data,len,s);
 }
+
+bool F010045C0109F2000(void* data, size_t* len, HookParam* hp){
+    auto s = std::string((char*)data,*len);
+    s = std::regex_replace(s, std::regex("#[^\\]]*\\]"), "");
+    s = std::regex_replace(s, std::regex("#[^\\n]*\\n"), "");
+    s = std::regex_replace(s, std::regex("\\u3000"), "");
+    s = std::regex_replace(s, std::regex("Save[\\s\\S]*データ"), "");
+	return write_string_overwrite(data,len,s);
+}
+
+template<int index>
+void T0100A1E00BFEA000(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
+    auto address=emu_arg(stack)[index];
+    *len=(*(WORD*)(address+0x10))*2;
+    *data=address+0x14;
+}
+
+bool F0100A1E00BFEA000(void* data, size_t* len, HookParam* hp){
+    auto s = std::wstring((wchar_t*)data,*len/2);
+    s = std::regex_replace(s, std::wregex(L"[\\s]"), L"");
+    s = std::regex_replace(s, std::wregex(L"(.+? \")"), L"");
+    s = std::regex_replace(s, std::wregex(L"(\",.*)"), L"");
+    s = std::regex_replace(s, std::wregex(L"(\" .*)"), L"");
+	return write_string_overwrite(data,len,s);
+}
+
+
+
+bool F0100A1200CA3C000(void* data, size_t* len, HookParam* hp){
+    auto s = std::wstring((wchar_t*)data,*len/2);
+    s = std::regex_replace(s, std::wregex(L"\\$d"), L"\n");
+    s = std::regex_replace(s, std::wregex(L"＿"), L" ");
+    s = std::regex_replace(s, std::wregex(L"@"), L" ");
+    s = std::regex_replace(s, std::wregex(L"\\[([^\\/\\]]+)\\/[^\\/\\]]+\\]"), L"$1");
+    s = std::regex_replace(s, std::wregex(L"[~^$❝.❞'?,(-)!—:;-❛ ❜]"), L"");
+    s = std::regex_replace(s, std::wregex(L"[A-Za-z0-9]"), L"");
+    s = std::regex_replace(s, std::wregex(L"^\\s+"), L"");
+    while (std::regex_search(s, std::wregex(L"^\\s*$"))) {
+        s = std::regex_replace(s, std::wregex(L"^\\s*$"), L"");
+    }
+	return write_string_overwrite(data,len,s);
+}
 namespace{
 auto _=[](){
     emfunctionhooks={
@@ -180,16 +205,28 @@ auto _=[](){
             {0x8003eebc - 0x80004000,{"Memories Off",_0100978013276000,0,L"0100978013276000",L"1.0.1"}},
             
             // Shiro to Kuro no Alice
-            {0x80013f20 - 0x80004000,{"Shiro to Kuro no Alice",_0100A460141B8000,NewLineCharFilterW,L"0100A460141B8000",L"1.0.0"}},
-            {0x80013f94 - 0x80004000,{"Shiro to Kuro no Alice",_0100A460141B8000,NewLineCharFilterW,L"0100A460141B8000",L"1.0.0"}},
-            {0x8001419c - 0x80004000,{"Shiro to Kuro no Alice",_0100A460141B8000,NewLineCharFilterW,L"0100A460141B8000",L"1.0.0"}},
+            {0x80013f20 - 0x80004000,{"Shiro to Kuro no Alice",simpleutf8getter<0>,NewLineCharFilterW,L"0100A460141B8000",L"1.0.0"}},
+            {0x80013f94 - 0x80004000,{"Shiro to Kuro no Alice",simpleutf8getter<0>,NewLineCharFilterW,L"0100A460141B8000",L"1.0.0"}},
+            {0x8001419c - 0x80004000,{"Shiro to Kuro no Alice",simpleutf8getter<0>,NewLineCharFilterW,L"0100A460141B8000",L"1.0.0"}},
             // Shiro to Kuro no Alice -Twilight line-
-            {0x80014260 - 0x80004000,{"Shiro to Kuro no Alice -Twilight line-",_0100A460141B8000,NewLineCharFilterW,L"0100A460141B8000",L"1.0.0"}},
-            {0x800142d4 - 0x80004000,{"Shiro to Kuro no Alice -Twilight line-",_0100A460141B8000,NewLineCharFilterW,L"0100A460141B8000",L"1.0.0"}},
-            {0x800144dc - 0x80004000,{"Shiro to Kuro no Alice -Twilight line-",_0100A460141B8000,NewLineCharFilterW,L"0100A460141B8000",L"1.0.0"}},
+            {0x80014260 - 0x80004000,{"Shiro to Kuro no Alice -Twilight line-",simpleutf8getter<0>,NewLineCharFilterW,L"0100A460141B8000",L"1.0.0"}},
+            {0x800142d4 - 0x80004000,{"Shiro to Kuro no Alice -Twilight line-",simpleutf8getter<0>,NewLineCharFilterW,L"0100A460141B8000",L"1.0.0"}},
+            {0x800144dc - 0x80004000,{"Shiro to Kuro no Alice -Twilight line-",simpleutf8getter<0>,NewLineCharFilterW,L"0100A460141B8000",L"1.0.0"}},
             
-            {0x80072d00 - 0x80004000,{"CLANNAD",_0100A3A00CC7E000,F0100A3A00CC7E000,L"0100A3A00CC7E000",L"1.0.0"}},
-            {0x80072d30 - 0x80004000,{"CLANNAD",_0100A3A00CC7E000,F0100A3A00CC7E000,L"0100A3A00CC7E000",L"1.0.7"}},
+            {0x80072d00 - 0x80004000,{"CLANNAD",simpleutf16getter<1,FULL_STRING>,F0100A3A00CC7E000,L"0100A3A00CC7E000",L"1.0.0"}},
+            {0x80072d30 - 0x80004000,{"CLANNAD",simpleutf16getter<1,FULL_STRING>,F0100A3A00CC7E000,L"0100A3A00CC7E000",L"1.0.7"}},
+
+            {0x800e3424 - 0x80004000,{"VARIABLE BARRICADE NS",simpleutf8getter<0>,F010045C0109F2000,L"010045C0109F2000",L"1.0.1"}},//"System Messages + Choices"), //Also includes the names of characters, 
+            {0x800fb080 - 0x80004000,{"VARIABLE BARRICADE NS",simpleutf8getter<3>,F010045C0109F2000,L"010045C0109F2000",L"1.0.1"}},//Main Text
+            
+            {0x805bba5c - 0x80004000,{"AMNESIA for Nintendo Switch",T0100A1E00BFEA000<2>,F0100A1E00BFEA000,L"0100A1E00BFEA000",L"1.0.1"}},//dialogue
+            {0x805e9930 - 0x80004000,{"AMNESIA for Nintendo Switch",T0100A1E00BFEA000<2>,F0100A1E00BFEA000,L"0100A1E00BFEA000",L"1.0.1"}},//choice
+            {0x805e7fd8 - 0x80004000,{"AMNESIA for Nintendo Switch",T0100A1E00BFEA000<2>,F0100A1E00BFEA000,L"0100A1E00BFEA000",L"1.0.1"}},//name
+
+            
+            {0x80095010 - 0x80004000,{"Chou no Doku Hana no Kusari Taishou Tsuya Koi Ibun",simpleutf16getter<1>,F0100A1200CA3C000,L"0100A1200CA3C000",L"2.0.1"}},//Main Text + Names
+            
+            {0x80db5d34 - 0x80004000,{"Chou no Doku Hana no Kusari Taishou Tsuya Koi Ibun",simpleutf16getter<1>,F0100A1200CA3C000,L"0100A1200CA3C000",L"1.1.0"}},//Main Text + Names
     };
     return 1;
 }();
