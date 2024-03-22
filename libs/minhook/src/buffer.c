@@ -217,6 +217,12 @@ static PMEMORY_BLOCK GetMemoryBlock(LPVOID pOrigin)
                 break;
         }
     }
+    
+    if (pBlock == NULL)
+    {
+        pBlock=(PMEMORY_BLOCK)VirtualAlloc(
+                (LPVOID)minAddr, MEMORY_BLOCK_SIZE, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+    }
 #else
     // In x86 mode, a memory block can be placed anywhere.
     pBlock = (PMEMORY_BLOCK)VirtualAlloc(
