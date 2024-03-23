@@ -35,6 +35,7 @@ struct EmbedSharedMem{
 	UINT8 fontCharSet;
 	wchar_t fontFamily[100];
 	UINT codepage;
+	bool fastskipignore;
 }; 
 class TextHook
 {

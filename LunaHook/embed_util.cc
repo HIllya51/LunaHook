@@ -187,7 +187,7 @@ bool check_is_thread_selected(const ThreadParam& tp){
   return false;
 }
 bool check_embed_able(const ThreadParam& tp){
-  return hostconnected&&check_is_thread_selected(tp)&&(isPauseKeyPressed()==false);
+  return hostconnected&&check_is_thread_selected(tp)&&((isPauseKeyPressed()==false)?true:!embedsharedmem->fastskipignore);
 }
 bool waitforevent(UINT32 timems,const ThreadParam& tp,const std::wstring &origin){
     char eventname[1000];
