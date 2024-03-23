@@ -275,7 +275,7 @@ void TextHook::Send(uintptr_t lpDataBase)
 }
 void TextHook::breakpointcontext(PCONTEXT context){
 #ifdef _WIN64
-	auto stack=new hook_stack;
+	auto stack=std::make_unique<hook_stack>();
 	stack->rax=context->Rax;
 	stack->rbx=context->Rbx;
 	stack->rcx=context->Rcx;
@@ -294,7 +294,7 @@ void TextHook::breakpointcontext(PCONTEXT context){
 	stack->r15=context->R15;
 	stack->eflags=context->EFlags;
 	stack->retaddr=*(DWORD64*)context->Rsp;
-	auto lpDataBase=(uintptr_t)stack+sizeof(hook_stack)-sizeof(uintptr_t);
+	auto lpDataBase=(uintptr_t)stack.get()+sizeof(hook_stack)-sizeof(uintptr_t);
 	Send(lpDataBase);
 	context->Rax=stack->rax;
 	context->Rbx=stack->rbx;
@@ -313,7 +313,6 @@ void TextHook::breakpointcontext(PCONTEXT context){
 	context->R14=stack->r14;
 	context->R15=stack->r15;
 	context->EFlags=stack->eflags;
-
 #endif
 }
 bool TextHook::InsertBreakPoint()
@@ -395,7 +394,7 @@ void TextHook::Clear()
 {
 	if (address == 0) return;
 	if (hp.type & DIRECT_READ) RemoveReadCode();
-	if (hp.type & BREAK_POINT) RemoveBreakPoint();
+	else if (hp.type & BREAK_POINT) RemoveBreakPoint();
 	else RemoveHookCode();
 	NotifyHookRemove(address, hp.name);
 	std::scoped_lock lock(viewMutex);
