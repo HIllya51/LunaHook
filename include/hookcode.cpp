@@ -177,7 +177,13 @@ namespace
 	std::optional<HookParam> ParseECode(std::wstring code)
 	{ 
 		auto idx=code.find(L'H');
-		if(idx==code.npos)return {};
+		if(idx==code.npos)
+		{
+			idx=code.find(L'B');
+
+			if(idx==code.npos)
+			return {};
+		}
 		auto hpo=ParseHCode(code.substr(idx+1));
 		code=code.substr(0,idx);
 		if(hpo.has_value()==false)return {};
