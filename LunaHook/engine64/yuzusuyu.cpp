@@ -100,13 +100,13 @@ bool checkiscurrentgame(const emfuncinfo& em){
 template<int index>
 void simpleutf8getter(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
     auto address=emu_arg(stack)[index];
-    hp->type=USING_STRING|CODEC_UTF8|NO_CONTEXT;
+    hp->type=USING_STRING|CODEC_UTF8|NO_CONTEXT|BREAK_POINT;
     *data=address;*len=strlen((char*)address);
 }
 template<int index,DWORD _type=0>
 void simpleutf16getter(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
     auto address=emu_arg(stack)[index];
-    hp->type=USING_STRING|CODEC_UTF16|NO_CONTEXT|_type;
+    hp->type=USING_STRING|CODEC_UTF16|NO_CONTEXT|BREAK_POINT|_type;
     *data=address;*len=wcslen((wchar_t*)address)*2;
 }
 
@@ -130,7 +130,7 @@ bool yuzusuyu::attach_function()
 
         HookParam hpinternal;
         hpinternal.address=entrypoint;
-        hpinternal.type=CODEC_UTF16|USING_STRING|NO_CONTEXT;
+        hpinternal.type=CODEC_UTF16|USING_STRING|NO_CONTEXT|BREAK_POINT;
         hpinternal.text_fun=(decltype(hpinternal.text_fun))op.hookfunc;
 		hpinternal.filter_fun=(decltype(hpinternal.filter_fun))op.filterfun;
         NewHook(hpinternal,op.hookname);

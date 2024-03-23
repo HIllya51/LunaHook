@@ -169,8 +169,7 @@ bool NewHook(HookParam hp, LPCSTR lpname)
 	}
 	if (lpname && *lpname) strncpy_s(hp.name, lpname, HOOK_NAME_SIZE - 1);
 	ConsoleOutput(INSERTING_HOOK, hp.name);
-	RemoveHook(hp.address, 0);
-	
+
 	wcscpy_s(hp.hookcode,HOOKCODE_LEN,HookCode::Generate(hp, GetCurrentProcessId()).c_str());
 	if (!(*hooks)[currentHook].Insert(hp))
 	{

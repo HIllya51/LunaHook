@@ -8,6 +8,7 @@
 #include "ithsys/ithsys.h"
 #include "MinHook.h"
 #include"Lang/Lang.h"
+#include"veh_hook.h"
 extern WinMutex viewMutex;
 
 // - Unnamed helpers -
@@ -94,15 +95,39 @@ namespace { // unnamed
 
 // - TextHook methods -
 
+uintptr_t getasbaddr(const HookParam &hp){
+	auto address=hp.address;
+	if (hp.type & MODULE_OFFSET)
+	{
+		if (hp.type & FUNCTION_OFFSET)
+		{
+			if (FARPROC function = GetProcAddress(GetModuleHandleW(hp.module), hp.function)) address += (uint64_t)function;
+			else return ConsoleOutput(FUNC_MISSING), false;
+		}
+		else
+		{
+			if (HMODULE moduleBase = GetModuleHandleW(hp.module)) address += (uint64_t)moduleBase;
+			else return ConsoleOutput(MODULE_MISSING), false;
+		} 
+	}
+	return address;
+}
 bool TextHook::Insert(HookParam hp)
 {
+	
+	auto addr=getasbaddr(hp);
+	RemoveHook(addr, 0);
+
 	local_buffer=new BYTE[PIPE_BUFFER_SIZE];
 	{
 		std::scoped_lock lock(viewMutex);
 		this->hp = hp;
-		address = hp.address;
+		address = addr;
 	}
+	
+
 	if (hp.type & DIRECT_READ) return InsertReadCode();
+	if (hp.type & BREAK_POINT) return InsertBreakPoint();
 	return InsertHookCode();
 }
 
@@ -248,17 +273,61 @@ void TextHook::Send(uintptr_t lpDataBase)
 
 	_InterlockedDecrement((long*) & useCount);
 }
+void TextHook::breakpointcontext(PCONTEXT context){
+#ifdef _WIN64
+	auto stack=new hook_stack;
+	stack->rax=context->Rax;
+	stack->rbx=context->Rbx;
+	stack->rcx=context->Rcx;
+	stack->rdx=context->Rdx;
+	stack->rsp=context->Rsp;
+	stack->rbp=context->Rbp;
+	stack->rsi=context->Rsi;
+	stack->rdi=context->Rdi;
+	stack->r8=context->R8;
+	stack->r9=context->R9;
+	stack->r10=context->R10;
+	stack->r11=context->R11;
+	stack->r12=context->R12;
+	stack->r13=context->R13;
+	stack->r14=context->R14;
+	stack->r15=context->R15;
+	stack->eflags=context->EFlags;
+	stack->retaddr=*(DWORD64*)context->Rsp;
+	auto lpDataBase=(uintptr_t)stack+sizeof(hook_stack)-sizeof(uintptr_t);
+	Send(lpDataBase);
+	context->Rax=stack->rax;
+	context->Rbx=stack->rbx;
+	context->Rcx=stack->rcx;
+	context->Rdx=stack->rdx;
+	context->Rsp=stack->rsp;
+	context->Rbp=stack->rbp;
+	context->Rsi=stack->rsi;
+	context->Rdi=stack->rdi;
+	context->R8=stack->r8;
+	context->R9=stack->r9;
+	context->R10=stack->r10;
+	context->R11=stack->r11;
+	context->R12=stack->r12;
+	context->R13=stack->r13;
+	context->R14=stack->r14;
+	context->R15=stack->r15;
+	context->EFlags=stack->eflags;
 
+#endif
+}
+bool TextHook::InsertBreakPoint()
+{
+	//MH_CreateHook 64位unity/yuzu-emu经常 MH_ERROR_MEMORY_ALLOC 
+	return add_veh_hook(location,std::bind(&TextHook::breakpointcontext,this,std::placeholders::_1), 0);
+}
+bool TextHook::RemoveBreakPoint()
+{
+	return remove_veh_hook(location);
+}
 bool TextHook::InsertHookCode()
 {
-	// jichi 9/17/2013: might raise 0xC0000005 AccessViolationException on win7
-	// Artikash 10/30/2018: No, I think that's impossible now that I moved to minhook
-	if (hp.type & MODULE_OFFSET)  // Map hook offset to real address
-		if (hp.type & FUNCTION_OFFSET)
-			if (FARPROC function = GetProcAddress(GetModuleHandleW(hp.module), hp.function)) address += (uint64_t)function;
-			else return ConsoleOutput(FUNC_MISSING), false;
-		else if (HMODULE moduleBase = GetModuleHandleW(hp.module)) address += (uint64_t)moduleBase;
-		else return ConsoleOutput(MODULE_MISSING), false;
+	
 
 	VirtualProtect(location, 10, PAGE_EXECUTE_READWRITE, DUMMY);
 	void* original;
@@ -326,6 +395,7 @@ void TextHook::Clear()
 {
 	if (address == 0) return;
 	if (hp.type & DIRECT_READ) RemoveReadCode();
+	if (hp.type & BREAK_POINT) RemoveBreakPoint();
 	else RemoveHookCode();
 	NotifyHookRemove(address, hp.name);
 	std::scoped_lock lock(viewMutex);

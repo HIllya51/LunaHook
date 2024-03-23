@@ -23,6 +23,7 @@ set(texthook_src
 		enginecontrol.cpp
 		embed_util.cc
 		hijackfuns.cc
+		veh_hook.cpp
 ) 
 add_subdirectory(util)
 add_subdirectory(engines)

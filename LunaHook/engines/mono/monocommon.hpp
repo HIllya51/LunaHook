@@ -11,6 +11,9 @@ std::unordered_set<uint64_t>inserted_addr;
 void NewHook_check(HookParam& hp,LPCSTR n){
     std::lock_guard _(mutex);
     if(inserted_addr.find(hp.address)==inserted_addr.end()){
+        #ifdef _WIN64
+        hp.type|=BREAK_POINT;
+        #endif
         NewHook(hp,n);
         inserted_addr.insert(hp.address);
     }

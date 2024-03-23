@@ -49,6 +49,9 @@ private:
 	void Read();
 	bool InsertHookCode();
 	bool InsertReadCode();
+	bool InsertBreakPoint();
+	bool RemoveBreakPoint();
+	void breakpointcontext(PCONTEXT);
 	void Send(uintptr_t dwDatabase);
 	int GetLength(hook_stack* stack, uintptr_t in); // jichi 12/25/2013: Return 0 if failed
 	int HookStrlen(BYTE* data);

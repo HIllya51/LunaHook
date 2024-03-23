@@ -255,7 +255,10 @@ namespace
 			}
 			 
 		}
-		HCode += L"H";
+		if(hp.type&BREAK_POINT)
+			HCode+=L"B";
+		else
+			HCode += L"H";
 
 		if (hp.type & CODEC_UTF16||hp.type & CODEC_UTF32)
 		{
@@ -328,7 +331,14 @@ namespace HookCode
 		code.erase(std::find(code.begin(), code.end(), L'/'), code.end()); // legacy/AGTH compatibility
 		Trim(code);
 		if (code[0] == L'R') return ParseRCode(code.erase(0, 1));
-		else if (code[0] == L'H') return ParseHCode(code.erase(0, 1));
+		else if (code[0] == L'B'||code[0] == L'H'){
+			auto isbreakpoint=code[0] == L'B';
+			auto hpo=ParseHCode(code.erase(0, 1));
+			if(isbreakpoint && hpo.has_value()){
+				hpo.value().type|=BREAK_POINT;
+			}
+			return hpo;
+		} 
 		else if (code[0] == L'E') return ParseECode(code.erase(0, 1));
 		return {};
 	}
