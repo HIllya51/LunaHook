@@ -52,6 +52,6 @@ LONG CALLBACK veh_dispatch(PEXCEPTION_POINTERS ExceptionInfo);
 veh_list_t* new_veh_list();
 veh_node_t* insert_veh_node(veh_list_t* list, void* origFunc, newFuncType newFunc, void* handle, DWORD hook_type);
 bool remove_veh_node(veh_list_t* list, void* origFunc);
-veh_node_t* get_veh_node(veh_list_t* list, void* origFunc, bool exactmatch);
+veh_node_t* get_veh_node(veh_list_t* list, void* origFunc, int range=0);
 
 #endif // LIST_T_H_INCLUDED

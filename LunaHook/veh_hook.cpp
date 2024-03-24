@@ -36,7 +36,7 @@ bool remove_veh_hook(void* origFunc)
 {
     std::lock_guard _(vehlistlock);
     if (list == NULL) return false;
-    veh_node_t* node = get_veh_node(list, origFunc, true);
+    veh_node_t* node = get_veh_node(list, origFunc);
     if (node == NULL) return false;
     DWORD _p;
     VirtualProtect(node->origFunc, sizeof(int), PAGE_EXECUTE_READWRITE, &_p);
@@ -82,41 +82,39 @@ LONG CALLBACK veh_dispatch(PEXCEPTION_POINTERS ExceptionInfo)
 
     if (Code != STATUS_BREAKPOINT && Code != STATUS_SINGLE_STEP) return EXCEPTION_CONTINUE_SEARCH;
     // Try to find the node associated with the address of the current exception, continue searching for handlers if not found;
-    veh_node_t* currnode ;
+    std::lock_guard _(vehlistlock);
+    if (Code == STATUS_BREAKPOINT )//&& hooktype == VEH_HK_INT3)
     {
-        std::lock_guard _(vehlistlock);
-        currnode = get_veh_node(list, Addr, false);
-    }
-    if (currnode == NULL) return EXCEPTION_CONTINUE_SEARCH;
-    DWORD hooktype = currnode->hooktype;
-    // Pre-callback functions:
-    if (Code == STATUS_BREAKPOINT && hooktype == VEH_HK_INT3)
-    {
-        //(Temporarily) remove the int3 breakpoint
+        veh_node_t* currnode  = get_veh_node(list, Addr); 
+        if (currnode == NULL) return EXCEPTION_CONTINUE_SEARCH;
+    
         VirtualProtect(Addr, sizeof(int), PAGE_EXECUTE_READWRITE, &currnode->OldProtect);
         memcpy((void*)Addr, (const void*)(&currnode->origBaseByte), sizeof (char));
         currnode->newFunc(ExceptionInfo->ContextRecord);
         VirtualProtect(Addr, sizeof(int), currnode->OldProtect, &oldProtect);
         ExceptionInfo->ContextRecord->EFlags |= 0x100;
+        
     }
-    else if (Code == STATUS_SINGLE_STEP && hooktype == VEH_HK_INT3)
+    else if (Code == STATUS_SINGLE_STEP )//&& hooktype == VEH_HK_INT3)
     {
-        // Restore the INT3 breakpoint
+        veh_node_t* currnode  = get_veh_node(list, Addr, 0x10); 
+        if (currnode == NULL) return EXCEPTION_CONTINUE_SEARCH;
+        
         VirtualProtect(Addr, sizeof(int), PAGE_EXECUTE_READWRITE, &currnode->OldProtect);
         memcpy((void*)currnode->origFunc, (const void*)&int3bp, sizeof (BYTE));
         VirtualProtect(Addr, sizeof(int), currnode->OldProtect, &oldProtect);
         ExceptionInfo->ContextRecord->EFlags &= ~0x00000100; // Remove TRACE from EFLAGS
-        return EXCEPTION_CONTINUE_EXECUTION;
+        
     }
-    else if (Code == STATUS_SINGLE_STEP && hooktype == VEH_HK_HW)
-    {
-        currnode->newFunc(ExceptionInfo->ContextRecord);
-    }
-    else if (Code == STATUS_SINGLE_STEP && hooktype == VEH_HK_MEM)
-    {
+    // else if (Code == STATUS_SINGLE_STEP && hooktype == VEH_HK_HW)
+    // {
+    //     currnode->newFunc(ExceptionInfo->ContextRecord);
+    // }
+    // else if (Code == STATUS_SINGLE_STEP && hooktype == VEH_HK_MEM)
+    // {
 
-        currnode->newFunc(ExceptionInfo->ContextRecord);
-    }
+    //     currnode->newFunc(ExceptionInfo->ContextRecord);
+    // }
     return EXCEPTION_CONTINUE_EXECUTION;
 }
 
@@ -153,24 +151,21 @@ veh_node_t* insert_veh_node(veh_list_t* list, void* origFunc, newFuncType newFun
     return newnode;
 }
 
-veh_node_t* get_veh_node(veh_list_t* list, void* origFunc, bool exactmatch)
+veh_node_t* get_veh_node(veh_list_t* list, void* origFunc, int range)
 {
     veh_node_t* newnode;
     veh_node_t* closestnode = NULL;
     if (list == NULL) return NULL;
     newnode = list->head;
-    MEMORY_BASIC_INFORMATION mem_info;
-    VirtualQuery(origFunc, &mem_info, sizeof(MEMORY_BASIC_INFORMATION));
     while (newnode != NULL)
     {
-
-        if (newnode->origFunc == origFunc)
+        if(((uintptr_t)origFunc-(uintptr_t)newnode->origFunc)<=range)
         {
-            return newnode;
+            closestnode=newnode;
+            if(range==0)break;
+            range=((uintptr_t)origFunc-(uintptr_t)newnode->origFunc);
         }
-        if (!exactmatch) if (newnode->baseAddr == mem_info.BaseAddress) closestnode = newnode;
         newnode = newnode->next;
     }
-
     return closestnode;
 }
