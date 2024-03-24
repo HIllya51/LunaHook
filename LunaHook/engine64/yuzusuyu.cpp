@@ -97,9 +97,9 @@ bool checkiscurrentgame(const emfuncinfo& em){
 }
 
 
-template<int index>
+template<int index,int offset=0>
 void simpleutf8getter(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
-    auto address=emu_arg(stack)[index];
+    auto address=emu_arg(stack)[index]+offset;
     hp->type=USING_STRING|CODEC_UTF8|NO_CONTEXT|BREAK_POINT;
     *data=address;*len=strlen((char*)address);
 }
@@ -205,6 +205,68 @@ bool F0100C29017106000(void* data, size_t* len, HookParam* hp){
     s = std::regex_replace(s, pattern, L" ");
 	return write_string_overwrite(data,len,s);
 }
+bool F01006590155AC000(void* data, size_t* len, HookParam* hp){
+    auto s = std::string((char*)data,*len);
+    
+    std::regex regex("(?=@.)");
+    std::sregex_token_iterator it(s.begin(), s.end(), regex, -1);
+    std::sregex_token_iterator end;
+
+    std::vector<std::string> parts(it, end);
+    s="";
+    int counter = 0;
+    while (counter < parts.size()) {
+        std::string part = parts[counter];
+        if (part[0] != '@') {
+            s += part;
+            counter++;
+            continue;
+        }
+        std::string tag = part.substr(0, 2);
+        std::string content = part.substr(2);
+        if (tag == "@s" || tag == "@t") {
+            s += content.substr(4);
+            counter++;
+            continue;
+        } else if (tag == "@m") {
+            s += content.substr(2);
+            counter++;
+            continue;
+        } else if (tag == "@n") {
+            s += '\n' + content;
+            counter++;
+            continue;
+        } else if (tag == "@b" || tag == "@a" || tag == "@p" || tag == "@k") {
+            s += content;
+            counter++;
+            continue;
+        } else if (tag == "@v" || tag == "@h") {
+            std::regex regex("[\\w_-]+");
+            s += std::regex_replace(content, regex, "");
+            counter++;
+            continue;
+        } else if (tag == "@r") {
+            s += content + parts[counter + 2].substr(1);
+            counter += 3;
+            continue;
+        } else if (tag == "@I") {
+            if (content == "@" || parts[counter + 1].substr(0, 2) == "@r") {
+                counter++;
+                continue;
+            }
+            std::regex regex("[\\d+─]");
+            s += std::regex_replace(content, regex, "");
+            counter += 3;
+            continue;
+        } else {
+            s += content;
+            counter++;
+            continue;
+        }
+    }
+	return write_string_overwrite(data,len,s);
+}
+
 namespace{
 auto _=[](){
     emfunctionhooks={
@@ -234,6 +296,9 @@ auto _=[](){
             {0x80095010 - 0x80004000,{"Chou no Doku Hana no Kusari Taishou Tsuya Koi Ibun",simpleutf16getter<1>,F0100A1200CA3C000,L"0100A1200CA3C000",L"2.0.1"}},//Main Text + Names
 
             {0x80a05170 - 0x80004000,{"Live a Live",simpleutf16getter<0>,F0100C29017106000,L"0100C29017106000",L"1.0.0"}},
+            
+            {0x8049d968 - 0x80004000,{"Sakura no Kumo * Scarlet no Koi",simpleutf8getter<0,1>,F01006590155AC000,L"01006590155AC000",L"1.0.0"}},//name
+            {0x8049d980 - 0x80004000,{"Sakura no Kumo * Scarlet no Koi",simpleutf8getter<0>,F01006590155AC000,L"01006590155AC000",L"1.0.0"}},//dialogue
     };
     return 1;
 }();
