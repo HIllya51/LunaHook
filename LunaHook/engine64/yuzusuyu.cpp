@@ -266,7 +266,99 @@ bool F01006590155AC000(void* data, size_t* len, HookParam* hp){
     }
 	return write_string_overwrite(data,len,s);
 }
+bool F01000200194AE000(void* data, size_t* len, HookParam* hp){
+    auto s = std::string((char*)data,*len);
+        
+    static std::string readString_savedSentence="";
+    static bool readString_playerNameFlag=false;
+    static std::string readString_playerName="ラピス";
+     
+    std::regex regex("(?=@.)");
+    std::sregex_token_iterator it(s.begin(), s.end(), regex, -1);
+    std::sregex_token_iterator end;
 
+    std::vector<std::string> parts(it, end);
+    s = "";
+    size_t counter = 0;
+    
+    while (counter < parts.size()) {
+        const std::string& part = parts[counter];
+        
+        if (part.empty() || part[0] != '@') {
+            s += part;
+            counter++;
+            continue;
+        }
+        
+        std::string tag = part.substr(0, 2);
+        std::string content = part.substr(2);
+        
+        if (tag == "@*") {
+            if (content.find("name") == 0) {
+                if (readString_playerName == "ラピス") {
+                    s += content.substr(4) + readString_playerName + parts[counter + 4].substr(1);
+                } else {
+                    s += content.substr(4) + parts[counter + 3].substr(1) + parts[counter + 4].substr(1);
+                }
+                counter += 5;
+                continue;
+            }
+        } else if (tag == "@s" || tag == "@t") {
+            s += content.substr(4);
+            counter++;
+            continue;
+        } else if (tag == "@m") {
+            s += content.substr(2);
+            counter++;
+            continue;
+        } else if (tag == "@u") {
+            readString_playerNameFlag = true;
+            readString_savedSentence = "";
+            counter++;
+            return write_string_overwrite(data,len,"");
+        } else if (tag == "@n" || tag == "@b" || tag == "@a" || tag == "@p" || tag == "@k") {
+            s += content;
+            counter++;
+            continue;
+        } else if (tag == "@v" || tag == "@h") {
+            std::regex regex("[\\w_-]+");
+            s += std::regex_replace(content, regex, "");
+            counter++;
+            continue;
+        } else if (tag == "@r") {
+            s += content + parts[counter + 2].substr(1);
+            counter += 3;
+            continue;
+        } else if (tag == "@I") {
+            if (content == "@" || parts[counter + 1].substr(0, 2) == "@r") {
+                counter++;
+                continue;
+            }
+            std::regex regex("[\\d+─]");
+            s += std::regex_replace(content, regex, "");
+            counter += 3;
+            continue;
+        } else {
+            s += content;
+            counter++;
+            continue;
+        }
+    }
+    
+    if (!readString_playerNameFlag) {
+        ;
+    } else if (readString_savedSentence.empty()) {
+        readString_savedSentence = s;
+        s= "";
+    } else {
+        std::string savedSentence = readString_savedSentence;
+        readString_playerNameFlag = false;
+        readString_savedSentence = "";
+        readString_playerName = s;
+        s= s + "\n" + savedSentence;
+    }
+	return write_string_overwrite(data,len,s);
+}
 namespace{
 auto _=[](){
     emfunctionhooks={
@@ -299,6 +391,10 @@ auto _=[](){
             
             {0x8049d968 - 0x80004000,{"Sakura no Kumo * Scarlet no Koi",simpleutf8getter<0,1>,F01006590155AC000,L"01006590155AC000",L"1.0.0"}},//name
             {0x8049d980 - 0x80004000,{"Sakura no Kumo * Scarlet no Koi",simpleutf8getter<0>,F01006590155AC000,L"01006590155AC000",L"1.0.0"}},//dialogue
+
+            {0x80557408 - 0x80004000,{"Majestic Majolical",simpleutf8getter<0>,F01000200194AE000,L"01000200194AE000",L"1.0.0"}},//name
+            {0x8059ee94 - 0x80004000,{"Majestic Majolical",simpleutf8getter<3>,F01000200194AE000,L"01000200194AE000",L"1.0.0"}},//player name
+            {0x80557420 - 0x80004000,{"Majestic Majolical",simpleutf8getter<0>,F01000200194AE000,L"01000200194AE000",L"1.0.0"}},//dialogue
     };
     return 1;
 }();

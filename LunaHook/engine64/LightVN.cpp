@@ -159,6 +159,7 @@ namespace{
         hp.type = CODEC_UTF16|USING_STRING|NO_CONTEXT;
         hp.text_fun=[](hook_stack* stack, HookParam*, uintptr_t* data, uintptr_t* split, size_t* len)
         {
+          //wstring=TextUnionW for msvc c++17
             auto str=*(std::wstring*)stack->rdx;
             write_string_new(data,len,str);
         };
