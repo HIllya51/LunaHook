@@ -94,9 +94,85 @@ bool _2(){
 		return NewHook(hp, "LightVN2");
 }
 }
+namespace{
+  bool lightvnparsestring(){
+    BYTE sig[]={
+      0x4c,0x8b,0x47,0x10,
+      0x48,0x83,0x7f,0x18,0x08,
+      0x72,0x03,
+      0x48,0x8b,0x3f,
+      0x48,0x8b,0xd7,
+      0x48,0x8b,0xcb,
+      0xe8
+    };
+    auto addr=MemDbg::findBytes(sig, sizeof(sig), processStartAddress, processStopAddress);
+		if(addr==0)return 0;
+		addr=MemDbg::findEnclosingAlignedFunction_strict(addr);
+		if(addr==0)return 0;
+    HookParam hp;
+    hp.address = addr;
+    hp.type = CODEC_UTF16|USING_STRING|NO_CONTEXT;
+    //包含太多短句，所以无法内嵌
+    hp.text_fun=[](hook_stack* stack, HookParam*, uintptr_t* data, uintptr_t* split, size_t* len)
+    {
+    //   v15 = a2[2];
+    // if ( a2[3] >= 8uLL )
+    //   a2 = (_QWORD *)*a2;
+        auto str=*(std::wstring*)stack->rdx;
+      
+        if(startWith(str,L"\\n")&&endWith(str,L"\\n"))
+        {
+          *split=1;
+        }
+    
+        strReplace(str,L"\\n",L"\n");
+        strReplace(str,L"\n",L"");
+        std::wregex pattern(L"-{2,}");
+        str = std::regex_replace(str, pattern, L"");
+        write_string_new(data,len,str);
+    };
+    return NewHook(hp, "Light.VN.16");
+  } 
 
+  bool xreflightvnparsestring(){
+    //ver16 是上面的xref
+    //ver12 找不到上面的函数
+    auto checkstrings={
+      L"backlog voice already exists at line: {}",
+      L"attempting to log to backlog when backlog showing. likely you faded it out."
+    };
+    auto succ=false;
+    for(auto str :checkstrings){
+      auto straddr=MemDbg::findBytes(str,wcslen(str)*2,processStartAddress,processStopAddress);
+      if(straddr==0)continue;
+      // 140CADC30
+      // 48 8D 0D C5 94 AB 00
+      // 1401F4764
+      BYTE lea[]={0x48,0x8d,XX};
+      for(auto leaaddr:Util::SearchMemory(lea,sizeof(lea),PAGE_EXECUTE,processStartAddress,processStopAddress)){
+        auto refaddr=(*(DWORD*)(leaaddr+3))+leaaddr+7;
+        if(refaddr!=straddr)continue;
+        auto funcaddr=MemDbg::findEnclosingAlignedFunction_strict(leaaddr,0x2000);
+        if(funcaddr==0)continue;
+        HookParam hp;
+        hp.address = funcaddr;
+        hp.type = CODEC_UTF16|USING_STRING|NO_CONTEXT;
+        hp.text_fun=[](hook_stack* stack, HookParam*, uintptr_t* data, uintptr_t* split, size_t* len)
+        {
+            auto str=*(std::wstring*)stack->rdx;
+            write_string_new(data,len,str);
+        };
+        succ|= NewHook(hp, "Light.VN.12");
+      }
+    }
+    return succ;
+
+  }
+}
 bool LightVN::attach_function() {
   bool ok=_1();
   ok=_2()||ok;
+  ok|=lightvnparsestring();
+  ok|=xreflightvnparsestring();
   return ok;
 }
