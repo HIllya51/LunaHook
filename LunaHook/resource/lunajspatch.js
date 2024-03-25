@@ -45,6 +45,8 @@ function clipboardsender(s,lpsplit){
 function rpgmakerhook(){
     
     if(Window_Message.prototype.originstartMessage)return;
+    Window_Base.prototype.drawTextEx_origin=Window_Base.prototype.drawTextEx;//selections
+    Window_Base.prototype.drawText_origin=Window_Base.prototype.drawText;//startup menu
     Window_Message.prototype.originstartMessage=Window_Message.prototype.startMessage;
     Bitmap.prototype.origin_makeFontNameText=Bitmap.prototype._makeFontNameText;
     Bitmap.prototype._makeFontNameText=function(){
@@ -59,6 +61,14 @@ function rpgmakerhook(){
         $gameMessage._texts=[resp]
         this.originstartMessage();
     };
+    Window_Base.prototype.drawText=function(text, x, y, maxWidth, align){
+        text=clipboardsender(text,1)
+        return this.drawText_origin(text,x,y,maxWidth,align)
+    }
+    Window_Base.prototype.drawTextEx=function(text, x, y){
+        text=clipboardsender(text,1)
+        return this.drawTextEx_origin(text, x, y)
+    }
 }
 
 function tyranohook() {
