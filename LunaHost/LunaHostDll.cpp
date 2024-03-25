@@ -185,6 +185,7 @@ C_LUNA_API void Luna_useembed(DWORD pid,uint64_t address,uint64_t ctx1,uint64_t 
                 sm->addr[i]=address;
                 sm->ctx1[i]=ctx1;
                 sm->ctx2[i]=ctx2;
+                break;
             }
         }
     } 
