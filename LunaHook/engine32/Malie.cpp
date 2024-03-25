@@ -88,7 +88,6 @@ bool InsertMalieHook2() // jichi 8/20/2013: Change return type to boolean
   hp.offset=get_reg(regs::eax);
   hp.text_fun = SpecialHookMalie;
   hp.type = USING_SPLIT|CODEC_UTF16|NO_CONTEXT|USING_CHAR;
-  hp.type = NO_CONTEXT;
   ConsoleOutput("INSERT MalieHook2");
   return NewHook(hp, "Malie");
   //RegisterEngineType(ENGINE_MALIE);
