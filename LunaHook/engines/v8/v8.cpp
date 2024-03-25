@@ -146,9 +146,6 @@ bool v8runscript_isolate(void* isolate){
 void v8runscript_isolate_bypass(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
 	
     hp->type=HOOK_EMPTY;hp->text_fun=nullptr;
-    static bool runonce=false;
-	if(runonce)return;
-	runonce=true;
 
 	auto isolate=(void*)stack->ARG2;//测试正确，且和v8::Isolate::GetCurrent结果相同
     v8runscript_isolate(isolate);
