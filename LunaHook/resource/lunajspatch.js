@@ -1,6 +1,6 @@
 var fontface='';
-const magicsend='\x01LUNAFROMJS\x01'
-const magicrecv='\x01LUNAFROMHOST\x01'
+var magicsend='\x01LUNAFROMJS\x01'
+var magicrecv='\x01LUNAFROMHOST\x01'
 function splitfonttext(transwithfont){
     if(transwithfont.substr(0,magicsend.length)==magicsend) //not trans
     {
