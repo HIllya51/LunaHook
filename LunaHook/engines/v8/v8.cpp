@@ -7,23 +7,30 @@
 #include"embed_util.h"
 #include"stackoffset.hpp"
 namespace{
-    
+    constexpr auto magicsend =L"\x01LUNAFROMJS\x01";
+    constexpr auto magicrecv =L"\x01LUNAFROMHOST\x01";
 	bool hookClipboard(){
 		HookParam hp;
 		hp.address=(uintptr_t)SetClipboardData;
 		hp.type= USING_STRING|CODEC_UTF16|EMBED_ABLE|EMBED_BEFORE_SIMPLE;
 		hp.text_fun=[](hook_stack* stack, HookParam *hp, uintptr_t* data, uintptr_t* split, size_t* len){
 			HGLOBAL hClipboardData=(HGLOBAL)stack->ARG2;
-			*data=(uintptr_t)GlobalLock(hClipboardData);
-			*len=wcslen((wchar_t*)*data)*2;
+			auto text=(wchar_t*)GlobalLock(hClipboardData);
+			if(startWith(text,magicsend)){
+				text+=wcslen(magicsend);
+				auto spl=wcschr(text,L'\x02');
+				*split=std::stoi(std::wstring(text,spl-text));
+				text=spl+1;
+				*data=(uintptr_t)text;
+				*len=wcslen(text)*2;
+			}
+			
 			GlobalUnlock(hClipboardData); 
 		};
 		hp.hook_after=[](hook_stack*s,void* data, size_t len){
-			
-			std::wstring transwithfont;
-			transwithfont+=L'\x01';
+			std::wstring transwithfont=magicrecv;
 			transwithfont+=embedsharedmem->fontFamily;
-			transwithfont+=L'\x01';
+			transwithfont+=L'\x02';
 			transwithfont+=std::wstring((wchar_t*)data,len/2);
 			HGLOBAL hClipboardData = GlobalAlloc(GMEM_MOVEABLE, transwithfont.size()*2 +2);
 			auto pchData = (wchar_t*)GlobalLock(hClipboardData);

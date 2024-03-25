@@ -1,10 +1,17 @@
 var fontface='';
-
+const magicsend='\x01LUNAFROMJS\x01'
+const magicrecv='\x01LUNAFROMHOST\x01'
 function splitfonttext(transwithfont){
-    if(transwithfont[0]=='\x01'){
-        transwithfont=transwithfont.substr(1)
-        split=transwithfont.search('\x01')
-        if(split==-1)return transwithfont;
+    if(transwithfont.substr(0,magicsend.length)==magicsend) //not trans
+    {
+        split=transwithfont.search('\x02')
+        return transwithfont.substr(split+1);
+    }
+    else if(transwithfont.substr(0,magicrecv.length)==magicrecv) 
+    {
+        transwithfont=transwithfont.substr(magicrecv.length)
+        //magic font \x02 text
+        split=transwithfont.search('\x02')
         fontface=transwithfont.substr(0,split)
         text=transwithfont.substr(split+1)
         return text;
@@ -13,7 +20,10 @@ function splitfonttext(transwithfont){
         return transwithfont;
     }
 }
-function clipboardsender(s){
+function clipboardsender(s,lpsplit){
+    lpsplit = typeof lpsplit !== 'undefined' ?  lpsplit : 0
+    //magic split \x02 text
+    s=magicsend+lpsplit.toString()+'\x02'+s;
     try{
         const _clipboard = require('nw.gui').Clipboard.get();
         _clipboard.set(s, 'text'); 
@@ -21,7 +31,6 @@ function clipboardsender(s){
     }
     catch(err){
         try{
-                
             const clipboard = require('electron').clipboard;
             clipboard.writeText(s);
             transwithfont= clipboard.readText();
@@ -56,6 +65,7 @@ function tyranohook() {
         
     if(tyrano.plugin.kag.tag.text.originstart)return;
     tyrano.plugin.kag.tag.text.originstart=tyrano.plugin.kag.tag.text.start;
+    tyrano.plugin.kag.tag.chara_ptext.startorigin=tyrano.plugin.kag.tag.chara_ptext.start;
     tyrano.plugin.kag.tag.text.start = function (pm) {
         if (1 != this.kag.stat.is_script && 1 != this.kag.stat.is_html) {
 			pm.val=clipboardsender(pm.val);
@@ -64,6 +74,10 @@ function tyranohook() {
             }
 		}
         return this.originstart(pm)
+    }
+    tyrano.plugin.kag.tag.chara_ptext.start = function (pm) {
+        pm.name=clipboardsender(pm.name,1)
+        return this.startorigin(pm)
     }
 }
 function retryinject(times){
