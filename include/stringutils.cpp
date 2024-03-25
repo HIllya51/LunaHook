@@ -1,4 +1,4 @@
-
+#include<MLang.h>
 LPCSTR reverse_search_begin(const char *s, int maxsize )
 {
   if (*s)
@@ -73,22 +73,6 @@ bool startWith(const std::wstring& s,const std::wstring& s2){return startWith_im
 bool endWith(const std::string& s,const std::string& s2){return endWith_impl<std::string>(s,s2);} 
 bool endWith(const std::wstring& s,const std::wstring& s2){return endWith_impl<std::wstring>(s,s2);} 
 
-typedef HRESULT(WINAPI* CONVERTINETMULTIBYTETOUNICODE)(
-    LPDWORD lpdwMode,
-    DWORD dwSrcEncoding,
-    LPCSTR lpSrcStr,
-    LPINT lpnMultiCharCount,
-    LPWSTR lpDstStr,
-    LPINT lpnWideCharCount
-    );
-typedef HRESULT(WINAPI* CONVERTINETUNICODETOMULTIBYTE)(
-    LPDWORD lpdwMode,
-    DWORD dwEncoding,
-    LPCWSTR lpSrcStr,
-    LPINT lpnWideCharCount,
-    LPSTR lpDstStr,
-    LPINT lpnMultiCharCount
-    );
 
 std::optional<std::wstring> StringToWideString(const std::string& text, UINT encoding)
 {
@@ -97,9 +81,9 @@ std::optional<std::wstring> StringToWideString(const std::string& text, UINT enc
 		int _s = text.size(); int _s2 = buffer.size();
 		auto h=LoadLibrary(TEXT("mlang.dll"));
 		if(h==0)return {};
-		auto ConvertINetMultiByteToUnicode = (CONVERTINETMULTIBYTETOUNICODE)GetProcAddress(h, "ConvertINetMultiByteToUnicode");
-		if(ConvertINetMultiByteToUnicode==0)return {};
-		auto hr=ConvertINetMultiByteToUnicode(0, encoding, text.c_str(), &_s, buffer.data(), &_s2);
+		auto pConvertINetMultiByteToUnicode = (decltype(&ConvertINetMultiByteToUnicode))GetProcAddress(h, "ConvertINetMultiByteToUnicode");
+		if(pConvertINetMultiByteToUnicode==0)return {};
+		auto hr=pConvertINetMultiByteToUnicode(0, encoding, text.c_str(), &_s, buffer.data(), &_s2);
 		if(SUCCEEDED(hr)){
 			return std::wstring(buffer.data(), _s2 );
 		}
@@ -124,9 +108,9 @@ std::string WideStringToString(const std::wstring& text,UINT cp)
 		int _s = text.size(); int _s2 = buffer.size();
 		auto h=LoadLibrary(TEXT("mlang.dll"));
 		if(h==0)return {};
-		auto ConvertINetUnicodeToMultiByte = (CONVERTINETUNICODETOMULTIBYTE)GetProcAddress(h, "ConvertINetUnicodeToMultiByte");
-		if(ConvertINetUnicodeToMultiByte==0)return {};
-		auto hr=ConvertINetUnicodeToMultiByte(0, cp, text.c_str(), &_s, buffer.data(), &_s2);
+		auto pConvertINetUnicodeToMultiByte = (decltype(&ConvertINetUnicodeToMultiByte))GetProcAddress(h, "ConvertINetUnicodeToMultiByte");
+		if(pConvertINetUnicodeToMultiByte==0)return {};
+		auto hr=pConvertINetUnicodeToMultiByte(0, cp, text.c_str(), &_s, buffer.data(), &_s2);
 		if(SUCCEEDED(hr)){
 			return std::string(buffer.data(), _s2 );
 		}
