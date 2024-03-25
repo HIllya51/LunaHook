@@ -45,8 +45,8 @@ function clipboardsender(s,lpsplit){
 function rpgmakerhook(){
     
     if(Window_Message.prototype.originstartMessage)return;
-    Window_Base.prototype.drawTextEx_origin=Window_Base.prototype.drawTextEx;//selections
-    Window_Base.prototype.drawText_origin=Window_Base.prototype.drawText;//startup menu
+    Window_Base.prototype.drawTextEx_origin=Window_Base.prototype.drawTextEx;
+    Window_Base.prototype.drawText_origin=Window_Base.prototype.drawText;
     Window_Message.prototype.originstartMessage=Window_Message.prototype.startMessage;
     Bitmap.prototype.origin_makeFontNameText=Bitmap.prototype._makeFontNameText;
     Bitmap.prototype._makeFontNameText=function(){
