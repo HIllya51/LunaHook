@@ -1,6 +1,22 @@
 #ifndef __LUNA_PSPUILTS_H
 #define __LUNA_PSPUILTS_H
+namespace ppsspp
+{
+    
+  struct emfuncinfo{
+      const char* hookname;
+      void* hookfunc;
+      void* filterfun;
+      const wchar_t* _id;
+  }; 
+  std::unordered_map<uintptr_t,emfuncinfo> loademfunctionhooks();
 
+}
+
+bool InsertPPSSPPcommonhooks();
+
+
+#ifndef _WIN64
 namespace{
 int PPSSPP_VERSION[4] = { 0, 9, 8, 0 }; // 0.9.8 by default
  
@@ -39,4 +55,6 @@ ULONG SafeMatchBytesInPS2Memory(LPCVOID pattern, DWORD patternSize)
   return _SafeMatchBytesInMappedMemory(pattern, patternSize, XX, start, stop, step);
 }
 }
+#endif
+
 #endif

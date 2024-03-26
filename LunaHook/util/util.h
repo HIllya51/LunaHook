@@ -45,10 +45,10 @@ uintptr_t FindFunction(const char* function);
 } // namespace Util
 
 
+uintptr_t SafeFindEnclosingAlignedFunction(uintptr_t addr, uintptr_t range);
+uintptr_t SafeFindBytes(LPCVOID pattern, size_t patternSize, uintptr_t lowerBound, uintptr_t upperBound); 
 #ifndef _WIN64
 
-ULONG SafeFindEnclosingAlignedFunction(DWORD addr, DWORD range);
-ULONG SafeFindBytes(LPCVOID pattern, DWORD patternSize, DWORD lowerBound, DWORD upperBound); 
 ULONG _SafeMatchBytesInMappedMemory(LPCVOID pattern, DWORD patternSize, BYTE wildcard,
                                    ULONG start, ULONG stop, ULONG step);
 ULONG SafeMatchBytesInGCMemory(LPCVOID pattern, DWORD patternSize);
@@ -60,7 +60,7 @@ uintptr_t findfuncstart(uintptr_t addr,uintptr_t range=0x100);
 #endif
 
 uintptr_t find_pattern(const char* pattern,uintptr_t start,uintptr_t end);
-uintptr_t reverseFindBytes(const BYTE* pattern, int length, uintptr_t start, uintptr_t end);
+uintptr_t reverseFindBytes(const BYTE* pattern, int length, uintptr_t start, uintptr_t end,int offset=0,bool checkalign=false);
 std::vector<uintptr_t> findxref_reverse(uintptr_t addr, uintptr_t from, uintptr_t to);
 
 

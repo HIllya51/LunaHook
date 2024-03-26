@@ -2,7 +2,6 @@
 #include"PPSSPP.h"
 
 #include"ppsspp/psputils.hpp"
-#include "ppsspp/funcinfo.h"
 namespace { // unnamed
 
 inline bool _bandaigarbage_ch(char c)
@@ -210,43 +209,6 @@ void SpecialPSPHook(hook_stack* stack,  HookParam *hp, uintptr_t *data, uintptr_
   }
 }
 
-bool InsertPPSSPPHLEHooks()
-{
-  ConsoleOutput("PPSSPP HLE: enter");
-
-  // 0x400000 - 0x139f000
-  //GROWL_DWORD2(processStartAddress, processStopAddress);
-
-  HookParam hp;
-  hp.length_offset = 1; // determine string length at runtime
-  auto succ=false;
-  const PPSSPPFunction funcs[] = { PPSSPP_FUNCTIONS_INITIALIZER };
-  enum { FunctionCount = sizeof(funcs) / sizeof(*funcs) };
-  for (size_t i = 0; i < FunctionCount; i++) {
-    const auto &it = funcs[i];
-    ULONG addr = MemDbg::findBytes(it.pattern, ::strlen(it.pattern), processStartAddress, processStopAddress);
-    if (addr
-        && (addr = MemDbg::findPushAddress(addr, processStartAddress, processStopAddress))
-        && (addr = SafeFindEnclosingAlignedFunction(addr, 0x200)) // range = 0x200, use the safe version or it might raise
-       ) {
-       hp.address = addr;
-       hp.type = USING_STRING|it.hookType;
-       hp.offset=get_stack(it.argIndex);
-       hp.split = it.hookSplit;
-       if (hp.split)
-         hp.type |= USING_SPLIT;
-       succ|=NewHook(hp, it.hookName);
-    }
-    if (addr)
-      ConsoleOutput("PPSSPP HLE: found pattern");
-    else
-      ConsoleOutput("PPSSPP HLE: not found pattern");
-    //ConsoleOutput(it.hookName); // wchar_t not supported
-    ConsoleOutput(it.pattern);
-  }
-  ConsoleOutput("PPSSPP HLE: leave");
-  return succ;
-}
 
 /** 8/9/2014 jichi imageepoch.co.jp PSP engine, 0.9.8, 0.9.9
  *  Sample game: Sol Trigger (0.9.8, 0.9.9)
@@ -3625,7 +3587,6 @@ bool InsertPPSSPPHooks()
 	 // 
   //}
 
-  InsertPPSSPPHLEHooks();
 
   if (PPSSPP_VERSION[1] == 9 && PPSSPP_VERSION[2] == 9 && PPSSPP_VERSION[3] == 0) // 0.9.9.0
     InsertOtomatePPSSPPHook();
@@ -3677,54 +3638,19 @@ bool InsertPPSSPPHooks()
   return true;
 }
 
-/** Artikash 6/7/2019
-*   PPSSPP JIT code has pointers, but they are all added to an offset before being used.
-    Find that offset so that hook searching works properly.
-	To find the offset, find a page of mapped memory with size 0x1f00000, read and write permissions, take its address and subtract 0x8000000.
-	The above is useful for emulating PSP hardware, so unlikely to change between versions.
-*/
-bool FindPPSSPP()
+namespace ppsspp{
+std::unordered_map<uintptr_t,emfuncinfo> loademfunctionhooks()
 {
-	bool found = false;
-	SYSTEM_INFO systemInfo;
-	GetNativeSystemInfo(&systemInfo);
-	for (BYTE* probe = NULL; probe < systemInfo.lpMaximumApplicationAddress;)
-	{
-		MEMORY_BASIC_INFORMATION info;
-		if (!VirtualQuery(probe, &info, sizeof(info)))
-		{
-			probe += systemInfo.dwPageSize;
-		}
-		else
-		{
-			if (info.RegionSize == 0x1f00000 && info.Protect == PAGE_READWRITE && info.Type == MEM_MAPPED)
-			{
-				found = true;
-				ConsoleOutput("PPSSPP memory found: searching for hooks should yield working hook codes");
-				// PPSSPP 1.8.0 compiles jal to sub dword ptr [ebp+0x360],??
-				memcpy(spDefault.pattern, Array<BYTE>{ 0x83, 0xAD, 0x60, 0x03, 0x00, 0x00 }, spDefault.length = 6);
-				spDefault.offset = 0;
-				spDefault.minAddress = 0;
-				spDefault.maxAddress = -1ULL;
-				spDefault.padding = (uintptr_t)probe - 0x8000000;
-				spDefault.hookPostProcessor = [](HookParam& hp)
-				{
-					hp.type |= NO_CONTEXT | USING_SPLIT | SPLIT_INDIRECT;
-					hp.split = get_reg(regs::ebp);
-					hp.split_index =get_reg(regs::eax); // this is where PPSSPP 1.8.0 stores its return address stack
-				};
-			}
-			probe += info.RegionSize;
-		}
-	}
-	return found;
+  return {};
+}
 }
 
+
 bool PPSSPP::attach_function() {
-  bool _b1=InsertPPSSPPHooks(); // Artikash 8/4/2018: removed for now as doesn't work for non ancient ppsspp versions
-	 bool _b2=FindPPSSPP();
-   if(_b1||_b2)
-     return true;
-  return false;
+  auto succ=InsertPPSSPPcommonhooks();
+  
+  //succ|=InsertPPSSPPHooks(); // Artikash 8/4/2018: removed for now as doesn't work for non ancient ppsspp versions
+	 
+  return succ;
 }
  

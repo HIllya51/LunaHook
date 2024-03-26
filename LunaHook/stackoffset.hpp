@@ -87,16 +87,22 @@ inline uintptr_t regof(regs reg,hook_stack* stack){
 #define ARG1	stack[1]
 #define ARG2	stack[2]
 #define ARG3	stack[3]
+#define RETADDR eax
 #define THISCALL __thiscall
 #define THISCALLTHIS ecx
 #define GETARG1	get_stack(1)
 #define GETARG2	get_stack(2)
+#define GETARG3	get_stack(3)
+#define GETARG4	get_stack(4)
 #else
 #define ARG1	rcx
 #define ARG2	rdx
 #define ARG3	r8
+#define RETADDR rax
 #define THISCALLTHIS rcx
 #define THISCALL 
 #define GETARG1	get_reg(regs::rcx)
 #define GETARG2	get_reg(regs::rdx)
+#define GETARG3	get_reg(regs::r8)
+#define GETARG4	get_reg(regs::r9)
 #endif

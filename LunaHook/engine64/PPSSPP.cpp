@@ -1,91 +1,10 @@
 ﻿#include"PPSSPP.h"
+#include"ppsspp/psputils.hpp"
 #include<queue>
-/** Artikash 6/7/2019
-*   PPSSPP JIT code has pointers, but they are all added to an offset before being used.
-	Find that offset so that hook searching works properly.
-	To find the offset, find a page of mapped memory with size 0x1f00000, read and write permissions, take its address and subtract 0x8000000.
-	The above is useful for emulating PSP hardware, so unlikely to change between versions.
-*/
-bool PPSSPPinithooksearch(){
-	bool found = false;
-	SYSTEM_INFO systemInfo;
-	GetNativeSystemInfo(&systemInfo);
-	for (BYTE* probe = NULL; probe < systemInfo.lpMaximumApplicationAddress;)
-	{
-		MEMORY_BASIC_INFORMATION info;
-		if (!VirtualQuery(probe, &info, sizeof(info)))
-		{
-			probe += systemInfo.dwPageSize;
-		}
-		else
-		{
-			if (info.RegionSize == 0x1f00000 && info.Protect == PAGE_READWRITE && info.Type == MEM_MAPPED)
-			{
-				found = true;
-				ConsoleOutput("PPSSPP memory found: searching for hooks should yield working hook codes");
-				// PPSSPP 1.8.0 compiles jal to sub dword ptr [r14+0x360],??
-				memcpy(spDefault.pattern, Array<BYTE>{ 0x41, 0x83, 0xae, 0x60, 0x03, 0x00, 0x00 }, spDefault.length = 7);
-				spDefault.offset = 0;
-				spDefault.minAddress = 0;
-				spDefault.maxAddress = -1ULL;
-				spDefault.padding = (uintptr_t)probe - 0x8000000;
-				spDefault.hookPostProcessor = [](HookParam& hp)
-				{
-					hp.type |= NO_CONTEXT | USING_SPLIT | SPLIT_INDIRECT;
-					hp.split = get_reg(regs::r14);
-					hp.split_index = -8; // this is where PPSSPP 1.8.0 stores its return address stack
-				};
-			}
-			probe += info.RegionSize;
-		}
-	}
-	return found;
-}
-namespace{ 
-uintptr_t getDoJitAddress() {
-    auto DoJitSig1 = "C7 83 ?? 0? 00 00 11 00 00 00 F6 83 ?? 0? 00 00 01 C7 83 ?? 0? 00 00 E4 00 00 00";
-    auto first=find_pattern(DoJitSig1,processStartAddress,processStopAddress); 
-    if (first) {
-        auto beginSubSig1 = "55 41 ?? 41 ?? 41";
-        auto lookbackSize = 0x400;
-        auto address=first-lookbackSize;
-        auto subs=find_pattern(beginSubSig1,address,address+lookbackSize);
-        if(subs){
-            return subs;
-        }
-    }
-    return 0;
-}
 
-class emu_arg{
-    hook_stack* stack;
-public:
-    emu_arg(hook_stack* stack_):stack(stack_){};
-    uintptr_t operator [](int idx){
-        auto base=stack->rbx;
-        auto args=stack->r14;
-		auto offR = -0x80;
-		auto offset = offR + 0x10 + idx * 4;
-        return base+*(uint32_t*)(args+offset);
-    }
-};
-struct emfuncinfo{
-    const char* hookname;
-    void* hookfunc;
-	void* filterfun;
-    const wchar_t* _id;
-};
-std::unordered_map<uintptr_t,emfuncinfo>emfunctionhooks;
-std::unordered_set<uintptr_t>breakpoints;
-
-bool checkiscurrentgame(const emfuncinfo& em){
-	auto wininfos=get_proc_windows();
-	for(auto&& info:wininfos){
-		if(info.title.find(em._id)!=info.title.npos)return true;
-	}
-	return false;
-}
-
+namespace
+{
+	
 template<int index,int offset=0>
 void simple932getter(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
      hp->type=USING_STRING|NO_CONTEXT;
@@ -105,53 +24,19 @@ void simpleutf16getter(hook_stack* stack, HookParam* hp, uintptr_t* data, uintpt
     hp->type=USING_STRING|CODEC_UTF16|NO_CONTEXT|_type;
     *data=address;*len=wcslen((wchar_t*)address)*2;
 }
-}
-bool hookPPSSPPDoJit(){
-    ConsoleOutput("[Compatibility] PPSSPP 1.12.3-867 -> v1.16.1-35");
-	auto DoJitPtr=getDoJitAddress();
-   if(DoJitPtr==0)return false;
-   HookParam hp;
-   hp.address=DoJitPtr;//Jit::DoJit
-   ConsoleOutput("DoJitPtr %p",DoJitPtr);
-   
-   hp.text_fun=[](hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
-        auto em_address=stack->ARG2;
-
-		if(emfunctionhooks.find(em_address)==emfunctionhooks.end())return;
-	
-		if(!(checkiscurrentgame(emfunctionhooks.at(em_address))))return;
-
-		HookParam hpinternal;
-		hpinternal.user_value=em_address;
-		hpinternal.address=stack->retaddr;
-		hpinternal.text_fun=[](hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
-			hp->text_fun=nullptr;hp->type=HOOK_EMPTY;
-			
-			auto ret=stack->rax;
-			if(breakpoints.find(ret)!=breakpoints.end())return;
-			breakpoints.insert(ret);
-
-			auto em_address=hp->user_value;
-			auto op=emfunctionhooks.at(em_address);
-
-			HookParam hpinternal;
-			hpinternal.address=ret;
-			hpinternal.user_value=em_address;
-			hpinternal.text_fun=(decltype(hpinternal.text_fun))op.hookfunc;
-			hpinternal.filter_fun=(decltype(hpinternal.filter_fun))op.filterfun;
-			NewHook(hpinternal,op.hookname);
-		};
-		NewHook(hpinternal,"DoJitPtrRet");
-   };
-   
-  return NewHook(hp,"PPSSPPDoJit");
-}
-
-bool PPSSPP::attach_function()
-{
-	return PPSSPPinithooksearch()| hookPPSSPPDoJit();
-}
-
+class emu_arg{
+    hook_stack* stack;
+public:
+    emu_arg(hook_stack* stack_):stack(stack_){};
+    uintptr_t operator [](int idx){
+        auto base=stack->rbx;
+        auto args=stack->r14;
+		auto offR = -0x80;
+		auto offset = offR + 0x10 + idx * 4;
+        return base+*(uint32_t*)(args+offset);
+    }
+};
+} 
 
 bool ULJS00403_filter(void* data, size_t* len, HookParam* hp){
      std::string result = std::string((char*)data,*len);
@@ -402,11 +287,10 @@ void QNPJH50909(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* sp
 	 if(0x6e87==*(WORD*)*data)*len=0;
 	 if(0x000a==*(WORD*)*data)*len=0;
 }
-
-
-namespace{
-auto _=[](){
-    emfunctionhooks={
+namespace ppsspp{
+std::unordered_map<uintptr_t,emfuncinfo> loademfunctionhooks()
+{
+    return {
 			/*
 			0x883b0bc: mainHandler.bind_(null, 2), // a2 - choices (un-formated)
 			0x883cf04: mainHandler.bind_(null, 3), // a3 - choices + nameX2
@@ -436,6 +320,9 @@ auto _=[](){
             {0x88eeba4,{"Gekka Ryouran Romance",simple932getter<0,0>,ULJM05943F,L"ULJM05943"}},// a0 - monologue text
             {0x8875e0c,{"Gekka Ryouran Romance",simple932getter<1,6>,ULJM05943F,L"ULJM05943"}},// a1 - dialogue text
     };
-    return 1;
-}();
+}
+}
+bool PPSSPP::attach_function()
+{
+	return InsertPPSSPPcommonhooks();
 }

@@ -328,18 +328,16 @@ uintptr_t FindFunction(const char* function)
 
 }
 
-#ifndef _WIN64
-
-ULONG SafeFindEnclosingAlignedFunction(DWORD addr, DWORD range)
+uintptr_t SafeFindEnclosingAlignedFunction(uintptr_t addr, uintptr_t range)
 {
-  ULONG r = 0;
+  uintptr_t r = 0;
   __try{
     r = MemDbg::findEnclosingAlignedFunction(addr, range); // this function might raise if failed
   }__except(EXCEPTION_EXECUTE_HANDLER) {}
   return r;
 }
 
-ULONG SafeFindBytes(LPCVOID pattern, DWORD patternSize, DWORD lowerBound, DWORD upperBound)
+uintptr_t SafeFindBytes(LPCVOID pattern, size_t patternSize, uintptr_t lowerBound, uintptr_t upperBound)
 {
   ULONG r = 0;
   __try{
@@ -347,6 +345,8 @@ ULONG SafeFindBytes(LPCVOID pattern, DWORD patternSize, DWORD lowerBound, DWORD 
   }__except(EXCEPTION_EXECUTE_HANDLER) {}
   return r;
 }
+#ifndef _WIN64
+
 // jichi 7/17/2014: Search mapped memory for emulators
 ULONG _SafeMatchBytesInMappedMemory(LPCVOID pattern, DWORD patternSize, BYTE wildcard,
                                    ULONG start, ULONG stop, ULONG step)
@@ -443,7 +443,7 @@ uintptr_t findfuncstart(uintptr_t addr,uintptr_t range){
 #endif
 
 
-uintptr_t reverseFindBytes(const BYTE* pattern, int length, uintptr_t start, uintptr_t end) {
+uintptr_t reverseFindBytes(const BYTE* pattern, int length, uintptr_t start, uintptr_t end,int offset,bool checkalign) {
   for (end -= length; end >= start; end -= 1) {
     bool success=true;
     for(int i=0;i<length;i++){
@@ -451,7 +451,15 @@ uintptr_t reverseFindBytes(const BYTE* pattern, int length, uintptr_t start, uin
         success=false;break;
       }
     }
-    if(success)return end;
+    if(success)
+    {
+      auto ret=end+offset;
+      
+      if(checkalign && ret&0xf)
+        continue;
+
+      return ret;
+    }
     // if (memcmp(pattern, (const BYTE*)(end), length) == 0) {
     //   return end;
     // }
