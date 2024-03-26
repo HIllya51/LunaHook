@@ -1488,7 +1488,8 @@ bool InsertBGI4Hook()
   hp.address = addr;
   hp.offset=get_reg(regs::eax);
   hp.split = get_reg(regs::esp);
-  hp.type = CODEC_UTF16 | USING_STRING| USING_SPLIT ;
+  hp.type = CODEC_UTF16 | USING_STRING| USING_SPLIT |EMBED_ABLE|EMBED_BEFORE_SIMPLE|EMBED_AFTER_OVERWRITE;
+  hp.hook_font=F_TextOutW|F_GetTextExtentPoint32W;
   hp.filter_fun = BGI7Filter;
   ConsoleOutput("BGI4");
   

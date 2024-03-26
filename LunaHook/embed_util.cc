@@ -231,6 +231,7 @@ UINT64 texthash(void*data,size_t len)
 }
 bool checktranslatedok(void*data ,size_t len)
 {
+  ZeroMemory(embedsharedmem->text,sizeof(embedsharedmem->text));//clear trans before call
   if(len>1000)return true;
   return(translatecache.find(texthash(data,len))!=translatecache.end());
 }
@@ -247,7 +248,7 @@ bool TextHook::waitfornotify(TextOutput_T* buffer,void*data ,size_t*len,ThreadPa
   else{
     if(waitforevent(embedsharedmem->waittime,tp,origin)==false)return false;
     translate=embedsharedmem->text; 
-    if((translate.size()==0)||(translate==origin))return false;
+    if((translate.size()==0))return false;
     translatecache.insert(std::make_pair(hash,translate));
   }
 	if(hp.newlineseperator)strReplace(translate,L"\n",hp.newlineseperator);
