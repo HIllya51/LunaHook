@@ -234,11 +234,9 @@ uintptr_t getDoJitAddress() {
     addr2=MemDbg::findEnclosingAlignedFunction_strict(addr2,0x100);
     if(addr1==0||addr2==0||addr1!=addr2)return 0;
     auto xrefs=findxref_reverse_checkcallop(addr1,processStartAddress,processStopAddress,0xe8);
-    if(xrefs.size()!=28)return 0;
-     
-    addr1=MemDbg::findEnclosingAlignedFunction_strict(xrefs[28-1-3],0x400);
-    addr2=MemDbg::findEnclosingAlignedFunction_strict(xrefs[28-1-4],0x400);
-    
+    if(xrefs.size()<28)return 0;
+    addr1=MemDbg::findEnclosingAlignedFunction_strict(xrefs[xrefs.size()-1-3],0x400);
+    addr2=MemDbg::findEnclosingAlignedFunction_strict(xrefs[xrefs.size()-1-4],0x400);
     if(addr1==0||addr2==0||addr1!=addr2)return 0; 
     return addr1;
     #else
