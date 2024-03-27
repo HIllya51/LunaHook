@@ -2,7 +2,7 @@
 #include <CommCtrl.h>
 #include <TlHelp32.h>
 #include"host.h" 
-#include"processlistwindow.h"
+#include"LunaHost.h"
 #include"Lang/Lang.h"
 #include<shellapi.h>
 std::unordered_map<std::wstring,std::vector<int>> getprocesslist()

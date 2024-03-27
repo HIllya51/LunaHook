@@ -112,7 +112,11 @@ void listbox::dispatch(WPARAM wparam){
             oncurrentchange(idx);
     }
 }
-
+void listbox::setcurrent(int idx){
+    SendMessage(winId, LB_SETCURSEL, idx, 0);
+    if(idx!=-1)
+        oncurrentchange(idx);
+}
 int listbox::currentidx(){
     return SendMessage(winId, LB_GETCURSEL, 0, 0);
 }

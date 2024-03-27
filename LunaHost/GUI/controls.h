@@ -60,6 +60,7 @@ public:
     int additem(const std::wstring&);
     void deleteitem(int);
     void setdata(int,LONG_PTR);
+    void setcurrent(int idx);
     int insertitem(int,const std::wstring&);
     LONG_PTR getdata(int);
     int count();
