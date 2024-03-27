@@ -18,6 +18,8 @@ class Settingwindow:public mainwindow{
     spinbox* g_codepage;
     checkbox* g_check_clipboard; 
     checkbox* readonlycheck;
+    checkbox* autoattach;
+    spinbox* spinmaxbuffsize;
 public:
 Settingwindow(LunaHost*);
 };
@@ -44,8 +46,12 @@ public:
     confighelper* configs;
     int64_t currentselect=0;
     bool check_toclipboard=false; 
+    bool autoattach=false;
     void on_size(int w,int h);
     void on_close();
     LunaHost();
     friend class Settingwindow;
+private:
+    void loadsettings();
+    void savesettings();
 };

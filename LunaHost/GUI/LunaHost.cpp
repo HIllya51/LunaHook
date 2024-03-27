@@ -25,6 +25,7 @@ void LunaHost::toclipboard(std::wstring& sentence){
     } 
 } 
 void LunaHost::on_close(){
+    savesettings();
     delete configs;
     for(auto pid:attachedprocess){
         Host::DetachProcess(pid);
@@ -44,9 +45,25 @@ void LunaHost::on_size(int w,int h){
     g_hEdit_userhook->setgeo(10,50,_w*2/3+10,30);
     g_hButton_insert->setgeo(10+20+_w*2/3,50,_w/3,30);
 }
-
+void LunaHost::savesettings()
+{
+    configs->set("ToClipboard",check_toclipboard);
+    configs->set("AutoAttach",autoattach);
+    configs->set("flushDelay",TextThread::flushDelay);
+    configs->set("filterRepetition",TextThread::filterRepetition);
+    configs->set("maxBufferSize",TextThread::maxBufferSize);
+    configs->set("defaultCodepage",Host::defaultCodepage);
+}
+void LunaHost::loadsettings(){
+    check_toclipboard=configs->get("ToClipboard",false);
+    autoattach=configs->get("AutoAttach",false);
+    TextThread::flushDelay=configs->get("flushDelay",TextThread::flushDelay);
+    TextThread::filterRepetition=configs->get("filterRepetition",TextThread::filterRepetition);
+    TextThread::maxBufferSize=configs->get("maxBufferSize",TextThread::maxBufferSize);
+    Host::defaultCodepage=configs->get("defaultCodepage",Host::defaultCodepage);
+}
 LunaHost::LunaHost(){
-    
+    loadsettings();
     setfont(25);
     configs=new confighelper;
     settext(WndLunaHostGui);
@@ -124,12 +141,7 @@ LunaHost::LunaHost(){
         }
     };
     g_showtexts = new textedit(this,L"",10, 330, 200, 200,ES_MULTILINE |ES_AUTOVSCROLL| WS_VSCROLL);
-    
-    g_showtexts->setreadonly(configs->get("ReadOnly",true));
-    TextThread::filterRepetition=configs->get("filterrepeat",false);
-    check_toclipboard=configs->get("ToClipboard",false);
-    TextThread::flushDelay=configs->get("flushDelay",TextThread::flushDelay);
-    Host::defaultCodepage=configs->get("codepage",Host::defaultCodepage);
+    g_showtexts->setreadonly(true);
              
     Host::Start(
         [&](DWORD pid) {attachedprocess.push_back(pid);}, 
@@ -183,41 +195,54 @@ void LunaHost::on_thread_delete(TextThread& thread){
 }
 
 Settingwindow::Settingwindow(LunaHost* host):mainwindow(host){
-    new label(this,LblFlushDelay,10, 10, 150, 30);
-    new label(this,LblCodePage,10, 50, 150, 30);
-    ckbfilterrepeat=new checkbox(this,LblFilterRepeat,10, 130, 200, 30);
-    ckbfilterrepeat->onclick=[=](){
-        auto ck=ckbfilterrepeat->ischecked();
-        TextThread::filterRepetition=ck;
-        host->configs->set("filterrepeat",ck);
-    };
-    ckbfilterrepeat->setcheck(host->configs->get("filterrepeat",false));
+    int height=30;int curry=10;int space=10;
+    int labelwidth=250;
+    g_timeout = new spinbox(this,std::to_wstring(TextThread::flushDelay),space+labelwidth, curry, 100, height) ;
+    new label(this,LblFlushDelay,10, curry, labelwidth, height);curry+=height+space;
+    
+    g_codepage = new spinbox(this,std::to_wstring(Host::defaultCodepage),space+labelwidth, curry, 100, height) ;
+    new label(this,LblCodePage,10, curry, labelwidth, height);curry+=height+space;
+    
+    spinmaxbuffsize = new spinbox(this,std::to_wstring(TextThread::maxBufferSize),space+labelwidth, curry, 100, height) ;
+    new label(this,LblMaxBuff,10, curry, labelwidth, height);curry+=height+space;
 
-    g_check_clipboard =new checkbox(this,BtnToClipboard,10, 90, 200, 30) ;
-    g_check_clipboard->onclick=[=](){
-        auto ck=g_check_clipboard->ischecked();
-        ((LunaHost*)parent)->check_toclipboard=ck;
-        host->configs->set("ToClipboard",ck);
-    }; 
-    g_check_clipboard->setcheck(host->configs->get("ToClipboard",false));
-    readonlycheck=new checkbox(this,BtnReadOnly,10,170,200,30);
-    readonlycheck->onclick=[=](){
-        auto ck=readonlycheck->ischecked();
-        ((LunaHost*)parent)->g_showtexts->setreadonly(ck);
-        host->configs->set("ReadOnly",ck);
+    spinmaxbuffsize->onvaluechange=[=](int v){
+        TextThread::flushDelay=v;
     };
-    readonlycheck->setcheck(host->configs->get("ReadOnly",true));
-    g_timeout = new spinbox(this,std::to_wstring(host->configs->get("flushDelay",TextThread::flushDelay)),150, 10, 100, 30) ;
-    g_codepage = new spinbox(this,std::to_wstring(host->configs->get("codepage",Host::defaultCodepage)),150, 50, 100, 30) ;
+    spinmaxbuffsize->setminmax(0,0x7fffffff);
+
+    ckbfilterrepeat=new checkbox(this,LblFilterRepeat,10, curry, labelwidth, height);curry+=height+space;
+    ckbfilterrepeat->onclick=[=](){
+        TextThread::filterRepetition=ckbfilterrepeat->ischecked();
+    };
+    ckbfilterrepeat->setcheck(TextThread::filterRepetition);
+
+    g_check_clipboard =new checkbox(this,BtnToClipboard,10, curry, labelwidth, height) ;curry+=height+space;
+    g_check_clipboard->onclick=[=](){
+        ((LunaHost*)parent)->check_toclipboard=g_check_clipboard->ischecked();
+    }; 
+    g_check_clipboard->setcheck(host->check_toclipboard);
+
+    autoattach =new checkbox(this,LblAutoAttach,10, curry, labelwidth, height) ;curry+=height+space;
+    autoattach->onclick=[=](){
+        ((LunaHost*)parent)->autoattach=autoattach->ischecked();
+    }; 
+    autoattach->setcheck(host->autoattach);
+
+
+    readonlycheck=new checkbox(this,BtnReadOnly,10,curry,labelwidth,height);curry+=height+space;
+    readonlycheck->onclick=[=](){
+        ((LunaHost*)parent)->g_showtexts->setreadonly(readonlycheck->ischecked());
+    };
+    readonlycheck->setcheck(true);
+    
     g_timeout->onvaluechange=[=](int v){
         TextThread::flushDelay=v;
-        host->configs->set("flushDelay",v);
     };
     g_timeout->setminmax(0,9999);
     g_codepage->onvaluechange=[=](int v){ 
             if(IsValidCodePage(v)){
                 Host::defaultCodepage= v; 
-                host->configs->set("codepage",v); 
             }
     }; 
     g_codepage->setminmax(0,CP_UTF8);
