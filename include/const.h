@@ -49,7 +49,6 @@ enum HookParamType : uint64_t
 	FIXING_SPLIT = 0x800,
 	DIRECT_READ = 0x1000, // /R read code instead of classic /H hook code
 	FULL_STRING = 0x2000,
-	HEX_DUMP = 0x4000,
 	KNOWN_UNSTABLE = 0x20000,
 	EMBED_ABLE=0x40000,
 	EMBED_DYNA_SJIS=0x80000,

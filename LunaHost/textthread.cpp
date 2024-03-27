@@ -57,8 +57,7 @@ void TextThread::Push(BYTE* data, int length)
 		}
 	}
 
-	if (hp.type & HEX_DUMP) for (int i = 0; i < length; i += sizeof(short)) buffer.append(FormatString(L"%04hX ", *(short*)(data + i)));
-	else if (auto converted = commonparsestring(data,length,&hp,Host::defaultCodepage)) buffer.append(converted.value());
+	if (auto converted = commonparsestring(data,length,&hp,Host::defaultCodepage)) buffer.append(converted.value());
 	else Host::AddConsoleOutput(INVALID_CODEPAGE);
 	if (hp.type & FULL_STRING) buffer.push_back(L'\n');
 	lastPushTime = GetTickCount64();

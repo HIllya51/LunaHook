@@ -22,9 +22,6 @@ namespace
 		case L'V':
 			hp.type |= CODEC_UTF8;
 			break;
-		case L'M':
-			hp.type |= CODEC_UTF16 | HEX_DUMP;
-			break;
 		default:
 			return {};
 		}
@@ -63,9 +60,6 @@ namespace
 		case L'I':
 			hp.type |= CODEC_UTF32;
 			break;
-		case L'H':
-			hp.type |= CODEC_UTF16 | HEX_DUMP;
-			break;
 		case L'S':
 			hp.type |= USING_STRING;
 			break;
@@ -77,9 +71,6 @@ namespace
 			break;
 		case L'V':
 			hp.type |= USING_STRING | CODEC_UTF8;
-			break;
-		case L'M':
-			hp.type |= USING_STRING | CODEC_UTF16 | HEX_DUMP;
 			break;
 		default:
 			return {};
@@ -221,13 +212,13 @@ namespace
 	std::wstring GenerateRCode(HookParam hp)
 	{
 		std::wstring RCode = L"R";
-
-		if (hp.type & CODEC_UTF16||hp.type & CODEC_UTF32)
-		{
-			if (hp.type & HEX_DUMP) RCode += L'M';
-			else if (hp.type&CODEC_UTF16)RCode += L'Q';
-			else if (hp.type&CODEC_UTF32)RCode += L'U';
-		}
+		
+		if(hp.type&CODEC_UTF16)
+			RCode += L'Q';
+		else if (hp.type&CODEC_UTF32)
+			RCode += L'U';
+		else if (hp.type&CODEC_UTF8)
+			RCode += L'V';
 		else
 		{
 			RCode += L'S';
@@ -254,6 +245,7 @@ namespace
 					HCode+=L"D";
 				if(hp.type&EMBED_BEFORE_SIMPLE)
 					HCode+=L"S";
+
 				if(hp.type&EMBED_AFTER_NEW)
 					HCode+=L"N";
 				else if(hp.type&EMBED_AFTER_OVERWRITE)
@@ -266,39 +258,40 @@ namespace
 		else
 			HCode += L"H";
 
-		if (hp.type & CODEC_UTF16||hp.type & CODEC_UTF32)
+		if (hp.text_fun || hp.filter_fun) 
+			HCode += L'X';
+		else
 		{
-			if (hp.type & HEX_DUMP)
+			if(hp.type & USING_STRING)
 			{
-				if (hp.type & USING_STRING) HCode += L'M';
-				else HCode += L'H';
+				if(hp.type&CODEC_UTF16)
+					HCode += L'Q';
+				else if(hp.type&CODEC_UTF8)
+					HCode += L'V';
+				else if(hp.type&CODEC_UTF32)
+					HCode += L'U';
+				else 
+					HCode += L'S';
 			}
 			else
 			{
-				if(hp.type&CODEC_UTF16){
-						
-					if (hp.type & USING_STRING) HCode += L'Q';
-					else HCode += L'W';
-				}
-				else if(hp.type&CODEC_UTF32){
-					if (hp.type & USING_STRING) HCode += L'U';
-					else HCode += L'I';
-				}
+				if(hp.type&CODEC_UTF16)
+					HCode += L'W';
+				else if(hp.type&CODEC_UTF32)
+					HCode += L'I';
+				else if (hp.type & CODEC_ANSI_BE) 
+					HCode += L'A';
+				else 
+					HCode += L'B';
 			}
-		}
-		else
-		{
-			if (hp.type & USING_STRING) HCode += L'S';
-			else if (hp.type & CODEC_ANSI_BE) HCode += L'A';
-			else HCode += L'B';
-		}
 
+		}
+		
 		if (hp.type & FULL_STRING) HCode += L'F';
 
 		if (hp.type & NO_CONTEXT) HCode += L'N';
-		if (hp.text_fun || hp.filter_fun) HCode += L'X'; // no AGTH equivalent
 
-		if (hp.codepage != 0 && !(hp.type & CODEC_UTF16||hp.type & CODEC_UTF32)) HCode += std::to_wstring(hp.codepage) + L'#';
+		if (hp.codepage != 0 && !(hp.type & CODEC_UTF8) ) HCode += std::to_wstring(hp.codepage) + L'#';
 
 		if (hp.padding) HCode += HexString(hp.padding) + L'+';
 
@@ -309,6 +302,8 @@ namespace
 		if (hp.type & DATA_INDIRECT) HCode += L'*' + HexString(hp.index);
 		if (hp.type & USING_SPLIT) HCode += L':' + HexString(hp.split);
 		if (hp.type & SPLIT_INDIRECT) HCode += L'*' + HexString(hp.split_index);
+	
+		
 
 		// Attempt to make the address relative
 		if (processId && !(hp.type & MODULE_OFFSET))
