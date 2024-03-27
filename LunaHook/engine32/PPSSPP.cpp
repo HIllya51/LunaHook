@@ -2,6 +2,7 @@
 #include"PPSSPP.h"
 
 #include"ppsspp/psputils.hpp"
+#if 0
 namespace { // unnamed
 
 inline bool _bandaigarbage_ch(char c)
@@ -3637,13 +3638,9 @@ bool InsertPPSSPPHooks()
   ConsoleOutput("PPSSPP: leave");
   return true;
 }
-
+#endif
 
 bool PPSSPP::attach_function() {
-  auto succ=InsertPPSSPPcommonhooks();
-  
-  //succ|=InsertPPSSPPHooks(); // Artikash 8/4/2018: removed for now as doesn't work for non ancient ppsspp versions
-	 
-  return succ;
+  return InsertPPSSPPcommonhooks();
 }
  
