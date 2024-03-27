@@ -40,13 +40,13 @@ void LunaHost::on_size(int w,int h){
     
     g_selectprocessbutton->setgeo(10,10,_w/4,30);
     btndetachall->setgeo(10+10+_w/4,10,_w/4,30);
-    //btnsavehook->setgeo(10+20+_w*2/4,10,_w/4,30);
-    btnshowsettionwindow->setgeo(10+30+_w*3/4,10,_w/4,30);
+    btnshowsettionwindow->setgeo(10+20+_w*2/4,10,_w/4,30);
+    btnplugin->setgeo(10+30+_w*3/4,10,_w/4,30);
     g_hListBox_listtext->setgeo(10, 90, w , height/2);
     g_showtexts->setgeo(10, 100+height/2, w , height/2);
-    g_hEdit_userhook->setgeo(10,50,_w*2/4+10,30);
-    g_hButton_insert->setgeo(10+20+_w*2/4,50,_w/4,30);
-    btnplugin->setgeo(10+30+_w*3/4,50,_w/4,30);
+    g_hEdit_userhook->setgeo(10,50,_w*3/4+20,30);
+    //g_hButton_insert->setgeo(10+20+_w*2/4,50,_w/4,30);
+    g_hButton_insert->setgeo(10+30+_w*3/4,50,_w/4,30);
 }
 void LunaHost::savesettings()
 {
