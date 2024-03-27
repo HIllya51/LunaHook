@@ -9,7 +9,6 @@ namespace ppsspp
       void* filterfun;
       const wchar_t* _id;
   }; 
-  std::unordered_map<uintptr_t,emfuncinfo> loademfunctionhooks();
 
 }
 

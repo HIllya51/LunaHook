@@ -3638,13 +3638,6 @@ bool InsertPPSSPPHooks()
   return true;
 }
 
-namespace ppsspp{
-std::unordered_map<uintptr_t,emfuncinfo> loademfunctionhooks()
-{
-  return {};
-}
-}
-
 
 bool PPSSPP::attach_function() {
   auto succ=InsertPPSSPPcommonhooks();

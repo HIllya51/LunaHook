@@ -2,6 +2,7 @@
 #include"engine.h"
 #include"util/util.h"
 #include"psputils.hpp"
+#include"specialgames.hpp"
 // See: https://github.com/hrydgard/ppsspp
 
 // Core/HLE (High Level Emulator)
@@ -275,7 +276,6 @@ bool checkiscurrentgame(const emfuncinfo& em){
     return false;
 }
 std::unordered_set<uintptr_t>breakpoints;
-std::unordered_map<uintptr_t,emfuncinfo>emfunctionhooks=loademfunctionhooks();
 
 bool hookPPSSPPDoJit(){
 	auto DoJitPtr=getDoJitAddress();
@@ -285,7 +285,7 @@ bool hookPPSSPPDoJit(){
    ConsoleOutput("DoJitPtr %p",DoJitPtr);
    
    hp.text_fun=[](hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
-        auto em_address=stack->ARG2;
+        auto em_address=stack->THISCALLARG1;
         
 		if(emfunctionhooks.find(em_address)==emfunctionhooks.end())return;
         
@@ -303,7 +303,23 @@ bool hookPPSSPPDoJit(){
 
 			auto em_address=hp->user_value;
 			auto op=emfunctionhooks.at(em_address);
+            ConsoleOutput("jit function addr %p",ret);
+            #ifndef _WIN64
+            BYTE sig[]={
+                0x8b,XX2,//mov reg,[ebp-off]
+                0x8b,0xc6,//mov eax,esi
+                0x25,0xff,0xff,0xff,0x3f,//and eax,0x3fffffff
+                0x89,XX,XX4,//mov [eax+base+off],reg
 
+            };
+            auto findbase=MemDbg::findBytes(sig,sizeof(sig),ret,ret+0x20);
+            if(!findbase) 
+                findbase=MemDbg::findBytes(sig,sizeof(sig),ret-0x1000,ret+0x1000);
+            if(!findbase)
+                ConsoleOutput("can't find emu_baseaddr"); 
+            ppsspp::x86_baseaddr=(*(DWORD*)(findbase+12))&0xffff0000;
+            ConsoleOutput("x86 base addr %p",x86_baseaddr);
+            #endif
 			HookParam hpinternal;
 			hpinternal.address=ret;
 			hpinternal.user_value=em_address;
