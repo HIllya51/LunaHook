@@ -15,7 +15,7 @@ public:
     std::vector<std::wstring>PluginRank;
     Pluginmanager(LunaHost*);
     bool dispatch(TextThread&, std::wstring& sentence);
-    bool addplugin(const std::wstring&,bool isQt=false);
+    bool addplugin(const std::wstring&);
     void swaprank(int,int);
     void remove(const std::wstring&);
     std::optional<std::wstring>selectpluginfile();

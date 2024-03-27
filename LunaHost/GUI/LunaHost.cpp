@@ -402,14 +402,12 @@ Pluginwindow::Pluginwindow(mainwindow*p,Pluginmanager* pl):mainwindow(p){
     };
     listplugins = new listbox(this,10, 10,360,340);
 #define IDM_ADD_PLUGIN 1004
-#define IDM_ADD_QT_PLUGIN 1005
 #define IDM_REMOVE_PLUGIN 1006
 #define IDM_RANK_UP 1007
 #define IDM_RANK_DOWN 1008
     listplugins->oncontextmenu=[](){
         HMENU hMenu = CreatePopupMenu();
         AppendMenu(hMenu, MF_STRING, IDM_ADD_PLUGIN, MenuAddPlugin);
-        AppendMenu(hMenu, MF_STRING, IDM_ADD_QT_PLUGIN, MenuAddQtPlugin);
         AppendMenu(hMenu, MF_STRING, IDM_REMOVE_PLUGIN, MenuRemovePlugin);
         AppendMenu(hMenu, MF_STRING, IDM_RANK_UP, MenuPluginRankUp);
         AppendMenu(hMenu, MF_STRING, IDM_RANK_DOWN, MenuPluginRankDown);
@@ -439,12 +437,14 @@ Pluginwindow::Pluginwindow(mainwindow*p,Pluginmanager* pl):mainwindow(p){
                 break;
             }
             case IDM_ADD_PLUGIN:
-            case IDM_ADD_QT_PLUGIN:
             {
                 auto f=pluginmanager->selectpluginfile();
                 if(f.has_value()){
-                    if(pluginmanager->addplugin(f.value(),LOWORD(wparam)==IDM_ADD_QT_PLUGIN)){
+                    if(pluginmanager->addplugin(f.value())){
                         listadd(f.value());
+                    }
+                    else{
+                        MessageBoxW(winId,InvalidPlugin,MsgError,0);
                     }
                 }
                 break;

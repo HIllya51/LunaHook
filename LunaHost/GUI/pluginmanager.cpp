@@ -149,26 +149,99 @@ void Pluginmanager::swaprank(int a,int b){
     PluginRank[a]=_b;
     host->configs->pluginrankswap(a,b);
 }
-bool Pluginmanager::addplugin(const std::wstring& p,bool isQt){
+DWORD Rva2Offset(DWORD rva, PIMAGE_SECTION_HEADER psh, PIMAGE_NT_HEADERS pnt)
+{
+    size_t i = 0;
+    PIMAGE_SECTION_HEADER pSeh;
+    if (rva == 0)
+    {
+        return (rva);
+    }
+    pSeh = psh;
+    for (i = 0; i < pnt->FileHeader.NumberOfSections; i++)
+    {
+        if (rva >= pSeh->VirtualAddress && rva < pSeh->VirtualAddress +
+            pSeh->Misc.VirtualSize)
+        {
+            break;
+        }
+        pSeh++;
+    }
+    return (rva - pSeh->VirtualAddress + pSeh->PointerToRawData);
+} 
+std::set<std::string> getimporttable(const std::wstring&pe){
+    AutoHandle handle = CreateFile(pe.c_str(), GENERIC_READ, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+    if(!handle)return {};
+    DWORD byteread, size = GetFileSize(handle, NULL);
+    PVOID virtualpointer = VirtualAlloc(NULL, size, MEM_COMMIT, PAGE_READWRITE);
+    if(!virtualpointer) return {};
+    ReadFile(handle, virtualpointer, size, &byteread, NULL);
+    
+    struct __{
+        PVOID _ptr;DWORD size;
+        __(PVOID ptr,DWORD sz):_ptr(ptr),size(sz){}
+        ~__(){
+            VirtualFree(_ptr, size, MEM_DECOMMIT);
+        }
+    }_(virtualpointer,size);
+    
+
+    if(PIMAGE_DOS_HEADER(virtualpointer)->e_magic!=0x5a4d) 
+        return {}; 
+
+    PIMAGE_NT_HEADERS           ntheaders = (PIMAGE_NT_HEADERS)(PCHAR(virtualpointer) + PIMAGE_DOS_HEADER(virtualpointer)->e_lfanew);
+
+    auto magic=ntheaders->OptionalHeader.Magic;
+    if(x64 && (magic!=IMAGE_NT_OPTIONAL_HDR64_MAGIC))return {};
+    if((!x64)&&(magic!=IMAGE_NT_OPTIONAL_HDR32_MAGIC))return {};
+
+    PIMAGE_SECTION_HEADER       pSech = IMAGE_FIRST_SECTION(ntheaders);//Pointer to first section header
+    PIMAGE_IMPORT_DESCRIPTOR    pImportDescriptor; //Pointer to import descriptor 
+
+    
+    if (ntheaders->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].Size == 0)/*if size of the table is 0 - Import Table does not exist */
+        return {};
+
+    std::set<std::string> ret;
+    pImportDescriptor = (PIMAGE_IMPORT_DESCRIPTOR)((DWORD_PTR)virtualpointer + \
+        Rva2Offset(ntheaders->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress, pSech, ntheaders));
+        
+    while (pImportDescriptor->Name != NULL)
+    {
+        //Get the name of each DLL
+        ret.insert((PCHAR)((DWORD_PTR)virtualpointer + Rva2Offset(pImportDescriptor->Name, pSech, ntheaders)));
+        
+        pImportDescriptor++; //advance to next IMAGE_IMPORT_DESCRIPTOR
+    }
+    return ret;
+
+}
+bool qtchecker(const std::set<std::string>& dll)
+{
+    for(auto qt5:{"Qt5Widgets.dll","Qt5Gui.dll","Qt5Core.dll"})
+        if(dll.find(qt5)!=dll.end())
+            return true;
+    return false;
+}
+bool Pluginmanager::addplugin(const std::wstring& p){
+    auto importtable=getimporttable(p);
+    if(importtable.empty())return false;
+    auto isQt=qtchecker(importtable);
     if(isQt){
         host->configs->pluginsadd({p,isQt});
         return true;
     }
     auto plugin=GetProcAddress(LoadLibraryW(p.c_str()),"OnNewSentence");
-    if(plugin){ 
-        std::scoped_lock lock(OnNewSentenceSLock);
-        if(!checkisdump(plugin)){
-            PluginRank.push_back(p);
-            //std::swap(PluginRank.end()-2,PluginRank.end()-1);
-            OnNewSentenceS[p]=plugin;
-            host->configs->pluginsadd({p,isQt});
-        }
-        return true;
+    if(!plugin)return false;
+    
+    std::scoped_lock lock(OnNewSentenceSLock);
+    if(!checkisdump(plugin)){
+        PluginRank.push_back(p);
+        //std::swap(PluginRank.end()-2,PluginRank.end()-1);
+        OnNewSentenceS[p]=plugin;
+        host->configs->pluginsadd({p,isQt});
     }
-    else{
-        MessageBoxW(host->winId,InVaildPlugin,L"Error",0);
-        return false;
-    }
+    return true;
 }
 
 
