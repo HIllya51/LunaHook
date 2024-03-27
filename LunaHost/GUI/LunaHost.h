@@ -20,6 +20,7 @@ class Settingwindow:public mainwindow{
     checkbox* autoattach;
     checkbox* autoattach_so;
     spinbox* spinmaxbuffsize;
+    spinbox* spinmaxhistsize;
 public:
 Settingwindow(LunaHost*);
 };

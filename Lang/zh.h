@@ -53,6 +53,7 @@
 #define LblFilterRepeat L"过滤重复文本" 
 #define LblCodePage L"默认代码页" 
 #define LblMaxBuff L"最大缓冲区长度"
+#define LblMaxHist L"最大缓存文本长度"
 #define LblAutoAttach L"自动附加"
 #define LblAutoAttach_savedonly L"自动附加 (仅限保存过配置的游戏)"
 #define MenuCopyHookCode L"复制特殊码" 

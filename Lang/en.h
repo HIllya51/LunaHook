@@ -53,6 +53,7 @@
 #define LblFilterRepeat L"Filter repetition" 
 #define LblCodePage L"Default codepage" 
 #define LblMaxBuff L"Max buffer size"
+#define LblMaxHist L"Max history size"
 #define LblAutoAttach L"Auto attach"
 #define LblAutoAttach_savedonly L"Auto attach (saved only)"
 #define MenuCopyHookCode L"CopyHookCode" 

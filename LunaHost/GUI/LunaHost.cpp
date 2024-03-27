@@ -56,6 +56,7 @@ void LunaHost::savesettings()
     configs->set("flushDelay",TextThread::flushDelay);
     configs->set("filterRepetition",TextThread::filterRepetition);
     configs->set("maxBufferSize",TextThread::maxBufferSize);
+    configs->set("maxHistorySize",TextThread::maxHistorySize);
     configs->set("defaultCodepage",Host::defaultCodepage);
     configs->set("autoattachexes",autoattachexes);
     configs->set("savedhookcontext",savedhookcontext);
@@ -67,6 +68,7 @@ void LunaHost::loadsettings(){
     TextThread::flushDelay=configs->get("flushDelay",TextThread::flushDelay);
     TextThread::filterRepetition=configs->get("filterRepetition",TextThread::filterRepetition);
     TextThread::maxBufferSize=configs->get("maxBufferSize",TextThread::maxBufferSize);
+    TextThread::maxHistorySize=configs->get("maxHistorySize",TextThread::maxHistorySize);
     Host::defaultCodepage=configs->get("defaultCodepage",Host::defaultCodepage);
     autoattachexes=configs->get("autoattachexes",std::set<std::string>{});
     savedhookcontext=configs->get("savedhookcontext",decltype(savedhookcontext){});
@@ -329,20 +331,29 @@ void LunaHost::on_thread_delete(TextThread& thread){
 
 Settingwindow::Settingwindow(LunaHost* host):mainwindow(host){
     int height=30;int curry=10;int space=10;
-    int labelwidth=300;
-    g_timeout = new spinbox(this,std::to_wstring(TextThread::flushDelay),space+labelwidth, curry, 100, height) ;
+    int labelwidth=300;int spinwidth=200;
+    g_timeout = new spinbox(this,std::to_wstring(TextThread::flushDelay),space+labelwidth, curry, spinwidth, height) ;
     new label(this,LblFlushDelay,10, curry, labelwidth, height);curry+=height+space;
     
-    g_codepage = new spinbox(this,std::to_wstring(Host::defaultCodepage),space+labelwidth, curry, 100, height) ;
+    g_codepage = new spinbox(this,std::to_wstring(Host::defaultCodepage),space+labelwidth, curry, spinwidth, height) ;
     new label(this,LblCodePage,10, curry, labelwidth, height);curry+=height+space;
     
-    spinmaxbuffsize = new spinbox(this,std::to_wstring(TextThread::maxBufferSize),space+labelwidth, curry, 100, height) ;
+    spinmaxbuffsize = new spinbox(this,std::to_wstring(TextThread::maxBufferSize),space+labelwidth, curry, spinwidth, height) ;
     new label(this,LblMaxBuff,10, curry, labelwidth, height);curry+=height+space;
 
     spinmaxbuffsize->onvaluechange=[=](int v){
         TextThread::maxBufferSize=v;
     };
     spinmaxbuffsize->setminmax(0,0x7fffffff);
+
+    
+    spinmaxhistsize = new spinbox(this,std::to_wstring(TextThread::maxHistorySize),space+labelwidth, curry, spinwidth, height) ;
+    new label(this,LblMaxHist,10, curry, labelwidth, height);curry+=height+space;
+
+    spinmaxhistsize->onvaluechange=[=](int v){
+        TextThread::maxHistorySize=v;
+    };
+    spinmaxhistsize->setminmax(0,0x7fffffff);
 
     ckbfilterrepeat=new checkbox(this,LblFilterRepeat,10, curry, labelwidth, height);curry+=height+space;
     ckbfilterrepeat->onclick=[=](){
@@ -385,7 +396,7 @@ Settingwindow::Settingwindow(LunaHost* host):mainwindow(host){
             }
     }; 
     g_codepage->setminmax(0,CP_UTF8);
-    setcentral(500,500);
+    setcentral(600,500);
     settext(WndSetting);
 }
 void Pluginwindow::on_size(int w,int h){
