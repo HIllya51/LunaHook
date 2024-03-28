@@ -30,8 +30,11 @@ checkbox::checkbox(mainwindow* parent,const std::wstring& text):button(parent)
 void checkbox::setcheck(bool b){
     SendMessage(winId, BM_SETCHECK, (WPARAM)BST_CHECKED*b, 0);
 }
-spinbox::spinbox(mainwindow* parent,const std::wstring& text):control(parent){
-    winId=CreateWindowEx(0, L"EDIT", text.c_str(), WS_CHILD | WS_VISIBLE  | WS_BORDER|ES_NUMBER ,
+int spinbox::getcurr(){
+    return SendMessage(hUpDown, UDM_GETPOS32, 0, 0);
+}
+spinbox::spinbox(mainwindow* parent,int value):control(parent){
+    winId=CreateWindowEx(0, L"EDIT", std::to_wstring(value).c_str(), WS_CHILD | WS_VISIBLE  | WS_BORDER|ES_NUMBER ,
         0,0,0,0, parent->winId, NULL, NULL, NULL);
 
     hUpDown = CreateWindowEx(0, UPDOWN_CLASS, NULL,
@@ -39,6 +42,7 @@ spinbox::spinbox(mainwindow* parent,const std::wstring& text):control(parent){
         0, 0, 0, 0,
         parent->winId, NULL, NULL, NULL);
     SendMessage(hUpDown, UDM_SETBUDDY, (WPARAM)winId, 0);
+    setminmax(0,0x7fffffff);
     std::tie(minv,maxv)= getminmax();
 }
 void spinbox::setgeo(int x,int y,int w,int h)

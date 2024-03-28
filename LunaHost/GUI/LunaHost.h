@@ -38,11 +38,45 @@ public:
     processlistwindow(mainwindow* parent=0);
     void on_show();
 };
-
+class HooksearchText:public mainwindow{
+    gridlayout* layout;
+    lineedit* edittext;
+    button* checkok;
+    spinbox* codepage;
+public:
+    HooksearchText(mainwindow*);
+    void call(std::set<DWORD>pids);
+};
+class Hooksearchsetting:public mainwindow{
+    gridlayout* layout;
+    spinbox* spinduration;
+    spinbox* spinoffset;
+    spinbox* spincap;
+    spinbox* spincodepage;
+    lineedit* editpattern;
+    lineedit* editmodule;
+    lineedit* editmaxaddr;
+    lineedit* editminaddr;
+    spinbox* spinpadding;
+    lineedit* editregex;
+    button* start;
+public:
+    Hooksearchsetting(mainwindow*);
+    void call(std::set<DWORD>pids,std::wstring);
+};
+class Hooksearchwindow:public mainwindow{
+    checkbox* cjkcheck;
+    button* hs_default,*hs_text,*hs_user;
+    gridlayout* layout;
+    Hooksearchsetting* hooksearchsetting=0;
+    HooksearchText* hooksearchText=0;
+public:
+    Hooksearchwindow(LunaHost* parent);
+};
 class LunaHost:public mainwindow{
     Pluginwindow* pluginwindow=0;
     std::map<int64_t,std::vector<std::wstring>>savetext;
-    std::set<int>attachedprocess;
+    std::set<DWORD>attachedprocess;
     std::mutex settextmutex;
     lineedit* g_hEdit_userhook;
     gridlayout* mainlayout;
@@ -52,12 +86,14 @@ class LunaHost:public mainwindow{
     multilineedit* g_showtexts;
     button* g_selectprocessbutton;
     button* btndetachall;
+    button* btnsearchhooks;
     button* btnshowsettionwindow;
     //button* btnsavehook;
     void toclipboard(std::wstring& sentence);
     processlistwindow *_processlistwindow=0;
     Settingwindow *settingwindow=0;
     Pluginmanager* plugins;
+    Hooksearchwindow * hooksearchwindow=0;
     bool on_text_recv(TextThread& thread, std::wstring& sentence);
     void on_text_recv_checkissaved(TextThread& thread);
     void on_thread_create(TextThread& thread);
@@ -76,7 +112,7 @@ public:
     void on_close();
     LunaHost();
     friend class Settingwindow;
-    friend class processlistwindow;
+    friend class Hooksearchwindow;
 private:
     void loadsettings();
     void savesettings();

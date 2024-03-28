@@ -47,10 +47,11 @@ class spinbox:public control{
     int minv,maxv;
     public:
     void dispatch(WPARAM);
-    spinbox(mainwindow*,const std::wstring&);
+    spinbox(mainwindow*,int);
     void setminmax(int,int);
     std::pair<int,int>getminmax();
     void setcurr(int);
+    int getcurr();
     std::function<void(int)> onvaluechange=[&](int){};
     void setgeo(int,int,int,int);
 };

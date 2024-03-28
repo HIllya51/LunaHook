@@ -9,6 +9,13 @@
 #include"textthread.h"
 #include"LunaHost.h"
 #include"Lang/Lang.h"
+auto gmf=[&](DWORD processId)->std::optional<std::wstring>{
+     //见鬼了，GetModuleFileName找不到标识符
+    std::vector<wchar_t> buffer(MAX_PATH);
+    if (AutoHandle<> process = OpenProcess(PROCESS_VM_READ | PROCESS_QUERY_INFORMATION, FALSE, processId))
+        if (GetModuleFileNameExW(process, 0, buffer.data(), MAX_PATH)) return buffer.data();
+    return {};
+};
 void LunaHost::toclipboard(std::wstring& sentence){ 
      
     for (int loop = 0; loop < 10; loop++) {
@@ -198,15 +205,6 @@ LunaHost::LunaHost(){
             case IDM_FORGET_SELECTION:
             case IDM_REMEMBER_SELECTION:
             {
-                            
-                std::vector<wchar_t> buffer(MAX_PATH);
-                auto gmf=[&](DWORD processId)->std::optional<std::wstring>{
-                    std::vector<wchar_t> buffer(MAX_PATH);
-                    if (AutoHandle<> process = OpenProcess(PROCESS_VM_READ | PROCESS_QUERY_INFORMATION, FALSE, processId))
-                        if (GetModuleFileNameExW(process, 0, buffer.data(), MAX_PATH)) return buffer.data();
-                    return {};
-                };
-                //见鬼了，GetModuleFileName找不到标识符
                 
                 if(auto pexe=gmf(tt->tp.processId))
                 {
@@ -231,7 +229,13 @@ LunaHost::LunaHost(){
     };
     g_showtexts = new multilineedit(this);
     g_showtexts->setreadonly(true);
-             
+    
+    btnsearchhooks=new button(this,BtnSearchHook);
+    btnsearchhooks->onclick=[&](){
+        if(hooksearchwindow==0) hooksearchwindow=new Hooksearchwindow(this);
+        hooksearchwindow->show();
+    };
+    
     Host::Start(
         std::bind(&LunaHost::on_proc_connect,this,std::placeholders::_1),
         [&](DWORD pid) { 
@@ -247,8 +251,9 @@ LunaHost::LunaHost(){
     mainlayout->addcontrol(btndetachall,0,1);
     mainlayout->addcontrol(btnshowsettionwindow,0,2);
     mainlayout->addcontrol(btnplugin,0,3);
-    mainlayout->addcontrol(g_hEdit_userhook,1,0,1,3);
-    mainlayout->addcontrol(g_hButton_insert,1,3);
+    mainlayout->addcontrol(g_hEdit_userhook,1,0,1,2);
+    mainlayout->addcontrol(g_hButton_insert,1,2);
+    mainlayout->addcontrol(btnsearchhooks,1,3);
 
     mainlayout->addcontrol(g_hListBox_listtext,2,0,1,4);
     mainlayout->addcontrol(g_showtexts,3,0,1,4);
@@ -332,28 +337,25 @@ void LunaHost::on_thread_delete(TextThread& thread){
 Settingwindow::Settingwindow(LunaHost* host):mainwindow(host){
     int height=30;int curry=10;int space=10;
     int labelwidth=300;int spinwidth=200;
-    g_timeout = new spinbox(this,std::to_wstring(TextThread::flushDelay)) ;
+    g_timeout = new spinbox(this,TextThread::flushDelay) ;
     
     
-    g_codepage = new spinbox(this,std::to_wstring(Host::defaultCodepage)) ;
+    g_codepage = new spinbox(this,Host::defaultCodepage) ;
     
     
-    spinmaxbuffsize = new spinbox(this,std::to_wstring(TextThread::maxBufferSize)) ;
+    spinmaxbuffsize = new spinbox(this,TextThread::maxBufferSize);
     ;curry+=height+space;
 
     spinmaxbuffsize->onvaluechange=[=](int v){
         TextThread::maxBufferSize=v;
     };
-    spinmaxbuffsize->setminmax(0,0x7fffffff);
-
     
-    spinmaxhistsize = new spinbox(this,std::to_wstring(TextThread::maxHistorySize)) ;
+    spinmaxhistsize = new spinbox(this,TextThread::maxHistorySize) ;
     ;curry+=height+space;
 
     spinmaxhistsize->onvaluechange=[=](int v){
         TextThread::maxHistorySize=v;
     };
-    spinmaxhistsize->setminmax(0,0x7fffffff);
 
     ckbfilterrepeat=new checkbox(this,LblFilterRepeat);
     ckbfilterrepeat->onclick=[=](){
@@ -389,7 +391,7 @@ Settingwindow::Settingwindow(LunaHost* host):mainwindow(host){
     g_timeout->onvaluechange=[=](int v){
         TextThread::flushDelay=v;
     };
-    g_timeout->setminmax(0,9999);
+    
     g_codepage->onvaluechange=[=](int v){ 
             if(IsValidCodePage(v)){
                 Host::defaultCodepage= v; 
@@ -496,4 +498,223 @@ Pluginwindow::Pluginwindow(mainwindow*p,Pluginmanager* pl):mainwindow(p){
     }
     settext(WndPlugins);
     setcentral(500,400);
+}
+
+void HooksearchText::call(std::set<DWORD>pids){
+    edittext->settext(L"");
+    checkok->onclick=[&,pids](){
+        close();
+        auto cp=codepage->getcurr();
+        if(!IsValidCodePage(cp)) return;
+        SearchParam sp = {};
+        sp.codepage=cp;
+        wcsncpy_s(sp.text, edittext->text().c_str(), PATTERN_SIZE - 1);
+        wprintf(sp.text);
+        for(auto pid:pids)
+            Host::FindHooks(pid, sp);
+    };
+    show();
+}
+HooksearchText::HooksearchText(mainwindow* p):mainwindow(p){
+    codepage=new spinbox(this,Host::defaultCodepage);
+    codepage->setminmax(0,CP_UTF8);
+
+    edittext=new lineedit(this);
+    checkok=new button(this,BtnOk);
+    layout=new gridlayout();
+    layout->addcontrol(new label(this,HS_TEXT),0,0);
+    layout->addcontrol(new label(this,HS_CODEPAGE),1,0);
+    layout->addcontrol(edittext,0,1);
+    layout->addcontrol(codepage,1,1);
+    layout->addcontrol(checkok,2,1);
+
+    setlayout(layout);
+    setcentral(500,200);
+    
+}
+std::wstring tohex(BYTE* bs,int len){
+    std::wstring buffer;
+    for (int i = 0; i < len; i += 1){
+        buffer.append(FormatString(L"%02hX ", bs[i]));
+    }
+    return buffer;
+}
+std::wstring addr2hex(uintptr_t addr){
+    return FormatString(L"%p",addr);
+}
+void realcallsearchhooks(std::set<DWORD>pids,std::wstring filter,SearchParam sp){
+    
+    auto hooks = std::make_shared<std::vector<std::wstring>>();
+    
+    try
+    {
+        for(auto processId:pids)
+        Host::FindHooks(processId, sp,
+            [hooks, filter](HookParam hp, std::wstring text) 
+            { 
+                std::wsmatch matches;
+                if (std::regex_search(text, matches, std::wregex(filter))) {
+                    hooks->emplace_back(std::wstring(hp.hookcode)+L"=>"+text);
+                } 
+            });
+    }
+    catch (std::exception &e) { 
+        //std::wcout<<e.what();
+        return;    
+    }
+    
+    
+    std::thread([hooks]
+    {
+        for (int lastSize = 0; hooks->size() == 0 || hooks->size() != lastSize; Sleep(2000)) lastSize = hooks->size();
+
+        std::ofstream of;
+        of.open("savehooks.txt");
+        for (auto line:*hooks) of<<WideStringToString(line)<<"\n"; 
+        of.close(); 
+        hooks->clear();
+    }).detach();
+}
+Hooksearchsetting::Hooksearchsetting(mainwindow* p):mainwindow(p){
+    layout=new gridlayout();
+    SearchParam sp{};
+    spinduration=new spinbox(this,sp.searchTime);
+    spinoffset=new spinbox(this,sp.offset);
+    spincap=new spinbox(this,sp.maxRecords);
+    spincodepage=new spinbox(this,Host::defaultCodepage);
+    editpattern=new lineedit(this);
+    editpattern->settext(tohex(sp.pattern,sp.length));
+    editmodule=new lineedit(this);
+    editmaxaddr=new lineedit(this);
+    editmaxaddr->settext(addr2hex(sp.maxAddress));
+    editminaddr=new lineedit(this);
+    editminaddr->settext(addr2hex(sp.minAddress));
+    spinpadding=new spinbox(this,0);
+    editregex=new lineedit(this);
+    start=new button(this,HS_START_HOOK_SEARCH);
+    layout->addcontrol(new label(this,HS_SEARCH_PATTERN),0,0);
+    layout->addcontrol(new label(this,HS_SEARCH_DURATION),1,0);
+    layout->addcontrol(new label(this,HS_PATTERN_OFFSET),2,0);
+    layout->addcontrol(new label(this,HS_MAX_HOOK_SEARCH_RECORDS),3,0);
+    layout->addcontrol(new label(this,HS_CODEPAGE),4,0);
+    layout->addcontrol(new label(this,HS_SEARCH_MODULE),5,0);
+    layout->addcontrol(new label(this,HS_MIN_ADDRESS),6,0);
+    layout->addcontrol(new label(this,HS_MAX_ADDRESS),7,0);
+    layout->addcontrol(new label(this,HS_STRING_OFFSET),8,0);
+    layout->addcontrol(new label(this,HS_HOOK_SEARCH_FILTER),9,0);
+    layout->addcontrol(start,10,1);
+
+    layout->addcontrol(editpattern,0,1);
+    layout->addcontrol(spinduration,1,1);
+    layout->addcontrol(spinoffset,2,1);
+    layout->addcontrol(spincap,3,1);
+    layout->addcontrol(spincodepage,4,1);
+    layout->addcontrol(editmodule,5,1);
+    layout->addcontrol(editminaddr,6,1);
+    layout->addcontrol(editmaxaddr,7,1);
+    layout->addcontrol(spinpadding,8,1);
+    layout->addcontrol(editregex,9,1);
+
+    setlayout(layout);
+    setcentral(1000,600);
+}
+std::vector<BYTE> hexStringToBytes(const std::wstring& hexString_) {
+    auto hexString=hexString_;
+    strReplace(hexString,L" ",L"");
+    strReplace(hexString,L"??",FormatString(L"%02hX",XX));
+    std::vector<BYTE> bytes;
+    if (hexString.length() % 2 != 0) {
+        return {};
+    }
+    for (int i = 0; i < hexString.size() / 2; i++) {
+        auto byteValue = std::stoi(hexString.substr(i*2,2), nullptr, 16);
+        bytes.push_back(byteValue);
+    } 
+
+    return bytes;
+}
+void Hooksearchsetting::call(std::set<DWORD>pids,std::wstring reg){
+    if(pids.empty())return;
+    
+    if(auto filename=gmf(*pids.begin()))
+        editmodule->settext(std::filesystem::path(filename.value()).filename().wstring());
+    editregex->settext(reg);
+    spincodepage->setcurr(Host::defaultCodepage);
+    
+    start->onclick=[&,pids](){
+        close();
+        SearchParam sp{};
+        sp.searchTime=spinduration->getcurr();
+        sp.offset=spinoffset->getcurr();
+        sp.maxRecords=spincap->getcurr();
+        sp.codepage=spincodepage->getcurr();
+
+        if(editpattern->text().find(L".")==std::wstring::npos){
+            auto hex=hexStringToBytes(editpattern->text());
+            memcpy(sp.pattern,hex.data(),hex.size());
+            sp.length=hex.size();
+        }
+        else{
+            wcsncpy_s(sp.exportModule, editpattern->text().c_str(), MAX_MODULE_SIZE - 1);
+			sp.length = 1;
+        }
+
+        wcscpy(sp.boundaryModule,editmodule->text().c_str());
+        sp.minAddress=std::stoll(editminaddr->text(), nullptr, 16);
+        sp.maxAddress=std::stoll(editmaxaddr->text(), nullptr, 16);
+        sp.padding=spinpadding->getcurr();
+        realcallsearchhooks(pids,editregex->text(),sp);
+    };
+    show();
+}
+Hooksearchwindow::Hooksearchwindow(LunaHost* host):mainwindow(host){
+    
+    cjkcheck=new checkbox(this,SEARCH_CJK);
+    hs_default=new button(this,HS_SEARCH_FOR_TEXT);
+    hs_text=new button(this,HS_SEARCH_FOR_TEXT);
+    hs_user=new button(this,HS_SETTINGS);
+
+    layout=new gridlayout();
+    layout->addcontrol(cjkcheck,0,0,1,3);
+    layout->addcontrol(hs_default,1,0);
+    layout->addcontrol(hs_text,1,1);
+    layout->addcontrol(hs_user,1,2);
+
+    setlayout(layout);
+
+    settext(BtnSearchHook);
+    setcentral(800,200);
+
+    auto dohooksearchdispatch=[&,host](int type)
+    {
+        close();
+        if(type==1)
+        {
+            if(hooksearchText==0) hooksearchText=new HooksearchText(this);
+            hooksearchText->call(host->attachedprocess);
+            return;
+        }
+
+        auto filter=(cjkcheck->ischecked()?L"[\\u3000-\\ua000]{4,}" : L"[\\u0020-\\u1000]{4,}");
+        
+        
+        if(type==0)
+        {
+            SearchParam sp = {};
+            sp.codepage = Host::defaultCodepage;
+            sp.length = 0; 
+            realcallsearchhooks(host->attachedprocess,filter,sp);
+        }
+        else if(type==2)
+        {
+            if(hooksearchsetting==0) hooksearchsetting=new Hooksearchsetting(this);
+            hooksearchsetting->call(host->attachedprocess,filter);
+            return;
+        } 
+        
+    };
+
+    hs_default->onclick=std::bind(dohooksearchdispatch,0);
+    hs_text->onclick=std::bind(dohooksearchdispatch,1);
+    hs_user->onclick=std::bind(dohooksearchdispatch,2);
 }
