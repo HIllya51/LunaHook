@@ -108,6 +108,14 @@ std::vector<HMODULE> QtLoadLibrarys(std::vector<std::wstring>&collectQtplugs)
     
     return modules;
 }
+typedef  HMODULE*(*QtLoadLibrary_t)(LPWSTR*,int);
+QtLoadLibrary_t loadqtloader(const std::filesystem::path&pluginpath){
+    auto QtLoaderPath=pluginpath/"QtLoader.dll";
+    auto helper=LoadLibrary(QtLoaderPath.c_str());
+    if(helper==0)return 0;
+    auto QtLoadLibrary = (QtLoadLibrary_t)GetProcAddress(helper, "QtLoadLibrary"); 
+    return QtLoadLibrary;
+}
 void Pluginmanager::loadqtdlls(std::vector<std::wstring>&collectQtplugs){
     if(collectQtplugs.size()==0)return;
     auto pluginpath=std::filesystem::current_path()/(x64?"plugin64":"plugin32");
@@ -120,9 +128,24 @@ void Pluginmanager::loadqtdlls(std::vector<std::wstring>&collectQtplugs){
     }
     SetEnvironmentVariableW(L"PATH",envs.c_str());
     
-    auto modules=QtLoadLibrarys(collectQtplugs);
-    if(modules.empty())return;
+    // auto modules=QtLoadLibrarys(collectQtplugs);
+    // if(modules.empty())return;
     
+
+    auto QtLoadLibrary = loadqtloader(pluginpath); 
+    if(!QtLoadLibrary){
+        MessageBoxW(host->winId,CantLoadQtLoader,L"Error",0);
+        return ;
+    }
+    std::vector<wchar_t*>saves;
+    for(auto&p:collectQtplugs){
+        auto str=new wchar_t[p.size()+1];
+        wcscpy(str,p.c_str());
+        saves.emplace_back(str);
+    }
+    auto modules=QtLoadLibrary(saves.data(),collectQtplugs.size());
+    for(auto str:saves)delete str;
+
     for(int i=0;i<collectQtplugs.size();i++){
         OnNewSentenceS[collectQtplugs[i]]=GetProcAddress(modules[i],"OnNewSentence"); 
     }

@@ -4,7 +4,7 @@ target_precompile_headers(ToClipboard REUSE_FROM pch)
 set_target_properties(ToClipboard PROPERTIES LIBRARY_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/plugin${bitappendix}")
 endif()
 
-if(0)  #pluginmanager->QtLoadLibrarys
+
 include(QtUtils.cmake)
 msvc_registry_search()
 if(Qt5_DIR)
@@ -15,5 +15,4 @@ if(Qt5_DIR)
     #target_sources(QtLoader PRIVATE ${MOC_SOURCES})
     target_link_libraries(QtLoader Qt5::Widgets Qt5::Core)
     set_target_properties(QtLoader PROPERTIES LIBRARY_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/plugin${bitappendix}")
-endif()
 endif()
