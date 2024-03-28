@@ -14,44 +14,54 @@ class control:public basewindow{
 
 class button:public control{
 public:
-    button(mainwindow*,const std::wstring&,int,int,int,int,DWORD=BS_PUSHBUTTON);
+    button(mainwindow* parent);
+    button(mainwindow*,const std::wstring&);//,int,int,int,int,DWORD=BS_PUSHBUTTON);
     void dispatch(WPARAM);
     std::function<void()> onclick=[](){};
 };
 class checkbox:public button{
 public:
-    checkbox(mainwindow*,const std::wstring&,int,int,int,int);
+    checkbox(mainwindow*,const std::wstring&);//,int,int,int,int);
     bool ischecked();
     void setcheck(bool);
 };
-class textedit:public control{
+class texteditbase:public control{
 public:
-    textedit(mainwindow*,const std::wstring&,int,int,int,int,DWORD stype=0);
+    texteditbase(mainwindow*);
     void dispatch(WPARAM);
     std::function<void(const std::wstring&)> ontextchange=[&](const std::wstring &text){};
     void appendtext(const std::wstring&);
     void scrolltoend();
     void setreadonly(bool);
 };
+class multilineedit:public texteditbase{
+public:
+    multilineedit(mainwindow*);
+};
+class lineedit:public texteditbase{
+public:
+    lineedit(mainwindow*);
+};
 class spinbox:public control{
     HWND hUpDown;
     int minv,maxv;
     public:
     void dispatch(WPARAM);
-    spinbox(mainwindow*,const std::wstring&,int,int,int,int,DWORD stype=0);
+    spinbox(mainwindow*,const std::wstring&);
     void setminmax(int,int);
     std::pair<int,int>getminmax();
     void setcurr(int);
     std::function<void(int)> onvaluechange=[&](int){};
+    void setgeo(int,int,int,int);
 };
 class label:public control{
 public:
-    label(mainwindow*,const std::wstring&,int,int,int,int);
+    label(mainwindow*,const std::wstring&);
 };
 
 class listbox:public control{
 public:
-    listbox(mainwindow*,int,int,int,int);
+    listbox(mainwindow*);
     void dispatch(WPARAM);
     int currentidx();
     std::wstring text(int);
@@ -69,7 +79,7 @@ class listview:public control{
     int headernum=1;
     HIMAGELIST hImageList;
 public:
-    listview(mainwindow*,int,int,int,int);
+    listview(mainwindow*);
     int insertitem(int,const std::wstring&,HICON hicon);
     int insertcol(int,const std::wstring& );
     void clear();
@@ -80,5 +90,24 @@ public:
     void autosize();
     int additem(const std::wstring&,HICON hicon);
     void dispatch_2(WPARAM wParam, LPARAM lParam);
+    void on_size(int,int);
+};
+
+class gridlayout:public control{
+    struct _c{
+        control* ctr;
+        int row,col,rowrange,colrange;
+    };
+    int margin;
+    int maxrow,maxcol;
+    std::vector<_c>savecontrol;
+    std::map<int,int>fixedwidth,fixedheight;
+public:
+    void setgeo(int,int,int,int);
+    void setfixedwidth(int col,int width);
+    void setfixedheigth(int row,int height);
+    void addcontrol(control*,int row,int col,int rowrange=1,int colrange=1);
+    gridlayout(int row=0,int col=0);
+    void setmargin(int m=10);
 };
 #endif

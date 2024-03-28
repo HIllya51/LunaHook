@@ -5,7 +5,8 @@ class basewindow{
 public:
     HFONT hfont=0;
     HWND winId;
-    void setgeo(int,int,int,int);
+    virtual void setgeo(int,int,int,int);
+    virtual void on_size(int w,int h);
     RECT getgeo();
     std::wstring text();
     void settext(const std::wstring&);
@@ -17,9 +18,10 @@ public:
     std::vector<control*>controls;
     mainwindow* parent;
     HWND lastcontexthwnd;
+    control* layout;
     virtual void on_show();
     virtual void on_close();
-    virtual void on_size(int w,int h);
+    void on_size(int w,int h);
     mainwindow(mainwindow* _parent=0);
     LRESULT wndproc(UINT message, WPARAM wParam, LPARAM lParam);
     static void run();
@@ -27,6 +29,7 @@ public:
     void close();
     void setcentral(int,int);
     std::pair<int,int>calculateXY(int w,int h);
+    void setlayout(control*);
 };
 HICON GetExeIcon(const std::wstring&  filePath);
 #endif

@@ -33,21 +33,7 @@ void LunaHost::on_close(){
     if(attachedprocess.size())
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
 }
-void LunaHost::on_size(int w,int h){
-    int height = h-110;
-    w-=20;
-    auto _w=w-20;
-    
-    g_selectprocessbutton->setgeo(10,10,_w/4,30);
-    btndetachall->setgeo(10+10+_w/4,10,_w/4,30);
-    btnshowsettionwindow->setgeo(10+20+_w*2/4,10,_w/4,30);
-    btnplugin->setgeo(10+30+_w*3/4,10,_w/4,30);
-    g_hListBox_listtext->setgeo(10, 90, w , height/2);
-    g_showtexts->setgeo(10, 100+height/2, w , height/2);
-    g_hEdit_userhook->setgeo(10,50,_w*3/4+20,30);
-    //g_hButton_insert->setgeo(10+20+_w*2/4,50,_w/4,30);
-    g_hButton_insert->setgeo(10+30+_w*3/4,50,_w/4,30);
-}
+
 void LunaHost::savesettings()
 {
     configs->set("ToClipboard",check_toclipboard);
@@ -123,12 +109,12 @@ LunaHost::LunaHost(){
 
     setfont(25);
     settext(WndLunaHostGui);
-    btnshowsettionwindow=new button(this, BtnShowSettingWindow,100,100,100,100);
-    g_selectprocessbutton =new button(this,BtnSelectProcess,830, 10, 200, 40) ; 
+    btnshowsettionwindow=new button(this, BtnShowSettingWindow);
+    g_selectprocessbutton =new button(this,BtnSelectProcess) ; 
     
     // btnsavehook=new button(this,BtnSaveHook,10,10,10,10);
     // btnsavehook->onclick=std::bind(&LunaHost::btnsavehookscallback,this);
-    btndetachall=new button(this,BtnDetach,10,10,10,10);
+    btndetachall=new button(this,BtnDetach);
     btndetachall->onclick=[&](){
         for(auto pid:attachedprocess){
             Host::DetachProcess(pid);
@@ -136,15 +122,15 @@ LunaHost::LunaHost(){
         }
     };
 
-    g_hEdit_userhook = new textedit(this,L"",10, 60, 600, 40,ES_AUTOHSCROLL);
-    btnplugin=new button(this,BtnPlugin,830,60,200,40);
+    g_hEdit_userhook = new lineedit(this);
+    btnplugin=new button(this,BtnPlugin);
     
     plugins=new Pluginmanager(this);
     btnplugin->onclick=[&](){
         if(pluginwindow==0) pluginwindow=new Pluginwindow(this,plugins);
         pluginwindow->show();
     };
-    g_hButton_insert = new button(this,BtnInsertUserHook,610, 60, 200, 40) ;
+    g_hButton_insert = new button(this,BtnInsertUserHook) ;
     btnshowsettionwindow->onclick=[&](){
         if(settingwindow==0) settingwindow=new Settingwindow(this);
         settingwindow->show();
@@ -165,7 +151,7 @@ LunaHost::LunaHost(){
         }
     };
 
-    g_hListBox_listtext = new listbox(this,10, 120, 200, 200);
+    g_hListBox_listtext = new listbox(this);
     g_hListBox_listtext->oncurrentchange=[&](int idx){
         uint64_t handle = g_hListBox_listtext->getdata(idx);
         std::wstring get;
@@ -243,7 +229,7 @@ LunaHost::LunaHost(){
             break;
         }
     };
-    g_showtexts = new textedit(this,L"",10, 330, 200, 200,ES_MULTILINE |ES_AUTOVSCROLL| WS_VSCROLL);
+    g_showtexts = new multilineedit(this);
     g_showtexts->setreadonly(true);
              
     Host::Start(
@@ -256,6 +242,20 @@ LunaHost::LunaHost(){
         std::bind(&LunaHost::on_text_recv,this,std::placeholders::_1,std::placeholders::_2)
     ); 
     
+    mainlayout=new gridlayout();
+    mainlayout->addcontrol(g_selectprocessbutton,0,0);
+    mainlayout->addcontrol(btndetachall,0,1);
+    mainlayout->addcontrol(btnshowsettionwindow,0,2);
+    mainlayout->addcontrol(btnplugin,0,3);
+    mainlayout->addcontrol(g_hEdit_userhook,1,0,1,3);
+    mainlayout->addcontrol(g_hButton_insert,1,3);
+
+    mainlayout->addcontrol(g_hListBox_listtext,2,0,1,4);
+    mainlayout->addcontrol(g_showtexts,3,0,1,4);
+
+    mainlayout->setfixedheigth(0,30);
+    mainlayout->setfixedheigth(1,30);
+    setlayout(mainlayout);
     setcentral(1200,800);
 }
 void LunaHost::on_text_recv_checkissaved(TextThread& thread)
@@ -332,14 +332,14 @@ void LunaHost::on_thread_delete(TextThread& thread){
 Settingwindow::Settingwindow(LunaHost* host):mainwindow(host){
     int height=30;int curry=10;int space=10;
     int labelwidth=300;int spinwidth=200;
-    g_timeout = new spinbox(this,std::to_wstring(TextThread::flushDelay),space+labelwidth, curry, spinwidth, height) ;
-    new label(this,LblFlushDelay,10, curry, labelwidth, height);curry+=height+space;
+    g_timeout = new spinbox(this,std::to_wstring(TextThread::flushDelay)) ;
     
-    g_codepage = new spinbox(this,std::to_wstring(Host::defaultCodepage),space+labelwidth, curry, spinwidth, height) ;
-    new label(this,LblCodePage,10, curry, labelwidth, height);curry+=height+space;
     
-    spinmaxbuffsize = new spinbox(this,std::to_wstring(TextThread::maxBufferSize),space+labelwidth, curry, spinwidth, height) ;
-    new label(this,LblMaxBuff,10, curry, labelwidth, height);curry+=height+space;
+    g_codepage = new spinbox(this,std::to_wstring(Host::defaultCodepage)) ;
+    
+    
+    spinmaxbuffsize = new spinbox(this,std::to_wstring(TextThread::maxBufferSize)) ;
+    ;curry+=height+space;
 
     spinmaxbuffsize->onvaluechange=[=](int v){
         TextThread::maxBufferSize=v;
@@ -347,40 +347,40 @@ Settingwindow::Settingwindow(LunaHost* host):mainwindow(host){
     spinmaxbuffsize->setminmax(0,0x7fffffff);
 
     
-    spinmaxhistsize = new spinbox(this,std::to_wstring(TextThread::maxHistorySize),space+labelwidth, curry, spinwidth, height) ;
-    new label(this,LblMaxHist,10, curry, labelwidth, height);curry+=height+space;
+    spinmaxhistsize = new spinbox(this,std::to_wstring(TextThread::maxHistorySize)) ;
+    ;curry+=height+space;
 
     spinmaxhistsize->onvaluechange=[=](int v){
         TextThread::maxHistorySize=v;
     };
     spinmaxhistsize->setminmax(0,0x7fffffff);
 
-    ckbfilterrepeat=new checkbox(this,LblFilterRepeat,10, curry, labelwidth, height);curry+=height+space;
+    ckbfilterrepeat=new checkbox(this,LblFilterRepeat);
     ckbfilterrepeat->onclick=[=](){
         TextThread::filterRepetition=ckbfilterrepeat->ischecked();
     };
     ckbfilterrepeat->setcheck(TextThread::filterRepetition);
 
-    g_check_clipboard =new checkbox(this,BtnToClipboard,10, curry, labelwidth, height) ;curry+=height+space;
+    g_check_clipboard =new checkbox(this,BtnToClipboard);
     g_check_clipboard->onclick=[=](){
         host->check_toclipboard=g_check_clipboard->ischecked();
     }; 
     g_check_clipboard->setcheck(host->check_toclipboard);
 
-    autoattach =new checkbox(this,LblAutoAttach,10, curry, labelwidth, height) ;curry+=height+space;
+    autoattach =new checkbox(this,LblAutoAttach);
     autoattach->onclick=[=](){
         host->autoattach=autoattach->ischecked();
     }; 
     autoattach->setcheck(host->autoattach);
 
-    autoattach_so =new checkbox(this,LblAutoAttach_savedonly,10, curry, labelwidth, height) ;curry+=height+space;
+    autoattach_so =new checkbox(this,LblAutoAttach_savedonly);
     autoattach_so->onclick=[=](){
         host->autoattach_savedonly=autoattach_so->ischecked();
     }; 
     autoattach_so->setcheck(host->autoattach_savedonly);
 
 
-    readonlycheck=new checkbox(this,BtnReadOnly,10,curry,labelwidth,height);curry+=height+space;
+    readonlycheck=new checkbox(this,BtnReadOnly);
     readonlycheck->onclick=[=](){
         host->g_showtexts->setreadonly(readonlycheck->ischecked());
     };
@@ -396,6 +396,27 @@ Settingwindow::Settingwindow(LunaHost* host):mainwindow(host){
             }
     }; 
     g_codepage->setminmax(0,CP_UTF8);
+
+    mainlayout=new gridlayout();
+    mainlayout->addcontrol(new label(this,LblFlushDelay),0,0);
+    mainlayout->addcontrol(g_timeout,0,1);
+    
+    mainlayout->addcontrol(new label(this,LblCodePage),1,0);
+    mainlayout->addcontrol(g_codepage,1,1);
+    
+    mainlayout->addcontrol(new label(this,LblMaxBuff),2,0);
+    mainlayout->addcontrol(spinmaxbuffsize,2,1);
+    
+    mainlayout->addcontrol(new label(this,LblMaxHist),3,0);
+    mainlayout->addcontrol(spinmaxhistsize,3,1);
+    
+    mainlayout->addcontrol(ckbfilterrepeat,4,0,1,2);
+    mainlayout->addcontrol(g_check_clipboard,5,0,1,2);
+    mainlayout->addcontrol(autoattach,6,0,1,2);
+    mainlayout->addcontrol(autoattach_so,7,0,1,2);
+    mainlayout->addcontrol(readonlycheck,8,0,1,2);
+
+    setlayout(mainlayout);
     setcentral(600,500);
     settext(WndSetting);
 }
@@ -404,14 +425,14 @@ void Pluginwindow::on_size(int w,int h){
 }
 Pluginwindow::Pluginwindow(mainwindow*p,Pluginmanager* pl):mainwindow(p){
     pluginmanager=pl;
-    new label(this,LblPluginNotify, 10,10,500,30);
-    new label(this,LblPluginRemove, 10,40,500,30);
+    (new label(this,LblPluginNotify))->setgeo(10,10,500,30);
+    (new label(this,LblPluginRemove))->setgeo( 10,40,500,30);
     static auto listadd=[&](const std::wstring& s){
         auto idx=listplugins->additem(std::filesystem::path(s).stem());
         auto _s=new wchar_t[s.size()+1];wcscpy(_s,s.c_str());
         listplugins->setdata(idx,(LONG_PTR)_s);
     };
-    listplugins = new listbox(this,10, 10,360,340);
+    listplugins = new listbox(this);
 #define IDM_ADD_PLUGIN 1004
 #define IDM_REMOVE_PLUGIN 1006
 #define IDM_RANK_UP 1007

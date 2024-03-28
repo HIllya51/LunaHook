@@ -30,6 +30,7 @@ void basewindow::settext(const std::wstring& text){
 
 void basewindow::setgeo(int x,int y,int w,int h){
     MoveWindow(winId,x,y,w,h,TRUE);
+    on_size(w,h);
 }
 RECT basewindow::getgeo(){
     RECT rect;
@@ -140,7 +141,11 @@ void mainwindow::setcentral(int w,int h){
     auto [x,y]=calculateXY(w,h);
     setgeo(x,y,w,h);
 }
+void mainwindow::setlayout(control* _l){
+    layout=_l;
+}
 mainwindow::mainwindow(mainwindow* _parent){
+    layout=0;
     const wchar_t CLASS_NAME[] = L"LunaHostWindow"; 
      
     WNDCLASS wc = {};
@@ -183,4 +188,10 @@ void mainwindow::run(){
 
 void mainwindow::on_close(){}
 void mainwindow::on_show(){}
-void mainwindow::on_size(int w,int h){}
+void mainwindow::on_size(int w,int h){
+    if(layout)
+    {
+        layout->setgeo(0,0,w,h);
+    }
+}
+void basewindow::on_size(int w,int h){}

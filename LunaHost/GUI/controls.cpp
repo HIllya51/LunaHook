@@ -1,16 +1,17 @@
 #include"controls.h"
 #include"window.h"
-
 control::control(mainwindow*_parent){
+    if(_parent==0)return;
     parent=_parent;
     parent->controls.push_back(this);
-    
 }
 void control::dispatch(WPARAM){}
 void control::dispatch_2(WPARAM wParam, LPARAM lParam){};
-button::button(mainwindow* parent,const std::wstring& text,int x,int y,int w,int h,DWORD style):control(parent){
-    winId=CreateWindowEx(0, L"BUTTON", text.c_str(), WS_CHILD | WS_VISIBLE |style ,
-        x, y, w, h, parent->winId , NULL, NULL, NULL);
+button::button(mainwindow* parent):control(parent){}
+button::button(mainwindow* parent,const std::wstring& text):control(parent)
+{
+    winId=CreateWindowEx(0, L"BUTTON", text.c_str(), WS_CHILD | WS_VISIBLE ,
+        0,0,0,0, parent->winId , NULL, NULL, NULL);
 }
 void button::dispatch(WPARAM wparam){
     if(wparam==BN_CLICKED){
@@ -21,14 +22,17 @@ bool checkbox::ischecked(){
     int state = SendMessage(winId, BM_GETCHECK, 0, 0);
     return (state == BST_CHECKED);
 }
-checkbox::checkbox(mainwindow* parent,const std::wstring& text,int x,int y,int w,int h):button(parent,text,x,y,w,h,BS_AUTOCHECKBOX|BS_RIGHTBUTTON ){
+checkbox::checkbox(mainwindow* parent,const std::wstring& text):button(parent)
+{
+    winId=CreateWindowEx(0, L"BUTTON", text.c_str(), WS_CHILD | WS_VISIBLE |BS_AUTOCHECKBOX|BS_RIGHTBUTTON,
+        0,0,0,0, parent->winId , NULL, NULL, NULL);
 }
 void checkbox::setcheck(bool b){
     SendMessage(winId, BM_SETCHECK, (WPARAM)BST_CHECKED*b, 0);
 }
-spinbox::spinbox(mainwindow* parent,const std::wstring& text,int x,int y,int w,int h,DWORD stype):control(parent){
+spinbox::spinbox(mainwindow* parent,const std::wstring& text):control(parent){
     winId=CreateWindowEx(0, L"EDIT", text.c_str(), WS_CHILD | WS_VISIBLE  | WS_BORDER|ES_NUMBER ,
-        x, y, w, h, parent->winId, NULL, NULL, NULL);
+        0,0,0,0, parent->winId, NULL, NULL, NULL);
 
     hUpDown = CreateWindowEx(0, UPDOWN_CLASS, NULL,
         WS_CHILD | WS_VISIBLE | UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_ARROWKEYS | UDS_NOTHOUSANDS ,
@@ -36,6 +40,11 @@ spinbox::spinbox(mainwindow* parent,const std::wstring& text,int x,int y,int w,i
         parent->winId, NULL, NULL, NULL);
     SendMessage(hUpDown, UDM_SETBUDDY, (WPARAM)winId, 0);
     std::tie(minv,maxv)= getminmax();
+}
+void spinbox::setgeo(int x,int y,int w,int h)
+{
+    MoveWindow(winId,x,y,w,h,TRUE);
+    SendMessage(hUpDown, UDM_SETBUDDY, (WPARAM)winId, 0);
 }
 void spinbox::setcurr(int cur){
     SendMessage(hUpDown, UDM_SETPOS32, 0, cur);
@@ -72,38 +81,43 @@ void spinbox::setminmax(int min,int max){
     SendMessage(hUpDown, UDM_SETRANGE32,min, max);
     std::tie(minv,maxv)= getminmax();
 }
-textedit::textedit(mainwindow* parent,const std::wstring& text,int x,int y,int w,int h,DWORD stype):control(parent){
-    winId=CreateWindowEx(0, L"EDIT", text.c_str(), WS_CHILD | WS_VISIBLE  | WS_BORDER|stype ,
-        x, y, w, h, parent->winId, NULL, NULL, NULL);
+multilineedit::multilineedit(mainwindow* parent):texteditbase(parent){
+    winId=CreateWindowEx(0, L"EDIT", L"", WS_CHILD | WS_VISIBLE  | WS_BORDER| ES_MULTILINE |ES_AUTOVSCROLL| WS_VSCROLL ,
+        0,0,0,0, parent->winId, NULL, NULL, NULL);
     SendMessage(winId, EM_SETLIMITTEXT, 0, 0);
 }
-void textedit::setreadonly(bool ro){
+lineedit::lineedit(mainwindow* parent):texteditbase(parent){
+    winId=CreateWindowEx(0, L"EDIT", L"", WS_CHILD | WS_VISIBLE  | WS_BORDER| ES_AUTOHSCROLL ,
+        0,0,0,0, parent->winId, NULL, NULL, NULL);
+}
+texteditbase::texteditbase(mainwindow* parent):control(parent){}
+void texteditbase::setreadonly(bool ro){
     SendMessage(winId, EM_SETREADONLY, ro, 0);
 }
-void textedit::scrolltoend(){
+void texteditbase::scrolltoend(){
     int textLength = GetWindowTextLength(winId);
     SendMessage(winId, EM_SETSEL, (WPARAM)textLength, (LPARAM)textLength);
     SendMessage(winId, EM_SCROLLCARET, 0, 0);
 }
-void textedit::appendtext(const std::wstring& text){
+void texteditbase::appendtext(const std::wstring& text){
     auto _=std::wstring(L"\r\n")+text;
     SendMessage(winId, EM_REPLACESEL, 0, (LPARAM)_.c_str()); 
 }
 
-void textedit::dispatch(WPARAM wparam){
+void texteditbase::dispatch(WPARAM wparam){
     if(HIWORD(wparam)==EN_CHANGE){
         ontextchange(text());
     }
 }
-label::label(mainwindow* parent,const std::wstring& text,int x,int y,int w,int h):control(parent){
+label::label(mainwindow* parent,const std::wstring& text):control(parent){
     winId=CreateWindowEx(0, L"STATIC", text.c_str(), WS_CHILD | WS_VISIBLE,
-        x, y, w, h, parent->winId , NULL, NULL, NULL);
+        0,0,0,0, parent->winId , NULL, NULL, NULL);
 }
 
-listbox::listbox(mainwindow* parent,int x,int y,int w,int h):control(parent){
+listbox::listbox(mainwindow* parent):control(parent){
     
     winId=CreateWindowEx(WS_EX_CLIENTEDGE, L"LISTBOX", L"", WS_CHILD | WS_VISIBLE | WS_VSCROLL | LBS_NOTIFY|LBS_NOINTEGRALHEIGHT,
-        x, y, w, h, parent->winId , NULL, NULL, NULL);
+        0,0,0,0,  parent->winId , NULL, NULL, NULL);
 }
 void listbox::dispatch(WPARAM wparam){
     if(HIWORD(wparam) == LBN_SELCHANGE){
@@ -148,8 +162,8 @@ int listbox::insertitem(int i,const std::wstring& t){
     return SendMessage(winId, LB_INSERTSTRING, i, (LPARAM)t.c_str());
 }
 
-listview::listview(mainwindow* parent,int x,int y,int w,int h):control(parent){
-    winId=CreateWindowEx(0, WC_LISTVIEW, NULL, WS_VISIBLE |WS_VSCROLL| WS_CHILD | LVS_REPORT |LVS_SINGLESEL|LVS_NOCOLUMNHEADER , x, y, w, h, parent->winId, NULL,NULL, NULL);
+listview::listview(mainwindow* parent):control(parent){
+    winId=CreateWindowEx(0, WC_LISTVIEW, NULL, WS_VISIBLE |WS_VSCROLL| WS_CHILD | LVS_REPORT |LVS_SINGLESEL|LVS_NOCOLUMNHEADER , 0,0,0,0, parent->winId, NULL,NULL, NULL);
     ListView_SetExtendedListViewStyle(winId, LVS_EX_FULLROWSELECT); // Set extended styles
     setfont(22);
     hImageList = ImageList_Create(22,22, //GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON),
@@ -214,8 +228,85 @@ void listview::setheader(const std::vector<std::wstring>& headers){
     }
     headernum=headers.size();
 }
+void listview::on_size(int,int){
+    autosize();
+}
 void listview::autosize(){
     for(int i=0;i<headernum;i++){
         ListView_SetColumnWidth(winId, i, LVSCW_AUTOSIZE_USEHEADER);
     }
+}
+void gridlayout::setgeo(int x,int y,int w,int h){
+    
+    auto dynarow=maxrow;
+    auto dynacol=maxcol;
+    for(auto fw:fixedwidth){
+        dynacol-=1;
+        w-=fw.second+margin;
+    }
+    for(auto fh:fixedheight){
+        dynarow-=1;
+        h-=fh.second+margin;
+    }
+    auto wpercol=(w-margin*(dynacol+1))/dynacol;
+    auto hperrow=(h-margin*(dynarow+1))/dynarow;
+    
+    for(auto ctr:savecontrol){
+         
+        int _x=0,_y=0,_w=0,_h=0;
+        for(int c=0;c<ctr.col+ctr.colrange;c++)
+        {
+            if(fixedwidth.find(c)!=fixedwidth.end())
+                if(c<ctr.col)
+                    _x+=fixedwidth[c];
+                else
+                    _w+=fixedwidth[c];
+            else
+                if(c<ctr.col)
+                    _x+=wpercol;
+                else
+                    _w+=wpercol;
+            
+        }
+        _x+=(ctr.col+1)*margin;
+        _w+=(ctr.colrange-1)*margin;
+        for(int r=0;r<ctr.row+ctr.rowrange;r++)
+        {
+            if(fixedheight.find(r)!=fixedheight.end())
+                if(r<ctr.row)
+                    _y+=fixedheight[r];
+                else
+                    _h+=fixedheight[r];
+            else
+                if(r<ctr.row)
+                    _y+=hperrow;
+                else
+                    _h+=hperrow;
+        }
+        _y+=(ctr.row+1)*margin;
+        _h+=(ctr.rowrange-1)*margin;
+        
+        ctr.ctr->setgeo(_x,_y,_w,_h);
+    }
+}
+void gridlayout::setfixedwidth(int col,int width){
+    fixedwidth.insert({col,width});
+}
+void gridlayout::setfixedheigth(int row,int height){
+    fixedheight.insert({row,height});
+}
+void gridlayout::addcontrol(control* _c,int row,int col,int rowrange,int colrange){
+    maxrow=max(maxrow,row+rowrange);
+    maxcol=max(maxcol,col+colrange);
+    savecontrol.push_back(
+        {_c,row,col,rowrange,colrange}
+    );
+}
+gridlayout::gridlayout(int row,int col):control(0){
+    maxrow=row;
+    maxcol=col;
+    margin=10;
+}
+void gridlayout::setmargin(int m){
+    margin=m;
 }

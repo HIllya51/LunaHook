@@ -54,9 +54,9 @@ void processlistwindow::PopulateProcessList(listview* _listbox,std::unordered_ma
 }
 
 processlistwindow::processlistwindow(mainwindow* p):mainwindow(p){
-    g_hEdit = new textedit(this,L"",10, 10, 400, 30,ES_AUTOHSCROLL);
-    g_hButton=new button(this,BtnAttach,420, 10, 100, 30);
-    g_refreshbutton =new button(this,BtnRefresh,530, 10, 100, 30); 
+    g_hEdit = new lineedit(this);
+    g_hButton=new button(this,BtnAttach);
+    g_refreshbutton =new button(this,BtnRefresh); 
     g_hButton->onclick=[&](){
         auto str=g_hEdit->text();
         if(str.size()){
@@ -76,7 +76,7 @@ processlistwindow::processlistwindow(mainwindow* p):mainwindow(p){
         g_exe_pid=getprocesslist();
         PopulateProcessList(g_hListBox,g_exe_pid);
     };
-    g_hListBox = new listview(this,10, 60, 310, 200);
+    g_hListBox = new listview(this);
     g_hListBox->setheader({L""});
     g_hListBox->oncurrentchange=[&](int idx){
         auto pids=g_exe_pid[g_hListBox->text(idx)];
@@ -91,19 +91,17 @@ processlistwindow::processlistwindow(mainwindow* p):mainwindow(p){
         g_hEdit->settext(_);
     };
     settext(WndSelectProcess);
+    mainlayout=new gridlayout();
+    mainlayout->addcontrol(g_hEdit,0,0,1,2);
+    mainlayout->addcontrol(g_hButton,0,2);
+    mainlayout->addcontrol(g_refreshbutton,0,3);
+    mainlayout->addcontrol(g_hListBox,1,0,1,4);
+    mainlayout->setfixedheigth(0,30);
+    setlayout(mainlayout);
     setcentral(800,400); 
 }
 void processlistwindow::on_show(){
     g_hEdit->settext(L"");
     g_exe_pid=getprocesslist();
     PopulateProcessList(g_hListBox,g_exe_pid);
-}
-void processlistwindow::on_size(int w,int h){ 
-    w=w-20;
-    auto _w=w-20;
-    g_hEdit->setgeo(10,10,_w/2,30);
-    g_hButton->setgeo(10+_w/2+10,10,_w/4,30);
-    g_refreshbutton->setgeo(10+_w/2+_w/4+20,10,_w/4,30);
-    g_hListBox->setgeo(10,50,w,h-60);
-    g_hListBox->autosize();
 }

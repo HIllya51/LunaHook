@@ -21,12 +21,14 @@ class Settingwindow:public mainwindow{
     checkbox* autoattach_so;
     spinbox* spinmaxbuffsize;
     spinbox* spinmaxhistsize;
+    gridlayout* mainlayout;
 public:
 Settingwindow(LunaHost*);
 };
 
 class processlistwindow:public mainwindow{
-    textedit* g_hEdit;
+    gridlayout* mainlayout;
+    lineedit* g_hEdit;
     button* g_hButton;
     listview* g_hListBox;
     button* g_refreshbutton;  
@@ -34,7 +36,6 @@ class processlistwindow:public mainwindow{
     void PopulateProcessList(listview*,std::unordered_map<std::wstring,std::vector<int>>&);
 public:
     processlistwindow(mainwindow* parent=0);
-    void on_size(int w,int h);
     void on_show();
 };
 
@@ -43,11 +44,12 @@ class LunaHost:public mainwindow{
     std::map<int64_t,std::vector<std::wstring>>savetext;
     std::set<int>attachedprocess;
     std::mutex settextmutex;
-    textedit* g_hEdit_userhook;
+    lineedit* g_hEdit_userhook;
+    gridlayout* mainlayout;
     button* g_hButton_insert;
     button* btnplugin;
     listbox* g_hListBox_listtext;
-    textedit* g_showtexts;
+    multilineedit* g_showtexts;
     button* g_selectprocessbutton;
     button* btndetachall;
     button* btnshowsettionwindow;
@@ -71,7 +73,6 @@ public:
     std::unordered_map<std::string,nlohmann::json>savedhookcontext;
     std::set<int>userdetachedpids;
     std::set<int64_t>onceautoselectthread;
-    void on_size(int w,int h);
     void on_close();
     LunaHost();
     friend class Settingwindow;
