@@ -314,20 +314,24 @@ gridlayout::gridlayout(int row,int col):control(0){
 void gridlayout::setmargin(int m){
     margin=m;
 }
-void control::menu_dispatch(WPARAM wparam){
+void Menu::dispatch(WPARAM wparam){
     auto idx=LOWORD(wparam);
     menu_callbacks[idx].callback();
+    DestroyMenu(hmenu);
 }
-HMENU control::load_menu(){
-    HMENU hMenu = CreatePopupMenu();
+HMENU Menu::load(){
+    hmenu = CreatePopupMenu();
     for(int i=0;i<menu_callbacks.size();i++){
-        AppendMenuW(hMenu,menu_callbacks[i].type,i,menu_callbacks[i].str.c_str());
+        AppendMenuW(hmenu,menu_callbacks[i].type,i,menu_callbacks[i].str.c_str());
     }
-    return hMenu;
+    return hmenu;
 }
-void control::add_menu(const std::wstring& str,std::function<void()> callback, UINT type){
-    menu_callbacks.push_back({callback,type,str});
+void Menu::add(const std::wstring& str,std::function<void()> callback){
+    menu_callbacks.push_back({MF_STRING,callback,str});
 }
-void control::add_menu_sep(){
-    menu_callbacks.push_back({[](){},MF_SEPARATOR,L""});
+void Menu::add_checkable(const std::wstring& str,bool check,std::function<void(bool)> callback){
+    menu_callbacks.push_back({(UINT)(MF_STRING|(check?MF_CHECKED:MF_UNCHECKED)),std::bind(callback,!check),str});
+}
+void Menu::add_sep(){
+    menu_callbacks.push_back({MF_SEPARATOR});
 }

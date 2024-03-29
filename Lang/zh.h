@@ -66,6 +66,7 @@
 #define MenuRemovePlugin L"移除插件" 
 #define MenuPluginRankUp L"上移" 
 #define MenuPluginRankDown L"下移" 
+#define MenuPluginEnable L"使用" 
 #define DefaultFont L"微软雅黑" 
 #define CantLoadQtLoader L"无法加载QtLoader.dll"
 #define LblPluginNotify L"依赖于Qt的插件仅会在启动时载入。"

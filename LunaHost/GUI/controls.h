@@ -2,22 +2,31 @@
 #define LUNA_BASE_CONTROLS_H
 #include"window.h"
 #include <CommCtrl.h>
+class Menu{
+public:
+    void dispatch(WPARAM);
+    struct menuinfos{
+        UINT type;
+        std::function<void()> callback;
+        std::wstring str;
+    };
+    std::vector<menuinfos>menu_callbacks;
+    HMENU load();
+    HMENU hmenu;
+    void add(const std::wstring&,std::function<void()> callback);
+    void add_checkable(const std::wstring&,bool,std::function<void(bool)> callback);
+    void add_sep();
+};
+using maybehavemenu=std::optional<Menu>;
+    
 class control:public basewindow{
     public:
     mainwindow* parent;
     control(mainwindow*);
     virtual void dispatch(WPARAM);
     virtual void dispatch_2(WPARAM wParam, LPARAM lParam);
-    void menu_dispatch(WPARAM);
-    HMENU load_menu();
-    struct menuinfos{
-        std::function<void()> callback;
-        UINT type;
-        std::wstring str;
-    };
-    std::vector<menuinfos>menu_callbacks;
-    void add_menu(const std::wstring&,std::function<void()> callback, UINT type=MF_STRING);
-    void add_menu_sep();
+    maybehavemenu menu;
+    std::function<maybehavemenu()> on_menu=[]()->maybehavemenu{return {};};
 };
 
 class button:public control{

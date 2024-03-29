@@ -66,6 +66,7 @@
 #define MenuRemovePlugin L"Remove Plugin" 
 #define MenuPluginRankUp L"Up" 
 #define MenuPluginRankDown L"Down" 
+#define MenuPluginEnable L"Enable" 
 #define DefaultFont L"Arial" 
 #define CantLoadQtLoader L"Can't Load QtLoader.dll"
 #define LblPluginNotify L"Qt Plugins Will be Loaded at Start Only."

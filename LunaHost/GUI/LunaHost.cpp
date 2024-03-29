@@ -101,11 +101,6 @@ void LunaHost::on_proc_connect(DWORD pid)
         autoattachexes.insert(WideStringToString(pexe.value()));
     }
 }
-TextThread* LunaHost::getcurrthread(){
-    auto handle = g_hListBox_listtext->getdata(g_hListBox_listtext->currentidx());
-    auto tt=Host::GetThread(handle);
-    return tt;
-}
 LunaHost::LunaHost(){
     
     configs=new confighelper;
@@ -174,32 +169,34 @@ LunaHost::LunaHost(){
         g_showtexts->settext(get);
         g_showtexts->scrolltoend();
     };
-    g_hListBox_listtext->add_menu(MenuCopyHookCode,[&](){if(auto tt=getcurrthread())toclipboard(std::wstring(tt->hp.hookcode));});
-    
-    g_hListBox_listtext->add_menu_sep();
-    g_hListBox_listtext->add_menu(MenuRemoveHook,[&](){if(auto tt=getcurrthread())Host::RemoveHook(tt->tp.processId,tt->tp.addr);});
-
-    g_hListBox_listtext->add_menu(MenuDetachProcess,[&](){
-        if(auto tt=getcurrthread()){
+    g_hListBox_listtext->on_menu=[&]()->maybehavemenu{
+        auto handle = g_hListBox_listtext->getdata(g_hListBox_listtext->currentidx());
+        auto tt=Host::GetThread(handle);
+        if(!tt)return {};
+        Menu menu;
+        menu.add(MenuCopyHookCode,[&](){toclipboard(std::wstring(tt->hp.hookcode));});
+        menu.add_sep();
+        menu.add(MenuRemoveHook,[&](){Host::RemoveHook(tt->tp.processId,tt->tp.addr);});
+        menu.add(MenuDetachProcess,[&](){
+         
             Host::DetachProcess(tt->tp.processId);
-            userdetachedpids.insert(tt->tp.processId);
-        }
-    });
-    g_hListBox_listtext->add_menu_sep();
-    g_hListBox_listtext->add_menu(MenuRemeberSelect,[&](){
-        if(auto tt=getcurrthread())
+            userdetachedpids.insert(tt->tp.processId); 
+        });
+        menu.add_sep();
+        menu.add(MenuRemeberSelect,[&](){
             if(auto pexe=gmf(tt->tp.processId))
                 savedhookcontext[WideStringToString(pexe.value())]={
                     {"hookcode",WideStringToString(tt->hp.hookcode)},
                     {"ctx1",tt->tp.ctx},
                     {"ctx2",tt->tp.ctx2},
                 };
-    }); 
-    g_hListBox_listtext->add_menu(MenuForgetSelect,[&](){
-        if(auto tt=getcurrthread()) 
-            if(auto pexe=gmf(tt->tp.processId))
-                    savedhookcontext.erase(WideStringToString(pexe.value())); 
-    });  
+        }); 
+        menu.add(MenuForgetSelect,[&](){
+                if(auto pexe=gmf(tt->tp.processId))
+                        savedhookcontext.erase(WideStringToString(pexe.value())); 
+        });  
+        return menu;
+    };
      
     g_showtexts = new multilineedit(this);
     g_showtexts->setreadonly(true);
@@ -414,8 +411,7 @@ void Pluginwindow::pluginrankmove(int moveoffset){
     listplugins->insertitem(b,std::filesystem::path(pa).stem());
     listplugins->setdata(b,(LONG_PTR)pa);
 }
-Pluginwindow::Pluginwindow(mainwindow*p,Pluginmanager* pl):mainwindow(p){
-    pluginmanager=pl;
+Pluginwindow::Pluginwindow(mainwindow*p,Pluginmanager* pl):mainwindow(p),pluginmanager(pl){
     (new label(this,LblPluginNotify))->setgeo(10,10,500,30);
     (new label(this,LblPluginRemove))->setgeo( 10,40,500,30);
     static auto listadd=[&](const std::wstring& s){
@@ -425,7 +421,9 @@ Pluginwindow::Pluginwindow(mainwindow*p,Pluginmanager* pl):mainwindow(p){
     };
     listplugins = new listbox(this);
 
-    listplugins->add_menu(MenuAddPlugin,[&](){
+    listplugins->on_menu=[&](){
+        Menu menu;
+        menu.add(MenuAddPlugin,[&](){
         if(auto f=pluginmanager->selectpluginfile())
             switch (auto res=pluginmanager->addplugin(f.value()))
             {
@@ -440,21 +438,29 @@ Pluginwindow::Pluginwindow(mainwindow*p,Pluginmanager* pl):mainwindow(p){
                 };
                 MessageBoxW(winId,errorlog[res],MsgError,0);
             }
-    });
-    
-    listplugins->add_menu(MenuRemovePlugin,[&](){
+        });
         auto idx=listplugins->currentidx();
-        if(idx==-1)return;
-        pluginmanager->remove((LPCWSTR)listplugins->getdata(idx));
-        listplugins->deleteitem(idx);
-    });
+        if(idx!=-1)
+        {
+            menu.add(MenuRemovePlugin,[&](){
+                auto idx=listplugins->currentidx();
+                pluginmanager->remove((LPCWSTR)listplugins->getdata(idx));
+                listplugins->deleteitem(idx);
+            }); 
+            menu.add_sep();
+            menu.add(MenuPluginRankUp,std::bind(&Pluginwindow::pluginrankmove,this,-1));
+            menu.add(MenuPluginRankDown,std::bind(&Pluginwindow::pluginrankmove,this,1));
+            menu.add_sep();
+            menu.add_checkable(MenuPluginEnable,pluginmanager->getenable(idx),[&,idx](bool check){
+                pluginmanager->setenable(idx,check);
+            });
+        }
+        return menu;
+    }; 
     
-    listplugins->add_menu_sep();
-    listplugins->add_menu(MenuPluginRankUp,std::bind(&Pluginwindow::pluginrankmove,this,-1));
-    listplugins->add_menu(MenuPluginRankDown,std::bind(&Pluginwindow::pluginrankmove,this,1));
      
-    for(int i=0;i<pluginmanager->PluginRank.size();i++){
-        listadd(pluginmanager->PluginRank[i]);
+    for(int i=0;i<pluginmanager->count();i++){
+        listadd(pluginmanager->getname(i));
     }
     settext(WndPlugins);
     setcentral(500,400);

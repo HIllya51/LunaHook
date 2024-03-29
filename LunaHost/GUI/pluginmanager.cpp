@@ -128,45 +128,49 @@ void Pluginmanager::loadqtdlls(std::vector<std::wstring>&collectQtplugs){
     }
     SetEnvironmentVariableW(L"PATH",envs.c_str());
     
-    #if 1
-    auto modules=QtLoadLibrarys(collectQtplugs);
-    if(modules.empty())return;
-    #else
+    HMODULE* modules;
+    if(std::true_type::value){
+        auto vmodules=QtLoadLibrarys(collectQtplugs);
+        if(vmodules.empty())return;
+        modules=vmodules.data();
+    }
+    else{
+        auto QtLoadLibrary = loadqtloader(pluginpath); 
+        if(!QtLoadLibrary){
+            MessageBoxW(host->winId,CantLoadQtLoader,L"Error",0);
+            return ;
+        }
+        std::vector<wchar_t*>saves;
+        for(auto&p:collectQtplugs){
+            auto str=new wchar_t[p.size()+1];
+            wcscpy(str,p.c_str());
+            saves.emplace_back(str);
+        }
+        modules=QtLoadLibrary(saves.data(),collectQtplugs.size());
+        for(auto str:saves)delete str;
 
-    auto QtLoadLibrary = loadqtloader(pluginpath); 
-    if(!QtLoadLibrary){
-        MessageBoxW(host->winId,CantLoadQtLoader,L"Error",0);
-        return ;
     }
-    std::vector<wchar_t*>saves;
-    for(auto&p:collectQtplugs){
-        auto str=new wchar_t[p.size()+1];
-        wcscpy(str,p.c_str());
-        saves.emplace_back(str);
-    }
-    auto modules=QtLoadLibrary(saves.data(),collectQtplugs.size());
-    for(auto str:saves)delete str;
-    #endif
     for(int i=0;i<collectQtplugs.size();i++){
+        wprintf(L"%s %p %p",collectQtplugs[i].c_str(),modules[i],GetProcAddress(modules[i],"OnNewSentence"));
         OnNewSentenceS[collectQtplugs[i]]=GetProcAddress(modules[i],"OnNewSentence"); 
     }
 }
-Pluginmanager::Pluginmanager(LunaHost* _host):host(_host){
+Pluginmanager::Pluginmanager(LunaHost* _host):host(_host),configs(_host->configs){
     try {
         std::scoped_lock lock(OnNewSentenceSLock);
         
         std::vector<std::wstring>collectQtplugs;
-        for (auto i=0;i<host->configs->pluginsnum();i++) {
-            auto plg=host->configs->pluginsget(i);
+        for (auto i=0;i<count();i++) {
+            auto plg=get(i);
             bool isqt=plg.isQt;
             auto path=plg.wpath();
-            PluginRank.push_back(path);
             OnNewSentenceS[path]=0;
             if(isqt){
+                if(plg.enable==false)continue;
                 collectQtplugs.push_back((path));
-                continue;
             }
-            OnNewSentenceS[path]=GetProcAddress(LoadLibraryW(path.c_str()),"OnNewSentence");
+            else
+                OnNewSentenceS[path]=GetProcAddress(LoadLibraryW(path.c_str()),"OnNewSentence");
         }
         loadqtdlls(collectQtplugs);
         
@@ -174,7 +178,7 @@ Pluginmanager::Pluginmanager(LunaHost* _host):host(_host){
 
         
     } catch (const std::exception& ex) {
-        std::cerr << "Error: " << ex.what() << std::endl;
+        std::wcerr << "Error: " << ex.what() << std::endl;
     }
 }
 
@@ -184,14 +188,19 @@ bool Pluginmanager::dispatch(TextThread& thread, std::wstring& sentence){
 	wcscpy_s(sentenceBuffer, sentence.size() + 1, sentence.c_str());
     concurrency::reader_writer_lock::scoped_lock_read readLock(OnNewSentenceSLock);
 
-    bool interupt=false;
-    for (const auto& pathl :{std::vector<std::wstring>{L"InternalClipBoard"}, PluginRank}){
-        for(const auto&path:pathl){
-            auto funptr=OnNewSentenceS[path];
-            if(funptr==0)continue;
-            if (!*(sentenceBuffer = ((OnNewSentence_t)funptr)(sentenceBuffer, sentenceInfo))){interupt=true;break;};
+    for(int i=0;i<count()+1;i++){
+        std::wstring path;
+        if(i==count())path=L"InternalClipBoard";
+        else {
+            if(getenable(i)==false)continue;
+            path=getname(i);
         }
-        if(interupt)break;
+
+        auto funptr=OnNewSentenceS[path];
+        if(funptr==0)continue;
+        wprintf(L"%s %p\n",path.c_str(), funptr);
+        if (!*(sentenceBuffer = ((OnNewSentence_t)funptr)(sentenceBuffer, sentenceInfo)))
+            break;
     }
     
 	sentence = sentenceBuffer;
@@ -199,6 +208,73 @@ bool Pluginmanager::dispatch(TextThread& thread, std::wstring& sentence){
 	return !sentence.empty();
 }
 
+void Pluginmanager::remove(const std::string&s){
+    
+    auto &plgs=configs->configs["plugins"];
+    auto it=std::remove_if(plgs.begin(),plgs.end(),[&](auto&t){
+        std::string p=t["path"];
+        return p==s;
+    });
+    plgs.erase(it, plgs.end());
+}
+void Pluginmanager::add(const pluginitem& item){
+    configs->configs["plugins"].push_back(item.dump());
+}
+int Pluginmanager::count(){
+    return configs->configs["plugins"].size();
+}
+pluginitem Pluginmanager::get(int i){
+    return pluginitem{configs->configs["plugins"][i]};
+}
+void Pluginmanager::set(int i,const pluginitem& item){
+    configs->configs["plugins"][i]=item.dump();
+}
+
+pluginitem::pluginitem(const nlohmann::json& js){
+    path=js["path"];
+    isQt=safequeryjson(js,"isQt",false);
+    isref=safequeryjson(js,"isref",false);
+    enable=safequeryjson(js,"enable",true);
+}
+std::wstring pluginitem::wpath(){
+    auto wp=StringToWideString(path);
+    if(isref)return std::filesystem::current_path()/wp;
+    else return wp;
+}
+
+std::pair<std::wstring,bool> castabs2ref(const std::wstring&p){
+    auto curr=std::filesystem::current_path().wstring();
+    if(startWith(p,curr)){
+        return {p.substr(curr.size()+1),true};
+    }
+    return {p,false};
+}
+pluginitem::pluginitem(const std::wstring& pabs,bool _isQt){
+    isQt=_isQt;
+    auto [p,_isref]=castabs2ref(pabs);
+    isref=_isref;
+    path=WideStringToString(p);
+    enable=true;
+}
+nlohmann::json pluginitem::dump() const{
+    return {
+        {"path",path},
+        {"isQt",isQt},
+        {"isref",isref},
+        {"enable",enable}
+    };
+} 
+bool Pluginmanager::getenable(int idx){
+    return get(idx).enable;
+}
+void Pluginmanager::setenable(int idx,bool en){
+    auto item=get(idx);
+    item.enable=en;
+    set(idx,item);
+}
+std::wstring Pluginmanager::getname(int idx){
+    return get(idx).wpath();
+}
 std::optional<LPVOID> Pluginmanager::checkisvalidplugin(const std::wstring& pl){
     auto path=std::filesystem::path(pl);
     if (!std::filesystem::exists(path))return{};
@@ -221,22 +297,16 @@ bool Pluginmanager::checkisdump(const std::wstring& dll){
     return false;
 }
 void Pluginmanager::remove(const std::wstring& ss){
-    std::scoped_lock lock(OnNewSentenceSLock);
-    auto it = std::find(PluginRank.begin(), PluginRank.end(), ss);
-    if (it != PluginRank.end()) { 
-        PluginRank.erase(it);
-    }
-    host->configs->pluginsremove(WideStringToString(ss));
+    remove(WideStringToString(ss));
 }
 std::optional<std::wstring>Pluginmanager::selectpluginfile(){
-    return SelectFile(host->winId,L"Plugin Files\0*.dll;*.xdll\0");
+    return SelectFile(0,L"Plugin Files\0*.dll;*.xdll\0");
 }
 void Pluginmanager::swaprank(int a,int b){
-    std::scoped_lock lock(OnNewSentenceSLock);
-    auto _b=PluginRank[b];
-    PluginRank[b]=PluginRank[a];
-    PluginRank[a]=_b;
-    host->configs->pluginrankswap(a,b);
+    auto &plgs=configs->configs["plugins"];
+    auto _b=plgs[b];
+    plgs[b]=plgs[a];
+    plgs[a]=_b;
 }
 DWORD Rva2Offset(DWORD rva, PIMAGE_SECTION_HEADER psh, PIMAGE_NT_HEADERS pnt)
 {
@@ -330,10 +400,8 @@ addpluginresult Pluginmanager::addplugin(const std::wstring& p){
     std::scoped_lock lock(OnNewSentenceSLock);
     if(checkisdump(p))return addpluginresult::dumplicate;
 
-    PluginRank.push_back(p);
-    //std::swap(PluginRank.end()-2,PluginRank.end()-1);
     OnNewSentenceS[p]=plugin;
-    host->configs->pluginsadd({p,isQt});
+    add({p,isQt});
 
     return addpluginresult::success;
 }

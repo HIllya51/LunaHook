@@ -77,7 +77,9 @@ LRESULT mainwindow::wndproc(UINT message, WPARAM wParam, LPARAM lParam){
             if(lParam==0){
                 for(auto ctl:controls){
                     if(lastcontexthwnd==ctl->winId){
-                        ctl->menu_dispatch(wParam);break;
+                        if(ctl->menu)
+                            ctl->menu.value().dispatch(wParam);
+                        break;
                     }
                 }
             }
@@ -94,11 +96,12 @@ LRESULT mainwindow::wndproc(UINT message, WPARAM wParam, LPARAM lParam){
             bool succ=false;lastcontexthwnd=0;
             for(auto ctl:controls){
                 if((HWND)wParam==ctl->winId){
-                    auto hm=ctl->load_menu();
+                    auto hm=ctl->on_menu();
+                    ctl->menu=hm;
                     if(hm){
                         int xPos = LOWORD(lParam);
                         int yPos = HIWORD(lParam);
-                        TrackPopupMenu(hm, TPM_LEFTALIGN | TPM_TOPALIGN | TPM_RIGHTBUTTON,
+                        TrackPopupMenu(hm.value().load(), TPM_LEFTALIGN | TPM_TOPALIGN | TPM_RIGHTBUTTON,
                         xPos, yPos, 0, winId, NULL);
                         lastcontexthwnd=ctl->winId;
                         succ=true;
