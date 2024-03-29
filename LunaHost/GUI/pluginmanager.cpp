@@ -214,9 +214,9 @@ std::optional<LPVOID> Pluginmanager::checkisvalidplugin(const std::wstring& pl){
     }
     return OnNewSentence ;
 }
-bool Pluginmanager::checkisdump(LPVOID ptr){
+bool Pluginmanager::checkisdump(const std::wstring& dll){
     for(auto& p:OnNewSentenceS){
-        if(p.second==ptr)return true;
+        if(p.first==dll)return true;
     }
     return false;
 }
@@ -312,27 +312,30 @@ bool qtchecker(const std::set<std::string>& dll)
             return true;
     return false;
 }
-bool Pluginmanager::addplugin(const std::wstring& p){
+addpluginresult Pluginmanager::addplugin(const std::wstring& p){
     auto importtable=getimporttable(p);
-    if(importtable.empty())return false;
+    if(importtable.empty())return addpluginresult::invaliddll;
     auto isQt=qtchecker(importtable);
     LPVOID plugin;
     if(isQt){
         plugin=0;
     }
     else{
-        plugin=GetProcAddress(LoadLibraryW(p.c_str()),"OnNewSentence");
-        if(!plugin)return false;
+        auto base=LoadLibraryW(p.c_str());
+        if(base==0)return addpluginresult::invaliddll;
+        plugin=GetProcAddress(base,"OnNewSentence");
+        if(!plugin)return addpluginresult::isnotaplugins;
     } 
     
     std::scoped_lock lock(OnNewSentenceSLock);
-    if(!checkisdump(plugin)){
-        PluginRank.push_back(p);
-        //std::swap(PluginRank.end()-2,PluginRank.end()-1);
-        OnNewSentenceS[p]=plugin;
-        host->configs->pluginsadd({p,isQt});
-    }
-    return true;
+    if(checkisdump(p))return addpluginresult::dumplicate;
+
+    PluginRank.push_back(p);
+    //std::swap(PluginRank.end()-2,PluginRank.end()-1);
+    OnNewSentenceS[p]=plugin;
+    host->configs->pluginsadd({p,isQt});
+
+    return addpluginresult::success;
 }
 
 

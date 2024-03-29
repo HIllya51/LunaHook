@@ -71,6 +71,8 @@
 #define LblPluginNotify L"Qt Plugins Will be Loaded at Start Only."
 #define LblPluginRemove L"Remove Plugins Will be Useful after Restart."
 #define InvalidPlugin L"Invalid Plugin!"
+#define InvalidDll L"Invalid Dll!"
+#define InvalidDump L"Dumplicated!"
 #define MsgError L"Error"
 #define SEARCH_CJK L"Search for Chinese/Japanese/Korean"
 #define HS_SETTINGS L"Settings"

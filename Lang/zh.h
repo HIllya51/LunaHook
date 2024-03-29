@@ -71,6 +71,8 @@
 #define LblPluginNotify L"依赖于Qt的插件仅会在启动时载入。"
 #define LblPluginRemove L"移除插件要在重启后生效。"
 #define InvalidPlugin L"插件无效！"
+#define InvalidDll L"Dll无效！"
+#define InvalidDump L"重复！"
 #define MsgError L"错误"
 #define SEARCH_CJK L"搜索中文/日文/韩文"
 #define HS_SETTINGS L"设置"

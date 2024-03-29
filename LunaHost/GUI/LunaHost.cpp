@@ -427,11 +427,18 @@ Pluginwindow::Pluginwindow(mainwindow*p,Pluginmanager* pl):mainwindow(p){
 
     listplugins->add_menu(MenuAddPlugin,[&](){
         if(auto f=pluginmanager->selectpluginfile())
-            if(pluginmanager->addplugin(f.value())){
+            switch (auto res=pluginmanager->addplugin(f.value()))
+            {
+            case addpluginresult::success:
                 listadd(f.value());
-            }
-            else{
-                MessageBoxW(winId,InvalidPlugin,MsgError,0);
+                break;
+            default:
+                std::map<addpluginresult,LPCWSTR> errorlog={
+                    {addpluginresult::isnotaplugins,InvalidPlugin},
+                    {addpluginresult::invaliddll,InvalidDll},
+                    {addpluginresult::dumplicate,InvalidDump},
+                };
+                MessageBoxW(winId,errorlog[res],MsgError,0);
             }
     });
     
