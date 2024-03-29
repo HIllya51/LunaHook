@@ -475,7 +475,6 @@ void HooksearchText::call(std::set<DWORD>pids){
         SearchParam sp = {};
         sp.codepage=cp;
         wcsncpy_s(sp.text, edittext->text().c_str(), PATTERN_SIZE - 1);
-        wprintf(sp.text);
         for(auto pid:pids)
             Host::FindHooks(pid, sp);
     };

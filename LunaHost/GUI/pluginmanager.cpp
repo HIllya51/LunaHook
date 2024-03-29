@@ -129,7 +129,7 @@ void Pluginmanager::loadqtdlls(std::vector<std::wstring>&collectQtplugs){
     SetEnvironmentVariableW(L"PATH",envs.c_str());
     
     HMODULE* modules;
-    if(std::true_type::value){
+    if(std::false_type::value){
         auto vmodules=QtLoadLibrarys(collectQtplugs);
         if(vmodules.empty())return;
         modules=vmodules.data();
@@ -151,7 +151,6 @@ void Pluginmanager::loadqtdlls(std::vector<std::wstring>&collectQtplugs){
 
     }
     for(int i=0;i<collectQtplugs.size();i++){
-        wprintf(L"%s %p %p",collectQtplugs[i].c_str(),modules[i],GetProcAddress(modules[i],"OnNewSentence"));
         OnNewSentenceS[collectQtplugs[i]]=GetProcAddress(modules[i],"OnNewSentence"); 
     }
 }
@@ -198,7 +197,6 @@ bool Pluginmanager::dispatch(TextThread& thread, std::wstring& sentence){
 
         auto funptr=OnNewSentenceS[path];
         if(funptr==0)continue;
-        wprintf(L"%s %p\n",path.c_str(), funptr);
         if (!*(sentenceBuffer = ((OnNewSentence_t)funptr)(sentenceBuffer, sentenceInfo)))
             break;
     }
