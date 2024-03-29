@@ -56,10 +56,14 @@ void TextThread::Push(BYTE* data, int length)
 			length = 0;
 		}
 	}
+	auto converted = commonparsestring(data,length,&hp,Host::defaultCodepage);
+	if(converted)
+	{
+		buffer.append(converted.value());
+		if (hp.type & FULL_STRING && converted.value().size()>1) buffer.push_back(L'\n');
+	}
+	else Host::AddConsoleOutput(INVALID_CODEPAGE); 
 
-	if (auto converted = commonparsestring(data,length,&hp,Host::defaultCodepage)) buffer.append(converted.value());
-	else Host::AddConsoleOutput(INVALID_CODEPAGE);
-	if (hp.type & FULL_STRING) buffer.push_back(L'\n');
 	lastPushTime = GetTickCount64();
 	
 	if (filterRepetition)
