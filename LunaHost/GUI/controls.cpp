@@ -314,3 +314,20 @@ gridlayout::gridlayout(int row,int col):control(0){
 void gridlayout::setmargin(int m){
     margin=m;
 }
+void control::menu_dispatch(WPARAM wparam){
+    auto idx=LOWORD(wparam);
+    menu_callbacks[idx].callback();
+}
+HMENU control::load_menu(){
+    HMENU hMenu = CreatePopupMenu();
+    for(int i=0;i<menu_callbacks.size();i++){
+        AppendMenuW(hMenu,menu_callbacks[i].type,i,menu_callbacks[i].str.c_str());
+    }
+    return hMenu;
+}
+void control::add_menu(const std::wstring& str,std::function<void()> callback, UINT type){
+    menu_callbacks.push_back({callback,type,str});
+}
+void control::add_menu_sep(){
+    menu_callbacks.push_back({[](){},MF_SEPARATOR,L""});
+}

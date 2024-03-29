@@ -77,7 +77,7 @@ LRESULT mainwindow::wndproc(UINT message, WPARAM wParam, LPARAM lParam){
             if(lParam==0){
                 for(auto ctl:controls){
                     if(lastcontexthwnd==ctl->winId){
-                        ctl->oncontextmenucallback(wParam);break;
+                        ctl->menu_dispatch(wParam);break;
                     }
                 }
             }
@@ -94,7 +94,7 @@ LRESULT mainwindow::wndproc(UINT message, WPARAM wParam, LPARAM lParam){
             bool succ=false;lastcontexthwnd=0;
             for(auto ctl:controls){
                 if((HWND)wParam==ctl->winId){
-                    auto hm=ctl->oncontextmenu();
+                    auto hm=ctl->load_menu();
                     if(hm){
                         int xPos = LOWORD(lParam);
                         int yPos = HIWORD(lParam);

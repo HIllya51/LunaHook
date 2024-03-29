@@ -101,7 +101,11 @@ void LunaHost::on_proc_connect(DWORD pid)
         autoattachexes.insert(WideStringToString(pexe.value()));
     }
 }
-
+TextThread* LunaHost::getcurrthread(){
+    auto handle = g_hListBox_listtext->getdata(g_hListBox_listtext->currentidx());
+    auto tt=Host::GetThread(handle);
+    return tt;
+}
 LunaHost::LunaHost(){
     
     configs=new confighelper;
@@ -170,63 +174,33 @@ LunaHost::LunaHost(){
         g_showtexts->settext(get);
         g_showtexts->scrolltoend();
     };
+    g_hListBox_listtext->add_menu(MenuCopyHookCode,[&](){if(auto tt=getcurrthread())toclipboard(std::wstring(tt->hp.hookcode));});
     
-#define IDM_REMOVE_HOOK 1001
-#define IDM_DETACH_PROCESS 1002
-#define IDM_COPY_HOOKCODE 1003
-#define IDM_REMEMBER_SELECTION 1004
-#define IDM_FORGET_SELECTION 1005
-    g_hListBox_listtext->oncontextmenu=[](){
-        HMENU hMenu = CreatePopupMenu();
-        AppendMenu(hMenu, MF_STRING, IDM_COPY_HOOKCODE, MenuCopyHookCode);
-        AppendMenu(hMenu, MF_STRING, IDM_REMOVE_HOOK, MenuRemoveHook);
-        AppendMenu(hMenu, MF_STRING, IDM_DETACH_PROCESS, MenuDetachProcess);
-        AppendMenu(hMenu, MF_STRING, IDM_REMEMBER_SELECTION, MenuRemeberSelect);
-        AppendMenu(hMenu, MF_STRING, IDM_FORGET_SELECTION, MenuForgetSelect);
-        return hMenu;
-    };
-    g_hListBox_listtext->oncontextmenucallback=[&](WPARAM wparam){
+    g_hListBox_listtext->add_menu_sep();
+    g_hListBox_listtext->add_menu(MenuRemoveHook,[&](){if(auto tt=getcurrthread())Host::RemoveHook(tt->tp.processId,tt->tp.addr);});
 
-        auto handle = g_hListBox_listtext->getdata(g_hListBox_listtext->currentidx());
-        auto tt=Host::GetThread(handle);
-        if(tt==0)return;
-        switch (LOWORD(wparam)) {
-
-            case IDM_COPY_HOOKCODE:
-                toclipboard(std::wstring(tt->hp.hookcode));
-                break;
-            case IDM_DETACH_PROCESS:
-                Host::DetachProcess(tt->tp.processId);
-                userdetachedpids.insert(tt->tp.processId);
-                break;
-            case IDM_REMOVE_HOOK:
-                Host::RemoveHook(tt->tp.processId,tt->tp.addr);
-                break;
-            case IDM_FORGET_SELECTION:
-            case IDM_REMEMBER_SELECTION:
-            {
-                
-                if(auto pexe=gmf(tt->tp.processId))
-                {
-                    auto pexev=WideStringToString(pexe.value());
-                    if(LOWORD(wparam)==IDM_REMEMBER_SELECTION)
-                    {
-                            
-                        savedhookcontext[pexev]={
-                            {"hookcode",WideStringToString(tt->hp.hookcode)},
-                            {"ctx1",tt->tp.ctx},
-                            {"ctx2",tt->tp.ctx2},
-                        };
-                    }
-                    else if(LOWORD(wparam)==IDM_FORGET_SELECTION)
-                    {
-                        savedhookcontext.erase(pexev);
-                    }
-                }
-            }
-            break;
+    g_hListBox_listtext->add_menu(MenuDetachProcess,[&](){
+        if(auto tt=getcurrthread()){
+            Host::DetachProcess(tt->tp.processId);
+            userdetachedpids.insert(tt->tp.processId);
         }
-    };
+    });
+    g_hListBox_listtext->add_menu_sep();
+    g_hListBox_listtext->add_menu(MenuRemeberSelect,[&](){
+        if(auto tt=getcurrthread())
+            if(auto pexe=gmf(tt->tp.processId))
+                savedhookcontext[WideStringToString(pexe.value())]={
+                    {"hookcode",WideStringToString(tt->hp.hookcode)},
+                    {"ctx1",tt->tp.ctx},
+                    {"ctx2",tt->tp.ctx2},
+                };
+    }); 
+    g_hListBox_listtext->add_menu(MenuForgetSelect,[&](){
+        if(auto tt=getcurrthread()) 
+            if(auto pexe=gmf(tt->tp.processId))
+                    savedhookcontext.erase(WideStringToString(pexe.value())); 
+    });  
+     
     g_showtexts = new multilineedit(this);
     g_showtexts->setreadonly(true);
     
@@ -425,6 +399,21 @@ Settingwindow::Settingwindow(LunaHost* host):mainwindow(host){
 void Pluginwindow::on_size(int w,int h){
     listplugins->setgeo(10,80,w-20,h-90);
 }
+void Pluginwindow::pluginrankmove(int moveoffset){
+    auto idx=listplugins->currentidx();
+    if(idx==-1)return;
+    auto idx2=idx+moveoffset;
+    auto a=min(idx,idx2),b=max(idx,idx2);
+    if(a<0||b>=listplugins->count())return;
+    pluginmanager->swaprank(a,b);
+    
+    auto pa=((LPCWSTR)listplugins->getdata(a));
+    auto pb=((LPCWSTR)listplugins->getdata(b));
+    
+    listplugins->deleteitem(a);
+    listplugins->insertitem(b,std::filesystem::path(pa).stem());
+    listplugins->setdata(b,(LONG_PTR)pa);
+}
 Pluginwindow::Pluginwindow(mainwindow*p,Pluginmanager* pl):mainwindow(p){
     pluginmanager=pl;
     (new label(this,LblPluginNotify))->setgeo(10,10,500,30);
@@ -435,64 +424,28 @@ Pluginwindow::Pluginwindow(mainwindow*p,Pluginmanager* pl):mainwindow(p){
         listplugins->setdata(idx,(LONG_PTR)_s);
     };
     listplugins = new listbox(this);
-#define IDM_ADD_PLUGIN 1004
-#define IDM_REMOVE_PLUGIN 1006
-#define IDM_RANK_UP 1007
-#define IDM_RANK_DOWN 1008
-    listplugins->oncontextmenu=[](){
-        HMENU hMenu = CreatePopupMenu();
-        AppendMenu(hMenu, MF_STRING, IDM_ADD_PLUGIN, MenuAddPlugin);
-        AppendMenu(hMenu, MF_STRING, IDM_REMOVE_PLUGIN, MenuRemovePlugin);
-        AppendMenu(hMenu, MF_STRING, IDM_RANK_UP, MenuPluginRankUp);
-        AppendMenu(hMenu, MF_STRING, IDM_RANK_DOWN, MenuPluginRankDown);
-        return hMenu;
-    };
-    listplugins->oncontextmenucallback=[&](WPARAM wparam){
 
-        switch (LOWORD(wparam)) {
-            case IDM_RANK_DOWN:
-            case IDM_RANK_UP:
-            {
-                auto idx=listplugins->currentidx();
-                if(idx==-1)break;
-                auto idx2=idx+(
-                    (LOWORD(wparam)==IDM_RANK_UP)?-1:1
-                );
-                auto a=min(idx,idx2),b=max(idx,idx2);
-                if(a<0||b>=listplugins->count())break;
-                pluginmanager->swaprank(a,b);
-                
-                auto pa=((LPCWSTR)listplugins->getdata(a));
-                auto pb=((LPCWSTR)listplugins->getdata(b));
-                
-                listplugins->deleteitem(a);
-                listplugins->insertitem(b,std::filesystem::path(pa).stem());
-                listplugins->setdata(b,(LONG_PTR)pa);
-                break;
+    listplugins->add_menu(MenuAddPlugin,[&](){
+        if(auto f=pluginmanager->selectpluginfile())
+            if(pluginmanager->addplugin(f.value())){
+                listadd(f.value());
             }
-            case IDM_ADD_PLUGIN:
-            {
-                auto f=pluginmanager->selectpluginfile();
-                if(f.has_value()){
-                    if(pluginmanager->addplugin(f.value())){
-                        listadd(f.value());
-                    }
-                    else{
-                        MessageBoxW(winId,InvalidPlugin,MsgError,0);
-                    }
-                }
-                break;
+            else{
+                MessageBoxW(winId,InvalidPlugin,MsgError,0);
             }
-            case IDM_REMOVE_PLUGIN:
-            {
-                auto idx=listplugins->currentidx();
-                if(idx==-1)break;
-                pluginmanager->remove((LPCWSTR)listplugins->getdata(idx));
-                listplugins->deleteitem(idx);
-                break;
-            }
-        }
-    };
+    });
+    
+    listplugins->add_menu(MenuRemovePlugin,[&](){
+        auto idx=listplugins->currentidx();
+        if(idx==-1)return;
+        pluginmanager->remove((LPCWSTR)listplugins->getdata(idx));
+        listplugins->deleteitem(idx);
+    });
+    
+    listplugins->add_menu_sep();
+    listplugins->add_menu(MenuPluginRankUp,std::bind(&Pluginwindow::pluginrankmove,this,-1));
+    listplugins->add_menu(MenuPluginRankDown,std::bind(&Pluginwindow::pluginrankmove,this,1));
+     
     for(int i=0;i<pluginmanager->PluginRank.size();i++){
         listadd(pluginmanager->PluginRank[i]);
     }

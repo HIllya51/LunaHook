@@ -315,12 +315,14 @@ bool Pluginmanager::addplugin(const std::wstring& p){
     auto importtable=getimporttable(p);
     if(importtable.empty())return false;
     auto isQt=qtchecker(importtable);
+    LPVOID plugin;
     if(isQt){
-        host->configs->pluginsadd({p,isQt});
-        return true;
+        plugin=0;
     }
-    auto plugin=GetProcAddress(LoadLibraryW(p.c_str()),"OnNewSentence");
-    if(!plugin)return false;
+    else{
+        plugin=GetProcAddress(LoadLibraryW(p.c_str()),"OnNewSentence");
+        if(!plugin)return false;
+    } 
     
     std::scoped_lock lock(OnNewSentenceSLock);
     if(!checkisdump(plugin)){

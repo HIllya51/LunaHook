@@ -10,6 +10,7 @@ class Pluginwindow:public mainwindow{
 public:
     Pluginwindow(mainwindow*,Pluginmanager*);
     void on_size(int w,int h);
+    void pluginrankmove(int);
 };
 class Settingwindow:public mainwindow{
     checkbox* ckbfilterrepeat;
@@ -100,6 +101,7 @@ class LunaHost:public mainwindow{
     void on_thread_delete(TextThread& thread);
     void on_proc_connect(DWORD pid);
 public:
+    TextThread* getcurrthread();
     confighelper* configs;
     int64_t currentselect=0;
     bool check_toclipboard; 

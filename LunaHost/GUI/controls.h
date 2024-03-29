@@ -8,8 +8,16 @@ class control:public basewindow{
     control(mainwindow*);
     virtual void dispatch(WPARAM);
     virtual void dispatch_2(WPARAM wParam, LPARAM lParam);
-    std::function<HMENU()>oncontextmenu=[](){return (HMENU)nullptr;};
-    std::function<void(WPARAM)>oncontextmenucallback=[](WPARAM){};
+    void menu_dispatch(WPARAM);
+    HMENU load_menu();
+    struct menuinfos{
+        std::function<void()> callback;
+        UINT type;
+        std::wstring str;
+    };
+    std::vector<menuinfos>menu_callbacks;
+    void add_menu(const std::wstring&,std::function<void()> callback, UINT type=MF_STRING);
+    void add_menu_sep();
 };
 
 class button:public control{
