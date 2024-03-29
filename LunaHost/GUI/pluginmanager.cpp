@@ -128,9 +128,10 @@ void Pluginmanager::loadqtdlls(std::vector<std::wstring>&collectQtplugs){
     }
     SetEnvironmentVariableW(L"PATH",envs.c_str());
     
-    // auto modules=QtLoadLibrarys(collectQtplugs);
-    // if(modules.empty())return;
-    
+    #if 1
+    auto modules=QtLoadLibrarys(collectQtplugs);
+    if(modules.empty())return;
+    #else
 
     auto QtLoadLibrary = loadqtloader(pluginpath); 
     if(!QtLoadLibrary){
@@ -145,7 +146,7 @@ void Pluginmanager::loadqtdlls(std::vector<std::wstring>&collectQtplugs){
     }
     auto modules=QtLoadLibrary(saves.data(),collectQtplugs.size());
     for(auto str:saves)delete str;
-
+    #endif
     for(int i=0;i<collectQtplugs.size();i++){
         OnNewSentenceS[collectQtplugs[i]]=GetProcAddress(modules[i],"OnNewSentence"); 
     }
