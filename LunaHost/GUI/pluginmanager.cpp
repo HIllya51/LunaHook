@@ -25,33 +25,51 @@ std::optional<std::wstring>SelectFile(HWND hwnd,LPCWSTR lpstrFilter){
     }
     else return {};
 }
-
-typedef  std::vector<HMODULE>*(* QtLoadLibrary_t)(std::vector<std::wstring>* dlls);
-
-void Pluginmanager::loadqtdlls(std::vector<std::wstring>&collectQtplugs){
-    if(collectQtplugs.size()==0)return;
-    auto pluginpath=std::filesystem::current_path()/(x64?"plugin64":"plugin32");
-    wchar_t env[65535];
-    GetEnvironmentVariableW(L"PATH",env,65535);
-    auto envs=std::wstring(env);
-    envs+=L";";envs+=pluginpath;
-    for(auto&p:collectQtplugs){
-        envs+=L";";envs+=std::filesystem::path(p).parent_path();
+typedef std::vector<HMODULE>* (*QtLoadLibrary_t)(std::vector<std::wstring>* dlls);
+typedef std::vector<HMODULE>* (*QtLoadLibraryBatch_t)(std::vector<std::wstring>* dlls);
+typedef void (*QtFreeLibrary_t)(HMODULE hd);
+void tryaddqttoenv(std::vector<std::wstring>&collectQtplugs){
+    static HMODULE qt5core=0;
+    if(qt5core==0)
+    {
+        auto pluginpath=std::filesystem::current_path()/(x64?"plugin64":"plugin32");
+        wchar_t env[65535];
+        GetEnvironmentVariableW(L"PATH",env,65535);
+        auto envs=std::wstring(env);
+        for(auto&p:collectQtplugs){
+            envs+=L";";envs+=std::filesystem::path(p).parent_path();
+        }
+        SetEnvironmentVariableW(L"PATH",envs.c_str());
+        qt5core= LoadLibrary(L"Qt5Core.dll");
     }
-
-    SetEnvironmentVariableW(L"PATH",envs.c_str());
-
-    auto QtLoadLibrary = (QtLoadLibrary_t)GetProcAddress(GetModuleHandle(0), "QtLoadLibrary"); 
+}
+std::vector<HMODULE>loadqtdllsX(std::vector<std::wstring>&collectQtplugs){
+    if(collectQtplugs.empty())return {};
+    tryaddqttoenv(collectQtplugs);
+    #if 1
+    HMODULE base=GetModuleHandle(0);
+    #else 
+    HMODULE base=LoadLibrary((std::filesystem::current_path()/(x64?"plugin64":"plugin32")/"QtLoader.dll").wstring().c_str());
+    #endif
+    
+    //auto QtLoadLibrary = (QtLoadLibrary_t)GetProcAddress(base, "QtLoadLibrary"); 
+    auto QtLoadLibrary = (QtLoadLibrary_t)GetProcAddress(base, "QtLoadLibraryBatch"); 
     
     auto modules=QtLoadLibrary(&collectQtplugs);
-    
-    if(modules->empty())return;
-    
-    for(int i=0;i<collectQtplugs.size();i++){
-        OnNewSentenceS[collectQtplugs[i]]=GetProcAddress(modules->at(i),"OnNewSentence"); 
-    }
-
+     
+    std::vector<HMODULE> _{*modules};
     delete modules;
+    return _;
+}
+HMODULE loadqtdllsX(const std::wstring&collectQtplugs){
+    std::vector<std::wstring> _ {collectQtplugs};
+    return loadqtdllsX(_)[0];
+}
+void Pluginmanager::loadqtdlls(std::vector<std::wstring>&collectQtplugs){
+    auto modules=loadqtdllsX(collectQtplugs);
+    for(int i=0;i<collectQtplugs.size();i++){
+        OnNewSentenceS[collectQtplugs[i]]={true,GetProcAddress(modules[i],"OnNewSentence"),modules[i]};
+    }
 }
 Pluginmanager::Pluginmanager(LunaHost* _host):host(_host),configs(_host->configs){
     try {
@@ -62,17 +80,19 @@ Pluginmanager::Pluginmanager(LunaHost* _host):host(_host),configs(_host->configs
             auto plg=get(i);
             bool isqt=plg.isQt;
             auto path=plg.wpath();
-            OnNewSentenceS[path]=0;
+            OnNewSentenceS[path]={false,0,0};
             if(isqt){
                 if(plg.enable==false)continue;
                 collectQtplugs.push_back((path));
             }
-            else
-                OnNewSentenceS[path]=GetProcAddress(LoadLibraryW(path.c_str()),"OnNewSentence");
+            else{
+                auto base=LoadLibraryW(path.c_str());
+                OnNewSentenceS[path]={false,GetProcAddress(base,"OnNewSentence"),base};
+            }
         }
         loadqtdlls(collectQtplugs);
         
-        OnNewSentenceS[L"InternalClipBoard"]=GetProcAddress(GetModuleHandle(0),"OnNewSentence");//内部链接的剪贴板插件
+        OnNewSentenceS[L"InternalClipBoard"]={false,GetProcAddress(GetModuleHandle(0),"OnNewSentence"),GetModuleHandle(0)};//内部链接的剪贴板插件
 
         
     } catch (const std::exception& ex) {
@@ -94,7 +114,7 @@ bool Pluginmanager::dispatch(TextThread& thread, std::wstring& sentence){
             path=getname(i);
         }
 
-        auto funptr=OnNewSentenceS[path];
+        auto funptr=OnNewSentenceS[path].funcptr;
         if(funptr==0)continue;
         if (!*(sentenceBuffer = ((OnNewSentence_t)funptr)(sentenceBuffer, sentenceInfo)))
             break;
@@ -105,15 +125,6 @@ bool Pluginmanager::dispatch(TextThread& thread, std::wstring& sentence){
 	return !sentence.empty();
 }
 
-void Pluginmanager::remove(const std::string&s){
-    
-    auto &plgs=configs->configs["plugins"];
-    auto it=std::remove_if(plgs.begin(),plgs.end(),[&](auto&t){
-        std::string p=t["path"];
-        return p==s;
-    });
-    plgs.erase(it, plgs.end());
-}
 void Pluginmanager::add(const pluginitem& item){
     configs->configs["plugins"].push_back(item.dump());
 }
@@ -193,8 +204,23 @@ bool Pluginmanager::checkisdump(const std::wstring& dll){
     }
     return false;
 }
-void Pluginmanager::remove(const std::wstring& ss){
-    remove(WideStringToString(ss));
+void Pluginmanager::remove(const std::wstring& wss,bool onlyload){
+    auto hm=OnNewSentenceS[wss].hmodule;
+    if(OnNewSentenceS[wss].isQt && hm){
+        ((QtFreeLibrary_t)GetProcAddress(GetModuleHandle(0),"QtFreeLibrary"))(hm);
+    }
+    else
+        FreeLibrary(hm);
+    OnNewSentenceS[wss].funcptr=OnNewSentenceS[wss].hmodule=0;
+
+    if(onlyload)return;
+    auto s=WideStringToString(wss);
+    auto &plgs=configs->configs["plugins"];
+    auto it=std::remove_if(plgs.begin(),plgs.end(),[&](auto&t){
+        std::string p=t["path"];
+        return p==s;
+    });
+    plgs.erase(it, plgs.end());
 }
 std::optional<std::wstring>Pluginmanager::selectpluginfile(){
     return SelectFile(0,L"Plugin Files\0*.dll;*.xdll\0");
@@ -279,26 +305,28 @@ bool qtchecker(const std::set<std::string>& dll)
             return true;
     return false;
 }
-addpluginresult Pluginmanager::addplugin(const std::wstring& p){
+addpluginresult Pluginmanager::addplugin(const std::wstring& p,bool onlyload){
+    if(!onlyload)
+        if(checkisdump(p))return addpluginresult::dumplicate;
     auto importtable=getimporttable(p);
     if(importtable.empty())return addpluginresult::invaliddll;
     auto isQt=qtchecker(importtable);
-    LPVOID plugin;
+    HMODULE base;
     if(isQt){
-        plugin=0;
+        base=loadqtdllsX(p);
     }
     else{
-        auto base=LoadLibraryW(p.c_str());
-        if(base==0)return addpluginresult::invaliddll;
-        plugin=GetProcAddress(base,"OnNewSentence");
-        if(!plugin)return addpluginresult::isnotaplugins;
+        base=LoadLibraryW(p.c_str());
     } 
     
+    if(base==0)return addpluginresult::invaliddll;
+    auto plugin=GetProcAddress(base,"OnNewSentence");
+    if(!plugin)return addpluginresult::isnotaplugins;
     std::scoped_lock lock(OnNewSentenceSLock);
-    if(checkisdump(p))return addpluginresult::dumplicate;
-
-    OnNewSentenceS[p]=plugin;
-    add({p,isQt});
+     
+    OnNewSentenceS[p]={isQt,plugin,base};
+    if(!onlyload)
+        add({p,isQt});
 
     return addpluginresult::success;
 }

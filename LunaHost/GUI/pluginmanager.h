@@ -21,8 +21,13 @@ struct pluginitem{
     std::wstring wpath();
     nlohmann::json dump() const;
 };
+struct plugindata{
+    bool isQt;
+    LPVOID funcptr;
+    HMODULE hmodule;
+};
 class Pluginmanager{
-    std::unordered_map<std::wstring,LPVOID>OnNewSentenceS;
+    std::unordered_map<std::wstring,plugindata>OnNewSentenceS;
     std::optional<LPVOID> checkisvalidplugin(const std::wstring&);
     concurrency::reader_writer_lock OnNewSentenceSLock;
     bool checkisdump(const std::wstring&);
@@ -33,7 +38,7 @@ class Pluginmanager{
 public:
     Pluginmanager(LunaHost*);
     bool dispatch(TextThread&, std::wstring& sentence);
-    addpluginresult addplugin(const std::wstring&);
+    addpluginresult addplugin(const std::wstring&,bool onlyload=false);
     std::optional<std::wstring>selectpluginfile();
      
     pluginitem get(int);
@@ -43,8 +48,7 @@ public:
     void setenable(int ,bool);
     int count();
     void add(const pluginitem&);
-    void remove(const std::string&);
-    void remove(const std::wstring&);
+    void remove(const std::wstring&,bool);
     void swaprank(int,int);
 };
 

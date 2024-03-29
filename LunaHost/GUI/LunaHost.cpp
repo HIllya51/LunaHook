@@ -394,7 +394,7 @@ Settingwindow::Settingwindow(LunaHost* host):mainwindow(host){
     settext(WndSetting);
 }
 void Pluginwindow::on_size(int w,int h){
-    listplugins->setgeo(10,80,w-20,h-90);
+    listplugins->setgeo(10,10,w-20,h-20);
 }
 void Pluginwindow::pluginrankmove(int moveoffset){
     auto idx=listplugins->currentidx();
@@ -412,8 +412,7 @@ void Pluginwindow::pluginrankmove(int moveoffset){
     listplugins->setdata(b,(LONG_PTR)pa);
 }
 Pluginwindow::Pluginwindow(mainwindow*p,Pluginmanager* pl):mainwindow(p),pluginmanager(pl){
-    (new label(this,LblPluginNotify))->setgeo(10,10,500,30);
-    (new label(this,LblPluginRemove))->setgeo( 10,40,500,30);
+   
     static auto listadd=[&](const std::wstring& s){
         auto idx=listplugins->additem(std::filesystem::path(s).stem());
         auto _s=new wchar_t[s.size()+1];wcscpy(_s,s.c_str());
@@ -443,7 +442,7 @@ Pluginwindow::Pluginwindow(mainwindow*p,Pluginmanager* pl):mainwindow(p),pluginm
         if(idx!=-1)
         {
             menu.add(MenuRemovePlugin,[&,idx](){
-                pluginmanager->remove((LPCWSTR)listplugins->getdata(idx));
+                pluginmanager->remove((LPCWSTR)listplugins->getdata(idx),false);
                 listplugins->deleteitem(idx);
             }); 
             menu.add_sep();
@@ -452,6 +451,10 @@ Pluginwindow::Pluginwindow(mainwindow*p,Pluginmanager* pl):mainwindow(p),pluginm
             menu.add_sep();
             menu.add_checkable(MenuPluginEnable,pluginmanager->getenable(idx),[&,idx](bool check){
                 pluginmanager->setenable(idx,check);
+                if(check)
+                    pluginmanager->addplugin((LPCWSTR)listplugins->getdata(idx),true);
+                else
+                    pluginmanager->remove((LPCWSTR)listplugins->getdata(idx),true);
             });
         }
         return menu;
