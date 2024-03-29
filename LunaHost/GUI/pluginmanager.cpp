@@ -32,7 +32,6 @@ void tryaddqttoenv(std::vector<std::wstring>&collectQtplugs){
     static HMODULE qt5core=0;
     if(qt5core==0)
     {
-        auto pluginpath=std::filesystem::current_path()/(x64?"plugin64":"plugin32");
         wchar_t env[65535];
         GetEnvironmentVariableW(L"PATH",env,65535);
         auto envs=std::wstring(env);
