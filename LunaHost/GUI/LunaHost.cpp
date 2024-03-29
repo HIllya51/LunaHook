@@ -634,7 +634,7 @@ void Hooksearchsetting::call(std::set<DWORD>pids,std::wstring reg){
 Hooksearchwindow::Hooksearchwindow(LunaHost* host):mainwindow(host){
     
     cjkcheck=new checkbox(this,SEARCH_CJK);
-    hs_default=new button(this,HS_SEARCH_FOR_TEXT);
+    hs_default=new button(this,HS_START_HOOK_SEARCH);
     hs_text=new button(this,HS_SEARCH_FOR_TEXT);
     hs_user=new button(this,HS_SETTINGS);
 
