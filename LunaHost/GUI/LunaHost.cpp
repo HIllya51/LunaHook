@@ -174,16 +174,16 @@ LunaHost::LunaHost(){
         auto tt=Host::GetThread(handle);
         if(!tt)return {};
         Menu menu;
-        menu.add(MenuCopyHookCode,[&](){toclipboard(std::wstring(tt->hp.hookcode));});
+        menu.add(MenuCopyHookCode,[&,tt](){toclipboard(std::wstring(tt->hp.hookcode));});
         menu.add_sep();
-        menu.add(MenuRemoveHook,[&](){Host::RemoveHook(tt->tp.processId,tt->tp.addr);});
-        menu.add(MenuDetachProcess,[&](){
+        menu.add(MenuRemoveHook,[&,tt](){Host::RemoveHook(tt->tp.processId,tt->tp.addr);});
+        menu.add(MenuDetachProcess,[&,tt](){
          
             Host::DetachProcess(tt->tp.processId);
             userdetachedpids.insert(tt->tp.processId); 
         });
         menu.add_sep();
-        menu.add(MenuRemeberSelect,[&](){
+        menu.add(MenuRemeberSelect,[&,tt](){
             if(auto pexe=gmf(tt->tp.processId))
                 savedhookcontext[WideStringToString(pexe.value())]={
                     {"hookcode",WideStringToString(tt->hp.hookcode)},
@@ -191,7 +191,7 @@ LunaHost::LunaHost(){
                     {"ctx2",tt->tp.ctx2},
                 };
         }); 
-        menu.add(MenuForgetSelect,[&](){
+        menu.add(MenuForgetSelect,[&,tt](){
                 if(auto pexe=gmf(tt->tp.processId))
                         savedhookcontext.erase(WideStringToString(pexe.value())); 
         });  
@@ -442,8 +442,7 @@ Pluginwindow::Pluginwindow(mainwindow*p,Pluginmanager* pl):mainwindow(p),pluginm
         auto idx=listplugins->currentidx();
         if(idx!=-1)
         {
-            menu.add(MenuRemovePlugin,[&](){
-                auto idx=listplugins->currentidx();
+            menu.add(MenuRemovePlugin,[&,idx](){
                 pluginmanager->remove((LPCWSTR)listplugins->getdata(idx));
                 listplugins->deleteitem(idx);
             }); 
