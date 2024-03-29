@@ -70,10 +70,10 @@ lockedqueue<HMODULE>waitingresult;
 extern "C" __declspec(dllexport) void QtStartUp(std::vector<std::wstring>* dlls){
     
     static bool once=false;
-    loadqtdlls();
-    once=checkqterror();
     if(once)return;
-    once=checkqterror();
+    loadqtdlls();    
+    once=!checkqterror();
+    if(!once)return;
     std::thread([=](){
         static void* qapp;  //必须static
         void* qstring;
