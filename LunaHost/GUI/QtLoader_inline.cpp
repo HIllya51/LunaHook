@@ -40,13 +40,13 @@ FARPROC QString_fromStdWString,QCoreApplication_addLibraryPath,QString_dtor,QApp
 bool checkqterror(){
     return QString_fromStdWString==0||QCoreApplication_addLibraryPath==0||QString_dtor==0||QApplication_ctor==0||QFont_ctor==0||QFont_dtor==0||QApplication_setFont==0||QApplication_exec==0||QApplication_dtor==0||QApplication_processEvents==0;
 }
-int loadqtdlls(){
+void loadqtdlls(){
     QString_fromStdWString=QCoreApplication_addLibraryPath=QString_dtor=QApplication_ctor=QFont_ctor=QFont_dtor=QApplication_setFont=QApplication_exec=QApplication_dtor=QApplication_processEvents=0;
 
     auto Qt5Widgets=LoadLibrary(L"Qt5Widgets.dll");
     auto Qt5Gui=LoadLibrary(L"Qt5Gui.dll");
     auto Qt5Core=LoadLibrary(L"Qt5Core.dll");
-    if(Qt5Core==0||Qt5Gui==0||Qt5Widgets==0)return 0;
+    if(Qt5Core==0||Qt5Gui==0||Qt5Widgets==0)return;
     
     QString_fromStdWString=GetProcAddress(Qt5Core,fnQString_fromStdWString);
     QCoreApplication_addLibraryPath=GetProcAddress(Qt5Core,fnQCoreApplication_addLibraryPath);
@@ -58,7 +58,6 @@ int loadqtdlls(){
     QApplication_exec=GetProcAddress(Qt5Widgets,fnQApplication_exec);
     QApplication_dtor=GetProcAddress(Qt5Widgets,fnQApplication_dtor);
     QApplication_processEvents=GetProcAddress(Qt5Core,fnQApplication_processEvents);
-    return 0;
 }
 struct info{
     int type;
@@ -68,13 +67,13 @@ struct info{
 lockedqueue<info>waitingtask;
 lockedqueue<HMODULE>waitingresult;
 
-extern "C" __declspec(dllexport) int QtStartUp(std::vector<std::wstring>* dlls){
-    static bool once=false;
-    if(once)return 0;
-    once=true;
+extern "C" __declspec(dllexport) void QtStartUp(std::vector<std::wstring>* dlls){
     
-    static auto once1=loadqtdlls();
-    if(checkqterror())return 0;
+    static bool once=false;
+    loadqtdlls();
+    once=checkqterror();
+    if(once)return;
+    once=checkqterror();
     std::thread([=](){
         static void* qapp;  //必须static
         void* qstring;
@@ -112,6 +111,7 @@ extern "C" __declspec(dllexport) int QtStartUp(std::vector<std::wstring>* dlls){
                 }
             }
             ((void(_CDECL*)(DWORD))QApplication_processEvents)(0);
+            Sleep(1);
         }
         
         // ((void(*)())QApplication_exec)();
@@ -119,17 +119,23 @@ extern "C" __declspec(dllexport) int QtStartUp(std::vector<std::wstring>* dlls){
         // ((void(THISCALL*)(void*))QApplication_dtor)(&qapp);
         
     }).detach();
-    return 0;
+    
 }
 std::mutex loadmutex;
 
 extern "C" __declspec(dllexport) std::vector<HMODULE>* QtLoadLibraryBatch(std::vector<std::wstring>* dlls){
     std::lock_guard _(loadmutex);
-    static auto once=QtStartUp(dlls);
+    QtStartUp(dlls);
     auto hdlls=new std::vector<HMODULE>;
     for(int i=0;i<dlls->size();i++){
-        waitingtask.push({1,dlls->at(i)});
-        hdlls->push_back(waitingresult.pop());
+        if(checkqterror()){
+            hdlls->push_back(0);
+        }
+        else{
+            waitingtask.push({1,dlls->at(i)});
+            hdlls->push_back(waitingresult.pop());
+        }
+        
     }
     return hdlls;
 }
