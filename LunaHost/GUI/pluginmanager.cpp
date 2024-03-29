@@ -211,9 +211,12 @@ void Pluginmanager::remove(const std::wstring& wss,bool onlyload){
     }
     else
         FreeLibrary(hm);
-    OnNewSentenceS[wss].funcptr=OnNewSentenceS[wss].hmodule=0;
+    
 
-    if(onlyload)return;
+    if(onlyload){
+        OnNewSentenceS[wss].funcptr=OnNewSentenceS[wss].hmodule=0;
+        return;
+    }
     auto s=WideStringToString(wss);
     auto &plgs=configs->configs["plugins"];
     auto it=std::remove_if(plgs.begin(),plgs.end(),[&](auto&t){
@@ -221,6 +224,7 @@ void Pluginmanager::remove(const std::wstring& wss,bool onlyload){
         return p==s;
     });
     plgs.erase(it, plgs.end());
+    OnNewSentenceS.erase(wss);
 }
 std::optional<std::wstring>Pluginmanager::selectpluginfile(){
     return SelectFile(0,L"Plugin Files\0*.dll;*.xdll\0");
