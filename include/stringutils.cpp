@@ -151,10 +151,9 @@ inline unsigned int convertUTF32ToUTF16(unsigned int cUTF32, unsigned int& h, un
     unsigned int ret = ((h << 16) | (l & 0x0000FFFF));
     return ret;
 }
-std::wstring utf32_to_utf16(void* data,size_t size){
+std::wstring utf32_to_utf16(uint32_t* u32str,size_t size){
 	std::wstring u16str;
-	auto u32str=(uint32_t*)data;
-	for(auto i=0;i<size/sizeof(uint32_t);i++){
+	for(auto i=0;i<size;i++){
 		unsigned h,l;
 		convertUTF32ToUTF16(u32str[i],h,l);
 		if(h)
@@ -176,7 +175,7 @@ size_t u32strlen(uint32_t* data){
 std::optional<std::wstring> commonparsestring(void* data,size_t length,void* php,DWORD df){
   auto hp=(HookParam*)php;
   if (hp->type & CODEC_UTF16) return std::wstring((wchar_t*)data, length / sizeof(wchar_t));
-	else if(hp->type&CODEC_UTF32)return (std::move(utf32_to_utf16(data,length)));
+	else if(hp->type&CODEC_UTF32)return (std::move(utf32_to_utf16((uint32_t*)data,length/ sizeof(uint32_t))));
 	else if (auto converted = StringToWideString(std::string((char*)data, length), (hp->type&CODEC_UTF8)?CP_UTF8:(hp->codepage ? hp->codepage :df))) return (converted.value());
   else return {};
 }
