@@ -4,6 +4,8 @@
 #include "util.h"
 #include "MinHook.h"
 #include"Lang/Lang.h"
+#include"veh_hook.h"
+#include"engines/emujitarg.hpp"
 namespace
 {
 	SearchParam sp;
@@ -12,8 +14,11 @@ namespace
 	struct HookRecord
 	{
 		uint64_t address = 0;
+		uint64_t em_addr=0;
+		int argidx=0;
 		uintptr_t padding = 0;
 		int offset = 0;
+		JITTYPE jittype;
 		char text[MAX_STRING_SIZE] = {};
 	};
 	std::unique_ptr<HookRecord[]> records;
@@ -122,7 +127,51 @@ bool IsBadReadPtr(void* data)
 	}
 	return cacheEntry == BAD_PAGE;
 }
-
+void DoSend(int i,uintptr_t address,char* str,uintptr_t padding,JITTYPE jittype=JITTYPE::PC,uintptr_t em_addr=0)
+{
+	str += padding;
+	if (IsBadReadPtr(str) || IsBadReadPtr(str + MAX_STRING_SIZE)) return;
+	__try
+	{
+		int length = 0, sum = 0;
+		for (; (str[length] || str[length + 1]) && length < MAX_STRING_SIZE; length += 2) sum += *(uint16_t*)(str + length);
+		if (length > STRING && length < MAX_STRING_SIZE - 1)
+		{
+			// many duplicate results with same address, offset, and third/fourth character will be found: filter them out
+			uint64_t signature = ((uint64_t)i << 56) | ((uint64_t)(str[2] + str[3]) << 48) | address;
+			if (signatureCache[signature % CACHE_SIZE] == signature) return;
+			signatureCache[signature % CACHE_SIZE] = signature;
+			// if there are huge amount of strings that are the same, it's probably garbage: filter them out
+			// can't store all the strings, so use sum as heuristic instead
+			if (_InterlockedIncrement(sumCache + (sum % CACHE_SIZE)) > 25) return;
+			long n = sp.maxRecords - _InterlockedDecrement(&recordsAvailable);
+			if (n < sp.maxRecords)
+			{
+				records[n].jittype = jittype;
+				records[n].padding = padding;
+				if(jittype==JITTYPE::PC)
+				{
+					records[n].address = address;
+					records[n].offset = i * sizeof(char*);
+				}
+				else
+				{
+					records[n].em_addr=em_addr;
+					records[n].argidx=i;
+				}
+					
+				for (int j = 0; j < length; ++j) records[n].text[j] = str[j];
+				records[n].text[length] = 0;
+			}
+			if (n == sp.maxRecords)
+			{
+				spDefault.maxRecords = sp.maxRecords * 2;
+				ConsoleOutput(OUT_OF_RECORDS_RETRY);
+			}
+		}
+	}
+	__except (EXCEPTION_EXECUTE_HANDLER) {}
+}
 void Send(char** stack, uintptr_t address)
 {
 	// it is unsafe to call ANY external functions from this, as they may have been hooked (if called the hook would call this function making an infinite loop)
@@ -130,41 +179,46 @@ void Send(char** stack, uintptr_t address)
 	if (recordsAvailable <= 0) return;
 	for (int i = -registers; i < 10; ++i) for (auto padding : { uintptr_t{}, sp.padding })
 	{
-		char* str = stack[i] + padding;
-		if (IsBadReadPtr(str) || IsBadReadPtr(str + MAX_STRING_SIZE)) continue;
-		__try
-		{
-			int length = 0, sum = 0;
-			for (; (str[length] || str[length + 1]) && length < MAX_STRING_SIZE; length += 2) sum += *(uint16_t*)(str + length);
-			if (length > STRING && length < MAX_STRING_SIZE - 1)
-			{
-				// many duplicate results with same address, offset, and third/fourth character will be found: filter them out
-				uint64_t signature = ((uint64_t)i << 56) | ((uint64_t)(str[2] + str[3]) << 48) | address;
-				if (signatureCache[signature % CACHE_SIZE] == signature) continue;
-				signatureCache[signature % CACHE_SIZE] = signature;
-				// if there are huge amount of strings that are the same, it's probably garbage: filter them out
-				// can't store all the strings, so use sum as heuristic instead
-				if (_InterlockedIncrement(sumCache + (sum % CACHE_SIZE)) > 25) continue;
-				long n = sp.maxRecords - _InterlockedDecrement(&recordsAvailable);
-				if (n < sp.maxRecords)
-				{
-					records[n].address = address;
-					records[n].padding = padding;
-					records[n].offset = i * sizeof(char*);
-					for (int j = 0; j < length; ++j) records[n].text[j] = str[j];
-					records[n].text[length] = 0;
-				}
-				if (n == sp.maxRecords)
-				{
-					spDefault.maxRecords = sp.maxRecords * 2;
-					ConsoleOutput(OUT_OF_RECORDS_RETRY);
-				}
-			}
-		}
-		__except (EXCEPTION_EXECUTE_HANDLER) {}
+		DoSend(i,address,stack[i],padding);
 	}
+	
 }
-
+void SafeSendJitVeh(hook_stack* stack,uintptr_t address,uintptr_t em_addr,JITTYPE jittype){
+	__try
+	{ 
+		for (int i = 0;i<16;i++)
+		{
+			char* str=0;
+			switch (jittype)
+			{
+			#ifdef _WIN64
+			case JITTYPE::YUZU:
+				str=(char*)YUZU::emu_arg(stack)[i];
+				break;
+			#endif
+			case JITTYPE::PPSSPP:
+				str=(char*)PPSSPP::emu_arg(stack)[i];
+				break;
+			default:
+				return;
+			}
+			DoSend(i,address,str,0,jittype,em_addr);
+		}
+	}__except (EXCEPTION_EXECUTE_HANDLER) {}
+}
+std::unordered_map<uintptr_t,uint64_t>addresscalledtime;
+bool SendJitVeh(PCONTEXT context,uintptr_t address,uintptr_t em_addr,JITTYPE jittype){
+	
+	if (recordsAvailable <= 0) return false;
+	if(addresscalledtime.find(address)==addresscalledtime.end())addresscalledtime[address]=0;
+	auto tm=GetTickCount64();
+	if(tm-addresscalledtime[address]<100)return false;
+	addresscalledtime[address]=tm;
+	auto stack=std::make_unique<hook_stack>();
+	context_get(stack.get(),context);
+	SafeSendJitVeh(stack.get(),address,em_addr,jittype);
+	return true;
+}
 std::vector<uintptr_t> GetFunctions(uintptr_t module)
 {
 	if (!module) return {};
@@ -190,6 +244,43 @@ void mergevector(std::vector<uintptr_t> &v1,std::vector<uintptr_t> &v2){
 		}  
 	}
 }
+void SearchForHooks_Return(){
+	ConsoleOutput(HOOK_SEARCH_FINISHED, sp.maxRecords - recordsAvailable);
+	for (int i = 0, results = 0; i < sp.maxRecords; ++i)
+	{
+		HookParam hp;
+		hp.codepage = sp.codepage;
+		hp.jittype=records[i].jittype;
+		hp.padding = records[i].padding;
+
+		if(records[i].jittype==JITTYPE::PC)
+		{
+			if (!records[i].address) continue;
+			hp.offset = records[i].offset;
+			hp.type = CODEC_UTF16 | USING_STRING;
+			hp.address = records[i].address;
+		}
+		else
+		{
+			if (!records[i].em_addr) continue;
+			hp.emu_addr=records[i].em_addr;
+			hp.type = CODEC_UTF16 | USING_STRING|BREAK_POINT;
+			hp.argidx=records[i].argidx;
+		}
+		if (sp.hookPostProcessor) sp.hookPostProcessor(hp);	//actuall useless because of jit
+		NotifyHookFound(hp, (wchar_t*)records[i].text);
+		if (++results % 100'000 == 0) ConsoleOutput(ResultsNum, results);
+	}
+	records.reset();
+	for (int i = 0; i < CACHE_SIZE; ++i) signatureCache[i] = sumCache[i] = 0;
+}
+void initrecords(){
+	do
+		try { records = std::make_unique<HookRecord[]>(recordsAvailable = sp.maxRecords); }
+		catch (std::bad_alloc) { ConsoleOutput(SearchForHooks_ERROR, sp.maxRecords /= 2); }
+	while (!records && sp.maxRecords);
+
+}
 void SearchForHooks(SearchParam spUser)
 {
 	std::thread([=]
@@ -197,113 +288,118 @@ void SearchForHooks(SearchParam spUser)
 		static std::mutex m;
 		std::scoped_lock lock(m);
 		*(void**)(trampoline + send_offset) = Send;
+		ConsoleOutput(HOOK_SEARCH_INITIALIZING, 0.);
 
 		sp = spUser.length == 0 ? spDefault : spUser;
 		sp.codepage=spUser.codepage;
-		ConsoleOutput(HOOK_SEARCH_INITIALIZING, 0.);
-		do
-			try { records = std::make_unique<HookRecord[]>(recordsAvailable = sp.maxRecords); }
-			catch (std::bad_alloc) { ConsoleOutput(SearchForHooks_ERROR, sp.maxRecords /= 2); }
-		while (!records && sp.maxRecords);
+		initrecords();
 
 		std::vector<uintptr_t> addresses;
-		if (*sp.boundaryModule) {
-			auto [minaddr,maxaddr]=Util::QueryModuleLimits(GetModuleHandleW(sp.boundaryModule));
-			if(sp.address_method==0){
-				sp.minAddress=min(max(minaddr,sp.minAddress),maxaddr);
-				sp.maxAddress=max(min(maxaddr,sp.maxAddress),minaddr);
-			}
-			else if(sp.address_method==1){
-				auto maxoff=maxaddr-minaddr;
-				sp.minAddress=minaddr+min(sp.minAddress,maxoff);
-				sp.maxAddress=minaddr+min(sp.maxAddress,maxoff);
-			}
-			//std::tie(sp.minAddress, sp.maxAddress) = Util::QueryModuleLimits(GetModuleHandleW(sp.boundaryModule));
-		}
-		if (*sp.exportModule) addresses = GetFunctions((uintptr_t)GetModuleHandleW(sp.exportModule));
-		if (*sp.boundaryModule){
-			auto _addresses = GetFunctions((uintptr_t)GetModuleHandleW(sp.boundaryModule));
-			mergevector(addresses,_addresses);
-		}
-		std::vector<uintptr_t> addresses1;
-		if(sp.search_method==0){
-			for (auto& addr : addresses1 = Util::SearchMemory(sp.pattern, sp.length, PAGE_EXECUTE, sp.minAddress, sp.maxAddress)) 
-				addr += sp.offset;
-		}
-		else if(sp.search_method==1){  
-			for(uintptr_t addr=sp.minAddress;addr<sp.maxAddress;addr++){
-				if(((*(DWORD*)addr)==0xCCCCCCCC)||((*(DWORD*)addr)==0x90909090)){
-					if(((*(BYTE*)(addr+4))!=0xCC)&&(*(BYTE*)(addr+4))!=0x90){
-						addresses1.push_back(addr+4);
-					}
-				}
-			}  
-		}
-		else if(sp.search_method==2){  
-			for(uintptr_t addr=sp.minAddress;addr<sp.maxAddress;addr++){
-				if(((*(BYTE*)addr)==0xe8)){
-					auto off=*(DWORD*)(addr+1);
-					auto funcaddr=addr+5+off; 
-					if(sp.minAddress<funcaddr && sp.maxAddress>funcaddr){
-						auto it = std::find(addresses1.begin(), addresses1.end(), funcaddr);  
-						addresses1.push_back(funcaddr);
-					}
-				}
-			}  
-		}
-		mergevector(addresses,addresses1);
-
-		auto limits = Util::QueryModuleLimits(GetModuleHandleW(LUNA_HOOK_DLL));
-		addresses.erase(std::remove_if(addresses.begin(), addresses.end(), [&](auto addr) { return addr > limits.first && addr < limits.second; }), addresses.end());
-
-		auto trampolines = (decltype(trampoline)*)VirtualAlloc(NULL, sizeof(trampoline) * addresses.size(), MEM_COMMIT, PAGE_READWRITE);
-		VirtualProtect(trampolines, addresses.size() * sizeof(trampoline), PAGE_EXECUTE_READWRITE, DUMMY);
-		std::vector<uintptr_t>mherroridx;
-		for (int i = 0; i < addresses.size(); ++i)
+		if(jitaddr2emuaddr.empty() || spUser.length !=0)
 		{
-			void* original; 
+			if (*sp.boundaryModule) {
+				auto [minaddr,maxaddr]=Util::QueryModuleLimits(GetModuleHandleW(sp.boundaryModule));
+				if(sp.address_method==0){
+					sp.minAddress=min(max(minaddr,sp.minAddress),maxaddr);
+					sp.maxAddress=max(min(maxaddr,sp.maxAddress),minaddr);
+				}
+				else if(sp.address_method==1){
+					auto maxoff=maxaddr-minaddr;
+					sp.minAddress=minaddr+min(sp.minAddress,maxoff);
+					sp.maxAddress=minaddr+min(sp.maxAddress,maxoff);
+				}
+				//std::tie(sp.minAddress, sp.maxAddress) = Util::QueryModuleLimits(GetModuleHandleW(sp.boundaryModule));
+			}
+			if (*sp.exportModule) addresses = GetFunctions((uintptr_t)GetModuleHandleW(sp.exportModule));
+			if (*sp.boundaryModule){
+				auto _addresses = GetFunctions((uintptr_t)GetModuleHandleW(sp.boundaryModule));
+				mergevector(addresses,_addresses);
+			}
+			std::vector<uintptr_t> addresses1;
+			if(sp.search_method==0){
+				for (auto& addr : addresses1 = Util::SearchMemory(sp.pattern, sp.length, PAGE_EXECUTE, sp.minAddress, sp.maxAddress)) 
+					addr += sp.offset;
+			}
+			else if(sp.search_method==1){  
+				for(uintptr_t addr=sp.minAddress;addr<sp.maxAddress;addr++){
+					if(((*(DWORD*)addr)==0xCCCCCCCC)||((*(DWORD*)addr)==0x90909090)){
+						if(((*(BYTE*)(addr+4))!=0xCC)&&(*(BYTE*)(addr+4))!=0x90){
+							addresses1.push_back(addr+4);
+						}
+					}
+				}  
+			}
+			else if(sp.search_method==2){  
+				for(uintptr_t addr=sp.minAddress;addr<sp.maxAddress;addr++){
+					if(((*(BYTE*)addr)==0xe8)){
+						auto off=*(DWORD*)(addr+1);
+						auto funcaddr=addr+5+off; 
+						if(sp.minAddress<funcaddr && sp.maxAddress>funcaddr){
+							auto it = std::find(addresses1.begin(), addresses1.end(), funcaddr);  
+							addresses1.push_back(funcaddr);
+						}
+					}
+				}  
+			}
+				
+			mergevector(addresses,addresses1);
+
+			auto limits = Util::QueryModuleLimits(GetModuleHandleW(LUNA_HOOK_DLL));
+			addresses.erase(std::remove_if(addresses.begin(), addresses.end(), [&](auto addr) { return addr > limits.first && addr < limits.second; }), addresses.end());
+		
+
+			auto trampolines = (decltype(trampoline)*)VirtualAlloc(NULL, sizeof(trampoline) * addresses.size(), MEM_COMMIT, PAGE_READWRITE);
+			VirtualProtect(trampolines, addresses.size() * sizeof(trampoline), PAGE_EXECUTE_READWRITE, DUMMY);
+			std::vector<uintptr_t>mherroridx;
+			for (int i = 0; i < addresses.size(); ++i)
+			{
+				void* original; 
+				//避免MH_RemoveHook时移除原本已有hook
+				if(MH_CreateHook((void*)addresses[i], trampolines[i], &original)!=MH_OK){
+					mherroridx.push_back(i);
+				} 
+				MH_QueueEnableHook((void*)addresses[i]);
+				memcpy(trampolines[i], trampoline, sizeof(trampoline));
+				*(uintptr_t*)(trampolines[i] + addr_offset) = addresses[i];
+				*(void**)(trampolines[i] + original_offset) = original;
+				if (i % 2500 == 0) ConsoleOutput(HOOK_SEARCH_INITIALIZING, 1 + 98. * i / addresses.size());
+			}
 			//避免MH_RemoveHook时移除原本已有hook
-			if(MH_CreateHook((void*)addresses[i], trampolines[i], &original)!=MH_OK){
-				mherroridx.push_back(i);
+			for(int i=0;i<mherroridx.size();i++){
+				auto reverseidx=mherroridx[mherroridx.size()-1-i]; 
+				addresses.erase(addresses.begin()+reverseidx);
 			} 
-			MH_QueueEnableHook((void*)addresses[i]);
-			memcpy(trampolines[i], trampoline, sizeof(trampoline));
-			*(uintptr_t*)(trampolines[i] + addr_offset) = addresses[i];
-			*(void**)(trampolines[i] + original_offset) = original;
-			if (i % 2500 == 0) ConsoleOutput(HOOK_SEARCH_INITIALIZING, 1 + 98. * i / addresses.size());
-		}
-		//避免MH_RemoveHook时移除原本已有hook
-		for(int i=0;i<mherroridx.size();i++){
-			auto reverseidx=mherroridx[mherroridx.size()-1-i]; 
-			addresses.erase(addresses.begin()+reverseidx);
-		} 
 
-		ConsoleOutput(HOOK_SEARCH_INITIALIZED, addresses.size());
-		MH_ApplyQueued();
-		ConsoleOutput(HOOK_SEARCH_STARTING);
-		ConsoleOutput(MAKE_GAME_PROCESS_TEXT, sp.searchTime / 1000);
-		Sleep(sp.searchTime);
-		for (auto addr : addresses) MH_QueueDisableHook((void*)addr);
-		MH_ApplyQueued();
-		Sleep(1000);
-		for (auto addr : addresses) MH_RemoveHook((void*)addr);
-		ConsoleOutput(HOOK_SEARCH_FINISHED, sp.maxRecords - recordsAvailable);
-		for (int i = 0, results = 0; i < sp.maxRecords; ++i)
-		{
-			if (!records[i].address) continue;
-			if (++results % 100'000 == 0) ConsoleOutput(ResultsNum, results);
-			HookParam hp;
-			hp.offset = records[i].offset;
-			hp.type = CODEC_UTF16 | USING_STRING;
-			hp.address = records[i].address;
-			hp.padding = records[i].padding;
-			hp.codepage = sp.codepage;
-			if (sp.hookPostProcessor) sp.hookPostProcessor(hp);
-			NotifyHookFound(hp, (wchar_t*)records[i].text);
+			ConsoleOutput(HOOK_SEARCH_INITIALIZED, addresses.size());
+			MH_ApplyQueued();
+			ConsoleOutput(HOOK_SEARCH_STARTING);
+			ConsoleOutput(MAKE_GAME_PROCESS_TEXT, sp.searchTime / 1000);
+			Sleep(sp.searchTime);
+			for (auto addr : addresses) MH_QueueDisableHook((void*)addr);
+			MH_ApplyQueued();
+			Sleep(1000);
+			for (auto addr : addresses) MH_RemoveHook((void*)addr);
+			VirtualFree(trampolines, 0, MEM_RELEASE);
+			SearchForHooks_Return();
 		}
-		records.reset();
-		VirtualFree(trampolines, 0, MEM_RELEASE);
-		for (int i = 0; i < CACHE_SIZE; ++i) signatureCache[i] = sumCache[i] = 0;
+		else
+		{
+			ConsoleOutput(HOOK_SEARCH_INITIALIZED, jitaddr2emuaddr.size());
+			std::vector<uint64_t>successaddr;int i=0;
+			for(auto addr:jitaddr2emuaddr){
+				i+=1;
+				//addresses.push_back(addr.first);
+				if(add_veh_hook((void*)addr.first,std::bind(SendJitVeh,std::placeholders::_1,addr.first,addr.second.second,addr.second.first)))
+					successaddr.push_back(addr.first);
+				if (i % 2500 == 0) ConsoleOutput(HOOK_SEARCH_INITIALIZING, 1 + 98. * i / jitaddr2emuaddr.size());
+			}
+			ConsoleOutput(MAKE_GAME_PROCESS_TEXT, sp.searchTime / 1000);
+			Sleep(sp.searchTime);
+			for(auto addr:successaddr){
+				remove_veh_hook((void*)addr);
+			}
+			SearchForHooks_Return();
+		}
 	}).detach();
 }
 

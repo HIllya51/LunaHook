@@ -9,6 +9,7 @@
 #include "MinHook.h"
 #include"Lang/Lang.h"
 #include"veh_hook.h"
+#include"engines/emujitarg.hpp"
 extern WinMutex viewMutex;
 
 // - Unnamed helpers -
@@ -102,12 +103,12 @@ uintptr_t getasbaddr(const HookParam &hp){
 		if (hp.type & FUNCTION_OFFSET)
 		{
 			if (FARPROC function = GetProcAddress(GetModuleHandleW(hp.module), hp.function)) address += (uint64_t)function;
-			else return ConsoleOutput(FUNC_MISSING), false;
+			else return ConsoleOutput(FUNC_MISSING), 0;
 		}
 		else
 		{
 			if (HMODULE moduleBase = GetModuleHandleW(hp.module)) address += (uint64_t)moduleBase;
-			else return ConsoleOutput(MODULE_MISSING), false;
+			else return ConsoleOutput(MODULE_MISSING), 0;
 		} 
 	}
 	return address;
@@ -116,6 +117,8 @@ bool TextHook::Insert(HookParam hp)
 {
 	
 	auto addr=getasbaddr(hp);
+	if(!addr)return false;
+
 	RemoveHook(addr, 0);
 
 	local_buffer=new BYTE[PIPE_BUFFER_SIZE];
@@ -124,8 +127,7 @@ bool TextHook::Insert(HookParam hp)
 		this->hp = hp;
 		address = addr;
 	}
-	
-
+	savetypeforremove=hp.type;
 	if (hp.type & DIRECT_READ) return InsertReadCode();
 	if (hp.type & BREAK_POINT) return InsertBreakPoint();
 	return InsertHookCode();
@@ -142,6 +144,23 @@ uintptr_t queryrelativeret(uintptr_t retaddr){
 	re.insert(std::make_pair(retaddr,relative));
 	return relative;
 }
+
+void jitfunctiontext_fun(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
+	switch (hp->jittype)
+	{
+	#ifdef _WIN64
+	case JITTYPE::YUZU:
+		*data=YUZU::emu_arg(stack)[hp->argidx]+hp->padding;
+		break;
+	#endif
+	case JITTYPE::PPSSPP:
+		*data=PPSSPP::emu_arg(stack)[hp->argidx]+hp->padding;
+		break;
+	default:
+		*data=0;
+	}
+	*len=HookStrLen(hp,(BYTE*)*data);
+}
 void TextHook::Send(uintptr_t lpDataBase)
 {
 	auto buffer =(TextOutput_T*) local_buffer;
@@ -149,7 +168,7 @@ void TextHook::Send(uintptr_t lpDataBase)
 	_InterlockedIncrement((long*)&useCount);
 	__try
 	{
-		auto stack=(hook_stack*)(lpDataBase-sizeof(hook_stack)+sizeof(uintptr_t));
+		auto stack=get_hook_stack(lpDataBase);
 		
 		#ifndef _WIN64
 		if (auto current_trigger_fun = trigger_fun.exchange(nullptr))
@@ -176,6 +195,10 @@ void TextHook::Send(uintptr_t lpDataBase)
 		{
 			isstring=true;
 			hp.text_fun(stack, &hp, &lpDataIn, &lpSplit, &lpCount);
+		}
+		else if(hp.jittype!=JITTYPE::PC){
+			isstring=true;
+			jitfunctiontext_fun(stack, &hp, &lpDataIn, &lpSplit, &lpCount);
 		}
 		else 
 		{
@@ -273,52 +296,18 @@ void TextHook::Send(uintptr_t lpDataBase)
 
 	_InterlockedDecrement((long*) & useCount);
 }
-void TextHook::breakpointcontext(PCONTEXT context){
-#ifdef _WIN64
+bool TextHook::breakpointcontext(PCONTEXT context){
 	auto stack=std::make_unique<hook_stack>();
-	stack->rax=context->Rax;
-	stack->rbx=context->Rbx;
-	stack->rcx=context->Rcx;
-	stack->rdx=context->Rdx;
-	stack->rsp=context->Rsp;
-	stack->rbp=context->Rbp;
-	stack->rsi=context->Rsi;
-	stack->rdi=context->Rdi;
-	stack->r8=context->R8;
-	stack->r9=context->R9;
-	stack->r10=context->R10;
-	stack->r11=context->R11;
-	stack->r12=context->R12;
-	stack->r13=context->R13;
-	stack->r14=context->R14;
-	stack->r15=context->R15;
-	stack->eflags=context->EFlags;
-	stack->retaddr=*(DWORD64*)context->Rsp;
-	auto lpDataBase=(uintptr_t)stack.get()+sizeof(hook_stack)-sizeof(uintptr_t);
+	context_get(stack.get(),context);
+	auto lpDataBase=stack->get_base();
 	Send(lpDataBase);
-	context->Rax=stack->rax;
-	context->Rbx=stack->rbx;
-	context->Rcx=stack->rcx;
-	context->Rdx=stack->rdx;
-	context->Rsp=stack->rsp;
-	context->Rbp=stack->rbp;
-	context->Rsi=stack->rsi;
-	context->Rdi=stack->rdi;
-	context->R8=stack->r8;
-	context->R9=stack->r9;
-	context->R10=stack->r10;
-	context->R11=stack->r11;
-	context->R12=stack->r12;
-	context->R13=stack->r13;
-	context->R14=stack->r14;
-	context->R15=stack->r15;
-	context->EFlags=stack->eflags;
-#endif
+	context_set(stack.get(),context);
+	return true;
 }
 bool TextHook::InsertBreakPoint()
 {
 	//MH_CreateHook 64位unity/yuzu-emu经常 MH_ERROR_MEMORY_ALLOC 
-	return add_veh_hook(location,std::bind(&TextHook::breakpointcontext,this,std::placeholders::_1), 0);
+	return add_veh_hook(location,std::bind(&TextHook::breakpointcontext,this,std::placeholders::_1));
 }
 bool TextHook::RemoveBreakPoint()
 {
@@ -393,8 +382,8 @@ void TextHook::RemoveReadCode()
 void TextHook::Clear()
 {
 	if (address == 0) return;
-	if (hp.type & DIRECT_READ) RemoveReadCode();
-	else if (hp.type & BREAK_POINT) RemoveBreakPoint();
+	if (savetypeforremove & DIRECT_READ) RemoveReadCode();
+	else if (savetypeforremove & BREAK_POINT) RemoveBreakPoint();
 	else RemoveHookCode();
 	NotifyHookRemove(address, hp.name);
 	std::scoped_lock lock(viewMutex);
@@ -451,15 +440,7 @@ int TextHook::GetLength(hook_stack* stack, uintptr_t in)
 
 int TextHook::HookStrlen(BYTE* data)
 {
-	if(data==0)return 0;
-
-	if(hp.type&CODEC_UTF16)
-		return wcslen((wchar_t*)data)*2;
-	else if(hp.type&CODEC_UTF32)
-		return u32strlen((uint32_t*)data)*4;
-	else
-		return strlen((char*)data);
-
+	return HookStrLen(&hp,data);
 }
 
 // EOF

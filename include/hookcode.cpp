@@ -44,7 +44,12 @@ namespace
 	{
 		std::wsmatch match;
 		HookParam hp;
-
+		if(endWith(HCode,L":JIT:YUZU")){
+			hp.jittype=JITTYPE::YUZU;
+		}
+		else if(endWith(HCode,L":JIT:PPSSPP")){
+			hp.jittype=JITTYPE::PPSSPP;
+		}
 		// {A|B|W|H|S|Q|V|M}
 		switch (HCode[0])
 		{
@@ -161,7 +166,18 @@ namespace
 		// ITH has registers offset by 4 vs AGTH: need this to correct
 		if (hp.offset < 0) hp.offset -= 4;
 		if (hp.split < 0) hp.split -= 4;
-
+		
+		if(hp.jittype!=JITTYPE::PC){
+			hp.emu_addr=hp.address;
+			hp.argidx=hp.offset;
+			hp.padding=0;
+			hp.offset=0;
+			hp.address=0;
+			hp.type &= ~MODULE_OFFSET;
+			hp.type &= ~FUNCTION_OFFSET;
+			strcpy(hp.function,"");
+			wcscpy(hp.module,L"");
+		}
 		return hp;
 	}
 
@@ -258,34 +274,31 @@ namespace
 		else
 			HCode += L"H";
 
-		if (hp.text_fun || hp.filter_fun) 
-			HCode += L'X';
+		
+		if(hp.type & USING_STRING)
+		{
+			if(hp.type&CODEC_UTF16)
+				HCode += L'Q';
+			else if(hp.type&CODEC_UTF8)
+				HCode += L'V';
+			else if(hp.type&CODEC_UTF32)
+				HCode += L'U';
+			else 
+				HCode += L'S';
+		}
 		else
 		{
-			if(hp.type & USING_STRING)
-			{
-				if(hp.type&CODEC_UTF16)
-					HCode += L'Q';
-				else if(hp.type&CODEC_UTF8)
-					HCode += L'V';
-				else if(hp.type&CODEC_UTF32)
-					HCode += L'U';
-				else 
-					HCode += L'S';
-			}
-			else
-			{
-				if(hp.type&CODEC_UTF16)
-					HCode += L'W';
-				else if(hp.type&CODEC_UTF32)
-					HCode += L'I';
-				else if (hp.type & CODEC_ANSI_BE) 
-					HCode += L'A';
-				else 
-					HCode += L'B';
-			}
-
+			if(hp.type&CODEC_UTF16)
+				HCode += L'W';
+			else if(hp.type&CODEC_UTF32)
+				HCode += L'I';
+			else if (hp.type & CODEC_ANSI_BE) 
+				HCode += L'A';
+			else 
+				HCode += L'B';
 		}
+	 
+		if (hp.text_fun || hp.filter_fun)  HCode += L'X';
 		
 		if (hp.type & FULL_STRING) HCode += L'F';
 
@@ -295,30 +308,50 @@ namespace
 
 		if (hp.padding) HCode += HexString(hp.padding) + L'+';
 
-		if (hp.offset < 0) hp.offset += 4;
-		if (hp.split < 0) hp.split += 4;
+		switch (hp.jittype)
+		{
+		case JITTYPE::PC:
+		{
+			
+			if (hp.offset < 0) hp.offset += 4;
+			if (hp.split < 0) hp.split += 4;
 
-		HCode += HexString(hp.offset);
-		if (hp.type & DATA_INDIRECT) HCode += L'*' + HexString(hp.index);
-		if (hp.type & USING_SPLIT) HCode += L':' + HexString(hp.split);
-		if (hp.type & SPLIT_INDIRECT) HCode += L'*' + HexString(hp.split_index);
-	
+			HCode += HexString(hp.offset);
+			if (hp.type & DATA_INDIRECT) HCode += L'*' + HexString(hp.index);
+			if (hp.type & USING_SPLIT) HCode += L':' + HexString(hp.split);
+			if (hp.type & SPLIT_INDIRECT) HCode += L'*' + HexString(hp.split_index);
+			// Attempt to make the address relative
+			if (processId && !(hp.type & MODULE_OFFSET))
+				if (AutoHandle<> process = OpenProcess(PROCESS_VM_READ | PROCESS_QUERY_INFORMATION, FALSE, processId))
+					if (MEMORY_BASIC_INFORMATION info = {}; VirtualQueryEx(process, (LPCVOID)hp.address, &info, sizeof(info)))
+						if (auto moduleName = GetModuleFilename(processId, (HMODULE)info.AllocationBase))
+						{
+							hp.type |= MODULE_OFFSET;
+							hp.address -= (uint64_t)info.AllocationBase;
+							wcsncpy_s(hp.module, moduleName->c_str() + moduleName->rfind(L'\\') + 1, MAX_MODULE_SIZE - 1);
+						}
+
+			HCode += L'@' + HexString(hp.address);
+			if (hp.type & MODULE_OFFSET) HCode += L':' + std::wstring(hp.module);
+			if (hp.type & FUNCTION_OFFSET) HCode += L':' + StringToWideString(hp.function);
+		}
+		break;
+		default:
+		{
+			HCode += HexString(hp.argidx);
+			HCode += L'@' + HexString(hp.emu_addr);
+			switch (hp.jittype)
+			{
+			case  JITTYPE::YUZU:
+				HCode+=L":JIT:YUZU";
+				break;
+			case JITTYPE::PPSSPP:
+				HCode+=L":JIT:PPSSPP";
+			}
+		}
+		break;
+		} 
 		
-
-		// Attempt to make the address relative
-		if (processId && !(hp.type & MODULE_OFFSET))
-			if (AutoHandle<> process = OpenProcess(PROCESS_VM_READ | PROCESS_QUERY_INFORMATION, FALSE, processId))
-				if (MEMORY_BASIC_INFORMATION info = {}; VirtualQueryEx(process, (LPCVOID)hp.address, &info, sizeof(info)))
-					if (auto moduleName = GetModuleFilename(processId, (HMODULE)info.AllocationBase))
-					{
-						hp.type |= MODULE_OFFSET;
-						hp.address -= (uint64_t)info.AllocationBase;
-						wcsncpy_s(hp.module, moduleName->c_str() + moduleName->rfind(L'\\') + 1, MAX_MODULE_SIZE - 1);
-					}
-
-		HCode += L'@' + HexString(hp.address);
-		if (hp.type & MODULE_OFFSET) HCode += L':' + std::wstring(hp.module);
-		if (hp.type & FUNCTION_OFFSET) HCode += L':' + StringToWideString(hp.function);
 
 		return HCode;
 	}

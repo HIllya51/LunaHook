@@ -151,6 +151,26 @@ inline unsigned int convertUTF32ToUTF16(unsigned int cUTF32, unsigned int& h, un
     unsigned int ret = ((h << 16) | (l & 0x0000FFFF));
     return ret;
 }
+
+std::basic_string<uint32_t> utf16_to_utf32(const wchar_t* u16str,size_t size){
+  std::basic_string<uint32_t> utf32String;
+  for (size_t i=0;i<size;i++)
+  {
+    auto u16c=u16str[i];
+    if(u16c-0xd800u<2048u)
+      if((u16c&0xfffffc00==0xd800)&&(i<size-1)&&(u16str[i+1]&0xfffffc00==0xdc00)){
+        utf32String+=(u16c << 10) + u16str[i+1] - 0x35fdc00;
+        i+=1;
+      }
+      else{
+        //error invalid u16 char
+      }
+    else
+      utf32String+=u16str[i];
+  }
+  return utf32String;
+}
+
 std::wstring utf32_to_utf16(uint32_t* u32str,size_t size){
 	std::wstring u16str;
 	for(auto i=0;i<size;i++){

@@ -61,17 +61,30 @@ struct hook_stack
 		uintptr_t retaddr;
 		BYTE base[1];
 	};
-
+	uintptr_t get_base(){
+		return (uintptr_t)this+sizeof(hook_stack)-sizeof(uintptr_t);
+	}
 };
+
+inline hook_stack* get_hook_stack(uintptr_t lpDataBase){
+	return (hook_stack*)(lpDataBase-sizeof(hook_stack)+sizeof(uintptr_t));
+}
 // jichi 3/7/2014: Add guessed comment
 
 #define ALIGNPTR(Y,X) union { \
      ##Y; \
     ##X; \
 };
+
+
+enum class JITTYPE{
+	PC,//not a jit
+    YUZU,
+    PPSSPP
+};
 struct HookParam
 {
-	uint64_t address; // absolute or relative address
+	ALIGNPTR(uint64_t __11,uintptr_t address); // absolute or relative address
 	int offset, // offset of the data in the memory
 		index, // deref_offset1
 		split, // offset of the split character
@@ -96,6 +109,9 @@ struct HookParam
 	HookParam(){
 		ZeroMemory(this,sizeof(HookParam));
 	}
+	ALIGNPTR(uint64_t __10,uintptr_t emu_addr);
+	int argidx;
+	JITTYPE jittype;
 };
 
 struct ThreadParam

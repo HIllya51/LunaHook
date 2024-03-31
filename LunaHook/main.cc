@@ -161,8 +161,35 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD fdwReason, LPVOID)
 	}
 	return TRUE;
 }
-bool NewHook(HookParam hp, LPCSTR lpname)
+int HookStrLen(HookParam* hp,BYTE* data){
+	if(data==0)return 0;
+
+	if(hp->type&CODEC_UTF16)
+		return wcslen((wchar_t*)data)*2;
+	else if(hp->type&CODEC_UTF32)
+		return u32strlen((uint32_t*)data)*4;
+	else
+		return strlen((char*)data);
+
+}
+static std::mutex maplock;
+void jitaddrclear(){
+	std::lock_guard _(maplock);
+	emuaddr2jitaddr.clear();
+	jitaddr2emuaddr.clear();
+}
+void jitaddraddr(uintptr_t em_addr,uintptr_t jitaddr,JITTYPE jittype){
+	std::lock_guard _(maplock);
+	if(emuaddr2jitaddr.find(em_addr)==emuaddr2jitaddr.end())
+		emuaddr2jitaddr[em_addr]={jittype,{}};
+	emuaddr2jitaddr[em_addr].second.insert(jitaddr);
+	jitaddr2emuaddr[jitaddr]={jittype,em_addr};
+}
+bool NewHook_1(HookParam& hp, LPCSTR lpname)
 {
+	if(hp.emu_addr)
+		ConsoleOutput("%p => %p",hp.emu_addr,hp.address);
+
 	if (++currentHook >= MAX_HOOK){
 		ConsoleOutput(TOO_MANY_HOOKS);
 		return false;
@@ -182,7 +209,22 @@ bool NewHook(HookParam hp, LPCSTR lpname)
 		return true;
 	}
 }
-
+bool NewHook(HookParam hp, LPCSTR name){
+	if(hp.address)
+		return NewHook_1(hp,name);
+	if(emuaddr2jitaddr.find(hp.emu_addr)==emuaddr2jitaddr.end())return false;
+	strcpy(hp.function,"");
+	wcscpy(hp.module,L"");
+	hp.type &= ~MODULE_OFFSET;
+	hp.type &= ~FUNCTION_OFFSET;
+	auto succ=false;
+	for(auto __x: emuaddr2jitaddr[hp.emu_addr].second){
+		hp.address=__x;
+		hp.jittype=emuaddr2jitaddr[hp.emu_addr].first;
+		succ|=NewHook_1(hp,name);
+	}
+	return succ;
+}
 void RemoveHook(uint64_t addr, int maxOffset)
 {
 	for (auto& hook : *hooks) if (abs((long long)(hook.address - addr)) <= maxOffset) return hook.Clear();
@@ -206,3 +248,69 @@ std::string LoadResData(LPCWSTR pszResID,LPCWSTR _type)
 	FreeResource(lpRsrc); 
 	return data;
 }  
+
+
+void context_get(hook_stack* stack,PCONTEXT context){
+	#ifndef _WIN64
+	stack->eax=context->Eax;
+	stack->ecx=context->Ecx;
+	stack->edx=context->Edx;
+	stack->ebx=context->Ebx;
+	stack->esp=context->Esp;
+	stack->ebp=context->Ebp;
+	stack->esi=context->Esi;
+	stack->edi=context->Edi;
+	stack->eflags=context->EFlags;
+	stack->retaddr=*(DWORD*)context->Esp;
+	#else
+	stack->rax=context->Rax;
+	stack->rbx=context->Rbx;
+	stack->rcx=context->Rcx;
+	stack->rdx=context->Rdx;
+	stack->rsp=context->Rsp;
+	stack->rbp=context->Rbp;
+	stack->rsi=context->Rsi;
+	stack->rdi=context->Rdi;
+	stack->r8=context->R8;
+	stack->r9=context->R9;
+	stack->r10=context->R10;
+	stack->r11=context->R11;
+	stack->r12=context->R12;
+	stack->r13=context->R13;
+	stack->r14=context->R14;
+	stack->r15=context->R15;
+	stack->eflags=context->EFlags;
+	stack->retaddr=*(DWORD64*)context->Rsp;
+	#endif
+}
+void context_set(hook_stack* stack,PCONTEXT context){
+	#ifndef _WIN64
+	context->Eax=stack->eax;
+	context->Ecx=stack->ecx;
+	context->Edx=stack->edx;
+	context->Ebx=stack->ebx;
+	context->Esp=stack->esp;
+	context->Ebp=stack->ebp;
+	context->Esi=stack->esi;
+	context->Edi=stack->edi;
+	context->EFlags=stack->eflags;
+	#else
+	context->Rax=stack->rax;
+	context->Rbx=stack->rbx;
+	context->Rcx=stack->rcx;
+	context->Rdx=stack->rdx;
+	context->Rsp=stack->rsp;
+	context->Rbp=stack->rbp;
+	context->Rsi=stack->rsi;
+	context->Rdi=stack->rdi;
+	context->R8=stack->r8;
+	context->R9=stack->r9;
+	context->R10=stack->r10;
+	context->R11=stack->r11;
+	context->R12=stack->r12;
+	context->R13=stack->r13;
+	context->R14=stack->r14;
+	context->R15=stack->r15;
+	context->EFlags=stack->eflags;
+	#endif
+}

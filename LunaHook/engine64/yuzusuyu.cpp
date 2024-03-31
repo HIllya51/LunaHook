@@ -1,7 +1,8 @@
 ﻿#include"yuzusuyu.h"
 #include"mages/mages.h"
+#include"hookfinder.h"
+#include"emujitarg.hpp"
 namespace{
-        
     auto isFastMem = true;
 
     auto isVirtual = true;//Process.arch === 'x64' && Process.platform === 'windows';
@@ -68,18 +69,10 @@ uintptr_t* argidx(hook_stack* stack,int idx){
     return (uintptr_t*)((uintptr_t)stack+sizeof(hook_stack)-sizeof(uintptr_t)+offset);
 }
 
-class emu_arg{
-    hook_stack* stack;
-public:
-    emu_arg(hook_stack* stack_):stack(stack_){};
-    uintptr_t operator [](int idx){
-        auto base=stack->r13;
-        auto args=(uintptr_t*)stack->r15;
-        return base+args[idx];
-    }
-};
 struct emfuncinfo{
     const char* hookname;
+    uint64_t type;
+    int argidx;int padding;
     void* hookfunc;
 	void* filterfun;
     const wchar_t* _id;
@@ -95,49 +88,35 @@ bool checkiscurrentgame(const emfuncinfo& em){
 	}
 	return false;
 }
-template<int index>
-void simpleutf32getter(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
-    auto address=emu_arg(stack)[index];
-    auto s=utf32_to_utf16((uint32_t*)address,u32strlen((uint32_t*)address));
-    write_string_new(data,len,s);
-}
-
-template<int index,int offset=0>
-void simpleutf8getter(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
-    auto address=emu_arg(stack)[index]+offset;
-    hp->type=USING_STRING|CODEC_UTF8|NO_CONTEXT|BREAK_POINT;
-    *data=address;*len=strlen((char*)address);
-}
-template<int index,DWORD _type=0>
-void simpleutf16getter(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
-    auto address=emu_arg(stack)[index];
-    hp->type=USING_STRING|CODEC_UTF16|NO_CONTEXT|BREAK_POINT|_type;
-    *data=address;*len=wcslen((wchar_t*)address)*2;
-}
-
 }
 bool yuzusuyu::attach_function()
 {
-    ConsoleOutput("[Compatibility] Yuzu 1616+");
+   ConsoleOutput("[Compatibility] Yuzu 1616+");
    auto DoJitPtr=getDoJitAddress();
    if(DoJitPtr==0)return false;
    ConsoleOutput("DoJitPtr %p",DoJitPtr);
+   jitaddrclear();
    HookParam hp;
    hp.address=DoJitPtr;
    hp.text_fun=[](hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
         auto descriptor = *argidx(stack,idxDescriptor); // r8
         auto entrypoint = *argidx(stack,idxEntrypoint); // r9
         auto em_address = *(uintptr_t*)descriptor;
-        em_address-=0x80004000;
-        if(emfunctionhooks.find(em_address)==emfunctionhooks.end() || !entrypoint)return;
-        auto op=emfunctionhooks.at(em_address);
+        jitaddraddr(em_address,entrypoint,JITTYPE::YUZU);
+        auto em_address_off=em_address- 0x80004000;
+        if(emfunctionhooks.find(em_address_off)==emfunctionhooks.end() || !entrypoint)return;
+        auto op=emfunctionhooks.at(em_address_off);
         if(!(checkiscurrentgame(op)))return;
-
+        
         HookParam hpinternal;
         hpinternal.address=entrypoint;
-        hpinternal.type=CODEC_UTF16|USING_STRING|NO_CONTEXT|BREAK_POINT;
+        hpinternal.emu_addr=em_address;//用于生成hcode
+        hpinternal.type=USING_STRING|NO_CONTEXT|BREAK_POINT|op.type;
         hpinternal.text_fun=(decltype(hpinternal.text_fun))op.hookfunc;
 		hpinternal.filter_fun=(decltype(hpinternal.filter_fun))op.filterfun;
+        hpinternal.argidx=op.argidx;
+        hpinternal.padding=op.padding;
+        hpinternal.jittype=JITTYPE::YUZU;
         NewHook(hpinternal,op.hookname);
     
    };
@@ -145,7 +124,7 @@ bool yuzusuyu::attach_function()
 } 
 
 void _0100978013276000(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
-    auto s=mages::readString(emu_arg(stack)[0],0);
+    auto s=mages::readString(YUZU::emu_arg(stack)[0],0);
     write_string_new(data,len,s);
 }
 
@@ -174,7 +153,7 @@ bool F010045C0109F2000(void* data, size_t* len, HookParam* hp){
 
 template<int index>
 void T0100A1E00BFEA000(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
-    auto address=emu_arg(stack)[index];
+    auto address=YUZU::emu_arg(stack)[index];
     *len=(*(WORD*)(address+0x10))*2;
     *data=address+0x14;
 }
@@ -365,7 +344,7 @@ bool F01000200194AE000(void* data, size_t* len, HookParam* hp){
 	return write_string_overwrite(data,len,s);
 }
 bool F0100EA001A626000(void* data, size_t* len, HookParam* hp){
-    auto s=std::wstring((wchar_t*)data,*len/2);
+    auto s=utf32_to_utf16((uint32_t*)data,*len/4);
     if (s == L"　　") {
         return false;
     }
@@ -377,20 +356,22 @@ bool F0100EA001A626000(void* data, size_t* len, HookParam* hp){
         s = std::regex_replace(s, std::wregex(L"#T2[^#]+"), L"");
         s = std::regex_replace(s, std::wregex(L"#T\\d"), L"");
     }
-    return write_string_overwrite(data,len,s);
+    auto u32=utf16_to_utf32(s.c_str(),s.size());
+    return write_string_overwrite(data,len,u32);
 }
 bool F0100F7E00DFC8000(void* data, size_t* len, HookParam* hp){
-    auto s=std::wstring((wchar_t*)data,*len/2);
+    auto s=utf32_to_utf16((uint32_t*)data,*len/4);
     s = std::regex_replace(s, std::wregex(L"[\\s]"), L" "); 
     s = std::regex_replace(s, std::wregex(L"#KW"), L"");
     s = std::regex_replace(s, std::wregex(L"#C\\(TR,0xff0000ff\\)"), L"");
     s = std::regex_replace(s, std::wregex(L"#P\\(.*\\)"), L"");
-    return write_string_overwrite(data,len,s);
+    auto u32=utf16_to_utf32(s.c_str(),s.size());
+    return write_string_overwrite(data,len,u32);
 }
 
 
 void T0100982015606000(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
-    auto address=emu_arg(stack)[1];
+    auto address=YUZU::emu_arg(stack)[1];
     *len=(*(DWORD*)(address+0x10))*2;
     *data=address+0x14;
 }
@@ -410,79 +391,80 @@ bool F0100925014864000(void* data, size_t* len, HookParam* hp){
 }
 
 bool F0100936018EB4000(void* data, size_t* len, HookParam* hp){
-    auto s=std::wstring((wchar_t*)data,*len/2);
+    auto s=utf32_to_utf16((uint32_t*)data,*len/4);
     s = std::regex_replace(s, std::wregex(L"<[^>]+>"), L"");
     s = std::regex_replace(s, std::wregex(L"\n+"), L" ");
-    return write_string_overwrite(data,len,s);
+    auto u32=utf16_to_utf32(s.c_str(),s.size());
+    return write_string_overwrite(data,len,u32);
 }
 namespace{
 auto _=[](){
     emfunctionhooks={
-            {0x8003eeac - 0x80004000,{"Memories Off",_0100978013276000,0,L"0100978013276000",L"1.0.0"}},
-            {0x8003eebc - 0x80004000,{"Memories Off",_0100978013276000,0,L"0100978013276000",L"1.0.1"}},
+            {0x8003eeac - 0x80004000,{"Memories Off",CODEC_UTF16,0,0,_0100978013276000,0,L"0100978013276000",L"1.0.0"}},
+            {0x8003eebc - 0x80004000,{"Memories Off",CODEC_UTF16,0,0,_0100978013276000,0,L"0100978013276000",L"1.0.1"}},
             
             // Shiro to Kuro no Alice
-            {0x80013f20 - 0x80004000,{"Shiro to Kuro no Alice",simpleutf8getter<0>,NewLineCharFilterW,L"0100A460141B8000",L"1.0.0"}},
-            {0x80013f94 - 0x80004000,{"Shiro to Kuro no Alice",simpleutf8getter<0>,NewLineCharFilterW,L"0100A460141B8000",L"1.0.0"}},
-            {0x8001419c - 0x80004000,{"Shiro to Kuro no Alice",simpleutf8getter<0>,NewLineCharFilterW,L"0100A460141B8000",L"1.0.0"}},
+            {0x80013f20 - 0x80004000,{"Shiro to Kuro no Alice",CODEC_UTF8,0,0,0,NewLineCharFilterW,L"0100A460141B8000",L"1.0.0"}},
+            {0x80013f94 - 0x80004000,{"Shiro to Kuro no Alice",CODEC_UTF8,0,0,0,NewLineCharFilterW,L"0100A460141B8000",L"1.0.0"}},
+            {0x8001419c - 0x80004000,{"Shiro to Kuro no Alice",CODEC_UTF8,0,0,0,NewLineCharFilterW,L"0100A460141B8000",L"1.0.0"}},
             // Shiro to Kuro no Alice -Twilight line-
-            {0x80014260 - 0x80004000,{"Shiro to Kuro no Alice -Twilight line-",simpleutf8getter<0>,NewLineCharFilterW,L"0100A460141B8000",L"1.0.0"}},
-            {0x800142d4 - 0x80004000,{"Shiro to Kuro no Alice -Twilight line-",simpleutf8getter<0>,NewLineCharFilterW,L"0100A460141B8000",L"1.0.0"}},
-            {0x800144dc - 0x80004000,{"Shiro to Kuro no Alice -Twilight line-",simpleutf8getter<0>,NewLineCharFilterW,L"0100A460141B8000",L"1.0.0"}},
+            {0x80014260 - 0x80004000,{"Shiro to Kuro no Alice -Twilight line-",CODEC_UTF8,0,0,0,NewLineCharFilterW,L"0100A460141B8000",L"1.0.0"}},
+            {0x800142d4 - 0x80004000,{"Shiro to Kuro no Alice -Twilight line-",CODEC_UTF8,0,0,0,NewLineCharFilterW,L"0100A460141B8000",L"1.0.0"}},
+            {0x800144dc - 0x80004000,{"Shiro to Kuro no Alice -Twilight line-",CODEC_UTF8,0,0,0,NewLineCharFilterW,L"0100A460141B8000",L"1.0.0"}},
             
-            {0x80072d00 - 0x80004000,{"CLANNAD",simpleutf16getter<1,FULL_STRING>,F0100A3A00CC7E000,L"0100A3A00CC7E000",L"1.0.0"}},
-            {0x80072d30 - 0x80004000,{"CLANNAD",simpleutf16getter<1,FULL_STRING>,F0100A3A00CC7E000,L"0100A3A00CC7E000",L"1.0.7"}},
+            {0x80072d00 - 0x80004000,{"CLANNAD",CODEC_UTF16|FULL_STRING,1,0,0, F0100A3A00CC7E000,L"0100A3A00CC7E000",L"1.0.0"}},
+            {0x80072d30 - 0x80004000,{"CLANNAD",CODEC_UTF16|FULL_STRING,1,0,0,F0100A3A00CC7E000,L"0100A3A00CC7E000",L"1.0.7"}},
 
-            {0x800e3424 - 0x80004000,{"VARIABLE BARRICADE NS",simpleutf8getter<0>,F010045C0109F2000,L"010045C0109F2000",L"1.0.1"}},//"System Messages + Choices"), //Also includes the names of characters, 
-            {0x800fb080 - 0x80004000,{"VARIABLE BARRICADE NS",simpleutf8getter<3>,F010045C0109F2000,L"010045C0109F2000",L"1.0.1"}},//Main Text
+            {0x800e3424 - 0x80004000,{"VARIABLE BARRICADE NS",CODEC_UTF8,0,0,0,F010045C0109F2000,L"010045C0109F2000",L"1.0.1"}},//"System Messages + Choices"), //Also includes the names of characters, 
+            {0x800fb080 - 0x80004000,{"VARIABLE BARRICADE NS",CODEC_UTF8,3,0,0,F010045C0109F2000,L"010045C0109F2000",L"1.0.1"}},//Main Text
             
-            {0x805bba5c - 0x80004000,{"AMNESIA for Nintendo Switch",T0100A1E00BFEA000<2>,F0100A1E00BFEA000,L"0100A1E00BFEA000",L"1.0.1"}},//dialogue
-            {0x805e9930 - 0x80004000,{"AMNESIA for Nintendo Switch",T0100A1E00BFEA000<2>,F0100A1E00BFEA000,L"0100A1E00BFEA000",L"1.0.1"}},//choice
-            {0x805e7fd8 - 0x80004000,{"AMNESIA for Nintendo Switch",T0100A1E00BFEA000<2>,F0100A1E00BFEA000,L"0100A1E00BFEA000",L"1.0.1"}},//name
-
-            
-            {0x80095010 - 0x80004000,{"Chou no Doku Hana no Kusari Taishou Tsuya Koi Ibun",simpleutf16getter<1>,F0100A1200CA3C000,L"0100A1200CA3C000",L"2.0.1"}},//Main Text + Names
-
-            {0x80a05170 - 0x80004000,{"Live a Live",simpleutf16getter<0>,F0100C29017106000,L"0100C29017106000",L"1.0.0"}},
-            
-            {0x8049d968 - 0x80004000,{"Sakura no Kumo * Scarlet no Koi",simpleutf8getter<0,1>,F01006590155AC000,L"01006590155AC000",L"1.0.0"}},//name
-            {0x8049d980 - 0x80004000,{"Sakura no Kumo * Scarlet no Koi",simpleutf8getter<0>,F01006590155AC000,L"01006590155AC000",L"1.0.0"}},//dialogue
-
-            {0x80557408 - 0x80004000,{"Majestic Majolical",simpleutf8getter<0>,F01000200194AE000,L"01000200194AE000",L"1.0.0"}},//name
-            {0x8059ee94 - 0x80004000,{"Majestic Majolical",simpleutf8getter<3>,F01000200194AE000,L"01000200194AE000",L"1.0.0"}},//player name
-            {0x80557420 - 0x80004000,{"Majestic Majolical",simpleutf8getter<0>,F01000200194AE000,L"01000200194AE000",L"1.0.0"}},//dialogue
+            {0x805bba5c - 0x80004000,{"AMNESIA for Nintendo Switch",CODEC_UTF16,0,0,T0100A1E00BFEA000<2>,F0100A1E00BFEA000,L"0100A1E00BFEA000",L"1.0.1"}},//dialogue
+            {0x805e9930 - 0x80004000,{"AMNESIA for Nintendo Switch",CODEC_UTF16,0,0,T0100A1E00BFEA000<2>,F0100A1E00BFEA000,L"0100A1E00BFEA000",L"1.0.1"}},//choice
+            {0x805e7fd8 - 0x80004000,{"AMNESIA for Nintendo Switch",CODEC_UTF16,0,0,T0100A1E00BFEA000<2>,F0100A1E00BFEA000,L"0100A1E00BFEA000",L"1.0.1"}},//name
 
             
-            {0x8017ad54 - 0x80004000,{"Matsurika no Kei",simpleutf32getter<1>,F0100EA001A626000,L"0100EA001A626000",L"1.0.0"}},// text
-            {0x80174d4c - 0x80004000,{"Matsurika no Kei",simpleutf32getter<1>,F0100EA001A626000,L"0100EA001A626000",L"1.0.0"}},// name
+            {0x80095010 - 0x80004000,{"Chou no Doku Hana no Kusari Taishou Tsuya Koi Ibun",CODEC_UTF16,1,0,0,F0100A1200CA3C000,L"0100A1200CA3C000",L"2.0.1"}},//Main Text + Names
 
-            {0x80057910 - 0x80004000,{"Cupid Parasite",simpleutf32getter<2>,F0100F7E00DFC8000,L"0100F7E00DFC8000",L"1.0.1"}},// name + text
-            {0x80169df0 - 0x80004000,{"Cupid Parasite",simpleutf32getter<0>,F0100F7E00DFC8000,L"0100F7E00DFC8000",L"1.0.1"}},// choice
+            {0x80a05170 - 0x80004000,{"Live a Live",CODEC_UTF16,0,0,0,F0100C29017106000,L"0100C29017106000",L"1.0.0"}},
+            
+            {0x8049d968 - 0x80004000,{"Sakura no Kumo * Scarlet no Koi",CODEC_UTF8,0,1,0,F01006590155AC000,L"01006590155AC000",L"1.0.0"}},//name
+            {0x8049d980 - 0x80004000,{"Sakura no Kumo * Scarlet no Koi",CODEC_UTF8,0,0,0,F01006590155AC000,L"01006590155AC000",L"1.0.0"}},//dialogue
 
-            {0x80075190 - 0x80004000,{"Radiant Tale",simpleutf8getter<1>,F0100925014864000,L"0100925014864000",L"1.0.0"}},// prompt
-            {0x8002fb18 - 0x80004000,{"Radiant Tale",simpleutf8getter<0>,F0100925014864000,L"0100925014864000",L"1.0.0"}},// name
-            {0x8002fd7c - 0x80004000,{"Radiant Tale",simpleutf8getter<0>,F0100925014864000,L"0100925014864000",L"1.0.0"}},// text
-
-            {0x80462DD4 - 0x80004000,{"MUSICUS",simpleutf8getter<0,1>,F01006590155AC000,L"01000130150FA000",L"1.0.0"}},// name
-            {0x80462DEC - 0x80004000,{"MUSICUS",simpleutf8getter<0>,F01006590155AC000,L"01000130150FA000",L"1.0.0"}},// dialogue 1 
-            {0x80480d4c - 0x80004000,{"MUSICUS",simpleutf8getter<0>,F01006590155AC000,L"01000130150FA000",L"1.0.0"}},// dialogue 2
-            {0x804798e0 - 0x80004000,{"MUSICUS",simpleutf8getter<0>,F01006590155AC000,L"01000130150FA000",L"1.0.0"}},// choice
+            {0x80557408 - 0x80004000,{"Majestic Majolical",CODEC_UTF8,0,0,0,F01000200194AE000,L"01000200194AE000",L"1.0.0"}},//name
+            {0x8059ee94 - 0x80004000,{"Majestic Majolical",CODEC_UTF8,3,0,0,F01000200194AE000,L"01000200194AE000",L"1.0.0"}},//player name
+            {0x80557420 - 0x80004000,{"Majestic Majolical",CODEC_UTF8,0,0,0,F01000200194AE000,L"01000200194AE000",L"1.0.0"}},//dialogue
 
             
-            {0x80046700 - 0x80004000,{"CHAOS;HEAD NOAH",_0100978013276000,0,L"0100957016B90000",L"1.0.0"}},
-            {0x8003A2c0 - 0x80004000,{"CHAOS;HEAD NOAH",_0100978013276000,0,L"0100957016B90000",L"1.0.0"}},// choice
-            {0x8003EAB0 - 0x80004000,{"CHAOS;HEAD NOAH",_0100978013276000,0,L"0100957016B90000",L"1.0.0"}},// TIPS list (menu)
-            {0x8004C648 - 0x80004000,{"CHAOS;HEAD NOAH",_0100978013276000,0,L"0100957016B90000",L"1.0.0"}},// system message
-            {0x80050374 - 0x80004000,{"CHAOS;HEAD NOAH",_0100978013276000,0,L"0100957016B90000",L"1.0.0"}},// TIPS (red)
-            
-            
-            {0x80ac4d88 - 0x80004000,{"Story of Seasons a Wonderful Life",simpleutf32getter<0>,F0100936018EB4000,L"0100936018EB4000",L"1.0.3"}},// Main text
-            {0x808f7e84 - 0x80004000,{"Story of Seasons a Wonderful Life",simpleutf32getter<0>,F0100936018EB4000,L"0100936018EB4000",L"1.0.3"}},// Item name
-            {0x80bdf804 - 0x80004000,{"Story of Seasons a Wonderful Life",simpleutf32getter<0>,F0100936018EB4000,L"0100936018EB4000",L"1.0.3"}},// Item description
+            {0x8017ad54 - 0x80004000,{"Matsurika no Kei",CODEC_UTF32,1,0,0,F0100EA001A626000,L"0100EA001A626000",L"1.0.0"}},// text
+            {0x80174d4c - 0x80004000,{"Matsurika no Kei",CODEC_UTF32,1,0,0,F0100EA001A626000,L"0100EA001A626000",L"1.0.0"}},// name
 
-            {0x81e75940 - 0x80004000,{"Hamefura Pirates",T0100982015606000,F0100982015606000,L"0100982015606000",L"1.0.0"}},// Hamekai.TalkPresenter$$AddMessageBacklog
-            {0x81c9ae60 - 0x80004000,{"Hamefura Pirates",T0100982015606000,F0100982015606000,L"0100982015606000",L"1.0.0"}},// Hamekai.ChoicesText$$SetText
-            {0x81eb7dc0 - 0x80004000,{"Hamefura Pirates",T0100982015606000,F0100982015606000,L"0100982015606000",L"1.0.0"}},// Hamekai.ShortStoryTextView$$AddText
+            {0x80057910 - 0x80004000,{"Cupid Parasite",CODEC_UTF32,2,0,0,F0100F7E00DFC8000,L"0100F7E00DFC8000",L"1.0.1"}},// name + text
+            {0x80169df0 - 0x80004000,{"Cupid Parasite",CODEC_UTF32,0,0,0,F0100F7E00DFC8000,L"0100F7E00DFC8000",L"1.0.1"}},// choice
+
+            {0x80075190 - 0x80004000,{"Radiant Tale",CODEC_UTF8,1,0,0,F0100925014864000,L"0100925014864000",L"1.0.0"}},// prompt
+            {0x8002fb18 - 0x80004000,{"Radiant Tale",CODEC_UTF8,0,0,0,F0100925014864000,L"0100925014864000",L"1.0.0"}},// name
+            {0x8002fd7c - 0x80004000,{"Radiant Tale",CODEC_UTF8,0,0,0,F0100925014864000,L"0100925014864000",L"1.0.0"}},// text
+
+            {0x80462DD4 - 0x80004000,{"MUSICUS",CODEC_UTF8,0,1,0,F01006590155AC000,L"01000130150FA000",L"1.0.0"}},// name
+            {0x80462DEC - 0x80004000,{"MUSICUS",CODEC_UTF8,0,0,0,F01006590155AC000,L"01000130150FA000",L"1.0.0"}},// dialogue 1 
+            {0x80480d4c - 0x80004000,{"MUSICUS",CODEC_UTF8,0,0,0,F01006590155AC000,L"01000130150FA000",L"1.0.0"}},// dialogue 2
+            {0x804798e0 - 0x80004000,{"MUSICUS",CODEC_UTF8,0,0,0,F01006590155AC000,L"01000130150FA000",L"1.0.0"}},// choice
+
+            
+            {0x80046700 - 0x80004000,{"CHAOS;HEAD NOAH",CODEC_UTF16,0,0,_0100978013276000,0,L"0100957016B90000",L"1.0.0"}},
+            {0x8003A2c0 - 0x80004000,{"CHAOS;HEAD NOAH",CODEC_UTF16,0,0,_0100978013276000,0,L"0100957016B90000",L"1.0.0"}},// choice
+            {0x8003EAB0 - 0x80004000,{"CHAOS;HEAD NOAH",CODEC_UTF16,0,0,_0100978013276000,0,L"0100957016B90000",L"1.0.0"}},// TIPS list (menu)
+            {0x8004C648 - 0x80004000,{"CHAOS;HEAD NOAH",CODEC_UTF16,0,0,_0100978013276000,0,L"0100957016B90000",L"1.0.0"}},// system message
+            {0x80050374 - 0x80004000,{"CHAOS;HEAD NOAH",CODEC_UTF16,0,0,_0100978013276000,0,L"0100957016B90000",L"1.0.0"}},// TIPS (red)
+            
+            
+            {0x80ac4d88 - 0x80004000,{"Story of Seasons a Wonderful Life",CODEC_UTF32,0,0,F0100936018EB4000,L"0100936018EB4000",L"1.0.3"}},// Main text
+            {0x808f7e84 - 0x80004000,{"Story of Seasons a Wonderful Life",CODEC_UTF32,0,0,F0100936018EB4000,L"0100936018EB4000",L"1.0.3"}},// Item name
+            {0x80bdf804 - 0x80004000,{"Story of Seasons a Wonderful Life",CODEC_UTF32,0,0,F0100936018EB4000,L"0100936018EB4000",L"1.0.3"}},// Item description
+
+            {0x81e75940 - 0x80004000,{"Hamefura Pirates",CODEC_UTF16,0,0,T0100982015606000,F0100982015606000,L"0100982015606000",L"1.0.0"}},// Hamekai.TalkPresenter$$AddMessageBacklog
+            {0x81c9ae60 - 0x80004000,{"Hamefura Pirates",CODEC_UTF16,0,0,T0100982015606000,F0100982015606000,L"0100982015606000",L"1.0.0"}},// Hamekai.ChoicesText$$SetText
+            {0x81eb7dc0 - 0x80004000,{"Hamefura Pirates",CODEC_UTF16,0,0,T0100982015606000,F0100982015606000,L"0100982015606000",L"1.0.0"}},// Hamekai.ShortStoryTextView$$AddText
 
     };
     return 1;

@@ -17,58 +17,62 @@ bool add_veh_hook(void* origFunc, newFuncType newFunc, DWORD hook_type)
     DWORD oldProtect;
     if (list == NULL) list = new_veh_list();
     if (list == NULL) return false;
+    if(get_veh_node(list,origFunc))return false;
     void* handle = AddVectoredExceptionHandler(1, (PVECTORED_EXCEPTION_HANDLER)veh_dispatch);
-    veh_node_t* newnode = insert_veh_node(list, origFunc, newFunc, handle, hook_type);
-
+    auto newnode = create_veh_node(origFunc, newFunc, handle, hook_type);
+    if(newnode==NULL)return false;
     // For memory hooks especially, we need to know the address of the start of the relevant page.
     MEMORY_BASIC_INFORMATION mem_info;
     VirtualQuery(origFunc, &mem_info, sizeof(MEMORY_BASIC_INFORMATION));
     newnode->baseAddr = mem_info.BaseAddress;
-
-    VirtualProtect(origFunc, sizeof(int), PAGE_EXECUTE_READWRITE, &newnode->OldProtect);
+    if(!VirtualProtect(origFunc, sizeof(int), PAGE_EXECUTE_READWRITE, &newnode->OldProtect))
+    {
+        delete newnode;
+        return false;
+    }
     memcpy((void*)(&newnode->origBaseByte), (const void*)origFunc, sizeof (BYTE));
     memcpy((void*)origFunc, (const void*)&int3bp, sizeof (BYTE));
     VirtualProtect(origFunc, sizeof(int), newnode->OldProtect, &oldProtect);
+    insert_veh_node(list, newnode);
     return true;
 }
-
+void repair_origin(veh_node_t *node){
+    DWORD _p;
+    VirtualProtect(node->origFunc, sizeof(int), PAGE_EXECUTE_READWRITE, &_p);
+    memcpy((void*)node->origFunc, (const void*)(&node->origBaseByte), sizeof(char));
+    VirtualProtect(node->origFunc, sizeof(int), node->OldProtect, &_p);
+}
 bool remove_veh_hook(void* origFunc)
 {
     std::lock_guard _(vehlistlock);
     if (list == NULL) return false;
     veh_node_t* node = get_veh_node(list, origFunc);
     if (node == NULL) return false;
-    DWORD _p;
-    VirtualProtect(node->origFunc, sizeof(int), PAGE_EXECUTE_READWRITE, &_p);
-    memcpy((void*)node->origFunc, (const void*)(&node->origBaseByte), sizeof(char));
-    VirtualProtect(node->origFunc, sizeof(int), node->OldProtect, &_p);
+    repair_origin(node);
     RemoveVectoredExceptionHandler(node->handle);
     return remove_veh_node(list, origFunc);
 }
 
 bool remove_veh_node(veh_list_t* list, void* origFunc)
 {
-    veh_node_t* searchnode;
-    veh_node_t* lastsearchnode = NULL;
-    searchnode = list->head;
+    veh_node_t* searchnode  = list->head;
 
     while (searchnode != NULL)
     {
         if (searchnode->origFunc == origFunc)
         {
-            if (lastsearchnode == NULL)
-            {
-                list->head = searchnode->next;
-                if (list->tail == searchnode) list->tail = searchnode->next;
-            }
-            else
-            {
-                lastsearchnode->next = searchnode->next;
-            }
+            if(list->tail==searchnode)
+                list->tail=searchnode->last;
+            if(list->head==searchnode)
+                list->head=searchnode->next;
+            if(searchnode->last)
+                searchnode->last->next=searchnode->next;
+            if(searchnode->next)
+                searchnode->next->last=searchnode->last;
+            
             delete (searchnode);
             return true;
         }
-        lastsearchnode = searchnode;
         searchnode = searchnode->next;
     }
     return false;
@@ -82,21 +86,29 @@ LONG CALLBACK veh_dispatch(PEXCEPTION_POINTERS ExceptionInfo)
 
     if (Code != STATUS_BREAKPOINT && Code != STATUS_SINGLE_STEP) return EXCEPTION_CONTINUE_SEARCH;
     // Try to find the node associated with the address of the current exception, continue searching for handlers if not found;
-    std::lock_guard _(vehlistlock);
+    
     if (Code == STATUS_BREAKPOINT )//&& hooktype == VEH_HK_INT3)
     {
-        veh_node_t* currnode  = get_veh_node(list, Addr); 
+        veh_node_t* currnode ;
+        {
+            std::lock_guard _(vehlistlock);
+            currnode  = get_veh_node(list, Addr); 
+        }
         if (currnode == NULL) return EXCEPTION_CONTINUE_SEARCH;
-    
-        VirtualProtect(Addr, sizeof(int), PAGE_EXECUTE_READWRITE, &currnode->OldProtect);
-        memcpy((void*)Addr, (const void*)(&currnode->origBaseByte), sizeof (char));
-        currnode->newFunc(ExceptionInfo->ContextRecord);
-        VirtualProtect(Addr, sizeof(int), currnode->OldProtect, &oldProtect);
-        ExceptionInfo->ContextRecord->EFlags |= 0x100;
         
+        if(currnode->newFunc(ExceptionInfo->ContextRecord))
+        {
+            repair_origin(currnode);
+            ExceptionInfo->ContextRecord->EFlags |= 0x100;
+        }
+        else
+        {
+            remove_veh_hook(Addr);
+        }
     }
     else if (Code == STATUS_SINGLE_STEP )//&& hooktype == VEH_HK_INT3)
     {
+        std::lock_guard _(vehlistlock);
         veh_node_t* currnode  = get_veh_node(list, Addr, 0x10); 
         if (currnode == NULL) return EXCEPTION_CONTINUE_SEARCH;
         
@@ -126,18 +138,22 @@ veh_list_t* new_veh_list()
     newlist->tail = NULL;
     return newlist;
 }
-veh_node_t* insert_veh_node(veh_list_t* list, void* origFunc, newFuncType newFunc, void* handle, DWORD hook_type)
+veh_node_t* create_veh_node(void* origFunc, newFuncType newFunc, void* handle, DWORD hook_type)
 {
-    if (list == NULL) return NULL;
-    /* create a new node and fill in the blanks */
     veh_node_t* newnode = new veh_node_t;
     if (newnode == NULL) return NULL;
+    newnode->last=NULL;
     newnode->origFunc = origFunc;
     newnode->newFunc = newFunc;
     newnode->handle = handle;
     newnode->OldProtect = PAGE_EXECUTE_READWRITE;
     newnode->next = NULL;
     newnode->hooktype=hook_type;
+    return newnode;
+}
+void insert_veh_node(veh_list_t* list, veh_node_t* newnode)
+{
+    if (list == NULL) return;
     if (list->head == NULL)
     {
         list->head = newnode;
@@ -146,11 +162,10 @@ veh_node_t* insert_veh_node(veh_list_t* list, void* origFunc, newFuncType newFun
     else
     {
         list->tail->next = newnode;
+        newnode->last=list->tail;
         list->tail = newnode;
     }
-    return newnode;
 }
-
 veh_node_t* get_veh_node(veh_list_t* list, void* origFunc, int range)
 {
     veh_node_t* newnode;

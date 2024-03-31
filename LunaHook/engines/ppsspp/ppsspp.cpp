@@ -283,25 +283,29 @@ bool hookPPSSPPDoJit(){
    HookParam hp;
    hp.address=DoJitPtr;//Jit::DoJit
    ConsoleOutput("DoJitPtr %p",DoJitPtr);
-   
+   jitaddrclear();
+   hp.user_value=(uintptr_t)new uintptr_t;
    hp.text_fun=[](hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
         auto em_address=stack->THISCALLARG1;
         
-		if(emfunctionhooks.find(em_address)==emfunctionhooks.end())return;
-        
-        if(!(checkiscurrentgame(emfunctionhooks.at(em_address))))return;
+        *(uintptr_t*)(hp->user_value)=em_address;
 
 		HookParam hpinternal;
-		hpinternal.user_value=em_address;
+		hpinternal.user_value=hp->user_value;
 		hpinternal.address=stack->retaddr;
 		hpinternal.text_fun=[](hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
-			hp->text_fun=nullptr;hp->type=HOOK_EMPTY;
-		
+			
 			auto ret=stack->RETADDR;
 			if(breakpoints.find(ret)!=breakpoints.end())return;
 			breakpoints.insert(ret);
 
-			auto em_address=hp->user_value;
+            auto em_address=*(uintptr_t*)(hp->user_value);
+
+            jitaddraddr(em_address,ret,JITTYPE::PPSSPP);
+
+            if(emfunctionhooks.find(em_address)==emfunctionhooks.end())return;
+            if(!(checkiscurrentgame(emfunctionhooks.at(em_address))))return;
+			
 			auto op=emfunctionhooks.at(em_address);
             ConsoleOutput("jit function addr %p",ret);
             #ifndef _WIN64
@@ -317,17 +321,21 @@ bool hookPPSSPPDoJit(){
                 findbase=MemDbg::findBytes(sig,sizeof(sig),ret-0x1000,ret+0x1000);
             if(!findbase)
                 ConsoleOutput("can't find emu_baseaddr"); 
-            ppsspp::x86_baseaddr=(*(DWORD*)(findbase+12))&0xffff0000;
-            ConsoleOutput("x86 base addr %p",x86_baseaddr);
+            PPSSPP::x86_baseaddr=(*(DWORD*)(findbase+12))&0xffff0000;
+            ConsoleOutput("x86 base addr %p",PPSSPP::x86_baseaddr);
             #endif
 			HookParam hpinternal;
 			hpinternal.address=ret;
-			hpinternal.user_value=em_address;
+            hpinternal.emu_addr=em_address;//用于生成hcode
+            hpinternal.type=USING_STRING|NO_CONTEXT|BREAK_POINT|op.type;
 			hpinternal.text_fun=(decltype(hpinternal.text_fun))op.hookfunc;
 			hpinternal.filter_fun=(decltype(hpinternal.filter_fun))op.filterfun;
+            hpinternal.argidx=op.argidx;
+            hpinternal.padding=op.padding;
+            hpinternal.jittype=JITTYPE::PPSSPP;
 			NewHook(hpinternal,op.hookname);
 		};
-		NewHook(hpinternal,"DoJitPtrRet");
+		static auto once=NewHook(hpinternal,"DoJitPtrRet");
    };
    
   return NewHook(hp,"PPSSPPDoJit");

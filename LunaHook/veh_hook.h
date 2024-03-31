@@ -20,10 +20,12 @@ Version: 24-March-2008
 
 //typedef void (*pfvoid)();
 //typedef void (*newFuncType)(PCONTEXT);
-using newFuncType = std::function<void(PCONTEXT)>;
+using newFuncType = std::function<bool(PCONTEXT)>;
 
 typedef struct veh_node
 {
+	struct veh_node* last;
+	struct veh_node* next;
 	void* origFunc;
 	newFuncType newFunc;
 	void* handle;
@@ -31,7 +33,6 @@ typedef struct veh_node
 	void* baseAddr; // Address of the page in which origFunc resides.
 	BYTE origBaseByte;
 	DWORD OldProtect;
-	struct veh_node* next;
 } veh_node_t;
 
 typedef struct
@@ -41,7 +42,7 @@ typedef struct
 } veh_list_t;
 
 // VEH hook interface functions for creating and removing hooks.
-bool add_veh_hook(void* origFunc, newFuncType newFunc, DWORD hook_type);
+bool add_veh_hook(void* origFunc, newFuncType newFunc, DWORD hook_type=VEH_HK_INT3);
 bool remove_veh_hook(void* origFunc);
 
 // The VEH dispathing function is called by Windows every time an exception is encountered.
@@ -50,7 +51,8 @@ LONG CALLBACK veh_dispatch(PEXCEPTION_POINTERS ExceptionInfo);
 
 // Functions used internally by the library.
 veh_list_t* new_veh_list();
-veh_node_t* insert_veh_node(veh_list_t* list, void* origFunc, newFuncType newFunc, void* handle, DWORD hook_type);
+veh_node_t* create_veh_node(void* origFunc, newFuncType newFunc, void* handle, DWORD hook_type);
+void insert_veh_node(veh_list_t* list, veh_node_t*);
 bool remove_veh_node(veh_list_t* list, void* origFunc);
 veh_node_t* get_veh_node(veh_list_t* list, void* origFunc, int range=0);
 

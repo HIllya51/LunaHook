@@ -591,6 +591,15 @@ bool Engine::isAddressWritable(const wchar_t *p, size_t count)
 
 namespace{
     
+  uint32_t *Xstrcpy(uint32_t *s, const uint32_t *r){
+    while(*r){
+      *s=*r;
+      s+=1;
+      r+=1;
+    }
+    *s=0;
+    return s;
+  }
   wchar_t *Xstrcpy(wchar_t *s, const wchar_t *r){return wcscpy(s,r);}
   char *Xstrcpy(char *s, const char *r){return strcpy(s,r);}
   template<class CharT>
@@ -611,6 +620,7 @@ namespace{
 void write_string_new(uintptr_t* data, size_t* len,const std::wstring& s){write_string_new_impl<wchar_t>(data,len,s);}
 void write_string_new(uintptr_t* data, size_t* len,const std::string& s){write_string_new_impl<char>(data,len,s);}
 
+bool write_string_overwrite(void* data, size_t* len,const std::basic_string<uint32_t>& s){return write_string_overwrite_impl<uint32_t>(data,len,s);}
 bool write_string_overwrite(void* data, size_t* len,const std::wstring& s){return write_string_overwrite_impl<wchar_t>(data,len,s);}
 bool write_string_overwrite(void* data, size_t* len,const std::string& s){return write_string_overwrite_impl<char>(data,len,s);}
 

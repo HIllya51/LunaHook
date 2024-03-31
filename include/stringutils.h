@@ -23,6 +23,8 @@ bool endWith(const std::string& s,const std::string& s2);
 bool endWith(const std::wstring& s,const std::wstring& s2);
 
 std::wstring utf32_to_utf16(uint32_t* u32str,size_t size);
+std::basic_string<uint32_t> utf16_to_utf32(const wchar_t* u16str,size_t size);
+
 std::string WideStringToString(const std::wstring& text,UINT cp=CP_UTF8);
 std::wstring StringToWideString(const std::string& text);
 std::optional<std::wstring> StringToWideString(const std::string& text, UINT encoding);

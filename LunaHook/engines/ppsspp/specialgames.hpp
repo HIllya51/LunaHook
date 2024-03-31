@@ -1,63 +1,5 @@
 ﻿#include<queue>
-namespace ppsspp{
-    inline DWORD x86_baseaddr;
-}
-namespace
-{
-	
-template<int index,int offset=0>
-void simple932getter(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
-     hp->type=USING_STRING|NO_CONTEXT;
-	 hp->codepage=932;
-	 auto address= emu_arg(stack)[index]+offset;
-	*data=address;*len=strlen((char*)address);
-}
-template<int index>
-void simpleutf8getter(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
-    auto address=emu_arg(stack)[index];
-    hp->type=USING_STRING|CODEC_UTF8|NO_CONTEXT;
-    *data=address;*len=strlen((char*)address);
-}
-template<int index,DWORD _type=0>
-void simpleutf16getter(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
-    auto address=emu_arg(stack)[index];
-    hp->type=USING_STRING|CODEC_UTF16|NO_CONTEXT|_type;
-    *data=address;*len=wcslen((wchar_t*)address)*2;
-}
-class emu_addr{
-    hook_stack* stack;
-    DWORD addr;
-public:
-    emu_addr(hook_stack* stack_,DWORD addr_):stack(stack_),addr(addr_){};
-    operator uintptr_t(){
-        #ifndef _WIN64
-        auto base=ppsspp::x86_baseaddr;
-        #else
-        auto base=stack->rbx;
-        #endif
-        return base+addr;
-    }
-    operator DWORD*(){
-        return (DWORD*)(uintptr_t)*this;
-    }
-};
-class emu_arg{
-    hook_stack* stack;
-public:
-
-    emu_arg(hook_stack* stack_):stack(stack_){};
-    uintptr_t operator [](int idx){
-        #ifndef _WIN64
-        auto args=stack->ebp;
-        #else
-        auto args=stack->r14;
-        #endif
-		auto offR = -0x80;
-		auto offset = offR + 0x10 + idx * 4;
-        return (uintptr_t)emu_addr(stack,*(uint32_t*)(args+offset));
-    }
-};
-} 
+#include"emujitarg.hpp"
 
 bool ULJS00403_filter(void* data, size_t* len, HookParam* hp){
      std::string result = std::string((char*)data,*len);
@@ -70,21 +12,19 @@ bool ULJS00403_filter(void* data, size_t* len, HookParam* hp){
 
 
 void ULJS00339(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
-     hp->type=USING_STRING|NO_CONTEXT;
-	 hp->codepage=932;
-	 auto a2= emu_arg(stack)[0];
+     auto a2= PPSSPP::emu_arg(stack)[0];
 
 	auto vm = *(DWORD*)(a2+(0x28));
-	vm=*(DWORD*)emu_addr(stack,vm);
-	vm=*(DWORD*)emu_addr(stack,vm+8);
-	uintptr_t address=emu_addr(stack,vm);
+	vm=*(DWORD*)PPSSPP::emu_addr(stack,vm);
+	vm=*(DWORD*)PPSSPP::emu_addr(stack,vm+8);
+	uintptr_t address=PPSSPP::emu_addr(stack,vm);
 	auto len1=*(DWORD*)(address+4);
 	auto p=address+0x20;
 	if(len1>4 && *(WORD*)(p+2)==0){
 		auto p1=*(DWORD*)(address+8);
-		vm=*(DWORD*)emu_addr(stack,vm);
-		vm=*(DWORD*)emu_addr(stack,vm+0xC);
-		p=emu_addr(stack,vm);
+		vm=*(DWORD*)PPSSPP::emu_addr(stack,vm);
+		vm=*(DWORD*)PPSSPP::emu_addr(stack,vm+0xC);
+		p=PPSSPP::emu_addr(stack,vm);
 	}
 	static int fm=0;
 	static std::string pre;
@@ -215,9 +155,7 @@ namespace Corda{
 }
 
 void ULJM05428(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
-     hp->type=USING_STRING|NO_CONTEXT;
-	 hp->codepage=932;
-	auto address= emu_arg(stack)[1];
+    auto address= PPSSPP::emu_arg(stack)[1];
 	bool haveNamve;
 	auto s=Corda::readBinaryString(address,&haveNamve);
 	*split=haveNamve;
@@ -225,14 +163,12 @@ void ULJM05428(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* spl
 }
 
 void ULJM05054(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
-     hp->type=USING_STRING|NO_CONTEXT;
-	 hp->codepage=932;
-	 if (hp->user_value != 0x886162c) {
-		auto addr=emu_arg(stack)[0]+0x3c;
+    if (hp->emu_addr != 0x886162c) {
+		auto addr=PPSSPP::emu_arg(stack)[0]+0x3c;
 		*data=addr;*len=strlen((char*)addr);
         return;
     }
-	auto address= emu_arg(stack)[1];
+	auto address= PPSSPP::emu_arg(stack)[1];
 	bool haveNamve;
 	auto s=Corda::readBinaryString(address,&haveNamve);
 	*split=haveNamve;
@@ -296,9 +232,7 @@ bool NPJH50505F(void* data, size_t* len, HookParam* hp){
 }
 
 void QNPJH50909(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
-     hp->type=USING_STRING|NO_CONTEXT;
-	 hp->codepage=932;
-	 uintptr_t addr = emu_addr(stack,0x08975110);
+     uintptr_t addr = PPSSPP::emu_addr(stack,0x08975110);
 	 auto adr=addr+0x20;
 	 auto len1=*(DWORD*)(addr+0x14)*2;
 	 
@@ -308,27 +242,27 @@ void QNPJH50909(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* sp
 }
 namespace ppsspp{
     std::unordered_map<uintptr_t,emfuncinfo>emfunctionhooks= {
-            {0x883bf34,{"Shinigami to Shoujo",simple932getter<1>,ULJS00403_filter,L"ULJS00403"}},
-            {0x0886775c,{"Amagami",ULJS00339,0,L"ULJS00339"}},// String.length()
-            {0x8814adc,{"Sekai de Ichiban Dame na Koi",simple932getter<0>,NPJH50909_filter,L"ULJM05878"}},// name + dialouge
-            {0x8850b2c,{"Sekai de Ichiban Dame na Koi",simple932getter<0>,NPJH50909_filter,L"ULJM05878"}},// onscreen toast
-            {0x0891D72C,{"Dunamis15",simpleutf8getter<0>,ULJM06119_filter,L"ULJM06119"}},
-            {0x88506d0,{"Princess Evangile Portable",simpleutf16getter<2>,ULJM06036_filter,L"ULJM06036"}},// [0x88506d0(2)...0x088507C0(?)] // name text text (line doubled)
-            {0x89b59dc,{"Kin'iro no Corda 2f",ULJM05428,0,L"ULJM05428"}},
-            {0x886162c,{"Kin'iro no Corda",ULJM05054,0,L"ULJM05054"}},// dialogue: 0x886162c (x1), 0x889d5fc-0x889d520(a2) fullLine
-            {0x8899e90,{"Kin'iro no Corda",ULJM05054,0,L"ULJM05054"}},// name 0x88da57c, 0x8899ca4 (x0, oneTime), 0x8899e90
-            {0x8952cfc,{"Sol Trigger",simpleutf8getter<0>,NPJH50619F,L"NPJH50619"}},//dialog
-            {0x884aad4,{"Sol Trigger",simpleutf8getter<0>,NPJH50619F,L"NPJH50619"}},//description
-            {0x882e1b0,{"Sol Trigger",simpleutf8getter<0>,NPJH50619F,L"NPJH50619"}},//system
-            {0x88bb108,{"Sol Trigger",simpleutf8getter<2>,NPJH50619F,L"NPJH50619"}},//battle tutorial
-            {0x89526a0,{"Sol Trigger",simpleutf8getter<0>,NPJH50619F,L"NPJH50619"}},//battle info
-            {0x88bcef8,{"Sol Trigger",simpleutf8getter<1>,NPJH50619F,L"NPJH50619"}},//battle talk
-            {0x8958490,{"Fate/EXTRA CCC",simple932getter<0>,NPJH50505F,L"NPJH50505"}},
-            {0x088630f8,{"Kamigami no Asobi InFinite",QNPJH50909,0,L"NPJH50909"}}, // text, choice (debounce trailing 400ms), TODO: better hook
-            {0x0887813c,{"Kamigami no Asobi InFinite",simple932getter<3,4>,0,L"NPJH50909"}}, // Question YN
+            {0x883bf34,{"Shinigami to Shoujo",0,1,0,0,ULJS00403_filter,L"ULJS00403"}},
+            {0x0886775c,{"Amagami",0,0,0,ULJS00339,0,L"ULJS00339"}},// String.length()
+            {0x8814adc,{"Sekai de Ichiban Dame na Koi",0,0,0,0,NPJH50909_filter,L"ULJM05878"}},// name + dialouge
+            {0x8850b2c,{"Sekai de Ichiban Dame na Koi",0,0,0,0,NPJH50909_filter,L"ULJM05878"}},// onscreen toast
+            {0x0891D72C,{"Dunamis15",CODEC_UTF8,0,0,0,ULJM06119_filter,L"ULJM06119"}},
+            {0x88506d0,{"Princess Evangile Portable",CODEC_UTF16,2,0,0,ULJM06036_filter,L"ULJM06036"}},// [0x88506d0(2)...0x088507C0(?)] // name text text (line doubled)
+            {0x89b59dc,{"Kin'iro no Corda 2f",0,0,0,ULJM05428,0,L"ULJM05428"}},
+            {0x886162c,{"Kin'iro no Corda",0,0,0,ULJM05054,0,L"ULJM05054"}},// dialogue: 0x886162c (x1), 0x889d5fc-0x889d520(a2) fullLine
+            {0x8899e90,{"Kin'iro no Corda",0,0,0,ULJM05054,0,L"ULJM05054"}},// name 0x88da57c, 0x8899ca4 (x0, oneTime), 0x8899e90
+            {0x8952cfc,{"Sol Trigger",CODEC_UTF8,0,0,0,NPJH50619F,L"NPJH50619"}},//dialog
+            {0x884aad4,{"Sol Trigger",CODEC_UTF8,0,0,0,NPJH50619F,L"NPJH50619"}},//description
+            {0x882e1b0,{"Sol Trigger",CODEC_UTF8,0,0,0,NPJH50619F,L"NPJH50619"}},//system
+            {0x88bb108,{"Sol Trigger",CODEC_UTF8,2,0,0,NPJH50619F,L"NPJH50619"}},//battle tutorial
+            {0x89526a0,{"Sol Trigger",CODEC_UTF8,0,0,0,NPJH50619F,L"NPJH50619"}},//battle info
+            {0x88bcef8,{"Sol Trigger",CODEC_UTF8,1,0,0,NPJH50619F,L"NPJH50619"}},//battle talk
+            {0x8958490,{"Fate/EXTRA CCC",0,0,0,0,NPJH50505F,L"NPJH50505"}},
+            {0x088630f8,{"Kamigami no Asobi InFinite",0,0,0,QNPJH50909,0,L"NPJH50909"}}, // text, choice (debounce trailing 400ms), TODO: better hook
+            {0x0887813c,{"Kamigami no Asobi InFinite",0,3,4,0,0,L"NPJH50909"}}, // Question YN
 			
-            {0x88eeba4,{"Gekka Ryouran Romance",simple932getter<0,0>,ULJM05943F,L"ULJM05943"}},// a0 - monologue text
-            {0x8875e0c,{"Gekka Ryouran Romance",simple932getter<1,6>,ULJM05943F,L"ULJM05943"}},// a1 - dialogue text
+            {0x88eeba4,{"Gekka Ryouran Romance",0,0,0,0,ULJM05943F,L"ULJM05943"}},// a0 - monologue text
+            {0x8875e0c,{"Gekka Ryouran Romance",0,1,6,0,ULJM05943F,L"ULJM05943"}},// a1 - dialogue text
     };
     
 }

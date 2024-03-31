@@ -42,7 +42,7 @@ class TextHook
 public:
 	HookParam hp;
 	ALIGNPTR(uint64_t address,void* location);  
-
+	uint64_t savetypeforremove;
 	bool Insert(HookParam hp);
 	void Clear();
 
@@ -52,7 +52,7 @@ private:
 	bool InsertReadCode();
 	bool InsertBreakPoint();
 	bool RemoveBreakPoint();
-	void breakpointcontext(PCONTEXT);
+	bool breakpointcontext(PCONTEXT);
 	void Send(uintptr_t dwDatabase);
 	int GetLength(hook_stack* stack, uintptr_t in); // jichi 12/25/2013: Return 0 if failed
 	int HookStrlen(BYTE* data);
