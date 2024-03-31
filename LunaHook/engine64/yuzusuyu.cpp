@@ -95,7 +95,12 @@ bool checkiscurrentgame(const emfuncinfo& em){
 	}
 	return false;
 }
-
+template<int index>
+void simpleutf32getter(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
+    auto address=emu_arg(stack)[index];
+    auto s=utf32_to_utf16((uint32_t*)address,u32strlen((uint32_t*)address));
+    write_string_new(data,len,s);
+}
 
 template<int index,int offset=0>
 void simpleutf8getter(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
@@ -359,14 +364,28 @@ bool F01000200194AE000(void* data, size_t* len, HookParam* hp){
     }
 	return write_string_overwrite(data,len,s);
 }
-void T0100EA001A626000(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
-    auto address=emu_arg(stack)[1];
-    auto s=utf32_to_utf16((uint32_t*)address,u32strlen((uint32_t*)address));
-    s = std::regex_replace(s, std::wregex(L"[\\s]"), L"");
+bool F0100EA001A626000(void* data, size_t* len, HookParam* hp){
+    auto s=std::wstring((wchar_t*)data,*len/2);
+    if (s == L"　　") {
+        return false;
+    }
+    s = std::regex_replace(s, std::wregex(L"\n+"), L" ");
+
+    s = std::regex_replace(s, std::wregex(L"\\$\\{FirstName\\}"), L"ナーヤ");
+
+    if (startWith(s,L"#T")){
+        s = std::regex_replace(s, std::wregex(L"#T2[^#]+"), L"");
+        s = std::regex_replace(s, std::wregex(L"#T\\d"), L"");
+    }
+    return write_string_overwrite(data,len,s);
+}
+bool F0100F7E00DFC8000(void* data, size_t* len, HookParam* hp){
+    auto s=std::wstring((wchar_t*)data,*len/2);
+    s = std::regex_replace(s, std::wregex(L"[\\s]"), L" "); 
     s = std::regex_replace(s, std::wregex(L"#KW"), L"");
     s = std::regex_replace(s, std::wregex(L"#C\\(TR,0xff0000ff\\)"), L"");
     s = std::regex_replace(s, std::wregex(L"#P\\(.*\\)"), L"");
-    write_string_new(data,len,s);
+    return write_string_overwrite(data,len,s);
 }
 namespace{
 auto _=[](){
@@ -406,8 +425,11 @@ auto _=[](){
             {0x80557420 - 0x80004000,{"Majestic Majolical",simpleutf8getter<0>,F01000200194AE000,L"01000200194AE000",L"1.0.0"}},//dialogue
 
             
-            {0x8017ad54 - 0x80004000,{"Matsurika no Kei",T0100EA001A626000,0,L"0100EA001A626000",L"1.0.0"}},// text
-            {0x80174d4c - 0x80004000,{"Matsurika no Kei",T0100EA001A626000,0,L"0100EA001A626000",L"1.0.0"}},// name
+            {0x8017ad54 - 0x80004000,{"Matsurika no Kei",simpleutf32getter<1>,F0100EA001A626000,L"0100EA001A626000",L"1.0.0"}},// text
+            {0x80174d4c - 0x80004000,{"Matsurika no Kei",simpleutf32getter<1>,F0100EA001A626000,L"0100EA001A626000",L"1.0.0"}},// name
+
+            {0x80057910 - 0x80004000,{"Cupid Parasite",simpleutf32getter<2>,F0100F7E00DFC8000,L"0100F7E00DFC8000",L"1.0.1"}},// name + text
+            {0x80169df0 - 0x80004000,{"Cupid Parasite",simpleutf32getter<0>,F0100F7E00DFC8000,L"0100F7E00DFC8000",L"1.0.1"}},// choice
     };
     return 1;
 }();
