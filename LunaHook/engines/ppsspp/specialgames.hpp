@@ -308,13 +308,6 @@ void QNPJH50909(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* sp
 }
 namespace ppsspp{
     std::unordered_map<uintptr_t,emfuncinfo>emfunctionhooks= {
-			/*
-			0x883b0bc: mainHandler.bind_(null, 2), // a2 - choices (un-formated)
-			0x883cf04: mainHandler.bind_(null, 3), // a3 - choices + nameX2
-			0x883bf34: mainHandler.bind_(null, 1), // a1 - choices + dialogue + nameX2 <----
-			0x8836984: mainHandler.bind_(null, 1), // a1 - dialogue
-			0x883cecc: mainHandler.bind_(null, 3), // a3 - dialogue
-			*/
             {0x883bf34,{"Shinigami to Shoujo",simple932getter<1>,ULJS00403_filter,L"ULJS00403"}},
             {0x0886775c,{"Amagami",ULJS00339,0,L"ULJS00339"}},// String.length()
             {0x8814adc,{"Sekai de Ichiban Dame na Koi",simple932getter<0>,NPJH50909_filter,L"ULJM05878"}},// name + dialouge

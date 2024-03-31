@@ -387,6 +387,34 @@ bool F0100F7E00DFC8000(void* data, size_t* len, HookParam* hp){
     s = std::regex_replace(s, std::wregex(L"#P\\(.*\\)"), L"");
     return write_string_overwrite(data,len,s);
 }
+
+
+void T0100982015606000(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
+    auto address=emu_arg(stack)[1];
+    *len=(*(DWORD*)(address+0x10))*2;
+    *data=address+0x14;
+}
+
+bool F0100982015606000(void* data, size_t* len, HookParam* hp){
+    auto s=std::wstring((wchar_t*)data,*len/2);
+    s = std::regex_replace(s, std::wregex(L"\\n+|(\\\\n)+"), L" ");
+    return write_string_overwrite(data,len,s);
+}
+
+
+bool F0100925014864000(void* data, size_t* len, HookParam* hp){
+    auto s=std::string((char*)data,*len);
+    s = std::regex_replace(s, std::regex("(#n)+"), " ");
+    s = std::regex_replace(s, std::regex("(#[A-Za-z]+\\[(\\d*[.])?\\d+\\])+"), "");
+    return write_string_overwrite(data,len,s);
+}
+
+bool F0100936018EB4000(void* data, size_t* len, HookParam* hp){
+    auto s=std::wstring((wchar_t*)data,*len/2);
+    s = std::regex_replace(s, std::wregex(L"<[^>]+>"), L"");
+    s = std::regex_replace(s, std::wregex(L"\n+"), L" ");
+    return write_string_overwrite(data,len,s);
+}
 namespace{
 auto _=[](){
     emfunctionhooks={
@@ -430,6 +458,32 @@ auto _=[](){
 
             {0x80057910 - 0x80004000,{"Cupid Parasite",simpleutf32getter<2>,F0100F7E00DFC8000,L"0100F7E00DFC8000",L"1.0.1"}},// name + text
             {0x80169df0 - 0x80004000,{"Cupid Parasite",simpleutf32getter<0>,F0100F7E00DFC8000,L"0100F7E00DFC8000",L"1.0.1"}},// choice
+
+            {0x80075190 - 0x80004000,{"Radiant Tale",simpleutf8getter<1>,F0100925014864000,L"0100925014864000",L"1.0.0"}},// prompt
+            {0x8002fb18 - 0x80004000,{"Radiant Tale",simpleutf8getter<0>,F0100925014864000,L"0100925014864000",L"1.0.0"}},// name
+            {0x8002fd7c - 0x80004000,{"Radiant Tale",simpleutf8getter<0>,F0100925014864000,L"0100925014864000",L"1.0.0"}},// text
+
+            {0x80462DD4 - 0x80004000,{"MUSICUS",simpleutf8getter<0,1>,F01006590155AC000,L"01000130150FA000",L"1.0.0"}},// name
+            {0x80462DEC - 0x80004000,{"MUSICUS",simpleutf8getter<0>,F01006590155AC000,L"01000130150FA000",L"1.0.0"}},// dialogue 1 
+            {0x80480d4c - 0x80004000,{"MUSICUS",simpleutf8getter<0>,F01006590155AC000,L"01000130150FA000",L"1.0.0"}},// dialogue 2
+            {0x804798e0 - 0x80004000,{"MUSICUS",simpleutf8getter<0>,F01006590155AC000,L"01000130150FA000",L"1.0.0"}},// choice
+
+            
+            {0x80046700 - 0x80004000,{"CHAOS;HEAD NOAH",_0100978013276000,0,L"0100957016B90000",L"1.0.0"}},
+            {0x8003A2c0 - 0x80004000,{"CHAOS;HEAD NOAH",_0100978013276000,0,L"0100957016B90000",L"1.0.0"}},// choice
+            {0x8003EAB0 - 0x80004000,{"CHAOS;HEAD NOAH",_0100978013276000,0,L"0100957016B90000",L"1.0.0"}},// TIPS list (menu)
+            {0x8004C648 - 0x80004000,{"CHAOS;HEAD NOAH",_0100978013276000,0,L"0100957016B90000",L"1.0.0"}},// system message
+            {0x80050374 - 0x80004000,{"CHAOS;HEAD NOAH",_0100978013276000,0,L"0100957016B90000",L"1.0.0"}},// TIPS (red)
+            
+            
+            {0x80ac4d88 - 0x80004000,{"Story of Seasons a Wonderful Life",simpleutf32getter<0>,F0100936018EB4000,L"0100936018EB4000",L"1.0.3"}},// Main text
+            {0x808f7e84 - 0x80004000,{"Story of Seasons a Wonderful Life",simpleutf32getter<0>,F0100936018EB4000,L"0100936018EB4000",L"1.0.3"}},// Item name
+            {0x80bdf804 - 0x80004000,{"Story of Seasons a Wonderful Life",simpleutf32getter<0>,F0100936018EB4000,L"0100936018EB4000",L"1.0.3"}},// Item description
+
+            {0x81e75940 - 0x80004000,{"Hamefura Pirates",T0100982015606000,F0100982015606000,L"0100982015606000",L"1.0.0"}},// Hamekai.TalkPresenter$$AddMessageBacklog
+            {0x81c9ae60 - 0x80004000,{"Hamefura Pirates",T0100982015606000,F0100982015606000,L"0100982015606000",L"1.0.0"}},// Hamekai.ChoicesText$$SetText
+            {0x81eb7dc0 - 0x80004000,{"Hamefura Pirates",T0100982015606000,F0100982015606000,L"0100982015606000",L"1.0.0"}},// Hamekai.ShortStoryTextView$$AddText
+
     };
     return 1;
 }();
