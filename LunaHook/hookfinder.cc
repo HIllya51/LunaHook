@@ -207,8 +207,9 @@ void SafeSendJitVeh(hook_stack* stack,uintptr_t address,uintptr_t em_addr,JITTYP
 	}__except (EXCEPTION_EXECUTE_HANDLER) {}
 }
 std::unordered_map<uintptr_t,uint64_t>addresscalledtime;
+bool safeautoleaveveh=false;
 bool SendJitVeh(PCONTEXT context,uintptr_t address,uintptr_t em_addr,JITTYPE jittype){
-	
+	if(safeautoleaveveh)return true;
 	if (recordsAvailable <= 0) return false;
 	if(addresscalledtime.find(address)==addresscalledtime.end())addresscalledtime[address]=0;
 	auto tm=GetTickCount64();
@@ -384,6 +385,7 @@ void SearchForHooks(SearchParam spUser)
 		}
 		else
 		{
+			safeautoleaveveh=false;
 			ConsoleOutput(HOOK_SEARCH_INITIALIZED, jitaddr2emuaddr.size());
 			std::vector<uint64_t>successaddr;int i=0;
 			for(auto addr:jitaddr2emuaddr){
@@ -395,9 +397,10 @@ void SearchForHooks(SearchParam spUser)
 			}
 			ConsoleOutput(MAKE_GAME_PROCESS_TEXT, sp.searchTime / 1000);
 			Sleep(sp.searchTime);
-			for(auto addr:successaddr){
-				remove_veh_hook((void*)addr);
-			}
+			// for(auto addr:successaddr){
+			// 	remove_veh_hook((void*)addr);
+			// }
+			safeautoleaveveh=true;
 			SearchForHooks_Return();
 		}
 	}).detach();

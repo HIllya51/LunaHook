@@ -173,11 +173,6 @@ int HookStrLen(HookParam* hp,BYTE* data){
 
 }
 static std::mutex maplock;
-void jitaddrclear(){
-	std::lock_guard _(maplock);
-	emuaddr2jitaddr.clear();
-	jitaddr2emuaddr.clear();
-}
 void jitaddraddr(uintptr_t em_addr,uintptr_t jitaddr,JITTYPE jittype){
 	std::lock_guard _(maplock);
 	if(emuaddr2jitaddr.find(em_addr)==emuaddr2jitaddr.end())

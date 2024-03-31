@@ -21,7 +21,6 @@ inline SearchParam spDefault;
 int HookStrLen(HookParam*,BYTE* data);
 inline std::unordered_map<uintptr_t,std::pair<JITTYPE,std::set<uintptr_t> > >emuaddr2jitaddr;
 inline std::unordered_map<uintptr_t,std::pair<JITTYPE,uintptr_t>>jitaddr2emuaddr;
-void jitaddrclear();
 void jitaddraddr(uintptr_t em_addr,uintptr_t jitaddr,JITTYPE);
 
 void context_get(hook_stack*,PCONTEXT);

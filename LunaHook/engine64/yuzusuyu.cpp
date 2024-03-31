@@ -95,7 +95,6 @@ bool yuzusuyu::attach_function()
    auto DoJitPtr=getDoJitAddress();
    if(DoJitPtr==0)return false;
    ConsoleOutput("DoJitPtr %p",DoJitPtr);
-   jitaddrclear();
    HookParam hp;
    hp.address=DoJitPtr;
    hp.text_fun=[](hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){

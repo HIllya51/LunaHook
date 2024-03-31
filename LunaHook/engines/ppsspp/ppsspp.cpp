@@ -283,7 +283,6 @@ bool hookPPSSPPDoJit(){
    HookParam hp;
    hp.address=DoJitPtr;//Jit::DoJit
    ConsoleOutput("DoJitPtr %p",DoJitPtr);
-   jitaddrclear();
    hp.user_value=(uintptr_t)new uintptr_t;
    hp.text_fun=[](hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
         auto em_address=stack->THISCALLARG1;
