@@ -145,21 +145,18 @@ uintptr_t queryrelativeret(uintptr_t retaddr){
 	return relative;
 }
 
-void jitfunctiontext_fun(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
+uintptr_t jitgetaddr(hook_stack* stack, HookParam* hp){
 	switch (hp->jittype)
 	{
 	#ifdef _WIN64
 	case JITTYPE::YUZU:
-		*data=YUZU::emu_arg(stack)[hp->argidx]+hp->padding;
-		break;
+		return YUZU::emu_arg(stack)[hp->argidx]+hp->padding;
 	#endif
 	case JITTYPE::PPSSPP:
-		*data=PPSSPP::emu_arg(stack)[hp->argidx]+hp->padding;
-		break;
+		return PPSSPP::emu_arg(stack)[hp->argidx]+hp->padding;
 	default:
-		*data=0;
+		return 0;
 	}
-	*len=HookStrLen(hp,(BYTE*)*data);
 }
 void TextHook::Send(uintptr_t lpDataBase)
 {
@@ -183,6 +180,11 @@ void TextHook::Send(uintptr_t lpDataBase)
 			plpdatain=(lpDataBase + hp.offset),
 			lpDataIn=*(uintptr_t*)plpdatain;
 		bool isstring=false;
+		if(hp.jittype!=JITTYPE::PC)
+		{
+			lpDataIn=jitgetaddr(stack,&hp);
+			plpdatain=(uintptr_t)&lpDataIn;
+		}
 
 		auto use_custom_embed_fun=(hp.type&EMBED_ABLE)&&!(hp.type&EMBED_BEFORE_SIMPLE);
 		if(use_custom_embed_fun)
@@ -195,10 +197,6 @@ void TextHook::Send(uintptr_t lpDataBase)
 		{
 			isstring=true;
 			hp.text_fun(stack, &hp, &lpDataIn, &lpSplit, &lpCount);
-		}
-		else if(hp.jittype!=JITTYPE::PC){
-			isstring=true;
-			jitfunctiontext_fun(stack, &hp, &lpDataIn, &lpSplit, &lpCount);
 		}
 		else 
 		{

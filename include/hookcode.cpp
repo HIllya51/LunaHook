@@ -304,7 +304,7 @@ namespace
 
 		if (hp.type & NO_CONTEXT) HCode += L'N';
 
-		if (hp.codepage != 0 && !(hp.type & CODEC_UTF8) ) HCode += std::to_wstring(hp.codepage) + L'#';
+		if (hp.codepage != 0 && !(hp.type & CODEC_UTF8)&&!(hp.type & CODEC_UTF16)&&!(hp.type & CODEC_UTF32) ) HCode += std::to_wstring(hp.codepage) + L'#';
 
 		if (hp.padding) HCode += HexString(hp.padding) + L'+';
 
