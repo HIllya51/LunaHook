@@ -308,19 +308,23 @@ namespace
 
 		if (hp.padding) HCode += HexString(hp.padding) + L'+';
 
-		switch (hp.jittype)
-		{
-		case JITTYPE::PC:
-		{
-			
-			if (hp.offset < 0) hp.offset += 4;
-			if (hp.split < 0) hp.split += 4;
-
+		if (hp.offset < 0) hp.offset += 4;
+		if (hp.split < 0) hp.split += 4;
+		
+		if(hp.jittype==JITTYPE::PC){
 			HCode += HexString(hp.offset);
-			if (hp.type & DATA_INDIRECT) HCode += L'*' + HexString(hp.index);
-			if (hp.type & USING_SPLIT) HCode += L':' + HexString(hp.split);
-			if (hp.type & SPLIT_INDIRECT) HCode += L'*' + HexString(hp.split_index);
-			// Attempt to make the address relative
+		}
+		else{
+			HCode += HexString(hp.argidx);
+		}
+
+		if (hp.type & DATA_INDIRECT) HCode += L'*' + HexString(hp.index);
+		if (hp.type & USING_SPLIT) HCode += L':' + HexString(hp.split);
+		if (hp.type & SPLIT_INDIRECT) HCode += L'*' + HexString(hp.split_index);
+
+		// Attempt to make the address relative
+		if(hp.jittype==JITTYPE::PC)
+		{
 			if (processId && !(hp.type & MODULE_OFFSET))
 				if (AutoHandle<> process = OpenProcess(PROCESS_VM_READ | PROCESS_QUERY_INFORMATION, FALSE, processId))
 					if (MEMORY_BASIC_INFORMATION info = {}; VirtualQueryEx(process, (LPCVOID)hp.address, &info, sizeof(info)))
@@ -335,10 +339,8 @@ namespace
 			if (hp.type & MODULE_OFFSET) HCode += L':' + std::wstring(hp.module);
 			if (hp.type & FUNCTION_OFFSET) HCode += L':' + StringToWideString(hp.function);
 		}
-		break;
-		default:
+		else
 		{
-			HCode += HexString(hp.argidx);
 			HCode += L'@' + HexString(hp.emu_addr);
 			switch (hp.jittype)
 			{
@@ -349,9 +351,6 @@ namespace
 				HCode+=L":JIT:PPSSPP";
 			}
 		}
-		break;
-		} 
-		
 
 		return HCode;
 	}
