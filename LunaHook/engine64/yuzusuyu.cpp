@@ -80,17 +80,87 @@ struct emfuncinfo{
 };
 std::unordered_map<uintptr_t,emfuncinfo>emfunctionhooks;
 
+std::string wcasta(const std::wstring x){
+    std::string xx;
+    for(auto c:x)
+        xx+=c;
+    return xx;
+}
 
+std::wstring acastw(const std::string x){
+    std::wstring xx;
+    for(auto c:x)
+        xx+=c;
+    return xx;
+}
+struct GameInfo {
+    std::string name{""};
+    uint64_t id{0};
+    std::string version{""};
+} game_info;
 bool checkiscurrentgame(const emfuncinfo& em){
 	auto wininfos=get_proc_windows();
 	for(auto&& info:wininfos){
-		if(info.title.find(em._version)!=info.title.npos)return true;
+        if(info.title.find(acastw(game_info.version))!=info.title.npos){
+            //判断是有效的info
+            auto checkversion=(std::wstring(em._version)==acastw(game_info.version));
+            auto checkid=(std::stoll(em._id,0,16)==game_info.id);
+            if(checkid&&checkversion)return true;
+        }
+		else if(info.title.find(em._version)!=info.title.npos)return true;
 	}
 	return false;
 }
 }
+bool Hook_Network_RoomMember_SendGameInfo(){
+    // void RoomMember::SendGameInfo(const GameInfo& game_info) {
+    //     room_member_impl->current_game_info = game_info;
+    //     if (!IsConnected())
+    //         return;
+
+    //     Packet packet;
+    //     packet.Write(static_cast<u8>(IdSetGameInfo));
+    //     packet.Write(game_info.name);
+    //     packet.Write(game_info.id);
+    //     packet.Write(game_info.version);
+    //     room_member_impl->Send(std::move(packet));
+    // }
+    BYTE pattern[]={
+        0x49,0x8B,XX,
+        0x0F,0xB6,0x81,0x28,0x01,0x00,0x00,
+        0x90,
+        0x3C,0x02,
+        0x74,0x1C,
+        0x0F,0xB6,0x81,0x28,0x01,0x00,0x00,
+        0x90,
+        0x3C,0x03,
+        0x74,0x10,
+        0x0F,0xB6,0x81,0x28,0x01,0x00,0x00,
+        0x90,
+        0x3C,0x04,
+        0x0F,0x85,XX4
+    };
+    for(auto addr:Util::SearchMemory(pattern,sizeof(pattern),PAGE_EXECUTE,processStartAddress,processStopAddress))
+    {
+        addr=MemDbg::findEnclosingAlignedFunction_strict(addr,0x100);
+        //有两个，但另一个离起始很远
+        if(addr==0)continue;
+        HookParam hp;
+        hp.address=addr;
+        hp.text_fun=[](hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
+            // void __fastcall Network::RoomMember::SendGameInfo(
+            //     Network::RoomMember *this,
+            //     const AnnounceMultiplayerRoom::GameInfo *game_info)
+            game_info=*(GameInfo*)stack->rdx;
+            ConsoleOutput("%s %llx %s",game_info.name.c_str(),game_info.id,game_info.version.c_str());
+        };
+        return NewHook(hp,"yuzuGameInfo");
+    }
+    return false;
+}
 bool yuzusuyu::attach_function()
 {
+   Hook_Network_RoomMember_SendGameInfo();
    ConsoleOutput("[Compatibility] Yuzu 1616+");
    auto DoJitPtr=getDoJitAddress();
    if(DoJitPtr==0)return false;
