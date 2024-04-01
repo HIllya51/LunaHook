@@ -333,12 +333,7 @@ bool hookPPSSPPDoJit(){
                 hpinternal.jittype=JITTYPE::PPSSPP;
                 NewHook(hpinternal,op.hookname);
             }();
-            [&](){
-                if(delayinserthook.find(em_address)==delayinserthook.end())return;
-                auto h=delayinserthook[em_address];
-                delayinserthook.erase(em_address);
-                NewHook(h.second,h.first.c_str());
-            }();
+            delayinsertNewHook(em_address);
 		};
 		static auto once=NewHook(hpinternal,"DoJitPtrRet");
    };

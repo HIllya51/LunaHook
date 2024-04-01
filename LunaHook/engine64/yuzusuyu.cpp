@@ -190,12 +190,7 @@ bool yuzusuyu::attach_function()
             hpinternal.jittype=JITTYPE::YUZU;
             NewHook(hpinternal,op.hookname);
         }();
-        [&](){
-            if(delayinserthook.find(em_address)==delayinserthook.end())return;
-            auto h=delayinserthook[em_address];
-            delayinserthook.erase(em_address);
-            NewHook(h.second,h.first.c_str());
-        }();
+        delayinsertNewHook(em_address);
    };
   return NewHook(hp,"YuzuDoJit");
 } 

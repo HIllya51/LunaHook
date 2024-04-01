@@ -175,9 +175,7 @@ int HookStrLen(HookParam* hp,BYTE* data){
 static std::mutex maplock;
 void jitaddraddr(uintptr_t em_addr,uintptr_t jitaddr,JITTYPE jittype){
 	std::lock_guard _(maplock);
-	if(emuaddr2jitaddr.find(em_addr)==emuaddr2jitaddr.end())
-		emuaddr2jitaddr[em_addr]={jittype,{}};
-	emuaddr2jitaddr[em_addr].second.insert(jitaddr);
+	emuaddr2jitaddr[em_addr]={jittype,jitaddr};
 	jitaddr2emuaddr[jitaddr]={jittype,em_addr};
 }
 bool NewHook_1(HookParam& hp, LPCSTR lpname)
@@ -204,25 +202,34 @@ bool NewHook_1(HookParam& hp, LPCSTR lpname)
 		return true;
 	}
 }
+static std::mutex delayinsertlock;
+void delayinsertadd(HookParam hp,std::string name){
+	std::lock_guard _(maplock);
+	delayinserthook[hp.emu_addr]={name,hp};
+	ConsoleOutput(INSERTING_HOOK, name.c_str());
+}
+void delayinsertNewHook(uintptr_t em_address){
+	if(delayinserthook.find(em_address)==delayinserthook.end())return;
+	std::lock_guard _(maplock);
+	auto h=delayinserthook[em_address];
+	delayinserthook.erase(em_address);
+	NewHook(h.second,h.first.c_str());
+}
 bool NewHook(HookParam hp, LPCSTR name){
 	if(hp.address)
 		return NewHook_1(hp,name);
 	//下面的是手动插入
 	if(emuaddr2jitaddr.find(hp.emu_addr)==emuaddr2jitaddr.end()){
-		delayinserthook[hp.emu_addr]={name,hp};
-		return false;
+		delayinsertadd(hp,name);
+		return true;
 	}
 	strcpy(hp.function,"");
 	wcscpy(hp.module,L"");
 	hp.type &= ~MODULE_OFFSET;
-	hp.type &= ~FUNCTION_OFFSET;
-	auto succ=false;
-	for(auto __x: emuaddr2jitaddr[hp.emu_addr].second){
-		hp.address=__x;
-		hp.jittype=emuaddr2jitaddr[hp.emu_addr].first;
-		succ|=NewHook_1(hp,name);
-	}
-	return succ;
+
+	hp.address=emuaddr2jitaddr[hp.emu_addr].second;
+	hp.jittype=emuaddr2jitaddr[hp.emu_addr].first;
+	return NewHook_1(hp,name);
 }
 void RemoveHook(uint64_t addr, int maxOffset)
 {
