@@ -268,7 +268,6 @@ void SearchForHooks_Return(){
 			hp.type = CODEC_UTF16 | USING_STRING|BREAK_POINT;
 			hp.argidx=records[i].argidx;
 		}
-		if (sp.hookPostProcessor) sp.hookPostProcessor(hp);	//actuall useless because of jit
 		NotifyHookFound(hp, (wchar_t*)records[i].text);
 		if (++results % 100'000 == 0) ConsoleOutput(ResultsNum, results);
 	}

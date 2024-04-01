@@ -187,6 +187,18 @@ bool ULJM05943F(void* data, size_t* len, HookParam* hp){
 	return write_string_overwrite(data,len,result2);
 }
 
+bool FULJM05603(LPVOID data, size_t* size, HookParam*)
+{
+    auto text = reinterpret_cast<LPSTR>(data);
+    auto len = reinterpret_cast<size_t*>(size);
+
+    StringCharReplacer(text, len, "%N", 2, ' ');
+    StringFilter(text, len, "%K", 2);
+    StringFilter(text, len, "%P", 2);
+
+    return true;
+}
+
 bool NPJH50619F(void* data, size_t* len, HookParam* hp){
     auto s = std::string((char*)data,*len);
     std::regex pattern1("[\\r\\n]+");
@@ -263,6 +275,8 @@ namespace ppsspp{
 			
             {0x88eeba4,{"Gekka Ryouran Romance",0,0,0,0,ULJM05943F,L"ULJM05943"}},// a0 - monologue text
             {0x8875e0c,{"Gekka Ryouran Romance",0,1,6,0,ULJM05943F,L"ULJM05943"}},// a1 - dialogue text
+
+            {0x886F014,{"My Merry May with be",0,3,0,0,FULJM05603,L"ULJM05603"}},
     };
     
 }

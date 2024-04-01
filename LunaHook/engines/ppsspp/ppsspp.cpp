@@ -172,7 +172,7 @@ bool InsertPPSSPPHLEHooks()
     }
     return succ;
 }
-
+#if 0
 bool PPSSPPinithooksearch(){
 	bool found = false;
 	SYSTEM_INFO systemInfo;
@@ -218,7 +218,7 @@ bool PPSSPPinithooksearch(){
 	}
 	return found;
 }
-
+#endif
 uintptr_t getDoJitAddress() {
     #ifndef _WIN64
     auto string1="Jump target too far away, needs indirect register";
@@ -345,7 +345,6 @@ bool InsertPPSSPPcommonhooks()
 {
   
   auto succ=InsertPPSSPPHLEHooks();
-  succ|=PPSSPPinithooksearch();
   succ|=ppsspp::hookPPSSPPDoJit();
   return succ;
 }
