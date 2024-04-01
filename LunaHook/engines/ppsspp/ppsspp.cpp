@@ -271,7 +271,7 @@ namespace ppsspp{
 bool checkiscurrentgame(const emfuncinfo& em){
     auto wininfos=get_proc_windows();
     for(auto&& info:wininfos){
-        if(info.title.find(em._id)!=info.title.npos)return true;
+        if(info.title.find(acastw(em._id))!=info.title.npos)return true;
     }
     return false;
 }
@@ -331,7 +331,7 @@ bool hookPPSSPPDoJit(){
                 hpinternal.argidx=op.argidx;
                 hpinternal.padding=op.padding;
                 hpinternal.jittype=JITTYPE::PPSSPP;
-                NewHook(hpinternal,op.hookname);
+                NewHook(hpinternal,op._id);
             }();
             delayinsertNewHook(em_address);
 		};

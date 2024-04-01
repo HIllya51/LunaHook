@@ -190,6 +190,19 @@ size_t u32strlen(uint32_t* data){
 	return s;
 }
 
+std::string wcasta(const std::wstring x){
+    std::string xx;
+    for(auto c:x)
+        xx+=c;
+    return xx;
+}
+
+std::wstring acastw(const std::string x){
+    std::wstring xx;
+    for(auto c:x)
+        xx+=c;
+    return xx;
+}
 #include"const.h"
 #include"types.h"
 std::optional<std::wstring> commonparsestring(void* data,size_t length,void* php,DWORD df){

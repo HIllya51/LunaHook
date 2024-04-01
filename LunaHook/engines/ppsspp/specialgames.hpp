@@ -254,29 +254,31 @@ void QNPJH50909(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* sp
 }
 namespace ppsspp{
     std::unordered_map<uintptr_t,emfuncinfo>emfunctionhooks= {
-            {0x883bf34,{"Shinigami to Shoujo",0,1,0,0,ULJS00403_filter,L"ULJS00403"}},
-            {0x0886775c,{"Amagami",0,0,0,ULJS00339,0,L"ULJS00339"}},// String.length()
-            {0x8814adc,{"Sekai de Ichiban Dame na Koi",0,0,0,0,NPJH50909_filter,L"ULJM05878"}},// name + dialouge
-            {0x8850b2c,{"Sekai de Ichiban Dame na Koi",0,0,0,0,NPJH50909_filter,L"ULJM05878"}},// onscreen toast
-            {0x0891D72C,{"Dunamis15",CODEC_UTF8,0,0,0,ULJM06119_filter,L"ULJM06119"}},
-            {0x88506d0,{"Princess Evangile Portable",CODEC_UTF16,2,0,0,ULJM06036_filter,L"ULJM06036"}},// [0x88506d0(2)...0x088507C0(?)] // name text text (line doubled)
-            {0x89b59dc,{"Kin'iro no Corda 2f",0,0,0,ULJM05428,0,L"ULJM05428"}},
-            {0x886162c,{"Kin'iro no Corda",0,0,0,ULJM05054,0,L"ULJM05054"}},// dialogue: 0x886162c (x1), 0x889d5fc-0x889d520(a2) fullLine
-            {0x8899e90,{"Kin'iro no Corda",0,0,0,ULJM05054,0,L"ULJM05054"}},// name 0x88da57c, 0x8899ca4 (x0, oneTime), 0x8899e90
-            {0x8952cfc,{"Sol Trigger",CODEC_UTF8,0,0,0,NPJH50619F,L"NPJH50619"}},//dialog
-            {0x884aad4,{"Sol Trigger",CODEC_UTF8,0,0,0,NPJH50619F,L"NPJH50619"}},//description
-            {0x882e1b0,{"Sol Trigger",CODEC_UTF8,0,0,0,NPJH50619F,L"NPJH50619"}},//system
-            {0x88bb108,{"Sol Trigger",CODEC_UTF8,2,0,0,NPJH50619F,L"NPJH50619"}},//battle tutorial
-            {0x89526a0,{"Sol Trigger",CODEC_UTF8,0,0,0,NPJH50619F,L"NPJH50619"}},//battle info
-            {0x88bcef8,{"Sol Trigger",CODEC_UTF8,1,0,0,NPJH50619F,L"NPJH50619"}},//battle talk
-            {0x8958490,{"Fate/EXTRA CCC",0,0,0,0,NPJH50505F,L"NPJH50505"}},
-            {0x088630f8,{"Kamigami no Asobi InFinite",0,0,0,QNPJH50909,0,L"NPJH50909"}}, // text, choice (debounce trailing 400ms), TODO: better hook
-            {0x0887813c,{"Kamigami no Asobi InFinite",0,3,4,0,0,L"NPJH50909"}}, // Question YN
+            {0x883bf34,{0,1,0,0,ULJS00403_filter,"ULJS00403"}},
+            {0x0886775c,{0,0,0,ULJS00339,0,"ULJS00339"}},// String.length()
+            {0x8814adc,{0,0,0,0,NPJH50909_filter,"ULJM05878"}},// name + dialouge
+            {0x8850b2c,{0,0,0,0,NPJH50909_filter,"ULJM05878"}},// onscreen toast
+            {0x0891D72C,{CODEC_UTF8,0,0,0,ULJM06119_filter,"ULJM06119"}},
+            {0x88506d0,{CODEC_UTF16,2,0,0,ULJM06036_filter,"ULJM06036"}},// [0x88506d0(2)...0x088507C0(?)] // name text text (line doubled)
+            {0x89b59dc,{0,0,0,ULJM05428,0,"ULJM05428"}},
+            {0x886162c,{0,0,0,ULJM05054,0,"ULJM05054"}},// dialogue: 0x886162c (x1), 0x889d5fc-0x889d520(a2) fullLine
+            {0x8899e90,{0,0,0,ULJM05054,0,"ULJM05054"}},// name 0x88da57c, 0x8899ca4 (x0, oneTime), 0x8899e90
+            {0x8952cfc,{CODEC_UTF8,0,0,0,NPJH50619F,"NPJH50619"}},//dialog
+            {0x884aad4,{CODEC_UTF8,0,0,0,NPJH50619F,"NPJH50619"}},//description
+            {0x882e1b0,{CODEC_UTF8,0,0,0,NPJH50619F,"NPJH50619"}},//system
+            {0x88bb108,{CODEC_UTF8,2,0,0,NPJH50619F,"NPJH50619"}},//battle tutorial
+            {0x89526a0,{CODEC_UTF8,0,0,0,NPJH50619F,"NPJH50619"}},//battle info
+            {0x88bcef8,{CODEC_UTF8,1,0,0,NPJH50619F,"NPJH50619"}},//battle talk
+            {0x8958490,{0,0,0,0,NPJH50505F,"NPJH50505"}},
+            {0x088630f8,{0,0,0,QNPJH50909,0,"NPJH50909"}}, // text, choice (debounce trailing 400ms), TODO: better hook
+            {0x0887813c,{0,3,4,0,0,"NPJH50909"}}, // Question YN
 			
-            {0x88eeba4,{"Gekka Ryouran Romance",0,0,0,0,ULJM05943F,L"ULJM05943"}},// a0 - monologue text
-            {0x8875e0c,{"Gekka Ryouran Romance",0,1,6,0,ULJM05943F,L"ULJM05943"}},// a1 - dialogue text
+            {0x88eeba4,{0,0,0,0,ULJM05943F,"ULJM05943"}},// a0 - monologue text
+            {0x8875e0c,{0,1,6,0,ULJM05943F,"ULJM05943"}},// a1 - dialogue text
 
-            {0x886F014,{"My Merry May with be",0,3,0,0,FULJM05603,L"ULJM05603"}},
+            {0x886F014,{0,3,0,0,FULJM05603,"ULJM05603"}},
+			
+            {0x88517C8,{0,1,0,0,FULJM05603,"ULJM06114"}},
     };
     
 }

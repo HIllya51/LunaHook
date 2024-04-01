@@ -70,29 +70,15 @@ uintptr_t* argidx(hook_stack* stack,int idx){
 }
 
 struct emfuncinfo{
-    const char* hookname;
     uint64_t type;
     int argidx;int padding;
     void* hookfunc;
 	void* filterfun;
-    const wchar_t* _id;
-    const wchar_t* _version;
+    const char* _id;
+    const char* _version;
 };
 std::unordered_map<uintptr_t,emfuncinfo>emfunctionhooks;
 
-std::string wcasta(const std::wstring x){
-    std::string xx;
-    for(auto c:x)
-        xx+=c;
-    return xx;
-}
-
-std::wstring acastw(const std::string x){
-    std::wstring xx;
-    for(auto c:x)
-        xx+=c;
-    return xx;
-}
 struct GameInfo {
     std::string name{""};
     uint64_t id{0};
@@ -103,11 +89,11 @@ bool checkiscurrentgame(const emfuncinfo& em){
 	for(auto&& info:wininfos){
         if((game_info.version.size())&&(info.title.find(acastw(game_info.version))!=info.title.npos)&&(game_info.id!=0)){
             //判断是有效的info
-            auto checkversion=(std::wstring(em._version)==acastw(game_info.version));
+            auto checkversion=(std::string(em._version)==(game_info.version));
             auto checkid=(std::stoll(em._id,0,16)==game_info.id);
             if(checkid&&checkversion)return true;
         }
-		else if(info.title.find(em._version)!=info.title.npos)return true;
+		else if(info.title.find(acastw(em._version))!=info.title.npos)return true;
 	}
 	return false;
 }
@@ -188,7 +174,7 @@ bool yuzusuyu::attach_function()
             hpinternal.argidx=op.argidx;
             hpinternal.padding=op.padding;
             hpinternal.jittype=JITTYPE::YUZU;
-            NewHook(hpinternal,op.hookname);
+            NewHook(hpinternal,op._id);
         }();
         delayinsertNewHook(em_address);
    };
@@ -486,74 +472,74 @@ bool F0100936018EB4000(void* data, size_t* len, HookParam* hp){
 namespace{
 auto _=[](){
     emfunctionhooks={
-            {0x8003eeac - 0x80004000,{"Memories Off",CODEC_UTF16,0,0,_0100978013276000,0,L"0100978013276000",L"1.0.0"}},
-            {0x8003eebc - 0x80004000,{"Memories Off",CODEC_UTF16,0,0,_0100978013276000,0,L"0100978013276000",L"1.0.1"}},
+            {0x8003eeac - 0x80004000,{CODEC_UTF16,0,0,_0100978013276000,0,"0100978013276000","1.0.0"}},
+            {0x8003eebc - 0x80004000,{CODEC_UTF16,0,0,_0100978013276000,0,"0100978013276000","1.0.1"}},
             
             // Shiro to Kuro no Alice
-            {0x80013f20 - 0x80004000,{"Shiro to Kuro no Alice",CODEC_UTF8,0,0,0,NewLineCharFilterW,L"0100A460141B8000",L"1.0.0"}},
-            {0x80013f94 - 0x80004000,{"Shiro to Kuro no Alice",CODEC_UTF8,0,0,0,NewLineCharFilterW,L"0100A460141B8000",L"1.0.0"}},
-            {0x8001419c - 0x80004000,{"Shiro to Kuro no Alice",CODEC_UTF8,0,0,0,NewLineCharFilterW,L"0100A460141B8000",L"1.0.0"}},
+            {0x80013f20 - 0x80004000,{CODEC_UTF8,0,0,0,NewLineCharFilterW,"0100A460141B8000","1.0.0"}},
+            {0x80013f94 - 0x80004000,{CODEC_UTF8,0,0,0,NewLineCharFilterW,"0100A460141B8000","1.0.0"}},
+            {0x8001419c - 0x80004000,{CODEC_UTF8,0,0,0,NewLineCharFilterW,"0100A460141B8000","1.0.0"}},
             // Shiro to Kuro no Alice -Twilight line-
-            {0x80014260 - 0x80004000,{"Shiro to Kuro no Alice -Twilight line-",CODEC_UTF8,0,0,0,NewLineCharFilterW,L"0100A460141B8000",L"1.0.0"}},
-            {0x800142d4 - 0x80004000,{"Shiro to Kuro no Alice -Twilight line-",CODEC_UTF8,0,0,0,NewLineCharFilterW,L"0100A460141B8000",L"1.0.0"}},
-            {0x800144dc - 0x80004000,{"Shiro to Kuro no Alice -Twilight line-",CODEC_UTF8,0,0,0,NewLineCharFilterW,L"0100A460141B8000",L"1.0.0"}},
+            {0x80014260 - 0x80004000,{CODEC_UTF8,0,0,0,NewLineCharFilterW,"0100A460141B8000","1.0.0"}},
+            {0x800142d4 - 0x80004000,{CODEC_UTF8,0,0,0,NewLineCharFilterW,"0100A460141B8000","1.0.0"}},
+            {0x800144dc - 0x80004000,{CODEC_UTF8,0,0,0,NewLineCharFilterW,"0100A460141B8000","1.0.0"}},
             
-            {0x80072d00 - 0x80004000,{"CLANNAD",CODEC_UTF16|FULL_STRING,1,0,0, F0100A3A00CC7E000,L"0100A3A00CC7E000",L"1.0.0"}},
-            {0x80072d30 - 0x80004000,{"CLANNAD",CODEC_UTF16|FULL_STRING,1,0,0,F0100A3A00CC7E000,L"0100A3A00CC7E000",L"1.0.7"}},
+            {0x80072d00 - 0x80004000,{CODEC_UTF16|FULL_STRING,1,0,0, F0100A3A00CC7E000,"0100A3A00CC7E000","1.0.0"}},
+            {0x80072d30 - 0x80004000,{CODEC_UTF16|FULL_STRING,1,0,0,F0100A3A00CC7E000,"0100A3A00CC7E000","1.0.7"}},
 
-            {0x800e3424 - 0x80004000,{"VARIABLE BARRICADE NS",CODEC_UTF8,0,0,0,F010045C0109F2000,L"010045C0109F2000",L"1.0.1"}},//"System Messages + Choices"), //Also includes the names of characters, 
-            {0x800fb080 - 0x80004000,{"VARIABLE BARRICADE NS",CODEC_UTF8,3,0,0,F010045C0109F2000,L"010045C0109F2000",L"1.0.1"}},//Main Text
+            {0x800e3424 - 0x80004000,{CODEC_UTF8,0,0,0,F010045C0109F2000,"010045C0109F2000","1.0.1"}},//"System Messages + Choices"), //Also includes the names of characters, 
+            {0x800fb080 - 0x80004000,{CODEC_UTF8,3,0,0,F010045C0109F2000,"010045C0109F2000","1.0.1"}},//Main Text
             
-            {0x805bba5c - 0x80004000,{"AMNESIA for Nintendo Switch",CODEC_UTF16,0,0,T0100A1E00BFEA000<2>,F0100A1E00BFEA000,L"0100A1E00BFEA000",L"1.0.1"}},//dialogue
-            {0x805e9930 - 0x80004000,{"AMNESIA for Nintendo Switch",CODEC_UTF16,0,0,T0100A1E00BFEA000<2>,F0100A1E00BFEA000,L"0100A1E00BFEA000",L"1.0.1"}},//choice
-            {0x805e7fd8 - 0x80004000,{"AMNESIA for Nintendo Switch",CODEC_UTF16,0,0,T0100A1E00BFEA000<2>,F0100A1E00BFEA000,L"0100A1E00BFEA000",L"1.0.1"}},//name
-
-            
-            {0x80095010 - 0x80004000,{"Chou no Doku Hana no Kusari Taishou Tsuya Koi Ibun",CODEC_UTF16,1,0,0,F0100A1200CA3C000,L"0100A1200CA3C000",L"2.0.1"}},//Main Text + Names
-
-            {0x80a05170 - 0x80004000,{"Live a Live",CODEC_UTF16,0,0,0,F0100C29017106000,L"0100C29017106000",L"1.0.0"}},
-            
-            {0x8049d968 - 0x80004000,{"Sakura no Kumo * Scarlet no Koi",CODEC_UTF8,0,1,0,F01006590155AC000,L"01006590155AC000",L"1.0.0"}},//name
-            {0x8049d980 - 0x80004000,{"Sakura no Kumo * Scarlet no Koi",CODEC_UTF8,0,0,0,F01006590155AC000,L"01006590155AC000",L"1.0.0"}},//dialogue
-
-            {0x80557408 - 0x80004000,{"Majestic Majolical",CODEC_UTF8,0,0,0,F01000200194AE000,L"01000200194AE000",L"1.0.0"}},//name
-            {0x8059ee94 - 0x80004000,{"Majestic Majolical",CODEC_UTF8,3,0,0,F01000200194AE000,L"01000200194AE000",L"1.0.0"}},//player name
-            {0x80557420 - 0x80004000,{"Majestic Majolical",CODEC_UTF8,0,0,0,F01000200194AE000,L"01000200194AE000",L"1.0.0"}},//dialogue
+            {0x805bba5c - 0x80004000,{CODEC_UTF16,0,0,T0100A1E00BFEA000<2>,F0100A1E00BFEA000,"0100A1E00BFEA000","1.0.1"}},//dialogue
+            {0x805e9930 - 0x80004000,{CODEC_UTF16,0,0,T0100A1E00BFEA000<2>,F0100A1E00BFEA000,"0100A1E00BFEA000","1.0.1"}},//choice
+            {0x805e7fd8 - 0x80004000,{CODEC_UTF16,0,0,T0100A1E00BFEA000<2>,F0100A1E00BFEA000,"0100A1E00BFEA000","1.0.1"}},//name
 
             
-            {0x8017ad54 - 0x80004000,{"Matsurika no Kei",CODEC_UTF32,1,0,0,F0100EA001A626000,L"0100EA001A626000",L"1.0.0"}},// text
-            {0x80174d4c - 0x80004000,{"Matsurika no Kei",CODEC_UTF32,1,0,0,F0100EA001A626000,L"0100EA001A626000",L"1.0.0"}},// name
+            {0x80095010 - 0x80004000,{CODEC_UTF16,1,0,0,F0100A1200CA3C000,"0100A1200CA3C000","2.0.1"}},//Main Text + Names
 
-            {0x80057910 - 0x80004000,{"Cupid Parasite",CODEC_UTF32,2,0,0,F0100F7E00DFC8000,L"0100F7E00DFC8000",L"1.0.1"}},// name + text
-            {0x80169df0 - 0x80004000,{"Cupid Parasite",CODEC_UTF32,0,0,0,F0100F7E00DFC8000,L"0100F7E00DFC8000",L"1.0.1"}},// choice
+            {0x80a05170 - 0x80004000,{CODEC_UTF16,0,0,0,F0100C29017106000,"0100C29017106000","1.0.0"}},
+            
+            {0x8049d968 - 0x80004000,{CODEC_UTF8,0,1,0,F01006590155AC000,"01006590155AC000","1.0.0"}},//name
+            {0x8049d980 - 0x80004000,{CODEC_UTF8,0,0,0,F01006590155AC000,"01006590155AC000","1.0.0"}},//dialogue
 
-            {0x80075190 - 0x80004000,{"Radiant Tale",CODEC_UTF8,1,0,0,F0100925014864000,L"0100925014864000",L"1.0.0"}},// prompt
-            {0x8002fb18 - 0x80004000,{"Radiant Tale",CODEC_UTF8,0,0,0,F0100925014864000,L"0100925014864000",L"1.0.0"}},// name
-            {0x8002fd7c - 0x80004000,{"Radiant Tale",CODEC_UTF8,0,0,0,F0100925014864000,L"0100925014864000",L"1.0.0"}},// text
-
-            {0x80462DD4 - 0x80004000,{"MUSICUS",CODEC_UTF8,0,1,0,F01006590155AC000,L"01000130150FA000",L"1.0.0"}},// name
-            {0x80462DEC - 0x80004000,{"MUSICUS",CODEC_UTF8,0,0,0,F01006590155AC000,L"01000130150FA000",L"1.0.0"}},// dialogue 1 
-            {0x80480d4c - 0x80004000,{"MUSICUS",CODEC_UTF8,0,0,0,F01006590155AC000,L"01000130150FA000",L"1.0.0"}},// dialogue 2
-            {0x804798e0 - 0x80004000,{"MUSICUS",CODEC_UTF8,0,0,0,F01006590155AC000,L"01000130150FA000",L"1.0.0"}},// choice
+            {0x80557408 - 0x80004000,{CODEC_UTF8,0,0,0,F01000200194AE000,"01000200194AE000","1.0.0"}},//name
+            {0x8059ee94 - 0x80004000,{CODEC_UTF8,3,0,0,F01000200194AE000,"01000200194AE000","1.0.0"}},//player name
+            {0x80557420 - 0x80004000,{CODEC_UTF8,0,0,0,F01000200194AE000,"01000200194AE000","1.0.0"}},//dialogue
 
             
-            {0x80046700 - 0x80004000,{"CHAOS;HEAD NOAH",CODEC_UTF16,0,0,_0100978013276000,0,L"0100957016B90000",L"1.0.0"}},
-            {0x8003A2c0 - 0x80004000,{"CHAOS;HEAD NOAH",CODEC_UTF16,0,0,_0100978013276000,0,L"0100957016B90000",L"1.0.0"}},// choice
-            {0x8003EAB0 - 0x80004000,{"CHAOS;HEAD NOAH",CODEC_UTF16,0,0,_0100978013276000,0,L"0100957016B90000",L"1.0.0"}},// TIPS list (menu)
-            {0x8004C648 - 0x80004000,{"CHAOS;HEAD NOAH",CODEC_UTF16,0,0,_0100978013276000,0,L"0100957016B90000",L"1.0.0"}},// system message
-            {0x80050374 - 0x80004000,{"CHAOS;HEAD NOAH",CODEC_UTF16,0,0,_0100978013276000,0,L"0100957016B90000",L"1.0.0"}},// TIPS (red)
+            {0x8017ad54 - 0x80004000,{CODEC_UTF32,1,0,0,F0100EA001A626000,"0100EA001A626000","1.0.0"}},// text
+            {0x80174d4c - 0x80004000,{CODEC_UTF32,1,0,0,F0100EA001A626000,"0100EA001A626000","1.0.0"}},// name
+
+            {0x80057910 - 0x80004000,{CODEC_UTF32,2,0,0,F0100F7E00DFC8000,"0100F7E00DFC8000","1.0.1"}},// name + text
+            {0x80169df0 - 0x80004000,{CODEC_UTF32,0,0,0,F0100F7E00DFC8000,"0100F7E00DFC8000","1.0.1"}},// choice
+
+            {0x80075190 - 0x80004000,{CODEC_UTF8,1,0,0,F0100925014864000,"0100925014864000","1.0.0"}},// prompt
+            {0x8002fb18 - 0x80004000,{CODEC_UTF8,0,0,0,F0100925014864000,"0100925014864000","1.0.0"}},// name
+            {0x8002fd7c - 0x80004000,{CODEC_UTF8,0,0,0,F0100925014864000,"0100925014864000","1.0.0"}},// text
+
+            {0x80462DD4 - 0x80004000,{CODEC_UTF8,0,1,0,F01006590155AC000,"01000130150FA000","1.0.0"}},// name
+            {0x80462DEC - 0x80004000,{CODEC_UTF8,0,0,0,F01006590155AC000,"01000130150FA000","1.0.0"}},// dialogue 1 
+            {0x80480d4c - 0x80004000,{CODEC_UTF8,0,0,0,F01006590155AC000,"01000130150FA000","1.0.0"}},// dialogue 2
+            {0x804798e0 - 0x80004000,{CODEC_UTF8,0,0,0,F01006590155AC000,"01000130150FA000","1.0.0"}},// choice
+
+            
+            {0x80046700 - 0x80004000,{CODEC_UTF16,0,0,_0100978013276000,0,"0100957016B90000","1.0.0"}},
+            {0x8003A2c0 - 0x80004000,{CODEC_UTF16,0,0,_0100978013276000,0,"0100957016B90000","1.0.0"}},// choice
+            {0x8003EAB0 - 0x80004000,{CODEC_UTF16,0,0,_0100978013276000,0,"0100957016B90000","1.0.0"}},// TIPS list (menu)
+            {0x8004C648 - 0x80004000,{CODEC_UTF16,0,0,_0100978013276000,0,"0100957016B90000","1.0.0"}},// system message
+            {0x80050374 - 0x80004000,{CODEC_UTF16,0,0,_0100978013276000,0,"0100957016B90000","1.0.0"}},// TIPS (red)
             
             
-            {0x80ac4d88 - 0x80004000,{"Story of Seasons a Wonderful Life",CODEC_UTF32,0,0,F0100936018EB4000,L"0100936018EB4000",L"1.0.3"}},// Main text
-            {0x808f7e84 - 0x80004000,{"Story of Seasons a Wonderful Life",CODEC_UTF32,0,0,F0100936018EB4000,L"0100936018EB4000",L"1.0.3"}},// Item name
-            {0x80bdf804 - 0x80004000,{"Story of Seasons a Wonderful Life",CODEC_UTF32,0,0,F0100936018EB4000,L"0100936018EB4000",L"1.0.3"}},// Item description
+            {0x80ac4d88 - 0x80004000,{CODEC_UTF32,0,0,F0100936018EB4000,"0100936018EB4000","1.0.3"}},// Main text
+            {0x808f7e84 - 0x80004000,{CODEC_UTF32,0,0,F0100936018EB4000,"0100936018EB4000","1.0.3"}},// Item name
+            {0x80bdf804 - 0x80004000,{CODEC_UTF32,0,0,F0100936018EB4000,"0100936018EB4000","1.0.3"}},// Item description
 
-            {0x81e75940 - 0x80004000,{"Hamefura Pirates",CODEC_UTF16,0,0,T0100982015606000,F0100982015606000,L"0100982015606000",L"1.0.0"}},// Hamekai.TalkPresenter$$AddMessageBacklog
-            {0x81c9ae60 - 0x80004000,{"Hamefura Pirates",CODEC_UTF16,0,0,T0100982015606000,F0100982015606000,L"0100982015606000",L"1.0.0"}},// Hamekai.ChoicesText$$SetText
-            {0x81eb7dc0 - 0x80004000,{"Hamefura Pirates",CODEC_UTF16,0,0,T0100982015606000,F0100982015606000,L"0100982015606000",L"1.0.0"}},// Hamekai.ShortStoryTextView$$AddText
+            {0x81e75940 - 0x80004000,{CODEC_UTF16,0,0,T0100982015606000,F0100982015606000,"0100982015606000","1.0.0"}},// Hamekai.TalkPresenter$$AddMessageBacklog
+            {0x81c9ae60 - 0x80004000,{CODEC_UTF16,0,0,T0100982015606000,F0100982015606000,"0100982015606000","1.0.0"}},// Hamekai.ChoicesText$$SetText
+            {0x81eb7dc0 - 0x80004000,{CODEC_UTF16,0,0,T0100982015606000,F0100982015606000,"0100982015606000","1.0.0"}},// Hamekai.ShortStoryTextView$$AddText
 
-            {0x80225C3C - 0x80004000,{"Death end re;Quest 2",CODEC_UTF8,8,0,0,F010001D015260000,L"010001D015260000",L"1.0.0"}},
-            {0x80241088 - 0x80004000,{"Death end re;Quest",CODEC_UTF8,8,0,0,F0100AEC013DDA000,L"0100AEC013DDA000",L"1.0.0"}},//english ver
+            {0x80225C3C - 0x80004000,{CODEC_UTF8,8,0,0,F010001D015260000,"010001D015260000","1.0.0"}},
+            {0x80241088 - 0x80004000,{CODEC_UTF8,8,0,0,F0100AEC013DDA000,"0100AEC013DDA000","1.0.0"}},//english ver
 
     };
     return 1;

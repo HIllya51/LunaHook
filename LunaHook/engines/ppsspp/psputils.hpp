@@ -4,12 +4,11 @@ namespace ppsspp
 {
     
   struct emfuncinfo{
-      const char* hookname;
       uint64_t type;
       int argidx;int padding;
       void* hookfunc;
       void* filterfun;
-      const wchar_t* _id;
+      const char* _id;
   }; 
 
 }
