@@ -51,10 +51,10 @@ bool remove_veh_hook(void* origFunc)
     if (node == NULL) return false;
     repair_origin(node);
     RemoveVectoredExceptionHandler(node->handle);
-    return remove_veh_node(list, origFunc);
+    return remove_veh_node(list, origFunc) , true;
 }
 
-bool remove_veh_node(veh_list_t* list, void* origFunc)
+void remove_veh_node(veh_list_t* list, void* origFunc)
 {
     veh_node_t* searchnode  = list->head;
 
@@ -72,11 +72,11 @@ bool remove_veh_node(veh_list_t* list, void* origFunc)
                 searchnode->next->last=searchnode->last;
             
             delete (searchnode);
-            return true;
+            return ;
         }
         searchnode = searchnode->next;
     }
-    return false;
+    return ;
 }
 LONG CALLBACK veh_dispatch(PEXCEPTION_POINTERS ExceptionInfo)
 {
