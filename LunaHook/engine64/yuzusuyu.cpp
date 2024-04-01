@@ -101,7 +101,7 @@ struct GameInfo {
 bool checkiscurrentgame(const emfuncinfo& em){
 	auto wininfos=get_proc_windows();
 	for(auto&& info:wininfos){
-        if(info.title.find(acastw(game_info.version))!=info.title.npos){
+        if((game_info.version.size())&&(info.title.find(acastw(game_info.version))!=info.title.npos)&&(game_info.id!=0)){
             //判断是有效的info
             auto checkversion=(std::wstring(em._version)==acastw(game_info.version));
             auto checkid=(std::stoll(em._id,0,16)==game_info.id);
@@ -454,6 +454,20 @@ bool F0100982015606000(void* data, size_t* len, HookParam* hp){
     return write_string_overwrite(data,len,s);
 }
 
+bool F010001D015260000(void* data, size_t* len, HookParam* hp){
+    auto s=std::string((char*)data,*len);
+    if(startWith(s,"#Key"))return false;
+    strReplace(s,"#n","\n");
+    return write_string_overwrite(data,len,s);
+}
+bool F0100AEC013DDA000(void* data, size_t* len, HookParam* hp){
+    auto s=std::string((char*)data,*len);
+    static std::string ss;
+    if(ss==s)return false;
+    ss=s;
+    return true;
+}
+
 
 bool F0100925014864000(void* data, size_t* len, HookParam* hp){
     auto s=std::string((char*)data,*len);
@@ -537,6 +551,9 @@ auto _=[](){
             {0x81e75940 - 0x80004000,{"Hamefura Pirates",CODEC_UTF16,0,0,T0100982015606000,F0100982015606000,L"0100982015606000",L"1.0.0"}},// Hamekai.TalkPresenter$$AddMessageBacklog
             {0x81c9ae60 - 0x80004000,{"Hamefura Pirates",CODEC_UTF16,0,0,T0100982015606000,F0100982015606000,L"0100982015606000",L"1.0.0"}},// Hamekai.ChoicesText$$SetText
             {0x81eb7dc0 - 0x80004000,{"Hamefura Pirates",CODEC_UTF16,0,0,T0100982015606000,F0100982015606000,L"0100982015606000",L"1.0.0"}},// Hamekai.ShortStoryTextView$$AddText
+
+            {0x80225C3C - 0x80004000,{"Death end re;Quest 2",CODEC_UTF8,8,0,0,F010001D015260000,L"010001D015260000",L"1.0.0"}},
+            {0x80241088 - 0x80004000,{"Death end re;Quest",CODEC_UTF8,8,0,0,F0100AEC013DDA000,L"0100AEC013DDA000",L"1.0.0"}},//english ver
 
     };
     return 1;

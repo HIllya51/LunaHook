@@ -4,6 +4,7 @@ namespace
 {
 	std::optional<HookParam> ParseRCode(std::wstring RCode)
 	{
+		RCode.erase(0,1);
 		std::wsmatch match;
 		HookParam hp;
 		hp.type |= DIRECT_READ;
@@ -40,16 +41,28 @@ namespace
 		return hp;
 	}
 
-	std::optional<HookParam> ParseHCode(std::wstring HCode)
+	std::optional<HookParam> ParseHCode(std::wstring HCode,std::optional<HookParam> hpo={})
 	{
-		std::wsmatch match;
-		HookParam hp;
-		if(endWith(HCode,L":JIT:YUZU")){
+		auto hp=hpo?hpo.value():HookParam{};
+		
+		switch (HCode[0])
+		{
+			case L'B':
+				hp.type|=BREAK_POINT;
+			case L'H':
+				break;
+			default:
+				return {};
+		}
+	
+		HCode.erase(0,1);
+
+		if(endWith(HCode,L":JIT:YUZU"))
 			hp.jittype=JITTYPE::YUZU;
-		}
-		else if(endWith(HCode,L":JIT:PPSSPP")){
+		else if(endWith(HCode,L":JIT:PPSSPP"))
 			hp.jittype=JITTYPE::PPSSPP;
-		}
+		
+
 		// {A|B|W|H|S|Q|V|M}
 		switch (HCode[0])
 		{
@@ -98,7 +111,8 @@ namespace
 			hp.type |= NO_CONTEXT;
 			HCode.erase(0, 1);
 		}
-
+		
+		std::wsmatch match;
 		// [codepage#]
 		if (std::regex_search(HCode, match, std::wregex(L"^([0-9]+)#")))
 		{
@@ -183,18 +197,8 @@ namespace
 
 	std::optional<HookParam> ParseECode(std::wstring code)
 	{ 
-		auto idx=code.find(L'H');
-		if(idx==code.npos)
-		{
-			idx=code.find(L'B');
-
-			if(idx==code.npos)
-			return {};
-		}
-		auto hpo=ParseHCode(code.substr(idx+1));
-		code=code.substr(0,idx);
-		if(hpo.has_value()==false)return {};
-		auto hp=hpo.value();
+		code.erase(0,1);
+		HookParam hp;
 		hp.type|=EMBED_ABLE;
 
 		if(code[0]==L'D')
@@ -215,8 +219,8 @@ namespace
 				return {};
 			code.erase(0,1);
 		}
-		if(code.size())return {};
-		return hp;
+		 
+		return ParseHCode(code,hp);
 			 
 	}
 	std::wstring HexString(int64_t num)
@@ -363,17 +367,9 @@ namespace HookCode
 		if (code[0] == L'/') code.erase(0, 1);
 		code.erase(std::find(code.begin(), code.end(), L'/'), code.end()); // legacy/AGTH compatibility
 		Trim(code);
-		if (code[0] == L'R') return ParseRCode(code.erase(0, 1));
-		else if (code[0] == L'B'||code[0] == L'H'){
-			auto isbreakpoint=code[0] == L'B';
-			auto hpo=ParseHCode(code.erase(0, 1));
-			if(isbreakpoint && hpo.has_value()){
-				hpo.value().type|=BREAK_POINT;
-			}
-			return hpo;
-		} 
-		else if (code[0] == L'E') return ParseECode(code.erase(0, 1));
-		return {};
+		if (code[0] == L'R') return ParseRCode(code);
+		else if (code[0] == L'E') return ParseECode(code);
+		else return ParseHCode(code);
 	}
 
 	std::wstring Generate(HookParam hp, DWORD processId)
