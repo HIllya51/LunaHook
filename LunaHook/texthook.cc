@@ -150,10 +150,10 @@ uintptr_t jitgetaddr(hook_stack* stack, HookParam* hp){
 	{
 	#ifdef _WIN64
 	case JITTYPE::YUZU:
-		return YUZU::emu_arg(stack)[hp->argidx]+hp->padding;
+		return YUZU::emu_arg(stack)[hp->argidx];
 	#endif
 	case JITTYPE::PPSSPP:
-		return PPSSPP::emu_arg(stack)[hp->argidx]+hp->padding;
+		return PPSSPP::emu_arg(stack)[hp->argidx];
 	default:
 		return 0;
 	}
