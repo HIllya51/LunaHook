@@ -38,7 +38,8 @@ bool add_veh_hook(void* origFunc, newFuncType newFunc, DWORD hook_type)
 }
 void repair_origin(veh_node_t *node){
     DWORD _p;
-    VirtualProtect(node->origFunc, sizeof(int), PAGE_EXECUTE_READWRITE, &_p);
+    if(!VirtualProtect(node->origFunc, sizeof(int), PAGE_EXECUTE_READWRITE, &_p))
+        return;
     memcpy((void*)node->origFunc, (const void*)(&node->origBaseByte), sizeof(char));
     VirtualProtect(node->origFunc, sizeof(int), node->OldProtect, &_p);
 }

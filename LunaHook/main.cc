@@ -207,7 +207,11 @@ bool NewHook_1(HookParam& hp, LPCSTR lpname)
 bool NewHook(HookParam hp, LPCSTR name){
 	if(hp.address)
 		return NewHook_1(hp,name);
-	if(emuaddr2jitaddr.find(hp.emu_addr)==emuaddr2jitaddr.end())return false;
+	//下面的是手动插入
+	if(emuaddr2jitaddr.find(hp.emu_addr)==emuaddr2jitaddr.end()){
+		delayinserthook[hp.emu_addr]={name,hp};
+		return false;
+	}
 	strcpy(hp.function,"");
 	wcscpy(hp.module,L"");
 	hp.type &= ~MODULE_OFFSET;

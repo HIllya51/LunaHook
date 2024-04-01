@@ -293,46 +293,52 @@ bool hookPPSSPPDoJit(){
 		hpinternal.user_value=hp->user_value;
 		hpinternal.address=stack->retaddr;
 		hpinternal.text_fun=[](hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
-			
-			auto ret=stack->RETADDR;
-			if(breakpoints.find(ret)!=breakpoints.end())return;
-			breakpoints.insert(ret);
-
             auto em_address=*(uintptr_t*)(hp->user_value);
+			[&](){
+                auto ret=stack->RETADDR;
+                if(breakpoints.find(ret)!=breakpoints.end())return;
+                breakpoints.insert(ret);
 
-            jitaddraddr(em_address,ret,JITTYPE::PPSSPP);
+                jitaddraddr(em_address,ret,JITTYPE::PPSSPP);
 
-            if(emfunctionhooks.find(em_address)==emfunctionhooks.end())return;
-            if(!(checkiscurrentgame(emfunctionhooks.at(em_address))))return;
-			
-			auto op=emfunctionhooks.at(em_address);
-            ConsoleOutput("jit function addr %p",ret);
-            #ifndef _WIN64
-            BYTE sig[]={
-                0x8b,XX2,//mov reg,[ebp-off]
-                0x8b,0xc6,//mov eax,esi
-                0x25,0xff,0xff,0xff,0x3f,//and eax,0x3fffffff
-                0x89,XX,XX4,//mov [eax+base+off],reg
+                if(emfunctionhooks.find(em_address)==emfunctionhooks.end())return;
+                if(!(checkiscurrentgame(emfunctionhooks.at(em_address))))return;
+                
+                auto op=emfunctionhooks.at(em_address);
+                ConsoleOutput("jit function addr %p",ret);
+                #ifndef _WIN64
+                BYTE sig[]={
+                    0x8b,XX2,//mov reg,[ebp-off]
+                    0x8b,0xc6,//mov eax,esi
+                    0x25,0xff,0xff,0xff,0x3f,//and eax,0x3fffffff
+                    0x89,XX,XX4,//mov [eax+base+off],reg
 
-            };
-            auto findbase=MemDbg::findBytes(sig,sizeof(sig),ret,ret+0x20);
-            if(!findbase) 
-                findbase=MemDbg::findBytes(sig,sizeof(sig),ret-0x1000,ret+0x1000);
-            if(!findbase)
-                ConsoleOutput("can't find emu_baseaddr"); 
-            PPSSPP::x86_baseaddr=(*(DWORD*)(findbase+12))&0xffff0000;
-            ConsoleOutput("x86 base addr %p",PPSSPP::x86_baseaddr);
-            #endif
-			HookParam hpinternal;
-			hpinternal.address=ret;
-            hpinternal.emu_addr=em_address;//用于生成hcode
-            hpinternal.type=USING_STRING|NO_CONTEXT|BREAK_POINT|op.type;
-			hpinternal.text_fun=(decltype(hpinternal.text_fun))op.hookfunc;
-			hpinternal.filter_fun=(decltype(hpinternal.filter_fun))op.filterfun;
-            hpinternal.argidx=op.argidx;
-            hpinternal.padding=op.padding;
-            hpinternal.jittype=JITTYPE::PPSSPP;
-			NewHook(hpinternal,op.hookname);
+                };
+                auto findbase=MemDbg::findBytes(sig,sizeof(sig),ret,ret+0x20);
+                if(!findbase) 
+                    findbase=MemDbg::findBytes(sig,sizeof(sig),ret-0x1000,ret+0x1000);
+                if(!findbase)
+                    ConsoleOutput("can't find emu_baseaddr"); 
+                PPSSPP::x86_baseaddr=(*(DWORD*)(findbase+12))&0xffff0000;
+                ConsoleOutput("x86 base addr %p",PPSSPP::x86_baseaddr);
+                #endif
+                HookParam hpinternal;
+                hpinternal.address=ret;
+                hpinternal.emu_addr=em_address;//用于生成hcode
+                hpinternal.type=USING_STRING|NO_CONTEXT|BREAK_POINT|op.type;
+                hpinternal.text_fun=(decltype(hpinternal.text_fun))op.hookfunc;
+                hpinternal.filter_fun=(decltype(hpinternal.filter_fun))op.filterfun;
+                hpinternal.argidx=op.argidx;
+                hpinternal.padding=op.padding;
+                hpinternal.jittype=JITTYPE::PPSSPP;
+                NewHook(hpinternal,op.hookname);
+            }();
+            [&](){
+                if(delayinserthook.find(em_address)==delayinserthook.end())return;
+                auto h=delayinserthook[em_address];
+                delayinserthook.erase(em_address);
+                NewHook(h.second,h.first.c_str());
+            }();
 		};
 		static auto once=NewHook(hpinternal,"DoJitPtrRet");
    };

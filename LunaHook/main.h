@@ -25,3 +25,5 @@ void jitaddraddr(uintptr_t em_addr,uintptr_t jitaddr,JITTYPE);
 
 void context_get(hook_stack*,PCONTEXT);
 void context_set(hook_stack*,PCONTEXT);
+
+inline std::map<uintptr_t,std::pair<std::string,HookParam>>delayinserthook;
