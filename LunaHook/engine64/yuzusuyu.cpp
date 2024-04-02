@@ -500,6 +500,11 @@ bool F01006F000B056000(void* data, size_t* len, HookParam* hp){
     s = std::regex_replace(s, std::wregex(L"\\[.*?\\]"), L" ");
     return write_string_overwrite(data,len,s);
 }
+bool F0100068019996000(void* data, size_t* len, HookParam* hp){
+    auto s=std::string((char*)data,*len);
+    s = std::regex_replace(s, std::regex("%N"), "\n");
+    return write_string_overwrite(data,len,s);
+}
 
 namespace{
 auto _=[](){
@@ -631,7 +636,10 @@ auto _=[](){
             {0x80ca88b0,{CODEC_UTF16,0,0,ReadTextAndLen<0>,F01006F000B056000,"01006F000B056000","1.0.1"}},// Tutorial1
             {0x80ca892c,{CODEC_UTF16,0,0,ReadTextAndLen<0>,F01006F000B056000,"01006F000B056000","1.0.1"}},// Tutorial2
             {0x80008d88,{CODEC_UTF16,0,0,ReadTextAndLen<1>,F01006F000B056000,"01006F000B056000","1.0.1"}},// Location
-
+            //Norn9 Var Commons
+            {0x8003E874,{CODEC_UTF8,0,0,0,F0100068019996000,"0100068019996000","1.0.0"}},//English
+            //薄桜鬼 真改 万葉ノ抄
+            {0x8004E8F0,{CODEC_UTF8,1,0,0,F010001D015260000,"0100EA601A0A0000","1.0.0"}},
     };
     return 1;
 }();
