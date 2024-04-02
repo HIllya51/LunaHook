@@ -456,6 +456,11 @@ bool F0100AEC013DDA000(void* data, size_t* len, HookParam* hp){
     return true;
 }
 
+bool F0100F7801B5DC000(void* data, size_t* len, HookParam* hp){
+    if(!all_ascii((wchar_t*)data))return false;//chaos on first load.
+    StringReplacer((wchar_t*)data,len,L"<br>",4,L"\n",1);
+    return true;
+}
 
 bool F0100925014864000(void* data, size_t* len, HookParam* hp){
     auto s=std::string((char*)data,*len);
@@ -544,6 +549,10 @@ auto _=[](){
             {0x80225C3C,{CODEC_UTF8,8,0,0,F010001D015260000,"010001D015260000","1.0.0"}},
             //Death end re;Quest
             {0x80241088,{CODEC_UTF8,8,0,0,F0100AEC013DDA000,"0100AEC013DDA000","1.0.0"}},//english ver
+            //Meta Meet Cute!!!+
+            {0x81DD6010,{CODEC_UTF16,1,-32,0,0,"01009A401C1B0000","1.02"}},//english ver, only long string, short string can't find.
+            //Of the Red, the Light, and the Ayakashi Tsuzuri
+            {0x8176D78C,{CODEC_UTF16,3,0,0,F0100F7801B5DC000,"0100F7801B5DC000","1.0.0"}},//english ver, only long string, short string can't find.
 
     };
     return 1;
