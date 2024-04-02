@@ -443,6 +443,11 @@ bool F010001D015260000(void* data, size_t* len, HookParam* hp){
     strReplace(s,"#n","\n");
     return write_string_overwrite(data,len,s);
 }
+bool F0100DE200C0DA000(void* data, size_t* len, HookParam* hp){
+    StringReplacer((char*)data,len,"#n",2," ",1);
+    StringReplacer((char*)data,len,"\n",1," ",1);
+    return true;
+}
 bool F0100AEC013DDA000(void* data, size_t* len, HookParam* hp){
     auto s=std::string((char*)data,*len);
     static std::string ss;
@@ -504,6 +509,64 @@ bool F0100068019996000(void* data, size_t* len, HookParam* hp){
     auto s=std::string((char*)data,*len);
     s = std::regex_replace(s, std::regex("%N"), "\n");
     return write_string_overwrite(data,len,s);
+}
+bool F0100ADC014DA0000(void* data, size_t* len, HookParam* hp){
+    auto s=std::wstring((wchar_t*)data,*len/2);
+    std::wregex symbolRegex(L"[~^$(,)]");
+    std::wregex alphanumericRegex(L"[A-Za-z0-9]");
+    std::wregex atRegex(L"@");
+    std::wregex leadingSpaceRegex(L"^\\s+");
+    s = std::regex_replace(s, symbolRegex, L"");
+    s = std::regex_replace(s, alphanumericRegex, L"");
+    s = std::regex_replace(s, atRegex, L" ");
+    s = std::regex_replace(s, leadingSpaceRegex, L"");
+    return write_string_overwrite(data,len,s);
+}
+bool F0100AFA01750C000(void* data, size_t* len, HookParam* hp){
+    auto s=std::string((char*)data,*len);
+    std::regex newlineRegex("(\\\\n)+");
+    std::regex specialCharsRegex("\\\\d$|^\\@[a-z]+|#.*?#|\\$");
+    s = std::regex_replace(s, newlineRegex, " ");
+    s = std::regex_replace(s, specialCharsRegex, "");
+    return write_string_overwrite(data,len,s);
+}
+bool F0100B6900A668000(void* data, size_t* len, HookParam* hp){
+    auto s=std::string((char*)data,*len);
+    s = std::regex_replace(s, std::regex("#N"), "\n");
+    std::regex colorRegex("#Color\\[[\\d]+\\]");
+    s = std::regex_replace(s, colorRegex, "");
+    return write_string_overwrite(data,len,s);
+}
+bool F0100BD700E648000(void* data, size_t* len, HookParam* hp){
+    StringReplacer((char*)data,len,"*",1," ",1);
+    StringReplacer((char*)data,len,u8"ゞ",sizeof(u8"ゞ"),u8"！？",sizeof(u8"！？"));
+    return true;
+}
+bool F0100D9500A0F6000(void* data, size_t* len, HookParam* hp){
+    StringReplacer((char*)data,len,u8"㊤",sizeof(u8"㊤"),u8"―",sizeof(u8"―"));
+    StringReplacer((char*)data,len,u8"㊥",sizeof(u8"㊥"),u8"―",sizeof(u8"―"));
+    StringReplacer((char*)data,len,u8"^㌻",sizeof(u8"^㌻"),u8" ",sizeof(u8" "));// \n
+    return true;
+}
+
+bool F0100DA201E0DA000(void* data, size_t* len, HookParam* hp){
+    auto s = std::wstring((wchar_t*)data,*len/2);
+    s = std::regex_replace(s, std::wregex(L"[\\s]"), L"");
+	return write_string_overwrite(data,len,s);
+}
+
+bool F01005940182EC000(void* data, size_t* len, HookParam* hp){
+    auto s = std::wstring((wchar_t*)data,*len/2);
+    std::wregex whitespaceRegex(L"\\s");
+    s = std::regex_replace(s, whitespaceRegex, L"");
+    std::wregex colorRegex(L"<color=.*?>(.*?)<\\/color>");
+    s = std::regex_replace(s, colorRegex, L"$1");
+	return write_string_overwrite(data,len,s);
+}
+void T01005940182EC000(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
+    auto address=YUZU::emu_arg(stack)[0];
+    *data=address+0x14;
+    *len=wcslen((wchar_t*)*data)*2;
 }
 
 namespace{
@@ -640,6 +703,48 @@ auto _=[](){
             {0x8003E874,{CODEC_UTF8,0,0,0,F0100068019996000,"0100068019996000","1.0.0"}},//English
             //薄桜鬼 真改 万葉ノ抄
             {0x8004E8F0,{CODEC_UTF8,1,0,0,F010001D015260000,"0100EA601A0A0000","1.0.0"}},
+            //Chrono Cross: The Radical Dreamers Edition
+            {0x802b1254,{CODEC_UTF32,1,0,0,0,"0100AC20128AC000","1.0.2"}},//Text
+            //AIR
+            {0x800a6b10,{CODEC_UTF16,1,0,0,F0100ADC014DA0000,"0100ADC014DA0000","1.0.1"}},//Text + Name
+            //Shinigami to Shoujo
+            {0x21cb08+0x80004000,{0,1,0,0,F0100AFA01750C000,"0100AFA01750C000","1.0.2"}},//Text
+            //Octopath Traveler II
+            {0x8088a4d4,{CODEC_UTF16,0,0,0,0,"0100A3501946E000","1.0.0"}},//main text
+            //NieR:Automata The End of YoRHa Edition
+            {0x808e7068,{CODEC_UTF16,3,0,0,0,"0100B8E016F76000","1.0.2"}},//Text
+            //Reine des Fleurs
+            {0x80026434,{CODEC_UTF8,0,0,0,0,"0100B5800C0E4000","1.0.0"}},//Dialogue text 
+            //Code : Realize - Saikou no Hanataba 
+            {0x80024eac,{CODEC_UTF8,0,0,0,F0100B6900A668000,"0100B6900A668000","1.0.0"}},
+            //Diabolik Lovers Grand Edition
+            {0x80041080,{CODEC_UTF8,1,0,0,F0100BD700E648000,"0100BD700E648000","1.0.0"}},//name
+            {0x80041080,{CODEC_UTF8,0,0,0,F0100BD700E648000,"0100BD700E648000","1.0.0"}},//dialogue
+            {0x80041080,{CODEC_UTF8,2,0,0,F0100BD700E648000,"0100BD700E648000","1.0.0"}},//choice1
+            //Shinobi, Koi Utsutsu
+            {0x8002aca0,{CODEC_UTF8,0,0,0,F0100B6900A668000,"0100C1E0102B8000","1.0.0"}},//name
+            {0x8002aea4,{CODEC_UTF8,0,0,0,F0100B6900A668000,"0100C1E0102B8000","1.0.0"}},//dialogue1
+            {0x8001ca90,{CODEC_UTF8,2,0,0,F0100B6900A668000,"0100C1E0102B8000","1.0.0"}},//dialogue2
+            {0x80049dbc,{CODEC_UTF8,1,0,0,F0100B6900A668000,"0100C1E0102B8000","1.0.0"}},//choice
+            //Yoru, Tomosu
+            {0xe2748eb0,{CODEC_UTF32,1,0,0,0,"0100C2901153C000","1.0.0"}},// text1
+            //Closed Nightmare
+            {0x800c0918,{CODEC_UTF8,0,0,0,F0100D9500A0F6000,"0100D9500A0F6000","1.0.0"}},// line + name
+            {0x80070b98,{CODEC_UTF8,0,0,0,F0100D9500A0F6000,"0100D9500A0F6000","1.0.0"}},// fast trophy
+            {0x800878fc,{CODEC_UTF8,0,0,0,F0100D9500A0F6000,"0100D9500A0F6000","1.0.0"}},// prompt
+            {0x80087aa0,{CODEC_UTF8,0,0,0,F0100D9500A0F6000,"0100D9500A0F6000","1.0.0"}},// choice
+            //Yuru Camp△ - Have a Nice Day!
+            {0x816d03f8,{CODEC_UTF16,0,0,ReadTextAndLen<0>,F0100982015606000,"0100D12014FC2000","1.0.0"}},// dialog / backlog
+            //Akuyaku Reijou wa Ringoku no Outaishi ni Dekiai Sareru
+            {0x817b35c4,{CODEC_UTF8,1,0,0,F0100DA201E0DA000,"0100DA201E0DA000","1.0.0"}},// Dialogue
+            //Yunohana Spring! ~Mellow Times~
+            {0x80028178,{CODEC_UTF8,0,0,0,F0100DE200C0DA000,"0100DE200C0DA000","1.0.0"}},// name
+            {0x8001b9d8,{CODEC_UTF8,2,0,0,F0100DE200C0DA000,"0100DE200C0DA000","1.0.0"}},// dialogue1
+            {0x8001b9b0,{CODEC_UTF8,2,0,0,F0100DE200C0DA000,"0100DE200C0DA000","1.0.0"}},// dialogue2
+            {0x8004b940,{CODEC_UTF8,2,0,0,F0100DE200C0DA000,"0100DE200C0DA000","1.0.0"}},// dialogue3
+            {0x8004a8d0,{CODEC_UTF8,1,0,0,F0100DE200C0DA000,"0100DE200C0DA000","1.0.0"}},// choice
+            //サマータイムレンダ Another Horizon
+            {0x818ebaf0,{CODEC_UTF16,0,0,T01005940182EC000,F01005940182EC000,"01005940182EC000","1.0.0"}},//dialogue
     };
     return 1;
 }();
