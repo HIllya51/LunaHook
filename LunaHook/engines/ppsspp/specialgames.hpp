@@ -245,10 +245,9 @@ bool NPJH50505F(void* data, size_t* len, HookParam* hp){
 
 void QNPJH50909(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
      uintptr_t addr = PPSSPP::emu_addr(stack,0x08975110);
-	 auto adr=addr+0x20;
-	 auto len1=*(DWORD*)(addr+0x14)*2;
+	 *data=addr+0x20;
+	 *len=*(DWORD*)(addr+0x14)*2;
 	 
-	 *data=adr+len1-2;*len=2;
 	 if(0x6e87==*(WORD*)*data)*len=0;
 	 if(0x000a==*(WORD*)*data)*len=0;
 }

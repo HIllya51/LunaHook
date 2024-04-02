@@ -183,6 +183,15 @@ bool yuzusuyu::attach_function()
   return NewHook(hp,"YuzuDoJit");
 } 
 
+
+template<int index>
+void ReadTextAndLen(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
+    auto address=YUZU::emu_arg(stack)[index];
+    *len=(*(DWORD*)(address+0x10))*2;
+    *data=address+0x14;
+}
+
+
 void _0100978013276000(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
     auto s=mages::readString(YUZU::emu_arg(stack)[0],0);
     write_string_new(data,len,s);
@@ -209,13 +218,6 @@ bool F010045C0109F2000(void* data, size_t* len, HookParam* hp){
     s = std::regex_replace(s, std::regex("\\u3000"), "");
     s = std::regex_replace(s, std::regex("Save[\\s\\S]*データ"), "");
 	return write_string_overwrite(data,len,s);
-}
-
-template<int index>
-void T0100A1E00BFEA000(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
-    auto address=YUZU::emu_arg(stack)[index];
-    *len=(*(WORD*)(address+0x10))*2;
-    *data=address+0x14;
 }
 
 bool F0100A1E00BFEA000(void* data, size_t* len, HookParam* hp){
@@ -429,13 +431,6 @@ bool F0100F7E00DFC8000(void* data, size_t* len, HookParam* hp){
     return write_string_overwrite(data,len,u32);
 }
 
-
-void T0100982015606000(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
-    auto address=YUZU::emu_arg(stack)[1];
-    *len=(*(DWORD*)(address+0x10))*2;
-    *data=address+0x14;
-}
-
 bool F0100982015606000(void* data, size_t* len, HookParam* hp){
     auto s=std::wstring((wchar_t*)data,*len/2);
     s = std::regex_replace(s, std::wregex(L"\\n+|(\\\\n)+"), L" ");
@@ -476,6 +471,36 @@ bool F0100936018EB4000(void* data, size_t* len, HookParam* hp){
     auto u32=utf16_to_utf32(s.c_str(),s.size());
     return write_string_overwrite(data,len,u32);
 }
+
+template<int index,int type>
+void T0100B0100E26C000(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
+    auto address=YUZU::emu_arg(stack)[index];
+    if(type==2)
+        address+=0xA;
+    auto length=(*(DWORD*)(address+0x10))*2;
+    *len=length;
+    *data=address+0x14;
+}
+
+bool F010045C014650000(void* data, size_t* len, HookParam* hp){
+    auto s=std::string((char*)data,*len);
+    std::regex pattern("(@(\\/)?[a-zA-Z#](\\(\\d+\\))?|)[*<>]+");
+    s = std::regex_replace(s, pattern, "");
+    return write_string_overwrite(data,len,s);
+}
+
+bool F01008C0016544000(void* data, size_t* len, HookParam* hp){
+    auto s=std::wstring((wchar_t*)data,*len/2);
+    s = std::regex_replace(s, std::wregex(L"<[^>]+>"), L" ");
+    return write_string_overwrite(data,len,s);
+}
+
+bool F01006F000B056000(void* data, size_t* len, HookParam* hp){
+    auto s=std::wstring((wchar_t*)data,*len/2);
+    s = std::regex_replace(s, std::wregex(L"\\[.*?\\]"), L" ");
+    return write_string_overwrite(data,len,s);
+}
+
 namespace{
 auto _=[](){
     emfunctionhooks={
@@ -498,9 +523,9 @@ auto _=[](){
             {0x800e3424,{CODEC_UTF8,0,0,0,F010045C0109F2000,"010045C0109F2000","1.0.1"}},//"System Messages + Choices"), //Also includes the names of characters, 
             {0x800fb080,{CODEC_UTF8,3,0,0,F010045C0109F2000,"010045C0109F2000","1.0.1"}},//Main Text
             //AMNESIA for Nintendo Switch
-            {0x805bba5c,{CODEC_UTF16,0,0,T0100A1E00BFEA000<2>,F0100A1E00BFEA000,"0100A1E00BFEA000","1.0.1"}},//dialogue
-            {0x805e9930,{CODEC_UTF16,0,0,T0100A1E00BFEA000<2>,F0100A1E00BFEA000,"0100A1E00BFEA000","1.0.1"}},//choice
-            {0x805e7fd8,{CODEC_UTF16,0,0,T0100A1E00BFEA000<2>,F0100A1E00BFEA000,"0100A1E00BFEA000","1.0.1"}},//name
+            {0x805bba5c,{CODEC_UTF16,0,0,ReadTextAndLen<2>,F0100A1E00BFEA000,"0100A1E00BFEA000","1.0.1"}},//dialogue
+            {0x805e9930,{CODEC_UTF16,0,0,ReadTextAndLen<1>,F0100A1E00BFEA000,"0100A1E00BFEA000","1.0.1"}},//choice
+            {0x805e7fd8,{CODEC_UTF16,0,0,ReadTextAndLen<1>,F0100A1E00BFEA000,"0100A1E00BFEA000","1.0.1"}},//name
 
             //Chou no Doku Hana no Kusari Taishou Tsuya Koi Ibun
             {0x80095010,{CODEC_UTF16,1,0,0,F0100A1200CA3C000,"0100A1200CA3C000","2.0.1"}},//Main Text + Names
@@ -542,9 +567,9 @@ auto _=[](){
             {0x808f7e84,{CODEC_UTF32,0,0,F0100936018EB4000,"0100936018EB4000","1.0.3"}},// Item name
             {0x80bdf804,{CODEC_UTF32,0,0,F0100936018EB4000,"0100936018EB4000","1.0.3"}},// Item description
             //Hamefura Pirates
-            {0x81e75940,{CODEC_UTF16,0,0,T0100982015606000,F0100982015606000,"0100982015606000","1.0.0"}},// Hamekai.TalkPresenter$$AddMessageBacklog
-            {0x81c9ae60,{CODEC_UTF16,0,0,T0100982015606000,F0100982015606000,"0100982015606000","1.0.0"}},// Hamekai.ChoicesText$$SetText
-            {0x81eb7dc0,{CODEC_UTF16,0,0,T0100982015606000,F0100982015606000,"0100982015606000","1.0.0"}},// Hamekai.ShortStoryTextView$$AddText
+            {0x81e75940,{CODEC_UTF16,0,0,ReadTextAndLen<1>,F0100982015606000,"0100982015606000","1.0.0"}},// Hamekai.TalkPresenter$$AddMessageBacklog
+            {0x81c9ae60,{CODEC_UTF16,0,0,ReadTextAndLen<1>,F0100982015606000,"0100982015606000","1.0.0"}},// Hamekai.ChoicesText$$SetText
+            {0x81eb7dc0,{CODEC_UTF16,0,0,ReadTextAndLen<1>,F0100982015606000,"0100982015606000","1.0.0"}},// Hamekai.ShortStoryTextView$$AddText
             //Death end re;Quest 2
             {0x80225C3C,{CODEC_UTF8,8,0,0,F010001D015260000,"010001D015260000","1.0.0"}},
             //Death end re;Quest
@@ -552,7 +577,60 @@ auto _=[](){
             //Meta Meet Cute!!!+
             {0x81DD6010,{CODEC_UTF16,1,-32,0,0,"01009A401C1B0000","1.02"}},//english ver, only long string, short string can't find.
             //Of the Red, the Light, and the Ayakashi Tsuzuri
-            {0x8176D78C,{CODEC_UTF16,3,0,0,F0100F7801B5DC000,"0100F7801B5DC000","1.0.0"}},//english ver, only long string, short string can't find.
+            {0x8176D78C,{CODEC_UTF16,3,0,0,0,"0100F7801B5DC000","1.0.0"}},
+            //Tokimeki Memorial Girl's Side: 4th Heart
+            {0x817e7da8,{CODEC_UTF16,0,0,T0100B0100E26C000<2,0>,0,"0100B0100E26C000","1.0.0"}},// name (x1) + dialogue (x2)
+            {0x81429f54,{CODEC_UTF16,0,0,T0100B0100E26C000<0,1>,0,"0100B0100E26C000","1.0.0"}},// choice (x0)
+            {0x8180633c,{CODEC_UTF16,0,0,T0100B0100E26C000<1,2>,0,"0100B0100E26C000","1.0.0"}},// help (x1)
+            //13 Sentinels: Aegis Rim
+            {0x80057d18,{CODEC_UTF8,0,0,0,F010045C014650000,"010045C014650000","1.0.0"}},// cutscene text
+            {0x8026fec0,{CODEC_UTF8,1,0,0,F010045C014650000,"010045C014650000","1.0.0"}},// prompt
+            {0x8014eab4,{CODEC_UTF8,0,0,0,F010045C014650000,"010045C014650000","1.0.0"}},// name (combat)
+            {0x801528ec,{CODEC_UTF8,3,0,0,F010045C014650000,"010045C014650000","1.0.0"}},// dialogue (combat)
+            {0x80055acc,{CODEC_UTF8,0,0,0,F010045C014650000,"010045C014650000","1.0.0"}},// dialogue 2 (speech bubble)
+            {0x802679c8,{CODEC_UTF8,1,0,0,F010045C014650000,"010045C014650000","1.0.0"}},// notification
+            {0x8025e210,{CODEC_UTF8,2,0,0,F010045C014650000,"010045C014650000","1.0.0"}},// scene context example: 数日前 咲良高校 １年Ｂ組 教室 １９８５年５月"
+            {0x8005c518,{CODEC_UTF8,0,0,0,F010045C014650000,"010045C014650000","1.0.0"}},// game help
+            //Sea of Stars
+            {0x83e93ca0,{CODEC_UTF16,0,0,ReadTextAndLen<0>,F01008C0016544000,"01008C0016544000","1.0.45861"}},// Main text
+            {0x820c3fa0,{CODEC_UTF16,0,0,ReadTextAndLen<0>,F01008C0016544000,"01008C0016544000","1.0.47140"}},// Main text
+            //Final Fantasy I
+            {0x81e88040,{CODEC_UTF16,0,0,ReadTextAndLen<0>,0,"01000EA014150000","1.0.1"}},// Main text
+            {0x81cae54c,{CODEC_UTF16,0,0,ReadTextAndLen<0>,0,"01000EA014150000","1.0.1"}},// Intro text
+            {0x81a3e494,{CODEC_UTF16,0,0,ReadTextAndLen<0>,0,"01000EA014150000","1.0.1"}},// battle text
+            {0x81952c28,{CODEC_UTF16,0,0,ReadTextAndLen<0>,0,"01000EA014150000","1.0.1"}},// Location
+            //Final Fantasy II
+            {0x8208f4cc,{CODEC_UTF16,0,0,ReadTextAndLen<0>,0,"01006B7014156000","1.0.1"}},// Main text
+            {0x817e464c,{CODEC_UTF16,0,0,ReadTextAndLen<0>,0,"01006B7014156000","1.0.1"}},// Intro text
+            {0x81fb6414,{CODEC_UTF16,0,0,ReadTextAndLen<0>,0,"01006B7014156000","1.0.1"}},// battle text
+            //Final Fantasy III
+            {0x82019e84,{CODEC_UTF16,0,0,ReadTextAndLen<0>,0,"01002E2014158000","1.0.1"}},// Main text1
+            {0x817ffcfc,{CODEC_UTF16,0,0,ReadTextAndLen<0>,0,"01002E2014158000","1.0.1"}},// Main text2
+            {0x81b8b7e4,{CODEC_UTF16,0,0,ReadTextAndLen<0>,0,"01002E2014158000","1.0.1"}},// battle text
+            {0x8192c4a8,{CODEC_UTF16,0,0,ReadTextAndLen<0>,0,"01002E2014158000","1.0.1"}},// Location
+            //Final Fantasy IV
+            {0x81e44bf4,{CODEC_UTF16,0,0,ReadTextAndLen<0>,0,"01004B301415A000","1.0.2"}},// Main text
+            {0x819f92c4,{CODEC_UTF16,0,0,ReadTextAndLen<0>,0,"01004B301415A000","1.0.2"}},// Rolling text
+            {0x81e2e798,{CODEC_UTF16,0,0,ReadTextAndLen<0>,0,"01004B301415A000","1.0.2"}},// Battle text
+            {0x81b1e6a8,{CODEC_UTF16,0,0,ReadTextAndLen<0>,0,"01004B301415A000","1.0.2"}},// Location
+            //Final Fantasy V
+            {0x81d63e24,{CODEC_UTF16,0,0,ReadTextAndLen<0>,0,"0100AA201415C000","1.0.2"}},// Main text
+            {0x81adfb3c,{CODEC_UTF16,0,0,ReadTextAndLen<0>,0,"0100AA201415C000","1.0.2"}},// Location
+            {0x81a8fda8,{CODEC_UTF16,0,0,ReadTextAndLen<0>,0,"0100AA201415C000","1.0.2"}},// Battle text
+            //Final Fantasy VI
+            {0x81e6b350,{CODEC_UTF16,0,0,ReadTextAndLen<0>,0,"0100AA001415E000","1.0.2"}},// Main text
+            {0x81ab40ec,{CODEC_UTF16,0,0,ReadTextAndLen<0>,0,"0100AA001415E000","1.0.2"}},// Location
+            {0x819b8c88,{CODEC_UTF16,0,0,ReadTextAndLen<0>,0,"0100AA001415E000","1.0.2"}},// Battle text
+            //Final Fantasy IX
+            {0x80034b90,{CODEC_UTF16,0,0,ReadTextAndLen<1>,F01006F000B056000,"01006F000B056000","1.0.1"}},// Main Text
+            {0x802ade64,{CODEC_UTF16,0,0,ReadTextAndLen<0>,F01006F000B056000,"01006F000B056000","1.0.1"}},// Battle Text
+            {0x801b1b84,{CODEC_UTF16,0,0,ReadTextAndLen<0>,F01006F000B056000,"01006F000B056000","1.0.1"}},// Descriptions
+            {0x805aa0b0,{CODEC_UTF16,0,0,ReadTextAndLen<0>,F01006F000B056000,"01006F000B056000","1.0.1"}},// Key Item Name
+            {0x805a75d8,{CODEC_UTF16,0,0,ReadTextAndLen<0>,F01006F000B056000,"01006F000B056000","1.0.1"}},// Key Item Content
+            {0x8002f79c,{CODEC_UTF16,0,0,ReadTextAndLen<0>,F01006F000B056000,"01006F000B056000","1.0.1"}},// Menu
+            {0x80ca88b0,{CODEC_UTF16,0,0,ReadTextAndLen<0>,F01006F000B056000,"01006F000B056000","1.0.1"}},// Tutorial1
+            {0x80ca892c,{CODEC_UTF16,0,0,ReadTextAndLen<0>,F01006F000B056000,"01006F000B056000","1.0.1"}},// Tutorial2
+            {0x80008d88,{CODEC_UTF16,0,0,ReadTextAndLen<1>,F01006F000B056000,"01006F000B056000","1.0.1"}},// Location
 
     };
     return 1;
