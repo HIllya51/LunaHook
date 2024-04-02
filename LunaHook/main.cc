@@ -216,7 +216,7 @@ void delayinsertNewHook(uintptr_t em_address){
 	NewHook(h.second,h.first.c_str());
 }
 bool NewHook(HookParam hp, LPCSTR name){
-	if(hp.address)
+	if(hp.address||hp.jittype==JITTYPE::PC)
 		return NewHook_1(hp,name);
 	//下面的是手动插入
 	if(emuaddr2jitaddr.find(hp.emu_addr)==emuaddr2jitaddr.end()){

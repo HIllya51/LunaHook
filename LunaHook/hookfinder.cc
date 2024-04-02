@@ -386,6 +386,12 @@ void SearchForHooks(SearchParam spUser)
 		{
 			safeautoleaveveh=false;
 			ConsoleOutput(HOOK_SEARCH_INITIALIZED, jitaddr2emuaddr.size());
+			uintptr_t minemaddr=-1,maxemaddr=0;
+			for(auto addr:jitaddr2emuaddr){
+				minemaddr=min(minemaddr,addr.first);
+				maxemaddr=max(maxemaddr,addr.first);
+			}
+			ConsoleOutput("%p %p",minemaddr);
 			std::vector<uint64_t>successaddr;int i=0;
 			for(auto addr:jitaddr2emuaddr){
 				i+=1;
