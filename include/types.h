@@ -141,6 +141,7 @@ struct SearchParam
 	wchar_t boundaryModule[MAX_MODULE_SIZE] = {}; // hook all functions within this module (middle priority)
 	wchar_t exportModule[MAX_MODULE_SIZE] = {}; // hook the exports of this module (highest priority)
 	wchar_t text[PATTERN_SIZE] = {}; // text to search for
+	JITTYPE jittype;
 };
 
 struct InsertHookCmd // From host

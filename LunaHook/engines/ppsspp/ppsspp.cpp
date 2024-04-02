@@ -280,6 +280,9 @@ std::unordered_set<uintptr_t>breakpoints;
 bool hookPPSSPPDoJit(){
 	auto DoJitPtr=getDoJitAddress();
    if(DoJitPtr==0)return false;
+   spDefault.jittype=JITTYPE::PPSSPP;
+   spDefault.minAddress = 0;
+   spDefault.maxAddress = -1;
    HookParam hp;
    hp.address=DoJitPtr;//Jit::DoJit
    ConsoleOutput("DoJitPtr %p",DoJitPtr);

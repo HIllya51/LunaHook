@@ -150,6 +150,9 @@ bool yuzusuyu::attach_function()
    ConsoleOutput("[Compatibility] Yuzu 1616+");
    auto DoJitPtr=getDoJitAddress();
    if(DoJitPtr==0)return false;
+   spDefault.jittype=JITTYPE::YUZU;
+   spDefault.minAddress = 0;
+   spDefault.maxAddress = -1;
    ConsoleOutput("DoJitPtr %p",DoJitPtr);
    HookParam hp;
    hp.address=DoJitPtr;

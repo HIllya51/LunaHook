@@ -295,7 +295,7 @@ void SearchForHooks(SearchParam spUser)
 		initrecords();
 
 		std::vector<uintptr_t> addresses;
-		if(jitaddr2emuaddr.empty() || spUser.length !=0)
+		if( sp.jittype==JITTYPE::PC)
 		{
 			if (*sp.boundaryModule) {
 				auto [minaddr,maxaddr]=Util::QueryModuleLimits(GetModuleHandleW(sp.boundaryModule));
@@ -385,21 +385,27 @@ void SearchForHooks(SearchParam spUser)
 		else
 		{
 			safeautoleaveveh=false;
-			ConsoleOutput(HOOK_SEARCH_INITIALIZED, jitaddr2emuaddr.size());
+			int i=0;
+			std::vector<uint64_t>successaddr;
 			uintptr_t minemaddr=-1,maxemaddr=0;
+
+			ConsoleOutput(HOOK_SEARCH_INITIALIZED, jitaddr2emuaddr.size());
+			
 			for(auto addr:jitaddr2emuaddr){
-				minemaddr=min(minemaddr,addr.first);
-				maxemaddr=max(maxemaddr,addr.first);
+				minemaddr=min(minemaddr,addr.second.second);
+				maxemaddr=max(maxemaddr,addr.second.second);
 			}
-			ConsoleOutput("%p %p",minemaddr);
-			std::vector<uint64_t>successaddr;int i=0;
+			ConsoleOutput("%p %p",minemaddr,maxemaddr);
+			ConsoleOutput("%p %p",sp.minAddress,sp.maxAddress);
 			for(auto addr:jitaddr2emuaddr){
+				if(addr.second.second>sp.maxAddress||addr.second.second<sp.minAddress)continue;
 				i+=1;
 				//addresses.push_back(addr.first);
 				if(add_veh_hook((void*)addr.first,std::bind(SendJitVeh,std::placeholders::_1,addr.first,addr.second.second,addr.second.first)))
 					successaddr.push_back(addr.first);
 				if (i % 2500 == 0) ConsoleOutput(HOOK_SEARCH_INITIALIZING, 1 + 98. * i / jitaddr2emuaddr.size());
 			}
+			ConsoleOutput(HOOK_SEARCH_INITIALIZED, i);
 			ConsoleOutput(MAKE_GAME_PROCESS_TEXT, sp.searchTime / 1000);
 			Sleep(sp.searchTime);
 			// for(auto addr:successaddr){
