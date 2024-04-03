@@ -7,12 +7,16 @@ namespace mages{
         auto compound_charsA=LoadResData(std::vector<const wchar_t*>{
           L"compound_chars_default",
           L"compound_chars_Robotics_Notes_Elite",
-          L"compound_chars_Robotics_Notes_Dash"
+          L"compound_chars_Robotics_Notes_Dash",
+          L"",
+          L""
         }[_idx],L"COMPOUND_CHARS");
         auto charsetA=LoadResData(std::vector<const wchar_t*>{
           L"charset_default",
           L"charset_Robotics_Notes_Elite",
-          L"charset_Robotics_Notes_Dash"
+          L"charset_Robotics_Notes_Dash",
+          L"charset_Famicom_Tantei_Club",
+          L"charset_SINce_Memories"
         }[_idx],L"CHARSET");
 
         

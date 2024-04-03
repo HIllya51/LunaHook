@@ -240,11 +240,11 @@ std::string LoadResData(LPCWSTR pszResID,LPCWSTR _type)
 	HMODULE hModule=hLUNAHOOKDLL;
 	HRSRC hRsrc = ::FindResourceW (hModule, pszResID,_type); 
 	if (!hRsrc)  
-		return 0;  
+		return "";  
 	DWORD len = SizeofResource(hModule, hRsrc);  
 	BYTE* lpRsrc = (BYTE*)LoadResource(hModule, hRsrc);  
 	if (!lpRsrc)  
-		return 0;  
+		return "";  
 	HGLOBAL m_hMem = GlobalAlloc(GMEM_FIXED, len);  
 	BYTE* pmem = (BYTE*)GlobalLock(m_hMem);  
 	memcpy(pmem,lpRsrc,len);  
