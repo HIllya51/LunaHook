@@ -10,6 +10,7 @@
 #include"engine32/sakanagl.h"
 #include"engine32/LCScript.h"
 #include"engine32/ONScripterru.h"
+#include"engine32/GSX.h"
 #include"engine32/pchooks.h"
 #include"engine32/Sprite.h"
 #include"engine32/PONScripter.h"
@@ -303,7 +304,8 @@ std::vector<ENGINE*> check_engines(){
         new ElfFunClubFinal,
         new Aksys,
         new Siglusold,
-        new Willold
+        new Willold,
+        new GSX
     };
      
 }
