@@ -277,6 +277,166 @@ bool checkiscurrentgame(const emfuncinfo& em){
 }
 std::unordered_set<uintptr_t>breakpoints;
 
+inline bool IsValidAddress(const uintptr_t address) {
+	if ((address & 0x3E000000) == 0x08000000) {
+		return true;
+	} else if ((address & 0x3F800000) == 0x04000000) {
+		return true;
+	} else if ((address & 0xBFFFC000) == 0x00010000) {
+		return true;
+	} else if ((address & 0x3F000000) >= 0x08000000){// && (address & 0x3F000000) < 0x08000000 + g_MemorySize) {
+		return true;
+	} else {
+		return false;
+	}
+}
+void dohookemaddr(uintptr_t em_address,uintptr_t ret){
+    jitaddraddr(em_address,ret,JITTYPE::PPSSPP);
+
+    if(emfunctionhooks.find(em_address)==emfunctionhooks.end())return;
+    if(!(checkiscurrentgame(emfunctionhooks.at(em_address))))return;
+    
+    auto op=emfunctionhooks.at(em_address);
+    ConsoleOutput("jit function addr %p",ret);
+    #ifndef _WIN64
+    BYTE sig[]={
+        0x8b,XX2,//mov reg,[ebp-off]
+        0x8b,0xc6,//mov eax,esi
+        0x25,0xff,0xff,0xff,0x3f,//and eax,0x3fffffff
+        0x89,XX,XX4,//mov [eax+base+off],reg
+
+    };
+    auto findbase=MemDbg::findBytes(sig,sizeof(sig),ret,ret+0x20);
+    if(!findbase) 
+        findbase=MemDbg::findBytes(sig,sizeof(sig),ret-0x1000,ret+0x1000);
+    if(!findbase)
+        ConsoleOutput("can't find emu_baseaddr"); 
+    PPSSPP::x86_baseaddr=(*(DWORD*)(findbase+12))&0xffff0000;
+    ConsoleOutput("x86 base addr %p",PPSSPP::x86_baseaddr);
+    #endif
+    HookParam hpinternal;
+    hpinternal.address=ret;
+    hpinternal.emu_addr=em_address;//用于生成hcode
+    hpinternal.type=USING_STRING|NO_CONTEXT|BREAK_POINT|op.type;
+    hpinternal.text_fun=(decltype(hpinternal.text_fun))op.hookfunc;
+    hpinternal.filter_fun=(decltype(hpinternal.filter_fun))op.filterfun;
+    hpinternal.argidx=op.argidx;
+    hpinternal.padding=op.padding;
+    hpinternal.jittype=JITTYPE::PPSSPP;
+    NewHook(hpinternal,op._id);
+}
+namespace{
+    typedef DWORD u32;
+    typedef BYTE u8;
+    typedef WORD u16;
+    const int MAX_JIT_BLOCK_EXITS = 8;
+    namespace Memory {
+        struct Opcode {
+            Opcode() {
+            }
+
+            explicit Opcode(u32 v) : encoding(v) {
+            }
+
+            u32 operator & (const u32& arg) const {
+                return encoding & arg;
+            }
+
+            u32 operator >> (const u32& arg) const {
+                return encoding >> arg;
+            }
+
+            bool operator == (const u32& arg) const {
+                return encoding == arg;
+            }
+
+            bool operator != (const u32& arg) const {
+                return encoding != arg;
+            }
+
+            u32 encoding;
+        };
+
+    }
+
+    typedef Memory::Opcode MIPSOpcode;
+
+    struct JitBlock {
+        bool ContainsAddress(u32 em_address) const;
+
+        const u8* checkedEntry;  // const, we have to translate to writable.
+        const u8* normalEntry;
+
+        u8* exitPtrs[MAX_JIT_BLOCK_EXITS];      // to be able to rewrite the exit jump
+        u32 exitAddress[MAX_JIT_BLOCK_EXITS];   // 0xFFFFFFFF == unknown
+
+        u32 originalAddress;
+        MIPSOpcode originalFirstOpcode; //to be able to restore
+        uint64_t compiledHash;
+        u16 codeSize;
+        u16 originalSize;
+        u16 blockNum;
+
+        bool invalid;
+        bool linkStatus[MAX_JIT_BLOCK_EXITS];
+
+    #ifdef USE_VTUNE
+        char blockName[32];
+    #endif
+
+        // By having a pointer, we avoid a constructor/destructor being generated and dog slow
+        // performance in debug.
+        std::vector<u32>* proxyFor;
+
+        bool IsPureProxy() const {
+            return originalFirstOpcode.encoding == 0x68FF0000;
+        }
+        void SetPureProxy() {
+            // Magic number that won't be a real opcode.
+            originalFirstOpcode.encoding = 0x68FF0000;
+        }
+    };
+}
+
+void unsafeoncegetJitBlockCache(hook_stack* stack){
+    
+    //class JitBlockCache : public JitBlockCacheDebugInterface {
+    //...
+    //JitBlock *blocks_ = nullptr;
+	//std::unordered_multimap<u32, int> proxyBlockMap_; ->64
+	//int num_blocks_ = 0;
+    #ifdef _WIN64
+    auto num_blocks_=*(uint32_t*)(stack->rcx+72+16+88);
+    auto blocks_=(JitBlock*)*(uintptr_t*)(stack->rcx+72+16+88-64-8);
+    #else
+    auto num_blocks_=*(uint32_t*)(stack->ecx+88);
+    auto blocks_=(JitBlock*)*(uintptr_t*)(stack->ecx+88-32-4);
+    #endif
+    int checkvalid=0;
+    num_blocks_-=1;//last one is now dojiting
+    for(int i=0;i<num_blocks_;i++){
+        if(IsValidAddress(blocks_[i].originalAddress) && blocks_[i].normalEntry)
+            checkvalid+=1;
+    }
+    if(checkvalid<num_blocks_/2)return;
+
+    for(int i=0;i<num_blocks_;i++){
+        if(IsValidAddress(blocks_[i].originalAddress) && blocks_[i].normalEntry){
+            dohookemaddr(blocks_[i].originalAddress,(uintptr_t)blocks_[i].normalEntry);
+            delayinsertNewHook(blocks_[i].originalAddress);
+        }
+    }
+
+    return;
+}
+bool oncegetJitBlockCache(hook_stack* stack){
+    //在游戏中途hook，获取已compiled jit
+    //虽然只有在每次进行jit时才会触发，不过测试后续触发的也挺频繁的。
+    __try{
+        unsafeoncegetJitBlockCache(stack);
+    }__except (EXCEPTION_EXECUTE_HANDLER) {}
+    return true;
+}
 bool hookPPSSPPDoJit(){
 	auto DoJitPtr=getDoJitAddress();
    if(DoJitPtr==0)return false;
@@ -288,6 +448,7 @@ bool hookPPSSPPDoJit(){
    ConsoleOutput("DoJitPtr %p",DoJitPtr);
    hp.user_value=(uintptr_t)new uintptr_t;
    hp.text_fun=[](hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
+        static auto once1=oncegetJitBlockCache(stack);
         auto em_address=stack->THISCALLARG1;
         
         *(uintptr_t*)(hp->user_value)=em_address;
@@ -297,44 +458,13 @@ bool hookPPSSPPDoJit(){
 		hpinternal.address=stack->retaddr;
 		hpinternal.text_fun=[](hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
             auto em_address=*(uintptr_t*)(hp->user_value);
+            if(!IsValidAddress(em_address))return;
 			[&](){
                 auto ret=stack->RETADDR;
                 if(breakpoints.find(ret)!=breakpoints.end())return;
                 breakpoints.insert(ret);
 
-                jitaddraddr(em_address,ret,JITTYPE::PPSSPP);
-
-                if(emfunctionhooks.find(em_address)==emfunctionhooks.end())return;
-                if(!(checkiscurrentgame(emfunctionhooks.at(em_address))))return;
-                
-                auto op=emfunctionhooks.at(em_address);
-                ConsoleOutput("jit function addr %p",ret);
-                #ifndef _WIN64
-                BYTE sig[]={
-                    0x8b,XX2,//mov reg,[ebp-off]
-                    0x8b,0xc6,//mov eax,esi
-                    0x25,0xff,0xff,0xff,0x3f,//and eax,0x3fffffff
-                    0x89,XX,XX4,//mov [eax+base+off],reg
-
-                };
-                auto findbase=MemDbg::findBytes(sig,sizeof(sig),ret,ret+0x20);
-                if(!findbase) 
-                    findbase=MemDbg::findBytes(sig,sizeof(sig),ret-0x1000,ret+0x1000);
-                if(!findbase)
-                    ConsoleOutput("can't find emu_baseaddr"); 
-                PPSSPP::x86_baseaddr=(*(DWORD*)(findbase+12))&0xffff0000;
-                ConsoleOutput("x86 base addr %p",PPSSPP::x86_baseaddr);
-                #endif
-                HookParam hpinternal;
-                hpinternal.address=ret;
-                hpinternal.emu_addr=em_address;//用于生成hcode
-                hpinternal.type=USING_STRING|NO_CONTEXT|BREAK_POINT|op.type;
-                hpinternal.text_fun=(decltype(hpinternal.text_fun))op.hookfunc;
-                hpinternal.filter_fun=(decltype(hpinternal.filter_fun))op.filterfun;
-                hpinternal.argidx=op.argidx;
-                hpinternal.padding=op.padding;
-                hpinternal.jittype=JITTYPE::PPSSPP;
-                NewHook(hpinternal,op._id);
+                dohookemaddr(em_address,ret);
             }();
             delayinsertNewHook(em_address);
 		};
