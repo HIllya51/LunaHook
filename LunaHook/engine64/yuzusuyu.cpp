@@ -87,7 +87,7 @@ struct GameInfo {
 bool checkiscurrentgame(const emfuncinfo& em){
 	auto wininfos=get_proc_windows();
 	for(auto&& info:wininfos){
-        if((game_info.version.size())&&(info.title.find(acastw(game_info.version))!=info.title.npos)&&(game_info.id!=0)){
+        if((game_info.version.size())&&game_info.name.size()&&(game_info.id!=0)){
             //判断是有效的info
             auto checkversion=(em._version==0)||(std::string(em._version)==(game_info.version));
             auto checkid=(std::stoll(em._id,0,16)==game_info.id);
