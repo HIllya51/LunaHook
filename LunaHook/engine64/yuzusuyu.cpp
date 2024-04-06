@@ -1109,6 +1109,16 @@ bool F010065301A2E0000(void* data, size_t* len, HookParam* hp){
     s = std::regex_replace(s, std::wregex(L"<[^>]*>"), L"");
     return write_string_overwrite(data,len,s);
 }
+bool F01002AE00F442000(void* data, size_t* len, HookParam* hp){
+    auto s=std::wstring((wchar_t*)data,*len/2);
+    std::wregex pattern1(L"\\[([^\\]\\/]+)\\/[^\\]]+\\]");
+    s = std::regex_replace(s, pattern1, L"$1");
+    std::wregex pattern2(L"(\\S*)@");
+    s = std::regex_replace(s, pattern2, L"$1");
+    std::wregex pattern3(L"\\$");
+    s = std::regex_replace(s, pattern3, L"");
+    return write_string_overwrite(data,len,s);
+}
 
 bool F0100CF400F7CE000(void* data, size_t* len, HookParam* hp){
     auto s=std::string((char*)data,*len);
@@ -1936,6 +1946,9 @@ auto _=[](){
         {0x800ac290,{CODEC_UTF8,0,0,T010012A017F18000,0,"01001DC01486A000",0}},//1.0.1,1.0.2
         //The Quintessential Quintuplets the Movie: Five Memories of My Time with You (JP)
         {0x80011688,{CODEC_UTF8,1,0,0,F01005E9016BDE000,"01005E9016BDE000","1.0.0"}},//dialogue, menu, choice, name
+        // Flowers: Les Quatre Saisons 
+        {0x8006f940,{CODEC_UTF16,1,0,0,F01002AE00F442000,"01002AE00F442000","1.0.1"}},
+
 
     };
     return 1;
