@@ -81,7 +81,8 @@ enum class JITTYPE{
 	PC,//not a jit
     YUZU,
     PPSSPP,
-	VITA3K
+	VITA3K,
+	RPCS3
 };
 struct HookParam
 {

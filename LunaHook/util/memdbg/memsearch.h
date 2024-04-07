@@ -132,6 +132,7 @@ dword_t findPushByteAddress(byte_t value, dword_t lowerBound, dword_t upperBound
 inline dword_t findPushAddress(dword_t value, dword_t lowerBound, dword_t upperBound)
 { return findPushDwordAddress(value, lowerBound, upperBound); }
 
+uint64_t findleaaddr(uint64_t addr,uint64_t start,uint64_t end);
 /**
  *  Return the enclosing function address outside the given address.
  *  The same as ITH FindEntryAligned().

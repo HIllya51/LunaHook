@@ -1,5 +1,18 @@
 #pragma once
 #ifdef _WIN64
+namespace RPCS3
+{
+class emu_arg{
+    hook_stack* stack;
+public:
+    emu_arg(hook_stack* stack_):stack(stack_){};
+    uintptr_t operator [](int idx){
+        auto base=stack->rbx;
+        auto args=(uintptr_t*)(stack->rbp+0x18+8*3);
+        return base+args[idx];
+    }
+};
+}
 namespace YUZU
 {
 class emu_arg{

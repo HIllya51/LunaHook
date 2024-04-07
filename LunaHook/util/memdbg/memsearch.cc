@@ -478,6 +478,24 @@ DWORD findEnclosingFunctionAfterInt3(DWORD start, DWORD back_range, DWORD step)
 DWORD findEnclosingFunctionAfterNop(DWORD start, DWORD back_range, DWORD step)
 { return findEnclosingFunctionAfterDword(0x90909090,start, back_range, step); }
 
+#else
+
+uint64_t findleaaddr(uint64_t addr,uint64_t start,uint64_t end)
+{
+    for(auto _addr=start;_addr<end;_addr+=1)
+    {
+        auto lea=(*(WORD*)_addr);
+        if(lea!=0x8d4c&&lea!=0x8d48)
+            continue;
+        
+        auto offset=*(DWORD*)(_addr+3);
+        auto refaddr=(offset)+_addr+7;
+        if(refaddr==addr)
+            return _addr;
+    }
+    
+    return 0;
+}
 #endif
 
 uintptr_t findCallerAddress(uintptr_t funcAddr, DWORD sig, uintptr_t lowerBound, uintptr_t upperBound, uintptr_t reverseLength,uintptr_t offset)

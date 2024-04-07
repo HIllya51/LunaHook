@@ -17,6 +17,7 @@
 #include"engine64/LightVN.h"
 #include"engine64/yuzusuyu.h"
 #include"engine64/vita3k.h"
+#include"engine64/rpcs3.h"
 std::vector<ENGINE*> ignore_engines(){ return{ }; }
 std::vector<ENGINE*> unsafe_check_atlast(){   return{ }; }
 
@@ -40,7 +41,8 @@ std::vector<ENGINE*> check_engines(){
         new ENTERGRAM,
         new yuzusuyu,
         new PPSSPP,
-        new vita3k
+        new vita3k,
+        new rpcs3
     };
      
 }

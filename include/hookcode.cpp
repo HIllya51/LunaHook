@@ -63,6 +63,8 @@ namespace
 			hp.jittype=JITTYPE::PPSSPP;
 		else if(endWith(HCode,L":JIT:VITA3K"))
 			hp.jittype=JITTYPE::VITA3K;
+		else if(endWith(HCode,L":JIT:RPCS3"))
+			hp.jittype=JITTYPE::RPCS3;
 
 		// {A|B|W|H|S|Q|V|M}
 		switch (HCode[0])
@@ -356,6 +358,9 @@ namespace
 				break;
 			case JITTYPE::VITA3K:
 				HCode+=L":JIT:VITA3K";
+				break;
+			case JITTYPE::RPCS3:
+				HCode+=L":JIT:RPCS3";
 				break;
 			}
 		}

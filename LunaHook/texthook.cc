@@ -149,6 +149,8 @@ uintptr_t jitgetaddr(hook_stack* stack, HookParam* hp){
 	switch (hp->jittype)
 	{
 	#ifdef _WIN64
+	case JITTYPE::RPCS3:
+		return RPCS3::emu_arg(stack)[hp->argidx];
 	case JITTYPE::VITA3K:
 		return VITA3K::emu_arg(stack)[hp->argidx];
 	case JITTYPE::YUZU:
@@ -341,14 +343,23 @@ void TextHook::Read()
 	buffer->type=hp.type;
 	__try
 	{
-		while (WaitForSingleObject(readerEvent, 500) == WAIT_TIMEOUT) if (location&&(memcmp(pbData, location, dataLen) != 0)) if (int currentLen = HookStrlen((BYTE*)location))
+		if(hp.text_fun)
 		{
-			dataLen = min(currentLen, TEXT_BUFFER_SIZE);
-			memcpy(pbData, location, dataLen);
-			if (hp.filter_fun && !hp.filter_fun(pbData, &dataLen, &hp) || dataLen <= 0) continue;
-			TextOutput({ GetCurrentProcessId(), address, 0, 0 }, buffer, dataLen);
-			memcpy(pbData, location, dataLen);
+			while (WaitForSingleObject(readerEvent, 500) == WAIT_TIMEOUT)
+				hp.text_fun(0,0,0,0,0);
 		}
+		else
+		{
+			while (WaitForSingleObject(readerEvent, 500) == WAIT_TIMEOUT) if (location&&(memcmp(pbData, location, dataLen) != 0)) if (int currentLen = HookStrlen((BYTE*)location))
+			{
+				dataLen = min(currentLen, TEXT_BUFFER_SIZE);
+				memcpy(pbData, location, dataLen);
+				if (hp.filter_fun && !hp.filter_fun(pbData, &dataLen, &hp) || dataLen <= 0) continue;
+				TextOutput({ GetCurrentProcessId(), address, 0, 0 }, buffer, dataLen);
+				memcpy(pbData, location, dataLen);
+			}
+		}
+		
 	}
 	__except (EXCEPTION_EXECUTE_HANDLER)
 	{
