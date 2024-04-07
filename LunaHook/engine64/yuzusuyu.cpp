@@ -171,6 +171,9 @@ bool yuzusuyu::attach_function()
    };
   return NewHook(hp,"YuzuDoJit");
 } 
+
+
+namespace{
 int readu8(BYTE* addr){
     int numBytes = 0;
     auto firstByte=*addr;
@@ -1169,7 +1172,6 @@ bool F01000EA00D2EE000(void* data, size_t* len, HookParam* hp){
     s = std::regex_replace(s, std::wregex(L"<.+?>"), L"");
 	return write_string_overwrite(data,len,s);
 }
-namespace{
 auto _=[](){
     emfunctionhooks={
         //Memories Off

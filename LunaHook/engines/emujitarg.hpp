@@ -15,14 +15,26 @@ public:
 }
 namespace VITA3K
 {
+class emu_addr{
+    hook_stack* stack;
+    DWORD addr;
+public:
+    emu_addr(hook_stack* stack_,DWORD addr_):stack(stack_),addr(addr_){};
+    operator uintptr_t(){
+        auto base=stack->r13;
+        return base+addr;
+    }
+    operator DWORD*(){
+        return (DWORD*)(uintptr_t)*this;
+    }
+};
 class emu_arg{
     hook_stack* stack;
 public:
     emu_arg(hook_stack* stack_):stack(stack_){};
     uintptr_t operator [](int idx){
-        auto base=stack->r13;
         auto args=(uint32_t*)stack->r15;
-        return base+args[idx];
+        return emu_addr(stack,args[idx]);
     }
 };
 }

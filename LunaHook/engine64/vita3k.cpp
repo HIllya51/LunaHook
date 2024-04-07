@@ -87,6 +87,7 @@ bool vita3k::attach_function()
 }
 
 
+namespace{
 bool FPCSG01023(void* data, size_t* len, HookParam* hp){
     auto s = std::string((char*)data,*len);
     s = std::regex_replace(s, std::regex("<br>"), "");
@@ -200,7 +201,68 @@ bool FPCSG00216(void* data, size_t* len, HookParam* hp){
     s = std::regex_replace(s, std::regex("#Pos\\[[\\s\\S]*?\\]"), "");
 	return write_string_overwrite(data,len,s);
 }
-namespace{
+
+
+void TPCSG00291(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
+     auto a2= VITA3K::emu_arg(stack)[0];
+
+	auto vm = *(DWORD*)(a2+(0x28));
+	vm=*(DWORD*)VITA3K::emu_addr(stack,vm);
+	vm=*(DWORD*)VITA3K::emu_addr(stack,vm+8);
+	uintptr_t address=VITA3K::emu_addr(stack,vm);
+	auto len1=*(DWORD*)(address+4);
+	auto p=address+0x20;
+	if(len1>4 && *(WORD*)(p+2)==0){
+		auto p1=*(DWORD*)(address+8);
+		vm=*(DWORD*)VITA3K::emu_addr(stack,vm);
+		vm=*(DWORD*)VITA3K::emu_addr(stack,vm+0xC);
+		p=VITA3K::emu_addr(stack,vm);
+	}
+	static int fm=0;
+	static std::string pre;
+	auto b=fm;
+	auto s=[](uintptr_t address){
+		auto frist = *(WORD*)address;
+		auto lo = frist & 0xFF; // uppercase: 41->5A
+		auto hi = frist >> 8;
+		if (hi == 0 && (lo > 0x5a || lo < 0x41)  /* T,W,? */) {
+			return std::string();
+		} 
+    	std::string s ;int i = 0;WORD c;
+		char buf[3]={0};
+		while ((c = *(WORD*)(address+i)) != 0) {
+			// reverse endian: ShiftJIS BE => LE
+			buf[0] = c >> 8;
+			buf[1] = c & 0xFF;
+
+			if (c == 0x815e /* ／ */) {
+				s += ' '; // single line
+			}
+			else if (buf[0] == 0) {
+				//// UTF16 LE turned BE: 5700=>0057, 3100, 3500
+				//// 4e00 6d00=>PLAYER
+				// do nothing
+				if (buf[1] == 0x4e) {
+					s += "PLAYER";
+					fm++;
+				}
+			}
+			else {
+				s+=buf;
+			}
+			i += 2;
+		}
+		return s;
+	}(p);
+	if(b>0){
+		fm--;
+		return;
+	}
+	if(s==pre)return ;
+	pre=s;
+	write_string_new(data,len,s);
+}
+
 auto _=[](){
     emfunctionhooks={
         //Tsuihou Senkyo
@@ -246,7 +308,7 @@ auto _=[](){
         {0x80058608,{0,1,0,0,FPCSG00389,"PCSG00389"}},//dialogue,sjis
         {0x80021292,{0,0,0,0,FPCSG00389,"PCSG00389"}},//name
         //Amagami
-        //to complex.
+        {0x80070658,{0,0,0,TPCSG00291,0,"PCSG00291"}},
         //Rui wa Tomo o Yobu
         {0x81003db0,{CODEC_UTF8,1,0,0,FPCSG00839,"PCSG00216"}},//dialogue
 
