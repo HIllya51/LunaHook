@@ -149,6 +149,8 @@ uintptr_t jitgetaddr(hook_stack* stack, HookParam* hp){
 	switch (hp->jittype)
 	{
 	#ifdef _WIN64
+	case JITTYPE::VITA3K:
+		return VITA3K::emu_arg(stack)[hp->argidx];
 	case JITTYPE::YUZU:
 		return YUZU::emu_arg(stack)[hp->argidx];
 	#endif

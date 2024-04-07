@@ -80,7 +80,8 @@ inline hook_stack* get_hook_stack(uintptr_t lpDataBase){
 enum class JITTYPE{
 	PC,//not a jit
     YUZU,
-    PPSSPP
+    PPSSPP,
+	VITA3K
 };
 struct HookParam
 {

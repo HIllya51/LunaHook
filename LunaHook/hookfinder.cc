@@ -195,6 +195,9 @@ void SafeSendJitVeh(hook_stack* stack,uintptr_t address,uintptr_t em_addr,JITTYP
 			case JITTYPE::YUZU:
 				str=(char*)YUZU::emu_arg(stack)[i];
 				break;
+			case JITTYPE::VITA3K:
+				str=(char*)VITA3K::emu_arg(stack)[i];
+				break;
 			#endif
 			case JITTYPE::PPSSPP:
 				str=(char*)PPSSPP::emu_arg(stack)[i];

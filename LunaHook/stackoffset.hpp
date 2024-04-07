@@ -107,4 +107,17 @@ inline uintptr_t regof(regs reg,hook_stack* stack){
 #define GETARG2	get_reg(regs::rdx)
 #define GETARG3	get_reg(regs::r8)
 #define GETARG4	get_reg(regs::r9)
+
+
+inline uintptr_t* argidx(hook_stack* stack,int idx){
+    auto offset=0;
+    switch (idx)
+    {
+    case 0:offset=get_reg(regs::rcx);break;
+    case 1:offset=get_reg(regs::rdx);break;
+    case 2:offset=get_reg(regs::r8);break;
+    case 3:offset=get_reg(regs::r9);break;
+    }
+    return (uintptr_t*)((uintptr_t)stack+sizeof(hook_stack)-sizeof(uintptr_t)+offset);
+}
 #endif

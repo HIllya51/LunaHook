@@ -13,6 +13,19 @@ public:
     }
 };
 }
+namespace VITA3K
+{
+class emu_arg{
+    hook_stack* stack;
+public:
+    emu_arg(hook_stack* stack_):stack(stack_){};
+    uintptr_t operator [](int idx){
+        auto base=stack->r13;
+        auto args=(uint32_t*)stack->r15;
+        return base+args[idx];
+    }
+};
+}
 #endif
 namespace PPSSPP{
     inline DWORD x86_baseaddr;

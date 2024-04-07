@@ -61,7 +61,8 @@ namespace
 			hp.jittype=JITTYPE::YUZU;
 		else if(endWith(HCode,L":JIT:PPSSPP"))
 			hp.jittype=JITTYPE::PPSSPP;
-		
+		else if(endWith(HCode,L":JIT:VITA3K"))
+			hp.jittype=JITTYPE::VITA3K;
 
 		// {A|B|W|H|S|Q|V|M}
 		switch (HCode[0])
@@ -184,7 +185,6 @@ namespace
 		if(hp.jittype!=JITTYPE::PC){
 			hp.emu_addr=hp.address;
 			hp.argidx=hp.offset;
-			hp.padding=0;
 			hp.offset=0;
 			hp.address=0;
 			hp.type &= ~MODULE_OFFSET;
@@ -353,6 +353,10 @@ namespace
 				break;
 			case JITTYPE::PPSSPP:
 				HCode+=L":JIT:PPSSPP";
+				break;
+			case JITTYPE::VITA3K:
+				HCode+=L":JIT:VITA3K";
+				break;
 			}
 		}
 
