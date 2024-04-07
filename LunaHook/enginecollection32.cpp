@@ -94,6 +94,7 @@
 #include"engine32/AIL2.h"
 #include"engine32/ApricoT.h"
 #include"engine32/Triangle.h"
+#include"engine32/GASTRO.h"
 #include"engine32/AB2Try.h"
 #include"engine32/GameMaker.h"
 #include"engine32/DxLib.h"
@@ -305,7 +306,8 @@ std::vector<ENGINE*> check_engines(){
         new Aksys,
         new Siglusold,
         new Willold,
-        new GSX
+        new GSX,
+        new GASTRO
     };
      
 }
