@@ -570,7 +570,7 @@ bool InsertAquaplus2Hook()
   hp.index = 0;
   hp.split = get_reg(regs::esp);
   hp.split_index = 0;
-  hp.type = USING_STRING | NO_CONTEXT | USING_SPLIT;
+  hp.type = USING_STRING | NO_CONTEXT | USING_SPLIT |CODEC_UTF8;
   hp.filter_fun = AquaplusFilter; 
   return NewHook(hp, "Aquaplus2");
 }
