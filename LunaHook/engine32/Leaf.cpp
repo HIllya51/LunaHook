@@ -659,6 +659,118 @@ namespace{
     return NewHook(hp, "kizuato");
   }
 }
+namespace{
+  //WHITE ALBUM2 Special Contents
+  /*
+  int __cdecl sub_40DE00(char *Source, int a2)
+  {
+    int v2; // eax
+    int v3; // edx
+    _DWORD *v4; // esi
+    unsigned __int8 *v5; // edi
+    unsigned __int8 *v6; // ebx
+    double v7; // st7
+    float v9; // [esp+0h] [ebp-14h]
+    float v10; // [esp+4h] [ebp-10h]
+
+    sub_4033B0(Source, 0);
+    v2 = sub_405100();
+    sub_4050E0(v2 - 1);
+    v4 = (_DWORD *)(4 * v3 + 4961380);
+    v5 = (unsigned __int8 *)(4 * v3 + 4961381);
+    v6 = (unsigned __int8 *)(4 * v3 + 4961382);
+    if ( dword_4CFC84 )
+      sub_44B0A0(
+        452,
+        0,
+        Source,
+        28,
+        40,
+        15,
+        0,
+        14,
+        32,
+        40,
+        1,
+        BYTE2(dword_4BB464[v3]),
+        BYTE1(dword_4BB464[v3]),
+        (unsigned __int8)dword_4BB464[v3],
+        BYTE2(dword_4BB490),
+        BYTE1(dword_4BB490),
+        (unsigned __int8)dword_4BB490,
+        1);
+    else
+      sub_44B0A0(
+        452,
+        0,
+        Source,
+        28,
+        28,
+        4,
+        0,
+        14,
+        32,
+        40,
+        1,
+        BYTE2(dword_4BB464[v3]),
+        BYTE1(dword_4BB464[v3]),
+        (unsigned __int8)dword_4BB464[v3],
+        BYTE2(dword_4BB490),
+        BYTE1(dword_4BB490),
+        (unsigned __int8)dword_4BB490,
+        1);
+    sub_44B490(1091, 0, 4183, 1);
+    if ( dword_4D00E4 )
+      sub_44B110(dword_4D00F0 + 1, *v6, *v5, (unsigned __int8)*v4, -1, -1, -1);
+    sub_44B540(1091, 2);
+    if ( dword_4CFC84 )
+    {
+      v10 = 26.0;
+      v7 = 75.0;
+    }
+    else
+    {
+      v10 = 536.0;
+      v7 = 274.0;
+    }
+    v9 = v7;
+    sub_44B730(1091, v9, v10);
+    sub_44B7F0(1091, 640.0, 624.0);
+    sub_44B940(1091, 2);
+    dword_4CFC64 = (unsigned int)(dword_4CFC64 - 1) <= 1;
+    dword_4CFC78 = a2;
+    dword_4CFC74 = 0;
+    dword_4CFC7C = 0;
+    dword_4CFC98 = 0;
+    sub_44B4E0(1091, 0);
+    return sub_44B4F0(1091, dword_4CFC7C);
+  }
+  */
+  bool wa2special(){
+    BYTE sig[]={
+      0x6A,0x01,0x6A,0x28,0x6A,0x20,0x6A,0x0E,0x6A,0x00,0x6A,0x0F,0x6A,0x28,0x6A,0x1C,
+      // .text:0040DE70                 push    1
+      // .text:0040DE72                 push    28h ; '('
+      // .text:0040DE74                 push    20h ; ' '
+      // .text:0040DE76                 push    0Eh
+      // .text:0040DE78                 push    0
+      // .text:0040DE7A                 push    0Fh
+      // .text:0040DE7C                 push    28h ; '('
+      // .text:0040DE7E                 push    1Ch
+    };
+    auto addr = MemDbg::findBytes(sig, sizeof(sig), processStartAddress, processStopAddress );
+    if (!addr)return false; 
+    addr=MemDbg::findEnclosingAlignedFunction_strict(addr);
+    if (!addr)return false; 
+    HookParam hp;
+    hp.address = addr;
+    hp.offset=get_stack(1);
+    hp.type = USING_STRING | NO_CONTEXT|EMBED_ABLE|EMBED_DYNA_SJIS|EMBED_BEFORE_SIMPLE|EMBED_AFTER_NEW;
+    hp.newlineseperator=L"\\n";
+    hp.filter_fun = AquaplusFilter; 
+    return NewHook(hp, "wa2special");
+  }
+}
 bool Leaf::attach_function() {
-    return InsertLeafHook()||activehook()||InsertAquaplusHooks()||kizuato();
+    return InsertLeafHook()||activehook()||InsertAquaplusHooks()||kizuato()||wa2special();
 } 
