@@ -41,6 +41,71 @@ static void SpecialHookKiriKiri(hook_stack* stack,  HookParam *, uintptr_t *data
 }
 #endif // 0
 
+namespace kirikiri{
+#pragma pack(push, 4)
+#define TJS_VS_SHORT_LEN 21
+typedef int tjs_int;    /* at least 32bits */
+typedef wchar_t tjs_char;
+typedef uint32_t tjs_uint32;
+
+struct tTJSVariantString_S
+{
+	tjs_int RefCount; // reference count - 1
+	tjs_char *LongString;
+	tjs_char ShortString[TJS_VS_SHORT_LEN +1];
+	tjs_int Length; // string length
+	tjs_uint32 HeapFlag;
+	tjs_uint32 Hint;
+};
+#pragma pack(pop)
+class tTJSVariantString : public tTJSVariantString_S{
+
+};
+struct tTJSString_S
+{
+	tTJSVariantString *Ptr;
+};
+class tTJSString : public tTJSString_S{
+
+};
+typedef tTJSString ttstr;
+#pragma pack(push, 4)
+struct tTVPPoint
+{
+	tjs_int x;
+	tjs_int y;
+};
+#pragma pack(pop)
+struct tTVPRect
+{ 
+	union
+	{
+		struct
+		{
+			tjs_int left;
+			tjs_int top;
+			tjs_int right;
+			tjs_int bottom;
+		};
+
+		struct
+		{
+			// capital style
+			tjs_int Left;
+			tjs_int Top;
+			tjs_int Right;
+			tjs_int Bottom;
+		};
+
+		struct
+		{
+			tTVPPoint upper_left;
+			tTVPPoint bottom_right;
+		};
+	};
+};
+}
+
 bool FindKiriKiriHook(DWORD fun, DWORD size, DWORD pt, DWORD flag) // jichi 10/20/2014: change return value to bool
 {
   enum : DWORD {
@@ -94,29 +159,28 @@ bool FindKiriKiriHook(DWORD fun, DWORD size, DWORD pt, DWORD flag) // jichi 10/2
                     hp.split = get_reg(regs::ecx);
                     hp.type = CODEC_UTF16|NO_CONTEXT|USING_SPLIT|DATA_INDIRECT;
                     ConsoleOutput("INSERT KiriKiri2");
-                    auto succ=NewHook(hp, "KiriKiri2");
-                    {
-                      //https://vndb.org/v5127
-                      //蝶の毒 華の鎖
-                      //KiriKiri2被注音的汉字数量若>=2，则会少字。
-                      auto addr=pt+k+0x14-5;
-                      BYTE check[]={0x66,0x85,0xC0,0x75};//mov ax,[ebx]; test ax,ax; jnz 
-                      if(memcmp(check,(void*)addr,sizeof(check))==0){
-                        HookParam hp_1;
-                        hp_1.address = addr;
-                        hp_1.type = CODEC_UTF16|NO_CONTEXT|USING_CHAR;
-                        hp_1.text_fun=[](hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
-                          *split=stack->ecx;
-                          if(*split!=0x16)return;
-                          *data=*(WORD*)(stack->ebx-2);
-                          *len=2;
-                        };
-                        succ|=NewHook(hp_1, "KiriKiri2X");
-                      }
+                    if(!NewHook(hp, "KiriKiri2"))return false;
+
+                    //https://vndb.org/v5127
+                    //蝶の毒 華の鎖
+                    //KiriKiri2被注音的汉字数量若>=2，则会少字。
+                    auto addr=pt+k+0x14-5;
+                    BYTE check[]={0x66,0x85,0xC0,0x75};//mov ax,[ebx]; test ax,ax; jnz 
+                    if(memcmp(check,(void*)addr,sizeof(check))==0){
+                      HookParam hp_1;
+                      hp_1.address = addr;
+                      hp_1.type = CODEC_UTF16|NO_CONTEXT|USING_CHAR;
+                      hp_1.text_fun=[](hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
+                        *split=stack->ecx;
+                        if(*split!=0x16)return;
+                        *data=*(WORD*)(stack->ebx-2);
+                        *len=2;
+                      };
+                      NewHook(hp_1, "KiriKiri2X");
                     }
                     
                     
-                    return succ;
+                    return true;
                   }
                 }
             } else {
@@ -129,8 +193,53 @@ bool FindKiriKiriHook(DWORD fun, DWORD size, DWORD pt, DWORD flag) // jichi 10/2
               hp.split = get_reg(regs::eax);
               hp.type = CODEC_UTF16|DATA_INDIRECT|USING_SPLIT|SPLIT_INDIRECT;
               ConsoleOutput("INSERT KiriKiri1");
-              
-              return NewHook(hp, "KiriKiri1");
+              if(!NewHook(hp, "KiriKiri1"))return false;
+              //该函数为InternalDrawText
+              //有4个xref， DrawTextMultiple*2，DrawTextSingle*2
+              //DrawTextMultiple和DrawTextSingle均只有一个xref->DrawText
+              auto xrefs=findxref_reverse_checkcallop(pt+j,processStartAddress,processStopAddress,0xe8);
+              if(xrefs.size()==4)
+                for(auto addr:xrefs){
+                  //ConsoleOutput("%p",addr);
+                  addr=findfuncstart(addr,0x300);//DrawTextMultiple or 2，DrawTextSingle
+                  //ConsoleOutput("%p",addr);
+                  if(addr){
+                    xrefs=findxref_reverse_checkcallop(addr,processStartAddress,processStopAddress,0xe8);
+                    if(xrefs.size()==1){
+                      addr=xrefs[0];
+                      //ConsoleOutput("%p",addr);
+                      addr=findfuncstart(addr,0x300);//DrawText
+                      //ConsoleOutput("%p",addr);
+                      if(addr){
+                        /*
+                        void DrawText(const tTVPRect &destrect, tjs_int x, tjs_int y, const ttstr &text,
+                          tjs_uint32 color, tTVPBBBltMethod bltmode, tjs_int opa = 255,
+                            bool holdalpha = true, bool aa = true, tjs_int shlevel = 0,
+                            tjs_uint32 shadowcolor = 0,
+                            tjs_int shwidth = 0, tjs_int shofsx = 0, tjs_int shofsy = 0,
+                            tTVPComplexRect *updaterects = NULL)
+                            */
+
+                          HookParam hp;
+                          hp.address = addr;
+                          hp.type = CODEC_UTF16|USING_STRING|NO_CONTEXT;
+                          hp.text_fun=[](hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
+                            //fastcall, a4
+                            auto text=(kirikiri::ttstr*)stack->stack[9];
+                            auto destrect=(kirikiri::tTVPRect*)stack->eax;
+                            //*split=destrect->Bottom-destrect->Top;//split by font size;不知道为什么destrect里面的值是乱七八糟的
+                            *split=stack->ecx;//y. 值似乎不是y，多行不会被分开。
+                            *len=text->Ptr->Length *2 ;
+                            *data=(uintptr_t)(text->Ptr->LongString?text->Ptr->LongString:text->Ptr->ShortString);
+                            
+                          };
+                          NewHook(hp, "tTVPNativeBaseBitmap::DrawText");
+                          return true;
+                      }
+                    }
+                  }
+                }
+              return true;
             }
             return false;
           }
