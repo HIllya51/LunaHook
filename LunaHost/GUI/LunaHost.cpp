@@ -159,7 +159,6 @@ LunaHost::LunaHost(){
                 try{
                     auto resp=nlohmann::json::parse(WideStringToString(httpRequest.response));
                     std::string ver=resp["tag_name"];
-                    ver=ver.substr(1);
                     settext(text()+L" | "+VersionLatest+L" "+ StringToWideString(ver));
                 }
                 catch(std::exception&e){}
