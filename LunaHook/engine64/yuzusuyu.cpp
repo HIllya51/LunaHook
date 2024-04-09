@@ -1120,6 +1120,14 @@ bool F01000A400AF2A000(void* data, size_t* len, HookParam* hp){
     return write_string_overwrite(data,len,s);
 }
 
+bool F01006B5014E2E000(void* data, size_t* len, HookParam* hp){
+    auto s=std::string((char*)data,*len);
+    s = std::regex_replace(s, std::regex("@r(.*?)@(.*?)@"), "$1");
+    s = std::regex_replace(s, std::regex("@n"), "");
+    s = std::regex_replace(s, std::regex("@v"), "");
+    s = std::regex_replace(s, std::regex("TKY[0-9]{6}_[A-Z][0-9]{2}"), "");
+    return write_string_overwrite(data,len,s);
+}
 bool F0100CF400F7CE000(void* data, size_t* len, HookParam* hp){
     auto s=std::string((char*)data,*len);
     s = std::regex_replace(s, std::regex("\\n+"), " ");
@@ -1949,8 +1957,8 @@ auto _=[](){
         {0x8006f940,{CODEC_UTF16,1,0,0,F01002AE00F442000,"01002AE00F442000","1.0.1"}},
         //最悪なる災厄人間に捧ぐ eSHOP [01000A400AF2A000][v0]
         {0x8034EB44,{CODEC_UTF16,8,0,0,F01000A400AF2A000,"01000A400AF2A000","1.0.0"}},//text
-
-
+        //神様のような君へ
+        {0x80487CD0,{CODEC_UTF8,0,0,0,F01006B5014E2E000,"01006B5014E2E000","1.0.0"}},//text
     };
     return 1;
 }();
