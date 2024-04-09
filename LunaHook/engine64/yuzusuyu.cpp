@@ -1111,6 +1111,14 @@ bool F01002AE00F442000(void* data, size_t* len, HookParam* hp){
     s = std::regex_replace(s, pattern3, L"");
     return write_string_overwrite(data,len,s);
 }
+bool F01000A400AF2A000(void* data, size_t* len, HookParam* hp){
+    auto s=std::wstring((wchar_t*)data,*len/2);
+    s = std::regex_replace(s, std::wregex(L"@[a-zA-Z]|%[a-zA-Z]+"), L"");
+    static std::wstring last;
+    if(last==s)return false;
+    last=s;
+    return write_string_overwrite(data,len,s);
+}
 
 bool F0100CF400F7CE000(void* data, size_t* len, HookParam* hp){
     auto s=std::string((char*)data,*len);
@@ -1939,6 +1947,8 @@ auto _=[](){
         {0x80011688,{CODEC_UTF8,1,0,0,F01005E9016BDE000,"01005E9016BDE000","1.0.0"}},//dialogue, menu, choice, name
         // Flowers: Les Quatre Saisons 
         {0x8006f940,{CODEC_UTF16,1,0,0,F01002AE00F442000,"01002AE00F442000","1.0.1"}},
+        //最悪なる災厄人間に捧ぐ eSHOP [01000A400AF2A000][v0]
+        {0x8034EB44,{CODEC_UTF16,8,0,0,F01000A400AF2A000,"01000A400AF2A000","1.0.0"}},//text
 
 
     };
