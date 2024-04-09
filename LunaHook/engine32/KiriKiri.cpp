@@ -94,8 +94,29 @@ bool FindKiriKiriHook(DWORD fun, DWORD size, DWORD pt, DWORD flag) // jichi 10/2
                     hp.split = get_reg(regs::ecx);
                     hp.type = CODEC_UTF16|NO_CONTEXT|USING_SPLIT|DATA_INDIRECT;
                     ConsoleOutput("INSERT KiriKiri2");
+                    auto succ=NewHook(hp, "KiriKiri2");
+                    {
+                      //https://vndb.org/v5127
+                      //蝶の毒 華の鎖
+                      //KiriKiri2被注音的汉字数量若>=2，则会少字。
+                      auto addr=pt+k+0x14-5;
+                      BYTE check[]={0x66,0x85,0xC0,0x75};//mov ax,[ebx]; test ax,ax; jnz 
+                      if(memcmp(check,(void*)addr,sizeof(check))==0){
+                        HookParam hp_1;
+                        hp_1.address = addr;
+                        hp_1.type = CODEC_UTF16|NO_CONTEXT|USING_CHAR;
+                        hp_1.text_fun=[](hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
+                          *split=stack->ecx;
+                          if(*split!=0x16)return;
+                          *data=*(WORD*)(stack->ebx-2);
+                          *len=2;
+                        };
+                        succ|=NewHook(hp_1, "KiriKiri2X");
+                      }
+                    }
                     
-                    return NewHook(hp, "KiriKiri2");
+                    
+                    return succ;
                   }
                 }
             } else {
