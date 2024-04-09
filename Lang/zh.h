@@ -89,3 +89,5 @@
 #define HS_TEXT L"文本"
 #define HS_CODEPAGE L"代码页"
 #define HS_SEARCH_FOR_TEXT L"搜索指定文本"
+#define VersionLatest L"最新版本"
+#define VersionCurrent L"当前版本"

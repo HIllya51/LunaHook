@@ -9,6 +9,7 @@
 #include"textthread.h"
 #include"LunaHost.h"
 #include"Lang/Lang.h"
+#include"http.hpp"
 auto gmf=[&](DWORD processId)->std::optional<std::wstring>{
      //见鬼了，GetModuleFileName找不到标识符
     std::vector<wchar_t> buffer(MAX_PATH);
@@ -101,7 +102,72 @@ void LunaHost::on_proc_connect(DWORD pid)
         autoattachexes.insert(WideStringToString(pexe.value()));
     }
 }
+
+bool queryversion(WORD *_1, WORD *_2, WORD *_3, WORD *_4)
+{
+    wchar_t fileName[MAX_PATH];
+    GetModuleFileNameW(NULL, fileName, MAX_PATH);
+    DWORD dwHandle;
+    DWORD dwSize = GetFileVersionInfoSizeW(fileName, &dwHandle);
+    if (dwSize == 0)
+    {
+        return false;
+    }
+
+    std::vector<char> versionInfoBuffer(dwSize);
+    if (!GetFileVersionInfoW(fileName, dwHandle, dwSize, versionInfoBuffer.data()))
+    {
+        return false;
+    }
+
+    VS_FIXEDFILEINFO *pFileInfo;
+    UINT fileInfoSize;
+    if (!VerQueryValueW(versionInfoBuffer.data(), L"\\", reinterpret_cast<LPVOID *>(&pFileInfo), &fileInfoSize))
+    {
+        return false;
+    }
+
+    DWORD ms = pFileInfo->dwFileVersionMS;
+    DWORD ls = pFileInfo->dwFileVersionLS;
+
+    WORD majorVersion = HIWORD(ms);
+    WORD minorVersion = LOWORD(ms);
+    WORD buildNumber = HIWORD(ls);
+    WORD revisionNumber = LOWORD(ls);
+    *_1 = majorVersion;
+    *_2 = minorVersion;
+    *_3 = buildNumber;
+    *_4 = revisionNumber;
+    return true;
+}
+
 LunaHost::LunaHost(){
+    std::wstring title=WndLunaHostGui;
+    WORD _1,_2,_3,_4;
+    WCHAR vs[32];
+    if(queryversion(&_1,&_2,&_3,&_4)){
+        wsprintf(vs,L" | %s v%d.%d.%d",VersionCurrent,_1,_2,_3);
+        title+=vs;
+        std::thread([&](){
+            if (HttpRequest httpRequest{
+                L"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
+                L"api.github.com",
+                L"GET",
+                L"/repos/HIllya51/LunaHook/releases/latest"
+            }){
+                
+                try{
+                    auto resp=nlohmann::json::parse(WideStringToString(httpRequest.response));
+                    std::string ver=resp["tag_name"];
+                    ver=ver.substr(1);
+                    settext(text()+L" | "+VersionLatest+L" "+ StringToWideString(ver));
+                }
+                catch(std::exception&e){}
+            }
+        }).detach();
+    }
+        
+    settext(title.c_str());
     
     configs=new confighelper;
     loadsettings();
@@ -114,7 +180,6 @@ LunaHost::LunaHost(){
     }).detach();
 
     setfont(25);
-    settext(WndLunaHostGui);
     btnshowsettionwindow=new button(this, BtnShowSettingWindow);
     g_selectprocessbutton =new button(this,BtnSelectProcess) ; 
     

@@ -44,7 +44,14 @@ include_directories(.)
 include(libs/libs.cmake)
 
 include_directories(include)
- 
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/version)
+include(generate_product_version)
+
+set(VERSION_MAJOR 2)
+set(VERSION_MINOR 10)
+set(VERSION_PATCH 0)
+set(VERSION_REVISION 0)
+
 add_subdirectory(include)
 add_subdirectory(LunaHook)
 add_subdirectory(LunaHost)

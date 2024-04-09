@@ -89,3 +89,5 @@
 #define HS_TEXT L"Text"
 #define HS_CODEPAGE L"Codepage"
 #define HS_SEARCH_FOR_TEXT L"Search for specific text"
+#define VersionLatest L"Latest version"
+#define VersionCurrent L"Current version"
