@@ -288,6 +288,9 @@ std::unordered_map<uintptr_t,emfuncinfo>emfunctionhooks= {
 	{0x886F014,{0,3,0,0,FULJM05603,"ULJM05603"}},
 	//Corpse Party -The Anthology- Sachiko no Ren'ai Yuugi ♥ Hysteric Birthday 2U - Regular Edition
 	{0x88517C8,{0,1,0,0,FULJM05603,"ULJM06114"}},
+	//Himawari_no_Kyoukai_to_Nagai_Natsuyasumi_Extra_Vacation_JPN_PSP-MOEMOE
+	{0x881c444,{FULL_STRING,0,0,0,0,"ULJM06321"}},//name+text,sjit,FULL_STRING to split name and text
+
 };
     
 }
