@@ -432,9 +432,35 @@ namespace{
     return NewHook(hp, "Silkys3");
   }
 }
+namespace{
+  //言の葉舞い散る夏の風鈴
+  //https://vndb.org/v23466
+  bool silkys4(){
+    BYTE check[]={
+      0x80,0xFA,0x81,
+      0x72,XX,
+      0x80,0xFA,0x9F,
+      0x76,XX
+    };
+    auto addr=MemDbg::findCallerAddress((ULONG)GetGlyphOutlineA, 0xec8b55,processStartAddress, processStopAddress); 
+    if(addr==0)return false;
+    if(MemDbg::findBytes(check,sizeof(check),addr,addr+0x100)==0)return false;
+    HookParam hp;
+    hp.address=addr;
+    hp.type=USING_CHAR|DATA_INDIRECT|USING_SPLIT;
+    hp.split=get_stack(1);
+    hp.offset=get_stack(1);//thiscall arg1
+    hp.filter_fun=[](LPVOID data, size_t *size, HookParam *)
+    {
+      static int idx=0;
+      return (bool)((idx++)%2);
+    };
+    return NewHook(hp, "Silkys4");
+  }
+}
 bool Silkys::attach_function() {
     auto b1=InsertSilkys2Hook();
-    return InsertSilkysHook()||InsertSilkysHook2()||_s()||b1||saiminset();
+    return InsertSilkysHook()||InsertSilkysHook2()||_s()||b1||saiminset()||silkys4();
 }  
 
 
