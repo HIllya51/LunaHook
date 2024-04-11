@@ -681,6 +681,13 @@ bool F0100B0601852A000(void* data, size_t* len, HookParam* hp){
     last=s;
 	return true;
 }
+bool F010027100C79A000(void* data, size_t* len, HookParam* hp){
+    auto s = std::string((char*)data,*len);
+    static std::string last;
+    if(last==s)return false;
+    last=s;
+	return true;
+}
 template<int idx>
 bool F0100B0C016164000(void* data, size_t* len, HookParam* hp){
     auto s = std::wstring((wchar_t*)data,*len/2);
@@ -710,6 +717,65 @@ bool F010055D009F78000(void* data, size_t* len, HookParam* hp){
     std::regex pattern3("\\d+");
     s = std::regex_replace(s, pattern3, "");
 	static std::string last;
+    if(last==s)return false;
+    last=s;
+	return write_string_overwrite(data,len,s);
+}
+
+bool F010080C01AA22000(void* data, size_t* len, HookParam* hp){
+    auto s = std::string((char*)data,*len);
+    std::regex furiganaRegex("#\\d+R.*?#");
+    s = std::regex_replace(s, furiganaRegex, "");
+    std::regex lettersNumbersRegex("[A-Za-z0-9]");
+    s = std::regex_replace(s, lettersNumbersRegex, "");
+    std::regex symbolsRegex(u8"[().%,_!#©&:?/]");
+    s = std::regex_replace(s, symbolsRegex, "");
+	return write_string_overwrite(data,len,s);
+}
+template<int i>
+bool F0100CB700D438000(void* data, size_t* len, HookParam* hp){
+    auto s = std::string((char*)data,*len);
+    std::regex furiganaRegex("<RUBY><RB>(.*?)<\\/RB><RT>(.*?)<\\/RT><\\/RUBY>");
+    s = std::regex_replace(s, furiganaRegex, "$1");
+    std::regex htmlTagRegex("<[^>]*>");
+    s = std::regex_replace(s, htmlTagRegex, "");
+    static std::string last;
+    if(last==s)return false;
+    last=s;
+	return write_string_overwrite(data,len,s);
+}
+template<int i>
+bool F010072000BD32000(void* data, size_t* len, HookParam* hp){
+    auto s = std::string((char*)data,*len);
+    std::regex lineBreakRegex("\\[~\\]");
+    s = std::regex_replace(s, lineBreakRegex, "\n");
+    std::regex romRegex("rom:[\\s\\S]*$");
+    s = std::regex_replace(s, romRegex, "");
+    std::regex furiganaRegex("\\[[\\w\\d]*\\[[\\w\\d]*\\].*?\\[\\/\\[\\w\\d]*\\]\\]");
+    s = std::regex_replace(s, furiganaRegex, "");
+    std::regex bracketsRegex("\\[.*?\\]");
+    s = std::regex_replace(s, bracketsRegex, "");
+    static std::string last;
+    if(last==s)return false;
+    last=s;
+	return write_string_overwrite(data,len,s);
+}
+template<int i>
+bool F01009B50139A8000(void* data, size_t* len, HookParam* hp){
+    auto s = std::wstring((wchar_t*)data,*len/2);
+    std::wregex htmlTagRegex(L"<[^>]*>");
+    s = std::regex_replace(s, htmlTagRegex, L"");
+    std::wregex hoursRegex(L"\\b\\d{2}:\\d{2}\\b");
+    s = std::regex_replace(s, hoursRegex, L"");
+    
+    auto _=L"^(?:スキップ|むしる|取り出す|話す|選ぶ|ならびかえ|閉じる|やめる|undefined|決定|ボロのクワ|拾う)$(\\r?\\n|\\r)?";
+    while (std::regex_search(s, std::wregex(_))) {
+        s = std::regex_replace(s, std::wregex(_), L"");
+    }
+    while (std::regex_search(s, std::wregex(L"^\\s*$"))) {
+        s = std::regex_replace(s, std::wregex(L"^\\s*$"), L"");
+    }
+    static std::wstring last;
     if(last==s)return false;
     last=s;
 	return write_string_overwrite(data,len,s);
@@ -1015,7 +1081,46 @@ bool F010050000705E000(void* data, size_t* len, HookParam* hp){
     s = std::regex_replace(s, std::regex("<[^>]+>"), "");
 	return write_string_overwrite(data,len,s);
 }
+bool F01001B900C0E2000(void* data, size_t* len, HookParam* hp){
+    auto s=std::string((char*)data,*len);
+    std::regex whitespaceRegex("\\s");
+    s = std::regex_replace(s, whitespaceRegex, "");
+    std::regex hashRegex("#[A-Za-z]+(\\[(\\d*\\.)?\\d+\\])+");
+    s = std::regex_replace(s, hashRegex, "");
+    std::regex hashLetterRegex("#[a-z]");
+    s = std::regex_replace(s, hashLetterRegex, "");
+    std::regex lowercaseRegex("[a-z]");
+    s = std::regex_replace(s, lowercaseRegex, "");
+	return write_string_overwrite(data,len,s);
+}
 
+bool F0100217014266000(void* data, size_t* len, HookParam* hp){
+    auto s=std::wstring((wchar_t*)data,*len/2);
+    std::wregex htmlTagRegex(L"<[^>]*>");
+    s = std::regex_replace(s, htmlTagRegex, L"");
+    std::wregex furiganaRegex(L"｛([^｛｝]+)：[^｛｝]+｝");
+    s = std::regex_replace(s, furiganaRegex, L"$1");
+    while (std::regex_search(s, std::wregex(L"^\\s+"))) {
+        s = std::regex_replace(s, std::wregex(L"^\\s+"), L"");
+    }
+    return write_string_overwrite(data,len,s);
+}
+bool F010007500F27C000(void* data, size_t* len, HookParam* hp){
+    auto s=std::wstring((wchar_t*)data,*len/2);
+    std::wregex htmlTagRegex(L"<[^>]*>");
+    s = std::regex_replace(s, htmlTagRegex, L"");
+    auto _=L"^(?:決定|進む|ページ移動|ノート全体図|閉じる|もどる|セーブ中)$(\\r?\\n|\\r)?";
+    while (std::regex_search(s, std::wregex(_))) {
+        s = std::regex_replace(s, std::wregex(_), L"");
+    }
+    while (std::regex_search(s, std::wregex(L"^\\s*$"))) {
+        s = std::regex_replace(s, std::wregex(L"^\\s*$"), L"");
+    }
+    static std::wstring last;
+    if(last==s)return false;
+    last=s;
+    return write_string_overwrite(data,len,s);
+}
 bool F0100874017BE2000(void* data, size_t* len, HookParam* hp){
     auto s=std::wstring((wchar_t*)data,*len/2);
     s = std::regex_replace(s, std::wregex(L"\\n+|(\\\\n)+"), L" ");
@@ -1959,6 +2064,60 @@ auto _=[](){
         {0x8034EB44,{CODEC_UTF16,8,0,0,F01000A400AF2A000,"01000A400AF2A000","1.0.0"}},//text
         //神様のような君へ
         {0x80487CD0,{CODEC_UTF8,0,0,0,F01006B5014E2E000,"01006B5014E2E000","1.0.0"}},//text
+        //BUSTAFELLOWS
+        {0x80191b18,{CODEC_UTF16,0,0,ReadTextAndLenW<0>,F0100874017BE2000,"010060800B7A8000","1.1.3"}},//Dialogue
+        {0x80191f88,{CODEC_UTF16,0,0,ReadTextAndLenW<0>,F0100874017BE2000,"010060800B7A8000","1.1.3"}},//Choice
+        {0x801921a4,{CODEC_UTF16,0,0,ReadTextAndLenW<0>,F0100874017BE2000,"010060800B7A8000","1.1.3"}},//Choice 2
+        {0x801935f0,{CODEC_UTF16,0,0,ReadTextAndLenW<0>,F0100874017BE2000,"010060800B7A8000","1.1.3"}},//option
+        //Moujuutsukai to Ouji-sama ~Flower ＆ Snow~ 
+        {0x800a1a10,{CODEC_UTF8,1,0,0,F01001B900C0E2000,"01001B900C0E2000","1.0.0"}},//Dialogue 1
+        {0x80058f80,{CODEC_UTF8,1,0,0,F01001B900C0E2000,"01001B900C0E2000","1.0.0"}},//Dialogue 2
+        //Detective Pikachu Returns
+        {0x81585750,{CODEC_UTF16,0,0,ReadTextAndLenDW<2>,F010007500F27C000,"010007500F27C000","1.0.0"}},//All Text
+        //Dragon Quest Treasures
+        {0x80bd62c4,{CODEC_UTF16,0,0,0,F0100217014266000,"0100217014266000","1.0.1"}},//Cutscene
+        {0x80a74b64,{CODEC_UTF16,0,0,0,F0100217014266000,"0100217014266000","1.0.1"}},//Ptc Text
+        {0x80a36d18,{CODEC_UTF16,0,0,0,F0100217014266000,"0100217014266000","1.0.1"}},//Info
+        {0x80c43878,{CODEC_UTF16,0,0,0,F0100217014266000,"0100217014266000","1.0.1"}},//Tutorial Title
+        {0x80c43d50,{CODEC_UTF16,0,0,0,F0100217014266000,"0100217014266000","1.0.1"}},//Tutorial Description
+        {0x80a72598,{CODEC_UTF16,0,0,0,F0100217014266000,"0100217014266000","1.0.1"}},//Aproach Text
+        //Rune Factory 4 Special
+        {0x48b268+0x80004000,{CODEC_UTF8,3,0,0,F010027100C79A000,"010027100C79A000","1.0.1"}},//All Text
+        //The Legend of Zelda: Skyward Sword HD
+        {0x80dc36dc,{CODEC_UTF16|FULL_STRING,3,0,0,F01001EF017BE6000,"01002DA013484000","1.0.1"}},//All Text
+        //World of Final Fantasy Maxima
+        {0x8068fea0,{CODEC_UTF8,0,0,0,F010072000BD32000<0>,"010072000BD32000","1.0.0"}},//Cutscene
+        {0x802c6a48,{CODEC_UTF8,0,0,0,F010072000BD32000<1>,"010072000BD32000","1.0.0"}},//Action Text
+        {0x803a523c,{CODEC_UTF8,1,0,0,F010072000BD32000<2>,"010072000BD32000","1.0.0"}},//Location
+        {0x8041ed64,{CODEC_UTF8,0,0,0,F010072000BD32000<3>,"010072000BD32000","1.0.0"}},//Info
+        {0x802c9f1c,{CODEC_UTF8,0,0,0,F010072000BD32000<4>,"010072000BD32000","1.0.0"}},//Chapter First Part
+        {0x802c9f6c,{CODEC_UTF8,0,0,0,F010072000BD32000<5>,"010072000BD32000","1.0.0"}},//Chapter Second Part
+        //Tokyo Xanadu eX+
+        {0x8025135c,{CODEC_UTF8,1,0,0,F010080C01AA22000,"010080C01AA22000","1.0.0"}},//Name
+        {0x80251068,{CODEC_UTF8,0,0,0,F010080C01AA22000,"010080C01AA22000","1.0.0"}},//Main Text
+        {0x802ac86c,{CODEC_UTF8,0,0,0,F010080C01AA22000,"010080C01AA22000","1.0.0"}},//Action Text
+        {0x802b04b4,{CODEC_UTF8,0,0,0,F010080C01AA22000,"010080C01AA22000","1.0.0"}},//Choices
+        {0x8013243c,{CODEC_UTF8,0,0,0,F010080C01AA22000,"010080C01AA22000","1.0.0"}},//Location
+        {0x802b1f3c,{CODEC_UTF8,0,0,0,F010080C01AA22000,"010080C01AA22000","1.0.0"}},//Info
+        {0x802ab46c,{CODEC_UTF8,0,0,0,F010080C01AA22000,"010080C01AA22000","1.0.0"}},//Documents
+        //DORAEMON STORY OF SEASONS: Friends of the Great Kingdom
+        {0x839558e4,{CODEC_UTF16,0,0,ReadTextAndLenDW<1>,F01009B50139A8000<0>,"01009B50139A8000","1.1.1"}},//Text
+        {0x8202a9b0,{CODEC_UTF16,0,0,ReadTextAndLenDW<0>,F01009B50139A8000<1>,"01009B50139A8000","1.1.1"}},//Tutorial
+        //Monster Hunter Stories 2: Wings of Ruin
+        {0x8042fe60,{CODEC_UTF8,1,0,0,F0100CB700D438000<0>,"0100CB700D438000","1.5.2"}},//Cutscene
+        {0x804326c0,{CODEC_UTF8,1,0,0,F0100CB700D438000<1>,"0100CB700D438000","1.5.2"}},//Ptc Text
+        {0x804d3d44,{CODEC_UTF8,0,0,0,F0100CB700D438000<2>,"0100CB700D438000","1.5.2"}},//Info
+        {0x8045e7c8,{CODEC_UTF8,0,0,0,F0100CB700D438000<3>,"0100CB700D438000","1.5.2"}},//Info Choice
+        {0x805cec4c,{CODEC_UTF8,0,0,0,F0100CB700D438000<4>,"0100CB700D438000","1.5.2"}},//Config Header
+        {0x8078c2d0,{CODEC_UTF8,0,0,0,F0100CB700D438000<5>,"0100CB700D438000","1.5.2"}},//Config Name+
+        {0x805d0858,{CODEC_UTF8,0,0,0,F0100CB700D438000<6>,"0100CB700D438000","1.5.2"}},//Config Description
+        {0x807612d4,{CODEC_UTF8,0,0,0,F0100CB700D438000<7>,"0100CB700D438000","1.5.2"}},//Notice
+        {0x807194a0,{CODEC_UTF8,1,0,0,F0100CB700D438000<8>,"0100CB700D438000","1.5.2"}},//Update Content + Tutorial
+        {0x804d687c,{CODEC_UTF8,0,0,0,F0100CB700D438000<9>,"0100CB700D438000","1.5.2"}},//Objective Title
+        {0x804d6a7c,{CODEC_UTF8,0,0,0,F0100CB700D438000<10>,"0100CB700D438000","1.5.2"}},//Objective Description
+        {0x80509900,{CODEC_UTF8,0,0,0,F0100CB700D438000<11>,"0100CB700D438000","1.5.2"}},//Aproach Text
+        {0x8060ee90,{CODEC_UTF8,1,0,0,F0100CB700D438000<12>,"0100CB700D438000","1.5.2"}},//Acquired Item
+
     };
     return 1;
 }();

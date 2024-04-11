@@ -201,7 +201,11 @@ bool FPCSG00216(void* data, size_t* len, HookParam* hp){
     s = std::regex_replace(s, std::regex("#Pos\\[[\\s\\S]*?\\]"), "");
 	return write_string_overwrite(data,len,s);
 }
-
+bool FPCSG00405(void* data, size_t* len, HookParam* hp){
+    auto s = std::string((char*)data,*len);
+    s = std::regex_replace(s, std::regex("[\\s]"), "");
+	return write_string_overwrite(data,len,s);
+}
 
 void TPCSG00291(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
      auto a2= VITA3K::emu_arg(stack)[0];
@@ -311,6 +315,8 @@ auto _=[](){
         {0x80070658,{0,0,0,TPCSG00291,0,"PCSG00291"}},
         //Rui wa Tomo o Yobu
         {0x81003db0,{CODEC_UTF8,1,0,0,FPCSG00839,"PCSG00216"}},//dialogue
+        //Reine des Fleurs
+        {0x8001bff2,{0,0,0,0,FPCSG00405,"PCSG00405"}},//dialogue,sjis
 
     };
     return 1;
