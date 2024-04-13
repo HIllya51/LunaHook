@@ -11,7 +11,7 @@ void SpecialHookRetouch1(hook_stack* stack,  HookParam *, uintptr_t *data, uintp
   *split =
     stack->eax == 0 ? FIXED_SPLIT_VALUE * 2 : // name
     stack->ebx == 0 ? FIXED_SPLIT_VALUE * 1 : // scenario
-                               FIXED_SPLIT_VALUE * 3 ; // other
+                               stack->eax;//FIXED_SPLIT_VALUE * 3 ; // other //夏への方舟１体験版
 }
 
 bool InsertRetouch1Hook()
@@ -56,7 +56,6 @@ bool InsertRetouch2Hook()
 
   HookParam hp;
   hp.address = addr;
-  hp.offset=get_stack(1);
   hp.offset=get_stack(1);
   hp.type = USING_STRING|NO_CONTEXT|EMBED_ABLE|EMBED_AFTER_NEW|EMBED_BEFORE_SIMPLE|EMBED_DYNA_SJIS;
   hp.hook_font=F_GetGlyphOutlineA;
