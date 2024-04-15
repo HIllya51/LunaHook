@@ -21,6 +21,7 @@
 #include"engine32/RUNE.h"
 #include"engine32/Lightvn.h"
 #include"engine32/KiriKiri.h"
+#include"engine32/ransel.h"
 #include"engine32/Bishop.h"
 #include"engine32/HXP.h"
 #include"engine32/morning.h"
@@ -309,7 +310,8 @@ std::vector<ENGINE*> check_engines(){
         new Willold,
         new GSX,
         new GASTRO,
-        new akatombo
+        new akatombo,
+        new ransel
     };
      
 }
