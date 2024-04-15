@@ -551,3 +551,34 @@ bool Siglusold::attach_function(){
   }
   return succ;
 }
+
+bool Silkyssakura::attach_function(){
+  auto addr=MemDbg::findCallerAddressAfterInt3((DWORD)GetGlyphOutlineW,processStartAddress,processStopAddress);
+  if(addr==0)return false;
+  HookParam hp;
+  hp.address=addr;
+  hp.offset=get_stack(3);
+  hp.split=get_stack(5);
+  hp.type=DATA_INDIRECT|USING_CHAR|USING_SPLIT|CODEC_UTF16;
+
+  auto xrefs=findxref_reverse_checkcallop(addr,processStartAddress,processStopAddress,0xe8);
+  if(xrefs.size()==1){
+    addr=MemDbg::findEnclosingAlignedFunction(xrefs[0]);
+    if(addr){
+      xrefs=findxref_reverse_checkcallop(addr,processStartAddress,processStopAddress,0xe8);
+      if(xrefs.size()==1){
+        addr=MemDbg::findEnclosingAlignedFunction(xrefs[0]);
+        if(addr){
+          HookParam hp_embed;
+          hp_embed.address=addr;
+          hp_embed.offset=get_stack(2);
+          hp_embed.type=USING_STRING|EMBED_ABLE|EMBED_AFTER_NEW|EMBED_BEFORE_SIMPLE|CODEC_UTF16;
+          hp_embed.hook_font=F_GetGlyphOutlineW;
+          return NewHook(hp_embed,"embedSilkyssakura");//这个是分两层分别绘制文字和阴影，需要两个都内嵌。
+        }
+      }
+    }
+  }
+
+  return NewHook(hp,"Silkyssakura");
+}

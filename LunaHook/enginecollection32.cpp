@@ -311,7 +311,8 @@ std::vector<ENGINE*> check_engines(){
         new GSX,
         new GASTRO,
         new akatombo,
-        new ransel
+        new ransel,
+        new Silkyssakura
     };
      
 }

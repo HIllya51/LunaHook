@@ -32,3 +32,14 @@ class Siglusold:public ENGINE{
     };
      bool attach_function();
 };
+
+
+class Silkyssakura:public ENGINE{
+    public:
+    Silkyssakura(){
+        //いれかわ　お姉ちゃん、ぼくの身体でオナニーしちゃうの!
+        check_by=CHECK_BY::FILE;
+        check_by_target=L"pak\\data001.pak";
+    };
+     bool attach_function();
+};
