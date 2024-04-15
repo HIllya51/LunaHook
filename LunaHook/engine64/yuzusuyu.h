@@ -8,7 +8,7 @@ class yuzusuyu:public ENGINE{
         check_by=CHECK_BY::CUSTOM;
         check_by_target=[](){
              
-            return (wcscmp(processName_lower, L"suyu.exe")==0 || wcscmp(processName_lower, L"yuzu.exe")==0);
+            return (wcscmp(processName_lower, L"suyu.exe")==0 || wcscmp(processName_lower, L"yuzu.exe")==0|| wcscmp(processName_lower, L"sudachi.exe")==0);
         };
     }; 
     bool attach_function(); 
