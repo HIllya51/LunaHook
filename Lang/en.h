@@ -91,3 +91,4 @@
 #define HS_SEARCH_FOR_TEXT L"Search for specific text"
 #define VersionLatest L"Latest version"
 #define VersionCurrent L"Current version"
+#define ProjectHomePage L"Project homepage: https://github.com/HIllya51/LunaHook"

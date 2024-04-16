@@ -91,3 +91,4 @@
 #define HS_SEARCH_FOR_TEXT L"搜索指定文本"
 #define VersionLatest L"最新版本"
 #define VersionCurrent L"当前版本"
+#define ProjectHomePage L"项目主页： https://github.com/HIllya51/LunaHook"

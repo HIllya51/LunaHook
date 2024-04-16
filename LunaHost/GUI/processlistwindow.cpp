@@ -15,6 +15,7 @@ std::unordered_map<std::wstring,std::vector<int>> getprocesslist()
     PROCESSENTRY32 pe32;
     pe32.dwSize = sizeof(PROCESSENTRY32);
     wchar_t buff[65535];
+    auto currpid=GetCurrentProcessId();
     if (Process32First(hSnapshot, &pe32))
     {
         do
@@ -25,6 +26,7 @@ std::unordered_map<std::wstring,std::vector<int>> getprocesslist()
                 PROCESS_VM_OPERATION |
                 PROCESS_VM_WRITE |
                 PROCESS_VM_READ);
+            if(pe32.th32ProcessID==currpid)continue;
             AutoHandle<> handle = OpenProcess(PROCESS_INJECT_ACCESS, 0, pe32.th32ProcessID);
             if (handle == 0)continue;
             DWORD sz = 65535;

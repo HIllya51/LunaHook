@@ -207,11 +207,13 @@ namespace Host
 
 		textThreadsByParams->try_emplace(console, console, HookParam{}, CONSOLE);
 		
-		if(createconsole)
+		if(createconsole){
 			OnCreate(GetThread(console));
+			Host::AddConsoleOutput(ProjectHomePage);
+		}
 
 		//CreatePipe();
-
+		
 	}
 	void StartEx(ProcessEventHandler Connect, ProcessEventHandler Disconnect, ThreadEventHandler Create, ThreadEventHandler Destroy, TextThread::OutputCallback Output,ConsoleHandler console,HookInsertHandler hookinsert,EmbedCallback embed){
 		Start(Connect,Disconnect,Create,Destroy,Output,false);
@@ -219,6 +221,7 @@ namespace Host
 		OnConsole=console;
 		HookInsert=hookinsert;
 		embedcallback=embed;
+		Host::AddConsoleOutput(ProjectHomePage);
 	}
 	constexpr auto  PROCESS_INJECT_ACCESS=(
 			PROCESS_CREATE_THREAD |
