@@ -100,6 +100,14 @@ void LunaHost::on_proc_connect(DWORD pid)
     if(auto pexe=GetModuleFilename(pid))
     {
         autoattachexes.insert(WideStringToString(pexe.value()));
+        auto u8procname=WideStringToString(pexe.value());
+        if(savedhookcontext.find(u8procname)!=savedhookcontext.end()){
+            std::string name=safequeryjson(savedhookcontext[u8procname],"name",std::string());
+            if(startWith(name,"UserHook")){
+                if(auto hp=HookCode::Parse(StringToWideString(savedhookcontext[u8procname]["hookcode"])))
+                    Host::InsertHook(pid,hp.value());
+            }
+        }
     }
 }
 
@@ -253,6 +261,7 @@ LunaHost::LunaHost(){
                     {"hookcode",WideStringToString(tt->hp.hookcode)},
                     {"ctx1",tt->tp.ctx},
                     {"ctx2",tt->tp.ctx2},
+                    {"name",WideStringToString(tt->name)}
                 };
         }); 
         menu.add(MenuForgetSelect,[&,tt](){
