@@ -1,6 +1,12 @@
-## English | [简体中文](README_zh.md) 
-
 # LunaHook
+
+<p align="left">
+    <a href="./LICENSE"><img src="https://img.shields.io/github/license/HIllya51/LunaHook"></a>
+    <a href="https://github.com/HIllya51/LunaHook/releases"><img src="https://img.shields.io/github/v/release/HIllya51/LunaHook?color=ffa"></a>
+    <a href="https://github.com/HIllya51/LunaHook/stargazers"><img src="https://img.shields.io/github/stars/HIllya51/LunaHook?color=ccf"></a>
+</p>
+
+## English | [简体中文](README_zh.md) 
 
 LunaHook is the Core Text Hook Module For [LunaTranslator](https://github.com/HIllya51/LunaTranslator).
 
