@@ -3,6 +3,9 @@
 #include"main.h"
 #include"defs.h"
 namespace {
+#define PyUnicode_IS_READY(op) 1
+#define PyUnicode_Check(op) 1
+
     #ifdef Py_TRACE_REFS
 /* Define pointers to support a doubly-linked list of all live heap objects. */
 #define _PyObject_HEAD_EXTRA            \
