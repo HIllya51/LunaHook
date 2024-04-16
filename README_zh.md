@@ -1,0 +1,21 @@
+## [English](README.md)  | 简体中文
+
+# LunaHook
+
+[LunaTranslator](https://github.com/HIllya51/LunaTranslator)核心文本提取器模块
+
+也可以单独使用，兼容Textractor插件
+
+## 下载
+
+在github [release](https://github.com/HIllya51/LunaHook/releases)中下载
+
+选择所使用的语言下载相应的zip
+
+若通过windows xp玩古老的游戏，下载带有_winxp后缀的版本
+
+## 支持作者
+
+若觉得软件对你有帮助，欢迎成为我的[sponsor](https://patreon.com/HIllya51)。感谢~
+
+<img src="https://p.inari.site/guest/24-03/29/6606c1f1838b0.png" alt="屏幕截图 2024-03-29 212522.png" title="屏幕截图 2024-03-29 212522.png" />
