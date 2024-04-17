@@ -515,8 +515,43 @@ bool InsertEushullyHook()
   }
   return succ;
 }
+namespace{
+  //(18禁ゲーム)[200529][エウシュリー] 天冥のコンキスタ DL版
+  bool TENMEI(){
+    BYTE sig[]={
+      0xc7,0x45,XX,0x00,0x00,0x00,0x00,
+      0xc7,0x45,XX,0x00,0x00,0x00,0x00,
+      0xc7,0x45,XX,0x00,0x00,0x00,0x00,
+      0xc7,0x45,XX,0x00,0x00,0x00,0x00,
+      0xc7,0x45,XX,0x0f,0x00,0x00,0x00,
+      0xc6,0x45,XX,0x00,
+      0xc6,0x45,XX,0x01,
+      0xc7,0x45,XX,0x00,0x00,0x00,0x00,
+      0xc7,0x45,XX,0x00,0x00,0x00,0x00,
+      0xc7,0x45,XX,0x00,0x00,0x00,0x00,
+      0xc7,0x45,XX,0x0f,0x00,0x00,0x00,
+      0xc6,0x45,XX,0x00,
+      0xc6,0x45,XX,0x03,
 
+    };
+    auto addr=MemDbg::findBytes(sig,sizeof(sig),processStartAddress,processStopAddress);
+    if(addr==0)return false;
+    addr=MemDbg::findEnclosingAlignedFunction(addr);
+    if(addr==0)return false;
+    HookParam hp;
+    hp.address = addr;
+    hp.type = USING_STRING|USING_SPLIT|NO_CONTEXT;//必须NO_CONTEXT否则被注音的字会被分开
+    hp.offset = get_stack(5);
+    hp.split= get_stack(1); //name 80000000 各种所有text 0
+    hp.filter_fun=[](void* data, size_t* len, HookParam* hp){
+      StringFilter((char*)data,len,"\xf0\x40",2);
+      NewLineCharFilterA((char*)data,len,hp);
+      return true;
+    };
+    return NewHook(hp, "TENMEI");
+  }
+}
 bool Eushully::attach_function() {
     
-    return InsertEushullyHook();
+    return InsertEushullyHook()||TENMEI();
 }  
