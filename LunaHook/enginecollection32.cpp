@@ -10,6 +10,7 @@
 #include"engine32/sakanagl.h"
 #include"engine32/LCScript.h"
 #include"engine32/ONScripterru.h"
+#include"engine32/splushwave.h"
 #include"engine32/GSX.h"
 #include"engine32/pchooks.h"
 #include"engine32/Sprite.h"
@@ -312,7 +313,8 @@ std::vector<ENGINE*> check_engines(){
         new GASTRO,
         new akatombo,
         new ransel,
-        new Silkyssakura
+        new Silkyssakura,
+        new splushwave
     };
      
 }
