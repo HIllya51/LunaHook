@@ -95,22 +95,32 @@ public:
 };
 class listview:public control{
     int headernum=1;
+    bool addicon;
     HIMAGELIST hImageList;
+    std::vector<LONG_PTR>assodata;
+    std::map<LONG_PTR,int>remapidx;
+    std::mutex lockdataidx;
 public:
-    listview(mainwindow*);
-    int insertitem(int,const std::wstring&,HICON hicon);
+    listview(mainwindow*,bool,bool);
+    int insertitem(int,const std::wstring&,HICON hicon=NULL);
+    void settext(int,int,const std::wstring&);
     int insertcol(int,const std::wstring& );
     void clear();
     int count();
+    int currentidx();
+    void setcurrent(int idx);
+
     std::function<void(int)> oncurrentchange=[](int){};
     std::wstring text(int,int=0);
     void setheader(const std::vector<std::wstring>&);
-    void autosize();
-    int additem(const std::wstring&,HICON hicon);
+    void deleteitem(int);
+    int additem(const std::wstring&,HICON hicon=NULL);
+    LONG_PTR getdata(int);
+    void setdata(int,LONG_PTR);
+    int querydataidx(LONG_PTR);
     void dispatch_2(WPARAM wParam, LPARAM lParam);
     void on_size(int,int);
 };
-
 class gridlayout:public control{
     struct _c{
         control* ctr;

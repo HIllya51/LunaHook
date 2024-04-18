@@ -92,3 +92,7 @@
 #define VersionLatest L"Latest version"
 #define VersionCurrent L"Current version"
 #define ProjectHomePage L"Project homepage: https://github.com/HIllya51/LunaHook"
+#define LIST_HOOK L"Hook"
+#define LIST_TEXT L"Text"
+#define PROC_CONN L"process connected %d"
+#define PROC_DISCONN L"process disconnected %d"

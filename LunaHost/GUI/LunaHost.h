@@ -83,7 +83,8 @@ class LunaHost:public mainwindow{
     gridlayout* mainlayout;
     button* g_hButton_insert;
     button* btnplugin;
-    listbox* g_hListBox_listtext;
+    //listbox* g_hListBox_listtext;
+    listview*g_hListBox_listtext;
     multilineedit* g_showtexts;
     button* g_selectprocessbutton;
     button* btndetachall;
@@ -100,6 +101,10 @@ class LunaHost:public mainwindow{
     void on_thread_create(TextThread& thread);
     void on_thread_delete(TextThread& thread);
     void on_proc_connect(DWORD pid);
+    void on_proc_disconnect(DWORD pid);
+
+    void showtext(const std::wstring&text,bool clear);
+    void updatelisttext(const std::wstring&text,LONG_PTR data);
 public:
     confighelper* configs;
     int64_t currentselect=0;

@@ -78,7 +78,7 @@ processlistwindow::processlistwindow(mainwindow* p):mainwindow(p){
         g_exe_pid=getprocesslist();
         PopulateProcessList(g_hListBox,g_exe_pid);
     };
-    g_hListBox = new listview(this);
+    g_hListBox = new listview(this,true,true);
     g_hListBox->setheader({L""});
     g_hListBox->oncurrentchange=[&](int idx){
         auto pids=g_exe_pid[g_hListBox->text(idx)];

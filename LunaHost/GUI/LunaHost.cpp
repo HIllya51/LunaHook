@@ -93,6 +93,11 @@ void LunaHost::doautoattach()
     
 }
 
+void LunaHost::on_proc_disconnect(DWORD pid)
+{
+    attachedprocess.erase(pid);
+}
+
 void LunaHost::on_proc_connect(DWORD pid)
 {
     attachedprocess.insert(pid);
@@ -225,21 +230,21 @@ LunaHost::LunaHost(){
             }
         }
         else{
-            g_showtexts->appendtext(NotifyInvalidHookCode);
+            showtext(NotifyInvalidHookCode,false);
         }
     };
 
-    g_hListBox_listtext = new listbox(this);
+    g_hListBox_listtext = new listview(this,false,false);
+    g_hListBox_listtext->setheader({LIST_HOOK,LIST_TEXT});
     g_hListBox_listtext->oncurrentchange=[&](int idx){
         uint64_t handle = g_hListBox_listtext->getdata(idx);
         std::wstring get;
         for(auto& _:savetext.at(handle)){
             get+=_;
-            get+=L"\r\n";
+            get+=L"\n";
         }
         currentselect=handle;
-        g_showtexts->settext(get);
-        g_showtexts->scrolltoend();
+        showtext(get,true);
     };
     g_hListBox_listtext->on_menu=[&]()->maybehavemenu{
         auto handle = g_hListBox_listtext->getdata(g_hListBox_listtext->currentidx());
@@ -282,9 +287,7 @@ LunaHost::LunaHost(){
     
     Host::Start(
         std::bind(&LunaHost::on_proc_connect,this,std::placeholders::_1),
-        [&](DWORD pid) { 
-            attachedprocess.erase(pid);
-        }, 
+        std::bind(&LunaHost::on_proc_disconnect,this,std::placeholders::_1),
         std::bind(&LunaHost::on_thread_create,this,std::placeholders::_1),
         std::bind(&LunaHost::on_thread_delete,this,std::placeholders::_1),
         std::bind(&LunaHost::on_text_recv,this,std::placeholders::_1,std::placeholders::_2)
@@ -339,31 +342,55 @@ void LunaHost::on_text_recv_checkissaved(TextThread& thread)
     }
             
 }
+
+void LunaHost::showtext(const std::wstring&text,bool clear){
+    auto output=text;
+    strReplace(output,L"\n",L"\r\n");
+    if(clear)
+    {
+        g_showtexts->settext(output);
+        g_showtexts->scrolltoend();
+    }
+    else{
+        g_showtexts->scrolltoend();
+        g_showtexts->appendtext(output);
+    }
+}
+void LunaHost::updatelisttext(const std::wstring&text,LONG_PTR data){
+    auto idx=g_hListBox_listtext->querydataidx(data);
+    if(idx>=0){
+        auto __output=text;
+        strReplace(__output,L"\n",L" ");
+        if(__output.size()>0x40){
+            __output=__output.substr(0,0x40)+L"...";
+        }
+        g_hListBox_listtext->settext(idx,1,__output);
+    }
+}
 bool LunaHost::on_text_recv(TextThread& thread, std::wstring& output){
     std::lock_guard _(settextmutex);
     on_text_recv_checkissaved(thread);
     if(!plugins->dispatch(thread,output))return false;
-    strReplace(output,L"\n",L"\r\n");
+
+    updatelisttext(output,thread.handle);
+            
     savetext.at(thread.handle).push_back(output);
     if(currentselect==thread.handle){ 
-        g_showtexts->scrolltoend();
-        g_showtexts->appendtext(output);
+        showtext(output,false);
     }
     return true;
 }
 void LunaHost::on_thread_create(TextThread& thread){
     wchar_t buff[65535];
-    swprintf_s(buff,L"[%I64X:%I32X:%I64X:%I64X:%I64X:%s:%s]",
-        thread.handle,
-        thread.tp.processId,
-        thread.tp.addr,
-        thread.tp.ctx,
-        thread.tp.ctx2,
+    swprintf_s(buff,L"%s:%s:%I32X:%I64X:%I64X",
         thread.name.c_str(),
-        thread.hp.hookcode 
+        thread.hp.hookcode,
+        thread.tp.processId,
+        thread.tp.ctx,
+        thread.tp.ctx2
     );
     savetext.insert({thread.handle,{}});
-    int index=g_hListBox_listtext->additem(buff); 
+    int index=g_hListBox_listtext->additem(buff,NULL); 
     g_hListBox_listtext->setdata(index,thread.handle);
 }
 void LunaHost::on_thread_delete(TextThread& thread){

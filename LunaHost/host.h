@@ -28,5 +28,5 @@ namespace Host
 
 	inline int defaultCodepage = SHIFT_JIS;
 
-	constexpr ThreadParam console{ 0, -1LL, -1LL, -1LL };
+	constexpr ThreadParam console{ 0, 0, 0, 0 };
 }

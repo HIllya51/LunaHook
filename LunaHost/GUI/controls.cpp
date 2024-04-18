@@ -166,13 +166,26 @@ int listbox::insertitem(int i,const std::wstring& t){
     return SendMessage(winId, LB_INSERTSTRING, i, (LPARAM)t.c_str());
 }
 
-listview::listview(mainwindow* parent):control(parent){
-    winId=CreateWindowEx(0, WC_LISTVIEW, NULL, WS_VISIBLE |WS_VSCROLL| WS_CHILD | LVS_REPORT |LVS_SINGLESEL|LVS_NOCOLUMNHEADER , 0,0,0,0, parent->winId, NULL,NULL, NULL);
+void listview::deleteitem(int i){
+    std::lock_guard _(lockdataidx);
+    assodata.erase(assodata.begin() + i);
+    for(auto& data:remapidx){
+        if(data.second>=i)
+            data.second-=1;
+    }
+    ListView_DeleteItem(winId,i);
+}
+listview::listview(mainwindow* parent,bool _addicon,bool notheader):control(parent),addicon(_addicon){
+    auto style=WS_VISIBLE |WS_VSCROLL| WS_CHILD | LVS_REPORT |LVS_SINGLESEL;
+    if(notheader)style|=LVS_NOCOLUMNHEADER;
+    winId=CreateWindowEx(0, WC_LISTVIEW, NULL, style , 0,0,0,0, parent->winId, NULL,NULL, NULL);
     ListView_SetExtendedListViewStyle(winId, LVS_EX_FULLROWSELECT); // Set extended styles
     setfont(22);
-    hImageList = ImageList_Create(22,22, //GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON),
-                               ILC_COLOR32, 1 ,1);
-    ListView_SetImageList(winId, hImageList, LVSIL_SMALL);
+    if(addicon){
+        hImageList = ImageList_Create(22,22, //GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON),
+                                ILC_COLOR32, 1 ,1);
+        ListView_SetImageList(winId, hImageList, LVSIL_SMALL);
+    }
 }
 int listview::insertcol(int i,const std::wstring& text){
     LVCOLUMN lvc;
@@ -181,25 +194,62 @@ int listview::insertcol(int i,const std::wstring& text){
     //lvc.cx = 100;
     return ListView_InsertColumn(winId, i, &lvc);
 }
+void listview::settext(int row,int col,const std::wstring& text){
+    ListView_SetItemText(winId,row,col,const_cast<LPWSTR>(text.c_str()));
+}
 int listview::insertitem(int row,const std::wstring&  text,HICON hicon){
     
     LVITEM lvi;
-    lvi.mask = LVIF_TEXT | LVIF_IMAGE;
     lvi.pszText = const_cast<LPWSTR>(text.c_str());
     lvi.iItem = row;
     lvi.iSubItem = 0;
-    lvi.iImage = ImageList_AddIcon(hImageList, hicon);
+    lvi.mask=LVIF_TEXT;
+    if(addicon && hicon && hImageList){
+        lvi.mask |= LVIF_IMAGE;
+        lvi.iImage = ImageList_AddIcon(hImageList, hicon);
+    }
+    std::lock_guard _(lockdataidx);
+    assodata.resize(assodata.size()+1);
+    std::rotate(assodata.begin() + row, assodata.begin() + row + 1, assodata.end());
+    for(auto& data:remapidx){
+        if(data.second>=row)
+            data.second+=1;
+    }
     return ListView_InsertItem(winId, &lvi);
 }
 int listview::additem(const std::wstring&  text,HICON hicon){
     return insertitem(count(),text,hicon);
 }
+LONG_PTR listview::getdata(int idx){
+    std::lock_guard _(lockdataidx);
+    return assodata[idx];
+}
+int listview::querydataidx(LONG_PTR data){
+    std::lock_guard _(lockdataidx);
+    if(remapidx.find(data)==remapidx.end())return -1;
+    return remapidx[data];
+}
+
+void listview::setdata(int idx,LONG_PTR data){
+    std::lock_guard _(lockdataidx);
+    assodata[idx]=data;
+    remapidx[data]=idx;
+}
 void listview::clear(){
     ListView_DeleteAllItems(winId);
-    ImageList_RemoveAll(hImageList);
+    if(addicon && hImageList)
+        ImageList_RemoveAll(hImageList);
 }
 int listview::count(){
     return ListView_GetItemCount(winId);
+}
+int listview::currentidx(){
+    return ListView_GetNextItem(winId, -1, LVNI_SELECTED);
+
+}
+void listview::setcurrent(int idx){
+    ListView_SetItemState(winId,idx,LVIS_SELECTED,LVIS_SELECTED);
+
 }
 void listview::dispatch_2(WPARAM wParam, LPARAM lParam){
     NMHDR* pnmhdr = (NMHDR*)lParam;
@@ -228,17 +278,23 @@ std::wstring listview::text(int row,int col){
 void listview::setheader(const std::vector<std::wstring>& headers){
     for(int i=0;i<headers.size();i++){
         insertcol(i,headers[i]);
-        ListView_SetColumnWidth(winId, i, LVSCW_AUTOSIZE_USEHEADER);
     }
     headernum=headers.size();
-}
-void listview::on_size(int,int){
-    autosize();
-}
-void listview::autosize(){
-    for(int i=0;i<headernum;i++){
-        ListView_SetColumnWidth(winId, i, LVSCW_AUTOSIZE_USEHEADER);
+
+    if(headernum==1)
+        ListView_SetColumnWidth(winId, 0, LVSCW_AUTOSIZE_USEHEADER);
+    else if(headernum==2){
+        ListView_SetColumnWidth(winId, 0, 0x180);
     }
+}
+void listview::on_size(int w,int){
+    if(headernum==1)
+        ListView_SetColumnWidth(winId, 0, LVSCW_AUTOSIZE_USEHEADER);
+    else if(headernum==2){
+        auto w0= ListView_GetColumnWidth(winId, 0);
+        ListView_SetColumnWidth(winId, 1, w-w0);
+    }
+    
 }
 void gridlayout::setgeo(int x,int y,int w,int h){
     
@@ -335,3 +391,4 @@ void Menu::add_checkable(const std::wstring& str,bool check,std::function<void(b
 void Menu::add_sep(){
     menu_callbacks.push_back({MF_SEPARATOR});
 }
+

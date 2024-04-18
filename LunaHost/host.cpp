@@ -107,7 +107,7 @@ namespace
 			ReadFile(hookPipe, &processId, sizeof(processId), &bytesRead, nullptr);
 			processRecordsByIds->try_emplace(processId, processId, hostPipe);
 			OnConnect(processId);
-
+			Host::AddConsoleOutput(FormatString(PROC_CONN,processId));
 			//CreatePipe();
 
 			while (ReadFile(hookPipe, buffer, PIPE_BUFFER_SIZE, &bytesRead, nullptr))
@@ -190,6 +190,7 @@ namespace
 
 			RemoveThreads([&](ThreadParam tp) { return tp.processId == processId; });
 			OnDisconnect(processId);
+			Host::AddConsoleOutput(FormatString(PROC_DISCONN,processId));
 			processRecordsByIds->erase(processId);
 		}).detach();
 	}

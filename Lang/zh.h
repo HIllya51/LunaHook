@@ -92,3 +92,7 @@
 #define VersionLatest L"最新版本"
 #define VersionCurrent L"当前版本"
 #define ProjectHomePage L"项目主页： https://github.com/HIllya51/LunaHook"
+#define LIST_HOOK L"Hook"
+#define LIST_TEXT L"文本"
+#define PROC_CONN L"进程已连接 %d"
+#define PROC_DISCONN L"进程已断开连接 %d"
