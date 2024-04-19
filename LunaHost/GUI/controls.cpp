@@ -90,6 +90,12 @@ multilineedit::multilineedit(mainwindow* parent):texteditbase(parent){
         0,0,0,0, parent->winId, NULL, NULL, NULL);
     SendMessage(winId, EM_SETLIMITTEXT, 0, 0);
 }
+std::wstring multilineedit::getsel(){
+    DWORD start, end;
+    SendMessage(winId, EM_GETSEL, reinterpret_cast<WPARAM>(&start), reinterpret_cast<LPARAM>(&end));
+    int length = end - start;
+    return text().substr(start,length);
+}
 lineedit::lineedit(mainwindow* parent):texteditbase(parent){
     winId=CreateWindowEx(0, L"EDIT", L"", WS_CHILD | WS_VISIBLE  | WS_BORDER| ES_AUTOHSCROLL ,
         0,0,0,0, parent->winId, NULL, NULL, NULL);

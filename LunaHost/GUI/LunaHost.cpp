@@ -17,21 +17,24 @@ auto gmf=[&](DWORD processId)->std::optional<std::wstring>{
         if (GetModuleFileNameExW(process, 0, buffer.data(), MAX_PATH)) return buffer.data();
     return {};
 };
-void LunaHost::toclipboard(std::wstring& sentence){ 
-     
+bool sendclipboarddata_i(const std::wstring&text,HWND hwnd){
+    if (!OpenClipboard((HWND)hwnd)) return false;
+    HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, (text.size() + 1) * sizeof(wchar_t));
+    memcpy(GlobalLock(hMem), text.c_str(), (text.size() + 1) * sizeof(wchar_t));
+    EmptyClipboard();
+    SetClipboardData(CF_UNICODETEXT, hMem);
+    GlobalUnlock(hMem);
+    CloseClipboard();
+    return true;
+}
+bool sendclipboarddata(const std::wstring&text,HWND hwnd){
     for (int loop = 0; loop < 10; loop++) {
-        if (OpenClipboard(winId)) {
-            HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, (sentence.size() + 2) * sizeof(wchar_t));
-            memcpy(GlobalLock(hMem), sentence.c_str(), (sentence.size() + 2) * sizeof(wchar_t));
-            EmptyClipboard();
-            SetClipboardData(CF_UNICODETEXT, hMem);
-            GlobalUnlock(hMem);
-            CloseClipboard();
-            break;
-        }
+        auto succ=sendclipboarddata_i(text,hwnd);
+        if(succ)return true;
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
     } 
-} 
+    return false;
+}
 void LunaHost::on_close(){
     savesettings();
     delete configs;
@@ -45,6 +48,7 @@ void LunaHost::on_close(){
 void LunaHost::savesettings()
 {
     configs->set("ToClipboard",check_toclipboard);
+    configs->set("ToClipboardSelection",check_toclipboard_selection);
     configs->set("AutoAttach",autoattach);
     configs->set("AutoAttach_SavedOnly",autoattach_savedonly);
     configs->set("flushDelay",TextThread::flushDelay);
@@ -56,6 +60,7 @@ void LunaHost::savesettings()
     configs->set("savedhookcontext",savedhookcontext);
 }
 void LunaHost::loadsettings(){
+    check_toclipboard_selection=configs->get("ToClipboardSelection",false);
     check_toclipboard=configs->get("ToClipboard",false);
     autoattach=configs->get("AutoAttach",false);
     autoattach_savedonly=configs->get("AutoAttach_SavedOnly",true);
@@ -155,41 +160,9 @@ bool queryversion(WORD *_1, WORD *_2, WORD *_3, WORD *_4)
 }
 
 LunaHost::LunaHost(){
-    std::wstring title=WndLunaHostGui;
-    WORD _1,_2,_3,_4;
-    WCHAR vs[32];
-    if(queryversion(&_1,&_2,&_3,&_4)){
-        wsprintf(vs,L" | %s v%d.%d.%d",VersionCurrent,_1,_2,_3);
-        title+=vs;
-        std::thread([&](){
-            if (HttpRequest httpRequest{
-                L"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
-                L"api.github.com",
-                L"GET",
-                L"/repos/HIllya51/LunaHook/releases/latest"
-            }){
-                
-                try{
-                    auto resp=nlohmann::json::parse(WideStringToString(httpRequest.response));
-                    std::string ver=resp["tag_name"];
-                    settext(text()+L" | "+VersionLatest+L" "+ StringToWideString(ver));
-                }
-                catch(std::exception&e){}
-            }
-        }).detach();
-    }
-        
-    settext(title.c_str());
     
     configs=new confighelper;
     loadsettings();
-
-    std::thread([&]{
-        while(1){
-            doautoattach();
-            std::this_thread::sleep_for(std::chrono::seconds(2));
-        }
-    }).detach();
 
     setfont(25);
     btnshowsettionwindow=new button(this, BtnShowSettingWindow);
@@ -251,7 +224,7 @@ LunaHost::LunaHost(){
         auto tt=Host::GetThread(handle);
         if(!tt)return {};
         Menu menu;
-        menu.add(MenuCopyHookCode,[&,tt](){toclipboard(std::wstring(tt->hp.hookcode));});
+        menu.add(MenuCopyHookCode,[&,tt](){sendclipboarddata(tt->hp.hookcode,winId);});
         menu.add_sep();
         menu.add(MenuRemoveHook,[&,tt](){Host::RemoveHook(tt->tp.processId,tt->tp.addr);});
         menu.add(MenuDetachProcess,[&,tt](){
@@ -309,6 +282,58 @@ LunaHost::LunaHost(){
     mainlayout->setfixedheigth(1,30);
     setlayout(mainlayout);
     setcentral(1200,800);
+    std::wstring title=WndLunaHostGui;
+    settext(title);
+     
+    std::thread([&](){
+        //https://github.com/HIllya51/LunaHook/issues/14
+        std::wstring sel;
+        while(1)
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            if(check_toclipboard_selection)
+            {
+                    
+                auto _sel=g_showtexts->getsel();
+                if(_sel!=sel){
+                    sel=_sel;
+                    sendclipboarddata(sel,winId);
+                }
+            }
+        }    
+    }).detach(); 
+    
+    std::thread([&]{
+        while(1){
+            doautoattach();
+            std::this_thread::sleep_for(std::chrono::seconds(2));
+        }
+    }).detach();
+    
+
+    WORD _1,_2,_3,_4;
+    WCHAR vs[32];
+    if(queryversion(&_1,&_2,&_3,&_4)){
+        wsprintf(vs,L" | %s v%d.%d.%d",VersionCurrent,_1,_2,_3);
+        title+=vs;
+        settext(title);
+        std::thread([&](){
+            if (HttpRequest httpRequest{
+                L"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
+                L"api.github.com",
+                L"GET",
+                L"/repos/HIllya51/LunaHook/releases/latest"
+            }){
+                
+                try{
+                    auto resp=nlohmann::json::parse(WideStringToString(httpRequest.response));
+                    std::string ver=resp["tag_name"];
+                    settext(text()+L" | "+VersionLatest+L" "+ StringToWideString(ver));
+                }
+                catch(std::exception&e){}
+            }
+        }).detach();
+    }
 }
 void LunaHost::on_text_recv_checkissaved(TextThread& thread)
 {
@@ -440,6 +465,12 @@ Settingwindow::Settingwindow(LunaHost* host):mainwindow(host){
     }; 
     g_check_clipboard->setcheck(host->check_toclipboard);
 
+    copyselect=new checkbox(this,COPYSELECTION);
+    copyselect->onclick=[=](){
+        host->check_toclipboard_selection=copyselect->ischecked();
+    }; 
+    copyselect->setcheck(host->check_toclipboard_selection);
+    
     autoattach =new checkbox(this,LblAutoAttach);
     autoattach->onclick=[=](){
         host->autoattach=autoattach->ischecked();
@@ -488,6 +519,7 @@ Settingwindow::Settingwindow(LunaHost* host):mainwindow(host){
     mainlayout->addcontrol(autoattach,6,0,1,2);
     mainlayout->addcontrol(autoattach_so,7,0,1,2);
     mainlayout->addcontrol(readonlycheck,8,0,1,2);
+    mainlayout->addcontrol(copyselect,9,0,1,2);
 
     setlayout(mainlayout);
     setcentral(600,500);

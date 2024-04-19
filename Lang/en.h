@@ -96,3 +96,4 @@
 #define LIST_TEXT L"Text"
 #define PROC_CONN L"process connected %d"
 #define PROC_DISCONN L"process disconnected %d"
+#define COPYSELECTION L"auto send selected text in textbox to clipboard"

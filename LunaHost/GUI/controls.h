@@ -54,6 +54,7 @@ public:
 class multilineedit:public texteditbase{
 public:
     multilineedit(mainwindow*);
+    std::wstring getsel();
 };
 class lineedit:public texteditbase{
 public:

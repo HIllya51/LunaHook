@@ -20,6 +20,7 @@ class Settingwindow:public mainwindow{
     checkbox* readonlycheck;
     checkbox* autoattach;
     checkbox* autoattach_so;
+    checkbox* copyselect;
     spinbox* spinmaxbuffsize;
     spinbox* spinmaxhistsize;
     gridlayout* mainlayout;
@@ -91,7 +92,6 @@ class LunaHost:public mainwindow{
     button* btnsearchhooks;
     button* btnshowsettionwindow;
     //button* btnsavehook;
-    void toclipboard(std::wstring& sentence);
     processlistwindow *_processlistwindow=0;
     Settingwindow *settingwindow=0;
     Pluginmanager* plugins;
@@ -109,6 +109,7 @@ public:
     confighelper* configs;
     int64_t currentselect=0;
     bool check_toclipboard; 
+    bool check_toclipboard_selection; 
     bool autoattach;
     bool autoattach_savedonly;
     std::set<std::string>autoattachexes;
