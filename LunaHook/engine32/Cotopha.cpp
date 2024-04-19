@@ -632,17 +632,13 @@ bool InsertCotophaHook1()
 {
   enum : DWORD { ins = 0xec8b55 }; // mov ebp,esp, sub esp,*  ; jichi 7/12/2014
   ULONG addr = MemDbg::findCallerAddress((ULONG)::GetTextMetricsA, ins, processStartAddress, processStopAddress);
-  if (!addr) {
-    ConsoleOutput("Cotopha: pattern not exist");
-    return false;
-  }
+  if (!addr)return false;
   HookParam hp;
   hp.address = addr;
   hp.offset=get_stack(1);
   hp.split = get_reg(regs::ebp);
   hp.type = CODEC_UTF16|USING_SPLIT|USING_STRING|EMBED_ABLE|EMBED_AFTER_NEW;
   hp.hook_before=ScenarioHook::Private::hookBefore;
-  hp.filter_fun = CotophaFilter;
   ConsoleOutput("INSERT Cotopha");
   
   //RegisterEngineType(ENGINE_COTOPHA);
@@ -657,14 +653,7 @@ bool InsertCotophaHook2()
 		hp.address = (uintptr_t)addr;
 		hp.offset=get_stack(2);
 		hp.type = CODEC_UTF16 | USING_STRING;
-		hp.filter_fun = [](void* data, size_t* len, HookParam*)
-		{
-      if(*len > VNR_TEXT_CAPACITY*2)return false;
-      
-			return std::wstring_view((wchar_t*)data, *len / sizeof(wchar_t)).find(L'\\') != std::wstring_view::npos;
-		};
-		ConsoleOutput("INSERT Cotopha 2");
-		
+		hp.filter_fun = CotophaFilter;
 		return NewHook(hp, "Cotopha2");
 	}
 	return false;
@@ -673,10 +662,7 @@ bool InsertCotophaHook3() {
     const BYTE bytes[] = { 0x8B,0x75,0xB8,0x8B,0xCE,0x50,0xC6,0x45,0xFC,0x01,0xE8 };
     ULONG range = min(processStopAddress - processStartAddress, MAX_REL_ADDR);
     ULONG addr = MemDbg::findBytes(bytes, sizeof(bytes), processStartAddress, processStartAddress + range);
-    if (!addr) {
-        ConsoleOutput("Cotopha3: Cotopha3 not found");
-        return false;
-    }
+    if (!addr)return false;
 
     HookParam myhp;
     myhp.address = addr;
@@ -708,10 +694,7 @@ bool InsertCotophaHook4()
 
   ULONG range = min(processStopAddress - processStartAddress, MAX_REL_ADDR);
   ULONG addr = MemDbg::findBytes(bytes, sizeof(bytes), processStartAddress, processStartAddress + range);
-  if (!addr) {
-    ConsoleOutput("Cotopha4: pattern not found");
-    return false;
-  }
+  if (!addr)return false;
 
   HookParam hp = {};
   hp.address = addr + 1;
@@ -723,8 +706,8 @@ bool InsertCotophaHook4()
 }
 bool InsertCotophaHook()
 {
-	   InsertCotophaHook1();
-	return (InsertCotophaHook4()|InsertCotophaHook3()) || InsertCotophaHook2();
+	auto _old=InsertCotophaHook1();
+	return (InsertCotophaHook4()|InsertCotophaHook3()) || InsertCotophaHook2()||_old;
 }
 bool Cotopha::attach_function() {
     
