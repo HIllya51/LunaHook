@@ -49,7 +49,7 @@ include(generate_product_version)
 
 set(VERSION_MAJOR 3)
 set(VERSION_MINOR 0)
-set(VERSION_PATCH 0)
+set(VERSION_PATCH 1)
 set(VERSION_REVISION 0)
 
 add_subdirectory(include)
