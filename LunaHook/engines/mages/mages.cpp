@@ -3,26 +3,32 @@
 namespace mages{
   
     std::map<WORD, std::wstring> createTable(int _idx) { 
-       
+        ConsoleOutput("%d",_idx);
         auto compound_charsA=LoadResData(std::vector<const wchar_t*>{
           L"compound_chars_default",
           L"compound_chars_Robotics_Notes_Elite",
           L"compound_chars_Robotics_Notes_Dash",
           L"",
-          L""
+          L"",
+          L"",
+          L"compound_chars_SGHD",
         }[_idx],L"COMPOUND_CHARS");
         auto charsetA=LoadResData(std::vector<const wchar_t*>{
           L"charset_default",
           L"charset_Robotics_Notes_Elite",
           L"charset_Robotics_Notes_Dash",
           L"charset_Famicom_Tantei_Club",
-          L"charset_SINce_Memories"
+          L"charset_SINce_Memories",
+          L"charset_SG_My_Darlings_Embrace",
+          L"charset_SG_Linear_Bounded_Phenogram",
+          L"charset_SGHD"
         }[_idx],L"CHARSET");
 
         
         auto compound_chars=StringToWideString(compound_charsA);
         auto charset=StringToWideString(charsetA);
-
+        strReplace(charset,L"\n",L"");
+        strReplace(charset,L"\r",L"");
         std::map<WORD, std::wstring> table = {};
         
         for (auto line : strSplit(compound_chars, L"\n")) {
@@ -250,15 +256,10 @@ bool MAGES() {
             //YU-NO
             //.text:00431D63 89 0D 20 A9 BF 00             mov     dword_BFA920, ecx
             //在加载到内存后，有时变成89 0d 20 a9 8a 00，导致崩溃，且这个没有遇到过，故注释掉。
-        //   case 3:reg=pusha_ebx_off;break;
-        //   case 1:reg=pusha_ecx_off;break;
-        //   case 2:reg=pusha_edx_off;break;
-        //   case 6:reg=pusha_ebp_off;break;
-        //   case 7:reg=pusha_edi_off;break;
         case 3:reg=regs::ebx;break;
         case 1:reg=regs::ecx;break;
         case 2:reg=regs::edx;break;
-        case 6:reg=regs::ebp;break;
+        case 6:reg=regs::esi;break;
         case 7:reg=regs::edi;break;
             default:reg=regs::invalid;
         }
@@ -267,15 +268,19 @@ bool MAGES() {
         pos+=1;
     }
     if(reg==regs::invalid)return false;
+    ConsoleOutput("%p",pos-processStartAddress);
     switch(pos-processStartAddress){
-        case 0x9f723:
-        //Robotics;Notes-Elite
-        gametype=1;
-        break;
-        case 0xf70a6:
-        //Robotics;Notes-Dash
-        gametype=2;
-        break;
+        case 0x6e69b://SG My Darling's Embrace 破解版
+        case 0x6e77b://SG My Darling's Embrace
+        gametype=5;break;
+        case 0x4ef60://STEINS;GATE: Linear Bounded Phenogram
+        gametype=6;break;
+        case 0x498b0://STEINS;GATE
+        gametype=7;break;
+        case 0x9f723://Robotics;Notes-Elite
+        gametype=1;break;
+        case 0xf70a6://Robotics;Notes-Dash
+        gametype=2;break;
         
         default:
         //YU-NO
@@ -302,6 +307,7 @@ bool MAGES() {
     hp.address=pos;
     hp.text_fun = SpecialHookMAGES<1>;
     _|=NewHook(hp, "5pb_MAGES");
+    ConsoleOutput("%p %p",hookaddr,pos);
     return _;
 
 #else
