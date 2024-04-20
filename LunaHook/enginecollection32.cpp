@@ -18,6 +18,7 @@
 #include"engine32/Ruf.h"
 #include"engine32/SYSD.h"
 #include"engine32/Renpy.h"
+#include"engine32/Diskdream.h"
 #include"engine32/RPGMakerRGSS3.h"
 #include"engine32/RUNE.h"
 #include"engine32/Lightvn.h"
@@ -314,7 +315,8 @@ std::vector<ENGINE*> check_engines(){
         new akatombo,
         new ransel,
         new Silkyssakura,
-        new splushwave
+        new splushwave,
+        new Diskdream
     };
      
 }
