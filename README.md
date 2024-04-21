@@ -22,6 +22,11 @@ For English user, download Release_English.zip. For Chinese user download Releas
 
 If you use Windows XP for some old Visual Novel, download zip with _winxp suffix.
 
+## Plugins
+
+Download plugin32 or plugin64 in [release](https://github.com/HIllya51/LunaHook/releases).
+
+Since both LunaHost32 and LunaHost64 can inject the both 32-bit and 64-bit games, actually you only need to use one of LunaHost32 and LunaHost64, and only need to download one of plugin32 and plugin64.
 
 ## Support
 

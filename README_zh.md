@@ -21,6 +21,12 @@
 
 若通过windows xp玩古老的游戏，下载带有_winxp后缀的版本
 
+## 插件
+
+在[release](https://github.com/HIllya51/LunaHook/releases)中下载plugin32或plugin64
+
+由于LunaHost32和LunaHost64都可以注入到32位和64位游戏，因此实际上你仅需使用LunaHost32和LunaHost64中的一个，且仅需下载plugin32和plugin64中的一个。
+
 ## 支持作者
 
 若觉得软件对你有帮助，欢迎成为我的[sponsor](https://patreon.com/HIllya51)。感谢~
