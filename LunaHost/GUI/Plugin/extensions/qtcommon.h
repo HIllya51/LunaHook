@@ -29,7 +29,13 @@ constexpr auto WINDOW = u8"Window";
 struct Settings : QSettings { Settings(QObject* parent = nullptr) : QSettings(CONFIG_FILE, QSettings::IniFormat, parent) {} };
 struct QTextFile : QFile { QTextFile(QString name, QIODevice::OpenMode mode) : QFile(name) { open(mode | QIODevice::Text); } };
 struct Localizer { Localizer() { Localize(); } };
-inline std::wstring S(const QString& s) { return { s.toStdWString() }; }
+inline std::wstring S(const QString& s) { 
+    //s.toStdWString will crash. unknown why.
+    std::wstring ws;
+    ws.resize(s.size()+1);
+    s.toWCharArray(ws.data());
+    return ws; 
+}
 inline QString S(const std::string& s) { return QString::fromStdString(s); }
 inline QString S(const std::wstring& s) { return QString::fromStdWString(s); }
 // TODO: allow paired surrogates
