@@ -10,10 +10,6 @@
 
 LunaHook is the Core Text Hook Module For [LunaTranslator](https://github.com/HIllya51/LunaTranslator).
 
-
-Through some efforts, it can be used independently and compatible with Textractor plugins.
-
-
 ## Download
 
 Download it via github [release](https://github.com/HIllya51/LunaHook/releases).
@@ -26,10 +22,12 @@ If you use Windows XP for some old Visual Novel, download zip with _winxp suffix
 
 Download plugin32 or plugin64 in [release](https://github.com/HIllya51/LunaHook/releases).
 
+Compatible with Textractor plugins.
+
 Since both LunaHost32 and LunaHost64 can inject the both 32-bit and 64-bit games, actually you only need to use one of LunaHost32 and LunaHost64, and only need to download one of plugin32 and plugin64.
 
 ## Support
 
 If you feel that the software is helpful to you, welcome to become my [sponsor](https://patreon.com/HIllya51). Thank you ~ 
 
-<img src="https://p.inari.site/guest/24-03/29/6606c1f1838b0.png" alt="屏幕截图 2024-03-29 212522.png" title="屏幕截图 2024-03-29 212522.png" />
+<img src="https://p.inari.site/guest/24-04/21/6624ee26d3093.png" alt="屏幕截图 2024-03-29 212522.png" title="屏幕截图 2024-03-29 212522.png" />
