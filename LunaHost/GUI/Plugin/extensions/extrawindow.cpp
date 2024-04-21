@@ -595,12 +595,10 @@ private:
 		int definitionIndex;
 	} dictionaryWindow;
 } extraWindow;
-#include<stdio.h>
+
 bool ProcessSentence(std::wstring& sentence, SentenceInfo sentenceInfo)
 {
-	wprintf(L"enter %s\n",sentence.c_str());
 	if (sentenceInfo["current select"] && sentenceInfo["text number"] != 0)
 		QMetaObject::invokeMethod(&extraWindow, [sentence = S(sentence)] { extraWindow.AddSentence(sentence); });
-	wprintf(L"leave %s\n",sentence.c_str());
 	return false;
 }
