@@ -33,15 +33,15 @@ if(NOT DEFINED LANGUAGE)
 endif()
 
 if(NOT DEFINED WINXP)
-  set(WINXP "")
+  set(WINXPAPP "")
 else()
-  set(WINXP "_winxp")
+  set(WINXPAPP "_winxp")
 endif()
 
 add_definitions(-DLANGUAGE=${LANGUAGE})
 
-set(CMAKE_FINAL_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/builds/${CMAKE_BUILD_TYPE}_x${bitappendix}_${LANGUAGE}${WINXP}) 
-set(binary_out_putpath ${CMAKE_SOURCE_DIR}/builds/${CMAKE_BUILD_TYPE}_${LANGUAGE}${WINXP}) 
+set(CMAKE_FINAL_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/builds/${CMAKE_BUILD_TYPE}_x${bitappendix}_${LANGUAGE}${WINXPAPP}) 
+set(binary_out_putpath ${CMAKE_SOURCE_DIR}/builds/${CMAKE_BUILD_TYPE}_${LANGUAGE}${WINXPAPP}) 
 #set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY $<1:${CMAKE_FINAL_OUTPUT_DIRECTORY}>)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY $<1:${binary_out_putpath}>)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY $<1:${binary_out_putpath}>)
@@ -55,7 +55,7 @@ include(generate_product_version)
 
 set(VERSION_MAJOR 3)
 set(VERSION_MINOR 0)
-set(VERSION_PATCH 1)
+set(VERSION_PATCH 2)
 set(VERSION_REVISION 0)
 
 add_subdirectory(include)

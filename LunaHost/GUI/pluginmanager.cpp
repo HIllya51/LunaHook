@@ -1,11 +1,12 @@
 #include"pluginmanager.h"
 #include<filesystem>
-#include"Plugin/plugindef.h"
+#include"Plugin/extension.h"
 #include<fstream>
 #include <commdlg.h>
 #include"LunaHost.h"
 #include"Lang/Lang.h"
 #include"host.h"
+typedef wchar_t* (*OnNewSentence_t)(wchar_t*, const InfoForExtension*);
 
 std::optional<std::wstring>SelectFile(HWND hwnd,LPCWSTR lpstrFilter){
     OPENFILENAME ofn;

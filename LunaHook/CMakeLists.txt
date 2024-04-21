@@ -9,9 +9,9 @@ else()
 	set(collector "enginecollection32.cpp")
 endif()
 string(REPLACE ";" ".cpp;${enginepath}/" enginessrc "${enginessrc}")
-message("${enginessrc}")
+#message("${enginessrc}")
 set(enginessrc "${enginepath}/${enginessrc}.cpp")
-message("${enginessrc}")
+#message("${enginessrc}")
 set_source_files_properties(${enginessrc} PROPERTIES SOURCE_ENCODING "UTF-8")
 
 set(texthook_src

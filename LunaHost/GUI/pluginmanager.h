@@ -1,6 +1,6 @@
 #ifndef LUNA_PLUGINMANAGER_H
 #define LUNA_PLUGINMANAGER_H
-#include"Plugin/plugindef.h"
+#include"Plugin/extension.h"
 #include"textthread.h"
 #include<nlohmann/json.hpp>
 class LunaHost;

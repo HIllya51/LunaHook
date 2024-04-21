@@ -1,6 +1,5 @@
-#include<Windows.h>
-#ifndef LUNA_PLUGIN_DEF_H
-#define LUNA_PLUGIN_DEF_H
+#pragma once
+
 struct InfoForExtension
 {
 	const char* name;
@@ -17,6 +16,6 @@ struct SentenceInfo
 		return *(int*)0xDEAD = 0; // gives better error message than alternatives
 	}
 };
-typedef wchar_t* (*OnNewSentence_t)(wchar_t*, const InfoForExtension*);
 
-#endif
+struct SKIP {};
+inline void Skip() { throw SKIP(); }
