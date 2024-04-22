@@ -175,10 +175,50 @@ bool InsertAIRNovelHook()
 	}
 	return false;
 }
+bool adobelair3(){
+  DWORD base = (DWORD)GetModuleHandleW(L"Adobe AIR.dll");
+  if (!base)return false;
+  BYTE sig[]={
+    0x8b,0x85,XX4,
+    0x8B,0x4E,0x04,
+    0x85,0xC9,
+    0x0F,0x85,XX4,
+    0xFF,0x70,0x14,
+    0x8B,0x78,0x0c,
+    0x8b,0xcf,
+    0x68,0xb8,0x00,0x00,0x00,
+    0xff,0x15,XX4,
+    0xff,0xd7,
+    0x8b,0xc8,
+    0x83,0xc4,0x08,
+    0x85,0xc9,
+    0x0f,0x85,XX4
+  };
+  enum { range = 0x600000 }; // larger than relative addresses
+  auto [minAddress, maxAddress] = std::make_pair(base,base+range);
+  auto addr=MemDbg::findBytes(sig,sizeof(sig),minAddress,maxAddress);
+  HookParam hp;
+  hp.address = addr;
+  hp.type = CODEC_UTF8|USING_STRING|NO_CONTEXT;
+  hp.offset=get_stack(1);
+  hp.filter_fun=[](void* data, size_t* len, HookParam* hp){
+    //若当前还有5个字符，则这个句子会显示5次，然后substr(1,len-1)，直到结束，总共显示5+4+3+2+1次
+    auto ws=StringToWideString(std::string((char*)data,*len));
+    static int leng=0;
+    if(ws.length()<=leng){
+      leng=ws.length();
+      return false;
+    }
+    leng=ws.length();
+    return true;
+  };
+  return NewHook(hp, "AIRNovel");
+}
 bool AdobeAir::attach_function() {
     
     bool b1= InsertAdobeAirHook();
     b1|=AdobeAIRhook2();
-    b1|=InsertAIRNovelHook();
+    b1|=adobelair3();
+    b1=b1||InsertAIRNovelHook();//乱码太多了这个
     return b1;
 } 
