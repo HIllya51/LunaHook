@@ -285,8 +285,9 @@ auto _=[](){
         // Marginal #4 Road to Galaxy
         {0x8002ff90,{CODEC_UTF8,0,0,0,FPCSG01008,"PCSG01008"}},//text
         //BLACK WOLVES SAGA  -Weiβ und Schwarz-
-        {0x8004ed22,{CODEC_UTF8,0,0,0,FPCSG01008,"PCSG00935"}},//name
-        {0x8006d202,{CODEC_UTF8,1,2,0,FPCSG01008,"PCSG00935"}},//text
+        // {0x8004ed22,{CODEC_UTF8,0,0,0,FPCSG01008,"PCSG00935"}},//name
+        // {0x8006d202,{CODEC_UTF8,1,2,0,FPCSG01008,"PCSG00935"}},//text
+        {0x800581a2,{CODEC_UTF8,0,0,0,FPCSG01008,"PCSG00935"}},//text
         //New Game! The Challenge Stage!
         {0x8012674c,{CODEC_UTF8,0,0,TPCSG00903,FPCSG00903,"PCSG00903"}},
         //Kenka Banchou Otome
