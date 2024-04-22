@@ -1,5 +1,9 @@
 name: Game Request 游戏支持请求
-description: Create the request for an unsupported game 请求支持尚未支持的游戏
+description: >
+  Create the request for an unsupported game 
+  请求支持尚未支持的游戏
+  Make sure the game hasn't been supported in latest version.
+  请确保游戏未被最新版本支持
 labels: enhancement
 body:
 - type: input
@@ -8,6 +12,8 @@ body:
 - type: textarea
   attributes:
     label: Game resource 游戏资源
-    description: give me the game resource via onedrive or googledrive or other unlimited speed network disk 使用onedrive或googledrive或其他不限速网盘给我游戏资源
+    description: >
+      give me the game resource via onedrive or googledrive or other unlimited speed network disk 
+      使用onedrive或googledrive或其他不限速网盘给我游戏资源
   validations:
     required: true
