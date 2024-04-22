@@ -7,7 +7,7 @@ body:
     value: >
       Make sure the game hasn't been supported in latest version.
       请确保游戏未被最新版本支持
-- type: textarea
+- type: input
   attributes:
     label: vndb id
 - type: textarea
