@@ -1,0 +1,18 @@
+name: Game Request 游戏支持请求
+description: Create the request for an unsupported game 请求支持尚未支持的游戏
+labels: enhancement
+body:
+- type: markdown
+  attributes:
+    value: >
+      Make sure the game hasn't been supported in latest version.
+      请确保游戏未被最新版本支持
+- type: textarea
+  attributes:
+    label: vndb id
+- type: textarea
+  attributes:
+    label: Game resource 游戏资源
+    description: give me the game resource via onedrive or googledrive or other unlimited speed network disk 使用onedrive或googledrive或其他不限速网盘给我游戏资源
+  validations:
+    required: true
