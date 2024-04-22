@@ -99,7 +99,7 @@ struct HookParam
 	UINT codepage; // text encoding
 	short length_offset; // index of the string length
 	ALIGNPTR(uint64_t __1,uintptr_t padding); // padding before string
-	ALIGNPTR(uint64_t __10,uintptr_t user_value);
+	ALIGNPTR(uint64_t __12,uintptr_t user_value);
 	ALIGNPTR(uint64_t __2,void(*text_fun)(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len))
 	ALIGNPTR(uint64_t __3,bool(*filter_fun)(void* data, size_t* len, HookParam* hp)); // jichi 10/24/2014: Add filter function. Return false to skip the text
 	ALIGNPTR(uint64_t __6,bool (*hook_before)(hook_stack* stack,void* data, size_t* len,uintptr_t*role));
