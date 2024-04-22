@@ -176,6 +176,7 @@ bool InsertAIRNovelHook()
 	return false;
 }
 bool adobelair3(){
+  //虚構英雄ジンガイアVol3
   DWORD base = (DWORD)GetModuleHandleW(L"Adobe AIR.dll");
   if (!base)return false;
   BYTE sig[]={
