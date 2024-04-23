@@ -38,8 +38,45 @@ bool InsertCircusHook1() // jichi 10/2/2013: Change return type to bool
   ConsoleOutput("CIRCUS1: failed");
   return false;
 }
-
+namespace{
+  //C.D.C.D.2～シーディーシーディー2～
+  //https://vndb.org/v947
+  bool circus12()
+  {
+    BYTE sig[]={
+      0x3C,0x24,
+      0x0F,0x85,XX4,
+      0x8A,0x47,0x01,
+      0x47,
+      0x3C,0x6E,
+      0x75,XX,
+      0xA0,XX4,
+      0xB9,XX4,
+      0x84,0xC0,
+      0x0F,0x84,XX4,
+      0x88,0x06,
+      0x8A,0x41,0x01,
+      0x46,
+      0x41,
+      0x84,0xC0,
+      0x75,XX,
+      0xE9,XX4,
+      0x3C,0x66,
+      0x75,XX
+    };
+    auto addr=MemDbg::findBytes(sig,sizeof(sig),processStartAddress,processStopAddress);
+    if(!addr)return false;
+    addr=MemDbg::findEnclosingAlignedFunction(addr,0x40);
+    if(!addr)return false;
+    HookParam hp;
+    hp.address =addr;
+    hp.offset=get_stack(2);
+    hp.type = USING_STRING|EMBED_ABLE|EMBED_AFTER_NEW|EMBED_BEFORE_SIMPLE|EMBED_DYNA_SJIS;
+    hp.hook_font=F_GetGlyphOutlineA;
+    return NewHook(hp, "Circus1");
+  }
+}
 bool Circus1::attach_function() {
     
-    return InsertCircusHook1();
+    return InsertCircusHook1()|circus12();
 } 
