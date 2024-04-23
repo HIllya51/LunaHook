@@ -465,11 +465,11 @@ Settingwindow::Settingwindow(LunaHost* host):mainwindow(host){
     }; 
     g_check_clipboard->setcheck(host->check_toclipboard);
 
-    copyselect=new checkbox(this,COPYSELECTION);
-    copyselect->onclick=[=](){
-        host->check_toclipboard_selection=copyselect->ischecked();
-    }; 
-    copyselect->setcheck(host->check_toclipboard_selection);
+    // copyselect=new checkbox(this,COPYSELECTION);
+    // copyselect->onclick=[=](){
+    //     host->check_toclipboard_selection=copyselect->ischecked();
+    // }; 
+    // copyselect->setcheck(host->check_toclipboard_selection);
     
     autoattach =new checkbox(this,LblAutoAttach);
     autoattach->onclick=[=](){
@@ -519,7 +519,7 @@ Settingwindow::Settingwindow(LunaHost* host):mainwindow(host){
     mainlayout->addcontrol(autoattach,6,0,1,2);
     mainlayout->addcontrol(autoattach_so,7,0,1,2);
     mainlayout->addcontrol(readonlycheck,8,0,1,2);
-    mainlayout->addcontrol(copyselect,9,0,1,2);
+    //mainlayout->addcontrol(copyselect,9,0,1,2);
 
     setlayout(mainlayout);
     setcentral(600,500);
