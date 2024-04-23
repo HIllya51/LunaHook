@@ -574,7 +574,7 @@ Pluginwindow::Pluginwindow(mainwindow*p,Pluginmanager* pl):mainwindow(p),pluginm
         if(idx!=-1)
         {
             menu.add(MenuRemovePlugin,[&,idx](){
-                pluginmanager->remove((LPCWSTR)listplugins->getdata(idx),false);
+                pluginmanager->remove((LPCWSTR)listplugins->getdata(idx));
                 listplugins->deleteitem(idx);
             }); 
             menu.add_sep();
@@ -584,9 +584,9 @@ Pluginwindow::Pluginwindow(mainwindow*p,Pluginmanager* pl):mainwindow(p),pluginm
             menu.add_checkable(MenuPluginEnable,pluginmanager->getenable(idx),[&,idx](bool check){
                 pluginmanager->setenable(idx,check);
                 if(check)
-                    pluginmanager->addplugin((LPCWSTR)listplugins->getdata(idx),true);
+                    pluginmanager->load((LPCWSTR)listplugins->getdata(idx));
                 else
-                    pluginmanager->remove((LPCWSTR)listplugins->getdata(idx),true);
+                    pluginmanager->unload((LPCWSTR)listplugins->getdata(idx));
             });
         }
         return menu;

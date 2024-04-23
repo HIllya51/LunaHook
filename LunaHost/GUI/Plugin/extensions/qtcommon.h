@@ -32,7 +32,7 @@ struct Localizer { Localizer() { Localize(); } };
 inline std::wstring S(const QString& s) { 
     //s.toStdWString will crash. unknown why.
     std::wstring ws;
-    ws.resize(s.size()+1);
+    ws.resize(s.size());
     s.toWCharArray(ws.data());
     return ws; 
 }
