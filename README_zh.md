@@ -29,6 +29,6 @@
 
 ## 支持作者
 
-若觉得软件对你有帮助，欢迎成为我的[sponsor](https://patreon.com/HIllya51)或请我一杯[咖啡](https://ko-fi.com/HIllya51)。感谢~
+若觉得软件对你有帮助，欢迎成为我的[sponsor](https://patreon.com/HIllya51) <!--或请我一杯[咖啡](https://ko-fi.com/HIllya51)-->。感谢~
 
 <img src="https://p.inari.site/guest/24-04/21/6624ee26d3093.png" alt="屏幕截图 2024-03-29 212522.png" title="屏幕截图 2024-03-29 212522.png" />

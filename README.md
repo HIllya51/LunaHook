@@ -28,6 +28,6 @@ Since both LunaHost32 and LunaHost64 can inject the both 32-bit and 64-bit games
 
 ## Support
 
-If you feel that the software is helpful to you, welcome to become my [sponsor](https://patreon.com/HIllya51) or buy me a [Coffee](https://ko-fi.com/HIllya51). Thank you ~ 
+If you feel that the software is helpful to you, welcome to become my [sponsor](https://patreon.com/HIllya51) <!--or buy me a [Coffee](https://ko-fi.com/HIllya51)-->. Thank you ~ 
 
 <img src="https://p.inari.site/guest/24-04/21/6624ee26d3093.png" alt="屏幕截图 2024-03-29 212522.png" title="屏幕截图 2024-03-29 212522.png" />
