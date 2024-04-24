@@ -123,6 +123,7 @@
 #include"engine32/Exp.h"
 #include"engine32/Syuntada.h"
 #include"engine32/Pensil.h"
+#include"engine32/solfasys.h"
 #include"engine32/Anim.h"
 #include"engine32/Nitroplus2.h"
 #include"engine32/Reallive.h"
@@ -316,7 +317,8 @@ std::vector<ENGINE*> check_engines(){
         new ransel,
         new Silkyssakura,
         new splushwave,
-        new Diskdream
+        new Diskdream,
+        new solfasys
     };
      
 }
