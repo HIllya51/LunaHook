@@ -9,7 +9,7 @@ labels: enhancement
 body:
 - type: input
   attributes:
-    label: vndb id
+    label: vndb link/id
 - type: textarea
   attributes:
     label: Game resource 游戏资源
