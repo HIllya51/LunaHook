@@ -27,7 +27,7 @@ public:
 		connect(ui.unlinkButton, &QPushButton::clicked, this, &Window::Unlink);
 
 		setWindowTitle(THREAD_LINKER);
-		QMetaObject::invokeMethod(this, &QWidget::show, Qt::QueuedConnection);
+		//QMetaObject::invokeMethod(this, &QWidget::show, Qt::QueuedConnection);
 	}
 
 private:
@@ -76,4 +76,15 @@ bool ProcessSentence(std::wstring& sentence, SentenceInfo sentenceInfo)
 		for (auto link : linkSet)
 			((void(*)(int64_t, const wchar_t*))action)(link, sentence.c_str());
 	return false;
+}
+
+
+
+
+extern "C" __declspec(dllexport) void VisSetting(bool vis)
+{
+	if(vis)
+		QMetaObject::invokeMethod(&window, &QWidget::show, Qt::QueuedConnection);
+	else
+		QMetaObject::invokeMethod(&window, &QWidget::hide, Qt::QueuedConnection);
 }

@@ -67,6 +67,7 @@
 #define MenuPluginRankUp L"上移" 
 #define MenuPluginRankDown L"下移" 
 #define MenuPluginEnable L"使用" 
+#define MenuPluginVisSetting L"显示设置" 
 #define DefaultFont L"微软雅黑" 
 #define CantLoadQtLoader L"无法加载QtLoader.dll"
 #define InvalidPlugin L"插件无效！"

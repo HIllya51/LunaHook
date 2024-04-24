@@ -588,6 +588,10 @@ Pluginwindow::Pluginwindow(mainwindow*p,Pluginmanager* pl):mainwindow(p),pluginm
                 else
                     pluginmanager->unload((LPCWSTR)listplugins->getdata(idx));
             });
+            if(pluginmanager->getvisible_setable(idx))
+                menu.add_checkable(MenuPluginVisSetting,pluginmanager->getvisible(idx),[&,idx](bool check){
+                    pluginmanager->setvisible(idx,check);
+                });
         }
         return menu;
     }; 

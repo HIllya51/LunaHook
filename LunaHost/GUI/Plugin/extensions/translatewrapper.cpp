@@ -129,7 +129,7 @@ public:
 		}
 
 		setWindowTitle(TRANSLATION_PROVIDER);
-		QMetaObject::invokeMethod(this, &QWidget::show, Qt::QueuedConnection);
+		//QMetaObject::invokeMethod(this, &QWidget::show, Qt::QueuedConnection);
 	}
 
 	~Window()
@@ -210,3 +210,12 @@ TEST(
 		assert(codes.count(L"?"));
 	}
 );
+
+
+extern "C" __declspec(dllexport) void VisSetting(bool vis)
+{
+	if(vis)
+		QMetaObject::invokeMethod(&window, &QWidget::show, Qt::QueuedConnection);
+	else
+		QMetaObject::invokeMethod(&window, &QWidget::hide, Qt::QueuedConnection);
+}

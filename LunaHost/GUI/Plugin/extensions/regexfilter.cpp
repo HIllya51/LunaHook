@@ -26,7 +26,7 @@ public:
 		connect(ui.saveButton, &QPushButton::clicked, this, &Window::Save);
 		
 		setWindowTitle(REGEX_FILTER);
-		QMetaObject::invokeMethod(this, &QWidget::show, Qt::QueuedConnection);
+		//QMetaObject::invokeMethod(this, &QWidget::show, Qt::QueuedConnection);
 	}
 
 	void SetRegex(QString regex)
@@ -68,4 +68,13 @@ bool ProcessSentence(std::wstring& sentence, SentenceInfo sentenceInfo)
 	concurrency::reader_writer_lock::scoped_lock_read readLock(m);
 	if (regex) sentence = std::regex_replace(sentence, regex.value(), replace);
 	return true;
+}
+
+
+extern "C" __declspec(dllexport) void VisSetting(bool vis)
+{
+	if(vis)
+		QMetaObject::invokeMethod(&window, &QWidget::show, Qt::QueuedConnection);
+	else
+		QMetaObject::invokeMethod(&window, &QWidget::hide, Qt::QueuedConnection);
 }

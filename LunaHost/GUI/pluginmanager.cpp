@@ -67,7 +67,7 @@ HMODULE loadqtdllsX(const std::wstring&collectQtplugs){
 void Pluginmanager::loadqtdlls(std::vector<std::wstring>&collectQtplugs){
     auto modules=loadqtdllsX(collectQtplugs);
     for(int i=0;i<collectQtplugs.size();i++){
-        OnNewSentenceS[collectQtplugs[i]]={true,modules[i]};
+        OnNewSentenceS[collectQtplugs[i]]={collectQtplugs[i],this,true,modules[i]};
     }
 }
 Pluginmanager::Pluginmanager(LunaHost* _host):host(_host),configs(_host->configs){
@@ -86,12 +86,12 @@ Pluginmanager::Pluginmanager(LunaHost* _host):host(_host),configs(_host->configs
             }
             else{
                 auto base=LoadLibraryW(path.c_str());
-                OnNewSentenceS[path]={false,base};
+                OnNewSentenceS[path]={path,this,false,base};
             }
         }
         loadqtdlls(collectQtplugs);
         
-        OnNewSentenceS[L"InternalClipBoard"]={false,GetModuleHandle(0)};//内部链接的剪贴板插件
+        OnNewSentenceS[L"InternalClipBoard"]={L"",this,false,GetModuleHandle(0)};//内部链接的剪贴板插件
 
         
     } catch (const std::exception& ex) {
@@ -142,6 +142,7 @@ pluginitem::pluginitem(const nlohmann::json& js){
     isQt=safequeryjson(js,"isQt",false);
     isref=safequeryjson(js,"isref",false);
     enable=safequeryjson(js,"enable",true);
+    vissetting=safequeryjson(js,"vissetting",true);
 }
 std::wstring pluginitem::wpath(){
     auto wp=StringToWideString(path);
@@ -162,15 +163,29 @@ pluginitem::pluginitem(const std::wstring& pabs,bool _isQt){
     isref=_isref;
     path=WideStringToString(p);
     enable=true;
+    vissetting=true;
 }
 nlohmann::json pluginitem::dump() const{
     return {
         {"path",path},
         {"isQt",isQt},
         {"isref",isref},
-        {"enable",enable}
+        {"enable",enable},
+        {"vissetting",vissetting}
     };
 } 
+bool Pluginmanager::getvisible_setable(int idx){
+    return OnNewSentenceS[getname(idx)].VisSetting;
+}
+bool Pluginmanager::getvisible(int idx){
+    return get(idx).vissetting;
+}
+void Pluginmanager::setvisible(int idx,bool vis){
+    auto item=get(idx);
+    item.vissetting=vis;
+    set(idx,item);
+    OnNewSentenceS[getname(idx)].VisSetting(vis);
+}
 bool Pluginmanager::getenable(int idx){
     return get(idx).enable;
 }
@@ -181,21 +196,6 @@ void Pluginmanager::setenable(int idx,bool en){
 }
 std::wstring Pluginmanager::getname(int idx){
     return get(idx).wpath();
-}
-std::optional<LPVOID> Pluginmanager::checkisvalidplugin(const std::wstring& pl){
-    auto path=std::filesystem::path(pl);
-    if (!std::filesystem::exists(path))return{};
-    if (!std::filesystem::is_regular_file(path))return{};
-    auto appendix=stolower(path.extension().wstring());
-    if((appendix!=std::wstring(L".dll"))&&(appendix!=std::wstring(L".xdll")))return {};
-    auto dll=LoadLibraryW(pl.c_str());
-    if(!dll)return {};
-    auto OnNewSentence=GetProcAddress(LoadLibraryW(pl.c_str()),"OnNewSentence");
-    if(!OnNewSentence){
-        FreeLibrary(dll);
-        return {};
-    }
-    return OnNewSentence ;
 }
 bool Pluginmanager::checkisdump(const std::wstring& dll){
     for(auto& p:OnNewSentenceS){
@@ -216,6 +216,7 @@ void Pluginmanager::unload(const std::wstring& wss){
 void plugindata::clear(){
     hmodule=0;
     OnNewSentence=0;
+    VisSetting=0;
 }
 void Pluginmanager::remove(const std::wstring& wss){
     unload(wss);
@@ -329,23 +330,48 @@ addpluginresult Pluginmanager::load(const std::wstring& p,bool*isqt){
     
     std::scoped_lock lock(OnNewSentenceSLock);
      
-    OnNewSentenceS[p]={isQt,base};
-    if(!OnNewSentenceS[p].OnNewSentence)
+    OnNewSentenceS[p]={p,this,isQt,base};
+    if(!OnNewSentenceS[p].valid())
         return addpluginresult::isnotaplugins;
     return addpluginresult::success;
 }
-plugindata::plugindata(bool _isQt,HMODULE hm){
+bool plugindata::valid(){
+    return OnNewSentence;
+}
+plugindata::plugindata(const std::wstring& p,Pluginmanager* manager,bool _isQt,HMODULE hm){
     hmodule=hm;
     isQt=_isQt;
     OnNewSentence=(OnNewSentence_t)GetProcAddress(hm,"OnNewSentence");
+    VisSetting=(VisSetting_t)GetProcAddress(hm,"VisSetting");
+    refpath=p;
+    if(VisSetting)
+    {
+        auto vis=true;
+        if(auto plg=manager->get(p))
+            vis=plg.value().vissetting;
+        VisSetting(vis);
+    }
+}
+void plugindata::initstatus(const pluginitem& plg){
+    if(plg.vissetting && VisSetting)
+        VisSetting(true);
+}
+std::optional<pluginitem> Pluginmanager::get(const std::wstring&p){
+    for(int i=0;i<count();i++)
+    {
+        if(getname(i)==p){
+            return get(i);
+        }
+    }
+    return {};
 }
 addpluginresult Pluginmanager::addplugin(const std::wstring& p){
     if(checkisdump(p))return addpluginresult::dumplicate;
     bool isQt;
     auto ret=load(p,&isQt);
-    if(ret==addpluginresult::success)
+    if(ret==addpluginresult::success){
         add({p,isQt});
-
+    }
     return ret;
 }
 

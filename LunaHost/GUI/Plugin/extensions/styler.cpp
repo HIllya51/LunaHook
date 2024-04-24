@@ -20,7 +20,7 @@ public:
 
 		resize(800, 600);
 		setWindowTitle("Styler");
-		QMetaObject::invokeMethod(this, &QWidget::show, Qt::QueuedConnection);
+		//QMetaObject::invokeMethod(this, &QWidget::show, Qt::QueuedConnection);
 
 		LoadScript();
 	}
@@ -51,4 +51,13 @@ private:
 bool ProcessSentence(std::wstring& sentence, SentenceInfo sentenceInfo)
 {
 	return false;
+}
+
+
+extern "C" __declspec(dllexport) void VisSetting(bool vis)
+{
+	if(vis)
+		QMetaObject::invokeMethod(&window, &QWidget::show, Qt::QueuedConnection);
+	else
+		QMetaObject::invokeMethod(&window, &QWidget::hide, Qt::QueuedConnection);
 }

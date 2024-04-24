@@ -67,6 +67,7 @@
 #define MenuPluginRankUp L"Up" 
 #define MenuPluginRankDown L"Down" 
 #define MenuPluginEnable L"Enable" 
+#define MenuPluginVisSetting L"Show Setting" 
 #define DefaultFont L"Arial" 
 #define CantLoadQtLoader L"Can't Load QtLoader.dll"
 #define InvalidPlugin L"Invalid Plugin!"
