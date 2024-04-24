@@ -31,3 +31,13 @@ extern "C" __declspec(dllexport) wchar_t* OnNewSentence(wchar_t* sentence, const
 	}
 	return sentence;
 }
+
+/*
+This API is not necessary, but when the plugin contains a configuration window, this API allows the user to show or hide the configuration window, which can greatly improve the user experience.
+*/
+/*
+extern "C" __declspec(dllexport) void VisSetting(bool vis)
+{
+	
+}
+*/
