@@ -39,10 +39,11 @@ void LunaHost::on_close(){
     hasstoped=true;
     savesettings();
     delete configs;
-    for(auto pid:attachedprocess){
+    auto _attachedprocess=attachedprocess;
+    for(auto pid:_attachedprocess){
         Host::DetachProcess(pid);
     }
-    if(attachedprocess.size())
+    if(_attachedprocess.size())
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
 }
 
