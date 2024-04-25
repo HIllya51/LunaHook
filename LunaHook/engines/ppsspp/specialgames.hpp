@@ -75,21 +75,21 @@ void ULJS00339(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* spl
 
 bool NPJH50909_filter(void* data, size_t* len, HookParam* hp){
      std::string result = std::string((char*)data,*len);
-
+	auto ws=StringToWideString(result,932).value();
     // Remove single line markers
-    result = std::regex_replace(result, std::regex("(\\%N)+"), " ");
+    ws = std::regex_replace(ws, std::wregex(L"(\\%N)+"), L" ");
 
     // Remove scale marker
-    result = std::regex_replace(result, std::regex("\\%\\@\\%\\d+"), "");
+    ws = std::regex_replace(ws, std::wregex(L"\\%\\@\\%\\d+"), L"");
 
     // Reformat name
-    std::smatch match;
-    if (std::regex_search(result, match, std::regex("(^[^「]+)「"))) {
-        std::string name = match[1].str();
-        result = std::regex_replace(result, std::regex("^[^「]+"), "");
-        result = name + "\n" + result;
+    std::wsmatch match;
+    if (std::regex_search(ws, match, std::wregex(L"(^[^「]+)「"))) {
+        std::wstring name = match[1].str();
+        ws = std::regex_replace(ws, std::wregex(L"^[^「]+"), L"");
+        ws = name + L"\n" + ws;
     }
-	return write_string_overwrite(data,len,result);
+	return write_string_overwrite(data,len,WideStringToString(ws,932));
 }
 
 bool ULJM06119_filter(void* data, size_t* len, HookParam* hp){

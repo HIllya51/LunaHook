@@ -280,7 +280,7 @@ bool F010045C0109F2000(void* data, size_t* len, HookParam* hp){
     s = std::regex_replace(s, std::regex("#[^\\]]*\\]"), "");
     s = std::regex_replace(s, std::regex("#[^\\n]*\\n"), "");
     s = std::regex_replace(s, std::regex("\\u3000"), "");
-    s = std::regex_replace(s, std::regex("Save[\\s\\S]*データ"), "");
+    s = std::regex_replace(s, std::regex(u8"Save[\\s\\S]*データ"), "");
 	return write_string_overwrite(data,len,s);
 }
 
@@ -416,7 +416,7 @@ bool F01006590155AC000(void* data, size_t* len, HookParam* hp){
                 counter++;
                 continue;
             }
-            std::regex regex("[\\d+─]");
+            std::regex regex(u8"[\\d+─]");
             s += std::regex_replace(content, regex, "");
             counter += 3;
             continue;
@@ -433,7 +433,7 @@ bool F01000200194AE000(void* data, size_t* len, HookParam* hp){
         
     static std::string readString_savedSentence="";
     static bool readString_playerNameFlag=false;
-    static std::string readString_playerName="ラピス";
+    static std::string readString_playerName=u8"ラピス";
      
     std::regex regex("(?=@.)");
     std::sregex_token_iterator it(s.begin(), s.end(), regex, -1);
@@ -457,7 +457,7 @@ bool F01000200194AE000(void* data, size_t* len, HookParam* hp){
         
         if (tag == "@*") {
             if (content.find("name") == 0) {
-                if (readString_playerName == "ラピス") {
+                if (readString_playerName == u8"ラピス") {
                     s += content.substr(4) + readString_playerName + parts[counter + 4].substr(1);
                 } else {
                     s += content.substr(4) + parts[counter + 3].substr(1) + parts[counter + 4].substr(1);
@@ -496,7 +496,7 @@ bool F01000200194AE000(void* data, size_t* len, HookParam* hp){
                 counter++;
                 continue;
             }
-            std::regex regex("[\\d+─]");
+            std::regex regex(u8"[\\d+─]");
             s += std::regex_replace(content, regex, "");
             counter += 3;
             continue;
@@ -999,7 +999,7 @@ void T0100DB300B996000(hook_stack* stack, HookParam* hp, uintptr_t* data, uintpt
 }
 bool F0100CBA014014000(void* data, size_t* len, HookParam* hp){
     auto s = std::string((char*)data,*len);
-    s = std::regex_replace(s, std::regex("《.*?》"), "");
+    s = std::regex_replace(s, std::regex(u8"《.*?》"), "");
     s = std::regex_replace(s, std::regex("<[^>]*>"), "");
 	return write_string_overwrite(data,len,s);
 }
@@ -1025,7 +1025,7 @@ bool F0100C310110B4000(void* data, size_t* len, HookParam* hp){
     auto s = std::string((char*)data,*len);
     s = std::regex_replace(s, std::regex("(#Ruby\\[)([^,]+).([^\\]]+)."), "$2");
     s = std::regex_replace(s, std::regex("#Color\\[[\\d]+\\]"), "");
-    s = std::regex_replace(s, std::regex("(　#n)+"), "#n");
+    s = std::regex_replace(s, std::regex(u8"(　#n)+"), "#n");
     s = std::regex_replace(s, std::regex("#n+"), " ");
 	return write_string_overwrite(data,len,s);
 }
