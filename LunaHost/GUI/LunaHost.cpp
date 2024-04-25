@@ -36,12 +36,12 @@ bool sendclipboarddata(const std::wstring&text,HWND hwnd){
     return false;
 }
 void LunaHost::on_close(){
+    hasstoped=true;
     savesettings();
     delete configs;
     for(auto pid:attachedprocess){
         Host::DetachProcess(pid);
     }
-    hasstoped=true;
     if(attachedprocess.size())
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
 }
