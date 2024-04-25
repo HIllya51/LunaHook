@@ -60,8 +60,10 @@ void LunaHost::savesettings()
     configs->set("defaultCodepage",Host::defaultCodepage);
     configs->set("autoattachexes",autoattachexes);
     configs->set("savedhookcontext",savedhookcontext);
+    configs->set("DefaultFont",defaultFont);
 }
 void LunaHost::loadsettings(){
+    defaultFont=configs->get("DefaultFont",std::wstring(DefaultFont));
     check_toclipboard_selection=configs->get("ToClipboardSelection",false);
     check_toclipboard=configs->get("ToClipboard",false);
     autoattach=configs->get("AutoAttach",false);
@@ -166,7 +168,7 @@ LunaHost::LunaHost(){
     configs=new confighelper;
     loadsettings();
 
-    setfont(25);
+    setfont(25,defaultFont.c_str());
     btnshowsettionwindow=new button(this, BtnShowSettingWindow);
     g_selectprocessbutton =new button(this,BtnSelectProcess) ; 
     
@@ -504,6 +506,18 @@ Settingwindow::Settingwindow(LunaHost* host):mainwindow(host){
     }; 
     g_codepage->setminmax(0,CP_UTF8);
 
+    showfont=new lineedit(this);
+    showfont->settext(host->defaultFont);
+    showfont->setreadonly(true);
+    selectfont=new button(this,FONTSELECT);
+    selectfont->onclick=[=](){
+        FontSelector(winId,host->defaultFont, [=](const std::wstring& _t){
+            showfont->settext(_t);
+            host->defaultFont=_t;
+            host->setfont(25,_t.c_str());
+        });
+    };
+
     mainlayout=new gridlayout();
     mainlayout->addcontrol(new label(this,LblFlushDelay),0,0);
     mainlayout->addcontrol(g_timeout,0,1);
@@ -522,7 +536,8 @@ Settingwindow::Settingwindow(LunaHost* host):mainwindow(host){
     mainlayout->addcontrol(autoattach,6,0,1,2);
     mainlayout->addcontrol(autoattach_so,7,0,1,2);
     mainlayout->addcontrol(readonlycheck,8,0,1,2);
-    //mainlayout->addcontrol(copyselect,9,0,1,2);
+    mainlayout->addcontrol(showfont,9,1);
+    mainlayout->addcontrol(selectfont,9,0);
 
     setlayout(mainlayout);
     setcentral(600,500);

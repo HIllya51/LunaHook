@@ -27,6 +27,7 @@ class control:public basewindow{
     virtual void dispatch_2(WPARAM wParam, LPARAM lParam);
     maybehavemenu menu;
     std::function<maybehavemenu()> on_menu=[]()->maybehavemenu{return {};};
+    
 };
 
 class button:public control{
@@ -138,5 +139,10 @@ public:
     void addcontrol(control*,int row,int col,int rowrange=1,int colrange=1);
     gridlayout(int row=0,int col=0);
     void setmargin(int m=10);
+};
+
+class FontSelector{
+public:
+    FontSelector(HWND hwnd,const std::wstring& init,std::function<void(const std::wstring&)>callback);
 };
 #endif

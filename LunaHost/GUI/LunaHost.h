@@ -24,6 +24,8 @@ class Settingwindow:public mainwindow{
     spinbox* spinmaxbuffsize;
     spinbox* spinmaxhistsize;
     gridlayout* mainlayout;
+    lineedit* showfont;
+    button* selectfont;
 public:
 Settingwindow(LunaHost*);
 };
@@ -110,7 +112,8 @@ public:
     confighelper* configs;
     int64_t currentselect=0;
     bool check_toclipboard; 
-    bool check_toclipboard_selection; 
+    bool check_toclipboard_selection;
+    std::wstring defaultFont;
     bool autoattach;
     bool autoattach_savedonly;
     std::set<std::string>autoattachexes;

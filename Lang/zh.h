@@ -98,3 +98,4 @@
 #define PROC_CONN L"进程已连接 %d"
 #define PROC_DISCONN L"进程已断开连接 %d"
 #define COPYSELECTION L"自动将文本框中选取的文本复制到剪贴板"
+#define FONTSELECT L"选择字体"

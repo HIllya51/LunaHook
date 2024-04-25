@@ -3,19 +3,21 @@
 class control;
 class basewindow{
 public:
-    HFONT hfont=0;
     HWND winId;
     virtual void setgeo(int,int,int,int);
     virtual void on_size(int w,int h);
     RECT getgeo();
     std::wstring text();
     void settext(const std::wstring&);
-    void setfont(int,LPCWSTR fn=0);
     operator HWND(){return winId;}
 };
 class mainwindow:public basewindow{
+    HFONT hfont=0;
 public:
+    void setfont(int,LPCWSTR fn=0);
+    void visfont();
     std::vector<control*>controls;
+    std::vector<mainwindow*>childrens;
     mainwindow* parent;
     HWND lastcontexthwnd;
     control* layout;

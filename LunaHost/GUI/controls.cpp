@@ -1,5 +1,6 @@
 #include"controls.h"
 #include"window.h"
+#include<commdlg.h>
 control::control(mainwindow*_parent){
     if(_parent==0)return;
     parent=_parent;
@@ -186,7 +187,6 @@ listview::listview(mainwindow* parent,bool _addicon,bool notheader):control(pare
     if(notheader)style|=LVS_NOCOLUMNHEADER;
     winId=CreateWindowEx(0, WC_LISTVIEW, NULL, style , 0,0,0,0, parent->winId, NULL,NULL, NULL);
     ListView_SetExtendedListViewStyle(winId, LVS_EX_FULLROWSELECT); // Set extended styles
-    setfont(22);
     if(addicon){
         hImageList = ImageList_Create(22,22, //GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON),
                                 ILC_COLOR32, 1 ,1);
@@ -398,3 +398,17 @@ void Menu::add_sep(){
     menu_callbacks.push_back({MF_SEPARATOR});
 }
 
+FontSelector::FontSelector(HWND hwnd,const std::wstring& init,std::function<void(const std::wstring&)>callback){
+    CHOOSEFONTW cf;
+    ZeroMemory(&cf, sizeof(CHOOSEFONTW));
+    cf.lStructSize = sizeof(CHOOSEFONTW);
+    cf.Flags = CF_INITTOLOGFONTSTRUCT | CF_SCREENFONTS | CF_EFFECTS;
+    LOGFONT lf;
+    wcscpy_s(lf.lfFaceName,init.c_str());
+    cf.hwndOwner = hwnd;
+    cf.lpLogFont = &lf;
+    if (ChooseFontW(&cf))
+    {
+        callback(lf.lfFaceName);
+    }
+}

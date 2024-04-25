@@ -10,13 +10,25 @@ HICON GetExeIcon(const std::wstring& filePath) {
     }
     return hIcon;
 }
-void basewindow::setfont(int sz,LPCWSTR fn){
+void mainwindow::visfont(){
+    if(hfont==0)hfont=parent->hfont;
+    if(hfont){
+        for(auto ctr:controls){
+            SendMessage(ctr->winId, WM_SETFONT, (LPARAM)hfont, TRUE);
+        }
+    }
+}
+void mainwindow::setfont(int sz,LPCWSTR fn){
     if(fn==0)fn=DefaultFont;
     hfont=CreateFont(sz, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
                             DEFAULT_CHARSET , OUT_DEFAULT_PRECIS, 
                             CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
                             DEFAULT_PITCH | FF_DONTCARE, fn);
     SendMessage(winId, WM_SETFONT, (WPARAM)hfont, TRUE);
+    visfont();
+    for(auto child:childrens){
+        child->setfont(sz,fn);
+    }
 }
 std::wstring basewindow::text(){
     int textLength = GetWindowTextLength(winId);
@@ -44,14 +56,7 @@ LRESULT mainwindow::wndproc(UINT message, WPARAM wParam, LPARAM lParam){
         case WM_SHOWWINDOW:
         {
             on_show();
-            if(hfont==0)hfont=parent->hfont;
-            if(hfont)
-                EnumChildWindows(winId, [](HWND hwndChild, LPARAM lParam)
-                {
-                    if(0==SendMessage(hwndChild, WM_GETFONT, 0, 0))
-                        SendMessage(hwndChild, WM_SETFONT, lParam, TRUE);
-                    return TRUE;
-                }, (LPARAM)hfont);
+            visfont();
             break;
         }
         case WM_SIZE:
@@ -171,6 +176,8 @@ mainwindow::mainwindow(mainwindow* _parent){
     ); 
     winId = hWnd;
     parent=_parent;
+    if(parent)
+        parent->childrens.push_back(this);
     SetWindowLongPtrW(hWnd, GWLP_USERDATA, (LONG_PTR)this);
 }
 void mainwindow::show(){
