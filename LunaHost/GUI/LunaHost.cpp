@@ -41,6 +41,7 @@ void LunaHost::on_close(){
     for(auto pid:attachedprocess){
         Host::DetachProcess(pid);
     }
+    hasstoped=true;
     if(attachedprocess.size())
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
 }
@@ -393,6 +394,7 @@ void LunaHost::updatelisttext(const std::wstring&text,LONG_PTR data){
     }
 }
 bool LunaHost::on_text_recv(TextThread& thread, std::wstring& output){
+    if(hasstoped)return true;
     std::lock_guard _(settextmutex);
     on_text_recv_checkissaved(thread);
     if(!plugins->dispatch(thread,output))return false;

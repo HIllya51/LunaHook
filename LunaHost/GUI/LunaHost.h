@@ -96,6 +96,7 @@ class LunaHost:public mainwindow{
     Settingwindow *settingwindow=0;
     Pluginmanager* plugins;
     Hooksearchwindow * hooksearchwindow=0;
+    bool hasstoped=false;
     bool on_text_recv(TextThread& thread, std::wstring& sentence);
     void on_text_recv_checkissaved(TextThread& thread);
     void on_thread_create(TextThread& thread);
