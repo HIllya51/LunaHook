@@ -187,11 +187,80 @@ namespace{
     return NewHook(hp, "QLIE5");
   }
 }
-// jichi 8/18/2013: Add new hook
+namespace{
+  //(18禁ゲーム) [240426] [ωstar] 美少女万華鏡異聞 雪おんな
+  bool qlie4(){
+    BYTE bytes[]={
+      0x55,0x8b,0xec,
+      0x83,0xc4,0xe8,
+      0x53,0x56,0x57,
+      0x33,0xdb,
+      0x89,0x5d,0xe8,
+      0x89,0x5d,0xf8,
+      0x89,0x4d,0xf0,
+      0x89,0x55,0xfc,
+      0x8b,0x45,0xfc,
+      0xe8,XX4,
+      0x33,0xc0,
+      0x55,
+      0x68,XX4,
+      0x64,0xff,0x30,
+      0x64,0x89,0x20,
+      0x33,0xf6,
+      0x8d,0x45,0xf8,
+      0x33,0xd2,
+      0xe8,XX4,
+      0x8b,0x45,0xfc,
+      0x85,0xc0,
+      0x74,XX,
+      0x8b,0xd0,
+      0x83,0xea,0x0a,
+      0x66,0x83,0x3a,0x02,
+      0x74,XX,
+      0x8d,0x45,0xfc,
+      0x8b,0x55,0xfc
+    };
+    ULONG addr = MemDbg::findBytes(bytes, sizeof(bytes), processStartAddress, processStopAddress);
+    if (addr == 0)return false; 
+    HookParam hp;
+    hp.address = addr;
+    hp.type = USING_STRING|CODEC_UTF16;
+    hp.text_fun=[](hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
+      *data=stack->esi;
+      *len=wcslen((wchar_t*)*data)*2;
+      auto __s=std::wstring((wchar_t*)*data,*len/2);
+      if(startWith(__s,L"[f,3")){
+        *split=2;//history
+      }
+      else if(startWith(__s,L"[f,0")){
+        *split=1;//text
+      }
+      else if(startWith(__s,L"[f,1")){
+        *split=0;//name
+      }
+      else if(startWith(__s,L"[s,")){
+        *split=3;//[s,36,36]「ああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああああ」
+      }
+      else if(startWith(__s,L"[pi,")||startWith(__s,L"[rp,")||startWith(__s,L"[rs,")||startWith(__s,L"[rpi,")){
+        *len=0;
+      }
+    };
+    hp.filter_fun=[](void* data, size_t* len, HookParam* hp){
+      //[f,1][rf,1][s,34,34][c,$FFFFFFFF][rc,$FFFFFFFF]雪之進
+      //[f,0][rf,0][s,36,36][c,$FFFFFFFF][rc,$FFFFFFFF]一瞬が勝負だ。私は模造刀に手をかけ、立て膝の状態（いわゆる『[rb,座業,すわりわざ]』）で待機していた。
+
+      auto s = std::wstring((wchar_t*)data,*len/2);
+      s = std::regex_replace(s, std::wregex(L"\\[rb,(.*),.*\\]"), L"$1");
+      s = std::regex_replace(s, std::wregex(L"\\[.*\\]"), L"");
+      return write_string_overwrite(data,len,s);
+    };
+    return NewHook(hp, "qlie4");
+  }
+}
 bool InsertQLIEHook()
 { 
   bool _=_4()||_5();
-  return InsertQLIE1Hook() || InsertQLIE2Hook() || InsertQLIE3Hook()||_; 
+  return InsertQLIE1Hook() || InsertQLIE2Hook() || qlie4()||InsertQLIE3Hook()||_; 
 
 }
 
