@@ -310,6 +310,63 @@ bool F0100A1200CA3C000(void* data, size_t* len, HookParam* hp){
 	return write_string_overwrite(data,len,s);
 }
 
+
+bool F0100F6A00A684000(void* data, size_t* len, HookParam* hp){
+    auto s = std::string((char*)data,*len);
+    
+    std::regex regex("(?=@.)");
+    std::sregex_token_iterator it(s.begin(), s.end(), regex, -1);
+    std::sregex_token_iterator end;
+
+    std::vector<std::string> parts(it, end);
+    s="";
+    for(auto part:parts){
+        if (startWith(part,"@")==false) {
+            s += part;
+            continue;
+        }
+        std::string tag = part.substr(0, 2);
+        std::string content = part.substr(2);
+        if (tag == "@r") {
+            if(s=="")s=content;
+            else s+='\n'+content;
+        } else if (tag == "@u"||tag == "@v"||tag == "@w"||tag == "@o"||tag == "@a"||tag == "@z"||tag == "@c"||tag == "@s") {
+            auto splited=strSplit(content,".");
+            if(splited.size()==2)
+                s += splited[1];
+        } else if (tag == "@b") {
+        } else {
+            s += content;
+        }
+    }
+    static auto katakanaMap =std::map<std::wstring,std::wstring>{
+        {L"｢",L"「"},{L"｣",L"」"},{L"ｧ",L"ぁ"},{L"ｨ",L"ぃ"},{L"ｩ",L"ぅ"},{L"ｪ",L"ぇ"},{L"ｫ",L"ぉ"},{L"ｬ",L"ゃ"},{
+        L"ｭ",L"ゅ"},{L"ｮ",L"ょ"},{L"ｱ",L"あ"},{L"ｲ",L"い"},{L"ｳ",L"う"},{L"ｴ",L"え"},{L"ｵ",L"お"},{L"ｶ",L"か"},{
+        L"ｷ",L"き"},{L"ｸ",L"く"},{L"ｹ",L"け"},{L"ｺ",L"こ"},{L"ｻ",L"さ"},{L"ｼ",L"し"},{L"ｽ",L"す"},{L"ｾ",L"せ"},{
+        L"ｿ",L"そ"},{L"ﾀ",L"た"},{L"ﾁ",L"ち"},{L"ﾂ",L"つ"},{L"ﾃ",L"て"},{L"ﾄ",L"と"},{L"ﾅ",L"な"},{L"ﾆ",L"に"},{
+        L"ﾇ",L"ぬ"},{L"ﾈ",L"ね"},{L"ﾉ",L"の"},{L"ﾊ",L"は"},{L"ﾋ",L"ひ"},{L"ﾌ",L"ふ"},{L"ﾍ",L"へ"},{L"ﾎ",L"ほ"},{
+        L"ﾏ",L"ま"},{L"ﾐ",L"み"},{L"ﾑ",L"む"},{L"ﾒ",L"め"},{L"ﾓ",L"も"},{L"ﾔ",L"や"},{L"ﾕ",L"ゆ"},{L"ﾖ",L"よ"},{
+        L"ﾗ",L"ら"},{L"ﾘ",L"り"},{L"ﾙ",L"る"},{L"ﾚ",L"れ"},{L"ﾛ",L"ろ"},{L"ﾜ",L"わ"},{L"ｦ",L"を"},{L"ﾝ",L"ん"},{
+        L"ｰ",L"ー"},{L"ｯ",L"っ"},{L"､",L"、"},{L"ﾟ",L"？"},{L"ﾞ",L"！"},{L"･",L"…"},{L"?",L"　"},{L"｡",L"。"},{
+        L"\uF8F0",L""},{L"\uFFFD",L""} // invalid (shift_jis A0 <=> EF A3 B0) | FF FD - F8 F0)
+    };
+
+    auto remap=[](std::string s) {
+        std::wstring result;
+        auto ws=StringToWideString(s,932).value();
+        for (auto _c:ws) {
+            std::wstring c;
+            c.push_back(_c);
+            if(katakanaMap.find(c)!=katakanaMap.end()){
+                result += katakanaMap[c];
+            }
+            else
+                result+=c;
+        }
+        return WideStringToString(result,932);
+    };
+	return write_string_overwrite(data,len,remap(s));
+}
 bool F01006590155AC000(void* data, size_t* len, HookParam* hp){
     auto s = std::string((char*)data,*len);
     
@@ -1854,8 +1911,8 @@ auto _=[](){
         {0x80f91c08,{CODEC_UTF16,0,0,0,F010043B013C5C000<9>,"010029B018432000","1.0.0"}},//Language Selection
         {0x805c9014,{CODEC_UTF16,0,0,0,F010043B013C5C000<10>,"010029B018432000","1.0.0"}},//Story/Character Info
         //Higurashi no Naku Koro ni Hou
-        {0x800bd6c8,{0,0,0,0,0,"0100F6A00A684000","1.0.0"}},//sjis, filter is to complex, quit.
-        {0x800c2d20,{0,0,0,0,0,"0100F6A00A684000","1.2.0"}},//sjis, filter is to complex, quit.
+        {0x800bd6c8,{0,0,0,0,F0100F6A00A684000,"0100F6A00A684000","1.0.0"}},//sjis
+        {0x800c2d20,{0,0,0,0,F0100F6A00A684000,"0100F6A00A684000","1.2.0"}},//sjis
         //Umineko no Naku Koro ni Saku ~Nekobako to Musou no Koukyoukyoku~
         {0x800b4560,{CODEC_UTF8,0,0,0,0,"01006A300BA2C000","1.0.0"}},// x0 name + text (bottom, center) - whole line. filter is to complex, quit.
         {0x801049c0,{CODEC_UTF8,0,0,0,0,"01006A300BA2C000","1.0.0"}},// x0 prompt, bottomLeft
@@ -2117,7 +2174,6 @@ auto _=[](){
         {0x804d6a7c,{CODEC_UTF8,0,0,0,F0100CB700D438000<10>,"0100CB700D438000","1.5.2"}},//Objective Description
         {0x80509900,{CODEC_UTF8,0,0,0,F0100CB700D438000<11>,"0100CB700D438000","1.5.2"}},//Aproach Text
         {0x8060ee90,{CODEC_UTF8,1,0,0,F0100CB700D438000<12>,"0100CB700D438000","1.5.2"}},//Acquired Item
-
     };
     return 1;
 }();
