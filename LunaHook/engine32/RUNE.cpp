@@ -27,11 +27,7 @@ bool RUNE1() {
 }  
 bool RUNE2(){
   //ANGEL CORE
-  auto entry=Util::FindImportEntry(processStartAddress,(DWORD)GetGlyphOutlineA);
-  if(entry==0)return false;
-  BYTE bytes2[]={0xff,0x15,XX4};  
-  memcpy(bytes2+2,&entry,4);    
-  auto addr = MemDbg::findBytes(bytes2, sizeof(bytes2), processStartAddress, processStopAddress);
+  auto addr = findiatcallormov((DWORD)GetGlyphOutlineA,processStartAddress,processStartAddress, processStopAddress);
   if (addr == 0)return false;
   BYTE sig1[]={ 0x81,0xe1,0x01,0x00,0x00,0x80,XX2,0x49,0x83,0xc9,0xfe,0x41 }; 
   auto _=MemDbg::findBytes(sig1, sizeof(sig1), addr, addr+0x100);

@@ -5,11 +5,7 @@ bool Tarte::attach_function() {
   //ひなたると～ひなたぼっこファンディスク～
   //スクールぱにっく！ 
   //こいじばし  https://vndb.org/v4247
-  auto entry=Util::FindImportEntry(processStartAddress,(DWORD)GetGlyphOutlineA);
-  if(entry==0)return false;
-  BYTE bytes[]={0xFF,0x15,XX4};
-  memcpy(bytes+2,&entry,4); 
-  for(auto addr:Util::SearchMemory(bytes, sizeof(bytes), PAGE_EXECUTE, processStartAddress, processStopAddress)){ 
+  for(auto addr: findiatcallormov_all((DWORD)GetGlyphOutlineA,processStartAddress,processStartAddress,processStopAddress,PAGE_EXECUTE)){
     addr = MemDbg::findEnclosingAlignedFunction(addr);
     if (!addr) continue; 
     auto xrefs=findxref_reverse_checkcallop(addr,addr-0x1000,addr+0x1000,0xe8);

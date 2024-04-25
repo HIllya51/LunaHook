@@ -439,7 +439,28 @@ uintptr_t findfuncstart(uintptr_t addr,uintptr_t range){
   addr = reverseFindBytes(funcstart, sizeof(funcstart), addr-range, addr);
   return addr;
 }
+#define buildbytes(ret) auto entry=Util::FindImportEntry(hmodule,addr); \
+  if(entry==0)return ret;\
+  BYTE bytes[]={XX,XX,XX4};\
+  if(movreg){\
+    bytes[0]=0x8b,bytes[1]=movreg;\
+  }\
+  else{\
+    bytes[0]=0xff;bytes[1]=0x15;\
+  }\
+  memcpy(bytes+2,&entry,4);  
+uintptr_t findiatcallormov(uintptr_t addr,DWORD hmodule, uintptr_t start, uintptr_t end,bool reverse,BYTE movreg){
+  buildbytes(0)
+  if(reverse)
+    return reverseFindBytes(bytes, sizeof(bytes), start, end);
+  else
+    return MemDbg::findBytes(bytes, sizeof(bytes), start, end);
+}
 
+std::vector<uintptr_t> findiatcallormov_all(uintptr_t addr, DWORD hmodule,uintptr_t start, uintptr_t end,DWORD protect,BYTE movreg){
+  buildbytes({})
+  return Util::SearchMemory(bytes, sizeof(bytes), protect, start, end);
+}
 #endif
 
 

@@ -404,13 +404,9 @@ bool Elf2::attach_function(){
 
 
 bool ElfFunClubFinal::attach_function(){
-  auto entry=Util::FindImportEntry(processStartAddress,(DWORD)TextOutA); 
-    
-  if(entry==0)return false;
-  BYTE bytes[]={0x8b,XX,XX4};//mov reg,ds:TextOutA
-  memcpy(bytes+2,&entry,4);  
+  //mov reg,ds:TextOutA
   bool succ=false;
-  for(auto addr:Util::SearchMemory(bytes, sizeof(bytes), PAGE_EXECUTE, processStartAddress, processStopAddress)){
+  for(auto addr: findiatcallormov_all((DWORD)TextOutA,processStartAddress,processStartAddress,processStopAddress,PAGE_EXECUTE,XX)){
     BYTE s[]={XX,0xCC,0xCC,0xCC};
     addr=reverseFindBytes(s,4,addr-0x100,addr);
     if(addr==0)continue;

@@ -3,12 +3,8 @@
 namespace{
   bool _1(){
     //どうして？いじってプリンセスFinalRoad～もう！またこんなところで3～
-    auto entry=Util::FindImportEntry(processStartAddress,(DWORD)ExtTextOutA);
-    if(entry==0)return false;
-    BYTE bytes[]={0xFF,0x15,XX4};
-    memcpy(bytes+2,&entry,4);
     bool ok=false;
-    for(auto addr:Util::SearchMemory(bytes, sizeof(bytes), PAGE_EXECUTE, processStartAddress, processStopAddress)){
+    for(auto addr:findiatcallormov_all((DWORD)ExtTextOutA,processStartAddress,processStartAddress,processStopAddress,PAGE_EXECUTE)){
       addr = MemDbg::findEnclosingAlignedFunction(addr);
       if (!addr) continue;
       HookParam hp;
@@ -23,12 +19,8 @@ namespace{
   bool _2(){
     //ねとって女神
     //ねとって女神 NEO
-    auto entry=Util::FindImportEntry(processStartAddress,(DWORD)TextOutA);
-    if(entry==0)return false;
-    BYTE bytes[]={0xFF,0x15,XX4};
-    memcpy(bytes+2,&entry,4);
     bool ok=false;
-    for(auto addr:Util::SearchMemory(bytes, sizeof(bytes), PAGE_EXECUTE, processStartAddress, processStopAddress)){
+    for(auto addr:findiatcallormov_all((DWORD)TextOutA,processStartAddress,processStartAddress,processStopAddress,PAGE_EXECUTE)){
       addr = MemDbg::findEnclosingAlignedFunction(addr);
       if (!addr) continue;
       HookParam hp;

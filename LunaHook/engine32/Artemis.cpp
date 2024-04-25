@@ -200,16 +200,12 @@ bool InsertArtemis3Hook()
 namespace{
   bool a4(){
     //高慢な奥さんは好きですか？～傲慢人妻教師の堕とし方～
-    auto entryA=Util::FindImportEntry(processStartAddress,(DWORD)GetGlyphOutlineA);
-    auto entryW=Util::FindImportEntry(processStartAddress,(DWORD)GetGlyphOutlineW);
     std::vector<uint64_t> addrs;
-    BYTE bytes[]={0xFF,0x15,XX4};
-    for(DWORD entry:{entryA,entryW})
-      if(entry) {
-        memcpy(bytes+2,&entry,4); 
-        auto addrs_ = Util::SearchMemory(bytes, sizeof(bytes), PAGE_EXECUTE, processStartAddress, processStopAddress); 
-        addrs.insert(addrs.end(), addrs_.begin(), addrs_.end());
-      }
+    for(DWORD func:{(DWORD)GetGlyphOutlineA,(DWORD)GetGlyphOutlineW})
+    {
+      auto addrs_ = findiatcallormov_all(func,processStartAddress,processStartAddress,processStopAddress,PAGE_EXECUTE);
+      addrs.insert(addrs.end(), addrs_.begin(), addrs_.end());
+    }
     bool ok=false;
     for (auto addr : addrs) { 
       auto funcaddr = MemDbg::findEnclosingAlignedFunction(addr);

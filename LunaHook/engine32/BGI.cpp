@@ -1499,15 +1499,9 @@ namespace{
   bool veryold(){
     //紅月－くれないつき－
     //あの街の恋の詩
-    auto entry=Util::FindImportEntry(processStartAddress,(DWORD)GetGlyphOutlineA);
-    if(entry==0)return false;  
-    BYTE bytes[]={0xFF,0x15,XX4};
-    memcpy(bytes+2,&entry,4); 
-    BYTE bytes2[]={0x8b,XX,XX4}; //mov     ebp, ds:GetGlyphOutlineA
-    memcpy(bytes2+2,&entry,4);    //銀行淫～堕ちゆく女達～
-    auto addr = MemDbg::findBytes(bytes, sizeof(bytes), processStartAddress, processStopAddress);
-    if (addr == 0)
-      addr = MemDbg::findBytes(bytes2, sizeof(bytes2), processStartAddress, processStopAddress);
+    auto addr = findiatcallormov((DWORD)GetGlyphOutlineA,processStartAddress,processStartAddress,processStopAddress);
+    if (addr == 0)//銀行淫～堕ちゆく女達～ //mov     ebp, ds:GetGlyphOutlineA
+      addr = findiatcallormov((DWORD)GetGlyphOutlineA,processStartAddress,processStartAddress,processStopAddress,false,XX);
     if (addr == 0)return false;
     addr = MemDbg::findEnclosingAlignedFunction(addr);
     if (addr == 0)return false;

@@ -23,11 +23,7 @@ bool InsertCMVS1Hook()
 
     //例外：
     //みはる -あるとアナザーストーリー-
-    auto entry=Util::FindImportEntry(processStartAddress,(DWORD)GetGlyphOutlineA);
-    if(entry==0)return false;
-    BYTE bytes2[]={0x8b,XX,XX4};  
-    memcpy(bytes2+2,&entry,4);    
-    addr = MemDbg::findBytes(bytes2, sizeof(bytes2), processStartAddress, processStopAddress);
+    addr = findiatcallormov((DWORD)GetGlyphOutlineA,processStartAddress,processStartAddress,processStopAddress,false,XX);
     if (addr == 0)return false;
     addr = MemDbg::findEnclosingAlignedFunction(addr);
     if (addr == 0)return false;

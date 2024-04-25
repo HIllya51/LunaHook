@@ -2,11 +2,8 @@
  
 bool Speed::attach_function() {
   //	藍色ノ狂詩曲～Deep Blue Rhapsody～
-  auto entry=Util::FindImportEntry(processStartAddress,(DWORD)DrawTextA);
-  if(entry==0)return false;
-  BYTE bytes2[]={0x8b,0x35,XX4}; //mov     esi, ds:DrawTextA
-  memcpy(bytes2+2,&entry,4);    
-  auto addr = MemDbg::findBytes(bytes2, sizeof(bytes2), processStartAddress, processStopAddress);
+  //mov     esi, ds:DrawTextA
+  auto addr = findiatcallormov((DWORD)DrawTextA,processStartAddress,processStartAddress,processStopAddress,false,0x35);
   if (addr == 0)return false;
   BYTE sig1[]={ 0x68,0x00,0x04,0x00,0x00  };
   BYTE sig2[]={ 0xFF,0xD6 };

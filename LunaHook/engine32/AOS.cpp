@@ -176,12 +176,7 @@ DWORD calladdr(DWORD addr){
   return addr; 
 }
 DWORD lastcall(){
-  auto entry=Util::FindImportEntry(processStartAddress,(DWORD)TextOutA); 
-    
-  if(entry==0)return 0;
-  BYTE bytes[]={0xFF,0x15,XX4};
-  memcpy(bytes+2,&entry,4);  
-  auto addr = reverseFindBytes(bytes, sizeof(bytes), processStartAddress, processStopAddress);
+  auto addr = findiatcallormov((DWORD)TextOutA,processStartAddress,processStartAddress, processStopAddress,true);
   if(addr==0)return 0;
   addr = MemDbg::findEnclosingAlignedFunction(addr);
   return addr;
