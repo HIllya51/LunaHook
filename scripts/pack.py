@@ -1,12 +1,6 @@
 import os, shutil, sys
 
 
-isXp = ""
-if sys.argv[1] == "pack_xp":
-    isXp = "_xp"
-else:
-    pass
-
 for f in os.listdir("../builds"):
     if os.path.isdir("../builds/" + f) == False:
         continue
@@ -32,5 +26,5 @@ for f in os.listdir("../builds"):
             ]:
                 os.remove(path)
     targetdir = "../builds/" + f
-    target = "../builds/" + f + isXp + ".zip"
+    target = "../builds/" + f + ".zip"
     os.system(rf'"C:\Program Files\7-Zip\7z.exe" a -m0=LZMA -mx9 {target} {targetdir}')

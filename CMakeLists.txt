@@ -58,6 +58,8 @@ set(VERSION_MINOR 1)
 set(VERSION_PATCH 2)
 set(VERSION_REVISION 0)
 
+if(NOT DEFINED PLUGIN)
 add_subdirectory(include)
 add_subdirectory(LunaHook)
+endif()
 add_subdirectory(LunaHost)

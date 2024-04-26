@@ -1,4 +1,5 @@
 
+if(NOT DEFINED PLUGIN)
 generate_product_version(
    versioninfohost
    NAME "LunaHost"
@@ -28,4 +29,5 @@ set_target_properties(LunaHostCLI PROPERTIES OUTPUT_NAME "LunaHostCLI${bitappend
 set_target_properties(LunaHostDll PROPERTIES OUTPUT_NAME "LunaHost${bitappendix}")
 target_link_libraries(LunaHostCLI pch host ${YY_Thunks_for_WinXP})
 target_link_libraries(LunaHostDll pch host ${YY_Thunks_for_WinXP})
+endif()
 add_subdirectory(GUI)
