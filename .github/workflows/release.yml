@@ -21,6 +21,17 @@ jobs:
         with:
           sdk-version: 22621
       
+      - name: Install Qt32
+        uses: jurplel/install-qt-action@v3.3.0
+        with:
+          version:      ${{ env.QT_VERSION }}
+          host:         windows
+          target:       desktop
+          arch:         win32_msvc2019
+          dir:          ${{ runner.temp }}
+          setup-python: true
+      - name: Run build script 32
+        run: python build.py 32
 
       - name: Install Qt
         uses: jurplel/install-qt-action@v3.3.0
@@ -31,19 +42,11 @@ jobs:
           arch:         win64_msvc2019_64
           dir:          ${{ runner.temp }}
           setup-python: true
-      - name: Install Qt32
-        uses: jurplel/install-qt-action@v3.3.0
-        with:
-          version:      ${{ env.QT_VERSION }}
-          host:         windows
-          target:       desktop
-          arch:         win32_msvc2019
-          dir:          ${{ runner.temp }}
-          setup-python: true
-          
       - name: Run build script
-        run: python build.py
-      - name: Release
+        run: python build.py 64
+      - name: Run build script
+        run: python build.py 0
+      - name: Release LunaTranslator
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.event.inputs.create_release }}

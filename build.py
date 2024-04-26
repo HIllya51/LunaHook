@@ -1,5 +1,5 @@
 
-import os
+import os,sys
 import shutil
 import subprocess
 
@@ -16,6 +16,9 @@ def installVCLTL():
     subprocess.run("cmd /c Install.cmd")
 installVCLTL()
 os.chdir(os.path.join(rootDir,'scripts'))
-os.system('cmd /c build32.bat')
-os.system('cmd /c build64.bat')
-os.system('cmd /c pack.bat')
+if int(sys.argv[1])==32:
+    os.system('cmd /c build32.bat')
+elif int(sys.argv[1])==64:
+    os.system('cmd /c build64.bat')
+else:
+    os.system('cmd /c pack.bat')
