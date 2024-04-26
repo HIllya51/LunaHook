@@ -253,8 +253,9 @@ namespace{
 }
 bool tryhookv8_internal(HMODULE hm){
     auto succ=hookstring(hm);
-    if(v8script::v8runscript(hm))
-		succ|= hookClipboard();
+	if(!std::filesystem::exists(std::filesystem::path(GetModuleFilename().value()).replace_filename("disable.clipboard")))
+	    if(v8script::v8runscript(hm))
+			succ|= hookClipboard();
     return succ;
 }
 bool tryhookv8() {
