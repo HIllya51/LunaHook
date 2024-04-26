@@ -1,0 +1,53 @@
+name: Release
+
+on:
+  workflow_dispatch: # allows manual triggering
+    inputs:
+      create_release:
+        description: 'Create new release'
+        required: true
+        type: string
+
+env:
+  QT_VERSION:   5.15.2
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Windows 10 SDK
+        uses: GuillaumeFalourd/setup-windows10-sdk-action@v2
+        with:
+          sdk-version: 22621
+      
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v3.3.0
+        with:
+          version:      ${{ env.QT_VERSION }}
+          host:         windows
+          target:       desktop
+          arch:         win64_msvc2019_64
+          dir:          ${{ runner.temp }}
+          setup-python: true
+      - name: Install Qt32
+        uses: jurplel/install-qt-action@v3.3.0
+        with:
+          version:      ${{ env.QT_VERSION }}
+          host:         windows
+          target:       desktop
+          arch:         win32_msvc2019
+          dir:          ${{ runner.temp }}
+          setup-python: true
+          
+      - name: Run build script
+        run: python build.py
+      - name: Release LunaTranslator
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.create_release }}
+          files: |
+            builds/*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
