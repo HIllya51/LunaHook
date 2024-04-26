@@ -13,7 +13,7 @@ endif()
 endif()
 
 if(NOT DEFINED WINXP)
-if(NOT DEFINED LANGUAGE)
+if(LANGUAGE STREQUAL "English")
     include(QtUtils.cmake)
     #msvc_registry_search()
     #if(Qt5_DIR)
