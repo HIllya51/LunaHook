@@ -44,7 +44,7 @@ jobs:
           setup-python: true
       - name: Run build script
         run: python build.py 64
-      - name: Run build script
+      - name: Pack
         run: python build.py 0
       - name: Release LunaTranslator
         uses: softprops/action-gh-release@v2
