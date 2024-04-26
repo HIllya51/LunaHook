@@ -3,21 +3,6 @@ import subprocess
 
 rootDir = os.path.dirname(__file__)
 
-vcltlFileName = "VC-LTL-5.0.9-Binary.7z"
-availableTargets = ["32xp", "32", "64"]
-
-target = sys.argv[1]
-os.chdir(os.path.join(rootDir, "scripts"))
-if target in availableTargets:
-    installVCLTL()
-    os.chdir(os.path.join(rootDir, "scripts"))
-    os.system(f"cmd /c build{target}.bat")
-else:
-    if target == "pack":
-        os.system(f"python pack.py pack")
-    else:
-        os.system(f"python pack.py pack_xp")
-
 if sys.argv[1]=='0':
         
     vcltlFile = "https://github.com/Chuyu-Team/VC-LTL5/releases/download/v5.0.9/VC-LTL-5.0.9-Binary.7z"
