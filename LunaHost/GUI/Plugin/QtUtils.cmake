@@ -62,7 +62,7 @@ macro(find_qt5)
 	set(CMAKE_AUTOUIC ON)
 	#add_definitions(-DQT_DEPRECATED_WARNINGS -DQT_DISABLE_DEPRECATED_BEFORE=0x060000)
 	find_package(Qt5 COMPONENTS ${ARGN})
-
+	set(CMAKE_PREFIX_PATH "C:/Qt/Qt5.14.2/5.14.2/msvc2017/lib/cmake/Qt5" ${CMAKE_PREFIX_PATH})
 	if(Qt5_FOUND)
 		if(WIN32 AND TARGET Qt5::qmake AND NOT TARGET Qt5::windeployqt)
 			get_target_property(_qt5_qmake_location Qt5::qmake IMPORTED_LOCATION)
