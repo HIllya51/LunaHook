@@ -11,6 +11,45 @@ on:
 env:
   QT_VERSION:   5.15.2
 jobs:
+  build_xp:
+    runs-on: windows-2019
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Windows 10 SDK
+        uses: GuillaumeFalourd/setup-windows10-sdk-action@v2
+        with:
+          sdk-version: 22621
+      - name: Install Qt32
+        uses: jurplel/install-qt-action@v3.3.0
+        with:
+          version:      ${{ env.QT_VERSION }}
+          host:         windows
+          target:       desktop
+          arch:         win32_msvc2019
+          dir:          ${{ runner.temp }}
+          setup-python: true
+      - name: Run build script 32xp
+        run: python build.py 32xp
+
+      - name: Pack
+        run: python build.py pack_xp
+      # - name: Upload plugin32_xp artifact
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: plugin32_xp
+      #     path: builds/plugin32_xp.zip
+      - name: Upload English xp artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Release_English_xp
+          path: builds/Release_English_xp.zip
+      - name: Upload Chinese xp artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Release_Chinese_xp
+          path: builds/Release_Chinese_xp.zip
+
   build:
     runs-on: windows-latest
     steps:
@@ -44,9 +83,71 @@ jobs:
           setup-python: true
       - name: Run build script
         run: python build.py 64
+
       - name: Pack
-        run: python build.py 0
-      - name: Release LunaTranslator
+        run: python build.py pack
+      - name: Upload plugin32 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: plugin32
+          path: builds/plugin32.zip
+      - name: Upload plugin64 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: plugin64
+          path: builds/plugin64.zip
+      - name: Upload English artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Release_English
+          path: builds/Release_English.zip
+      - name: Upload Chinese artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Release_Chinese
+          path: builds/Release_Chinese.zip
+  release:
+    needs: [build, build_xp]
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Download plugin32 artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: plugin32
+          path: builds
+      - name: Download plugin64 artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: plugin64
+          path: builds
+      - name: Download English artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: Release_English
+          path: builds
+      - name: Download Chinese artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: Release_Chinese
+          path: builds
+      # - name: Download plugin32_xp artifact
+      #   uses: actions/download-artifact@v4
+      #   with:
+      #     name: plugin32_xp
+      #     path: builds
+      - name: Download English xp artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: Release_English_xp
+          path: builds
+      - name: Download Chinese xp artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: Release_Chinese_xp
+          path: builds
+      - name: Release LunaHook
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.event.inputs.create_release }}

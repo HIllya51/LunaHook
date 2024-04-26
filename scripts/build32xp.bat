@@ -1,8 +1,8 @@
-@REM cmake ../CMakeLists.txt -G "Visual Studio 15 2017" -A win32 -T v141_xp -B ../build/xp
-@REM cmake --build ../build/xp --config Release --target ALL_BUILD -j 14
+cmake ../CMakeLists.txt -G "Visual Studio 16 2019" -A win32 -T v141_xp -B ../build/x86_xp
+cmake --build ../build/x86_xp --config Release --target ALL_BUILD -j 14
 
-cmake -DWINXP=1 ../CMakeLists.txt -G "Visual Studio 17 2022" -A win32 -T host=x86 -B ../build/x86_xp
-cmake -DWINXP=1 -DLANGUAGE=Chinese ../CMakeLists.txt -G "Visual Studio 17 2022" -A win32 -T host=x86 -B ../build/x86_zh_xp
+cmake -DLANGUAGE=Chinese ../CMakeLists.txt -G "Visual Studio 16 2019" -A win32 -T v141_xp -B ../build/x86_zh_xp
+cmake --build ../build/x86_zh_xp --config Release --target ALL_BUILD -j 14
 python edit_target.py
 
 @echo off
