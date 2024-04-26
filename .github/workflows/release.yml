@@ -28,7 +28,7 @@ jobs:
         run: python build.py xp
 
       - name: Pack
-        run: python build.py pack_xp
+        run: python build.py pack
       - name: Upload English xp artifact
         uses: actions/upload-artifact@v4
         with:
