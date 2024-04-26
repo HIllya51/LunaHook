@@ -32,5 +32,7 @@ else:
         os.system(f"cmd /c builden.bat")
     elif sys.argv[1]=='zh':
         os.system(f"cmd /c buildzh.bat")
-    elif sys.argv[1]=='xp':
-        os.system(f"cmd /c build32xp.bat")
+    elif sys.argv[1]=='Release_English_winxp':
+        os.system(f"cmd /c buildxpen.bat")
+    elif sys.argv[1]=='Release_Chinese_winxp':
+        os.system(f"cmd /c buildxpzh.bat")

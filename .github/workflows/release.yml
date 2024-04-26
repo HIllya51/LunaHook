@@ -11,6 +11,11 @@ on:
 jobs:
   build_xp:
     runs-on: windows-2019
+    strategy:
+      matrix:
+        include:
+          - target: Release_English_winxp
+          - target: Release_Chinese_winxp
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -23,31 +28,26 @@ jobs:
         with:
           python-version: '3.11'
           architecture: x64
-      
-      - name: Run build script 32xp
-        run: python build.py xp
+
+      - name: Run build script
+        run: python build.py ${{ matrix.target }}
 
       - name: Pack
         run: python build.py pack
-      - name: Upload English xp artifact
+
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Release_English_xp
-          path: builds/Release_English_xp.zip
-      - name: Upload Chinese xp artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: Release_Chinese_xp
-          path: builds/Release_Chinese_xp.zip
+          name: ${{ matrix.target }}
+          path: builds/${{ matrix.target }}.zip
       - name: Release LunaHook
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.event.inputs.create_release }}
-          files: |
-            builds/Release_Chinese_xp.zip
-            builds/Release_English_xp.zip
+          files: builds/${{ matrix.target }}.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  
   build_plugin:
     runs-on: windows-latest
     strategy:
