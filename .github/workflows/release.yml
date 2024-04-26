@@ -43,7 +43,7 @@ jobs:
           
       - name: Run build script
         run: python build.py
-      - name: Release LunaTranslator
+      - name: Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.event.inputs.create_release }}
