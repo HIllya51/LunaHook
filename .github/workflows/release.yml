@@ -23,6 +23,9 @@ jobs:
         with:
           python-version: '3.11'
           architecture: x64
+      
+      - name: Install vcltl
+        run: python build.py 0
       - name: Run build script 32xp
         run: python build.py xp
 
