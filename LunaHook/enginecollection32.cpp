@@ -11,6 +11,7 @@
 #include"engine32/LCScript.h"
 #include"engine32/ONScripterru.h"
 #include"engine32/splushwave.h"
+#include"engine32/FrontWing.h"
 #include"engine32/GSX.h"
 #include"engine32/pchooks.h"
 #include"engine32/Sprite.h"
@@ -318,7 +319,8 @@ std::vector<ENGINE*> check_engines(){
         new Silkyssakura,
         new splushwave,
         new Diskdream,
-        new solfasys
+        new solfasys,
+        new FrontWing
     };
      
 }
