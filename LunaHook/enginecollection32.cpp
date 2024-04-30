@@ -71,6 +71,7 @@
 #include"engine32/LunaSoft.h"
 #include"engine32/Unicorn.h"
 #include"engine32/Rejet.h"
+#include"engine32/tamasoft.h"
 #include"engine32/AdobeAir.h"
 #include"engine32/Retouch.h"
 #include"engine32/Malie.h"
@@ -320,7 +321,8 @@ std::vector<ENGINE*> check_engines(){
         new splushwave,
         new Diskdream,
         new solfasys,
-        new FrontWing
+        new FrontWing,
+        new tamasoft
     };
      
 }
