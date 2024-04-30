@@ -162,6 +162,7 @@
 #include"NoEngine.h"
 #include"engine32/EntisGLS.h"
 #include"engine32/Ciel.h"
+#include"engine32/CisLugI.h"
 #include"engine32/ACTGS.h"
 std::vector<ENGINE*> check_engines(){ 
     return  { 
@@ -322,7 +323,8 @@ std::vector<ENGINE*> check_engines(){
         new Diskdream,
         new solfasys,
         new FrontWing,
-        new tamasoft
+        new tamasoft,
+        new CisLugI
     };
      
 }
