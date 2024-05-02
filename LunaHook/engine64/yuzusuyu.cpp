@@ -801,6 +801,14 @@ bool F0100CB700D438000(void* data, size_t* len, HookParam* hp){
     last=s;
 	return write_string_overwrite(data,len,s);
 }
+bool F01005C301AC5E000(void* data, size_t* len, HookParam* hp){
+    auto s = std::string((char*)data,*len);
+    s = std::regex_replace(s, std::regex(".*_.*_.*"), "");//SIR_C01_016,ERU_C00_000
+    s = std::regex_replace(s, std::regex("\\.mp4"), "");
+    s = std::regex_replace(s, std::regex("@v"), "");
+    s = std::regex_replace(s, std::regex("@n"), "\n");
+	return write_string_overwrite(data,len,s);
+}
 template<int i>
 bool F010072000BD32000(void* data, size_t* len, HookParam* hp){
     auto s = std::string((char*)data,*len);
@@ -2174,6 +2182,8 @@ auto _=[](){
         {0x804d6a7c,{CODEC_UTF8,0,0,0,F0100CB700D438000<10>,"0100CB700D438000","1.5.2"}},//Objective Description
         {0x80509900,{CODEC_UTF8,0,0,0,F0100CB700D438000<11>,"0100CB700D438000","1.5.2"}},//Aproach Text
         {0x8060ee90,{CODEC_UTF8,1,0,0,F0100CB700D438000<12>,"0100CB700D438000","1.5.2"}},//Acquired Item
+        //２０４５、月より。
+        {0x80016334,{CODEC_UTF8,1,0,0,F01005C301AC5E000,"01005C301AC5E000","1.0.1"}},
     };
     return 1;
 }();
