@@ -809,6 +809,20 @@ bool F01005C301AC5E000(void* data, size_t* len, HookParam* hp){
     s = std::regex_replace(s, std::regex("@n"), "\n");
 	return write_string_overwrite(data,len,s);
 }
+bool F0100815019488000_text(void* data, size_t* len, HookParam* hp){
+    //@n@vaoi_s01_0110「うんうん、そうかも！」
+    auto s = std::string((char*)data,*len);
+    s = std::regex_replace(s, std::regex("@.*_.*_\\d+"), "");
+    s = std::regex_replace(s, std::regex("@n"), "");
+	return write_string_overwrite(data,len,s);
+}
+bool F0100815019488000_name(void* data, size_t* len, HookParam* hp){
+    //  あおい@n@vaoi_s01_0110「うんうん、そうかも！」
+    auto s = std::string((char*)data,*len);
+    if(s.find("@n")==s.npos)return false;
+    s = std::regex_replace(s, std::regex("(.*)@n.*"), "$1");
+	return write_string_overwrite(data,len,s);
+}
 template<int i>
 bool F010072000BD32000(void* data, size_t* len, HookParam* hp){
     auto s = std::string((char*)data,*len);
@@ -2184,6 +2198,10 @@ auto _=[](){
         {0x8060ee90,{CODEC_UTF8,1,0,0,F0100CB700D438000<12>,"0100CB700D438000","1.5.2"}},//Acquired Item
         //２０４５、月より。
         {0x80016334,{CODEC_UTF8,1,0,0,F01005C301AC5E000,"01005C301AC5E000","1.0.1"}},
+        //ヤマノススメ Next Summit ～あの山に、もう一度～
+        {0x806E1444,{CODEC_UTF8,0,0,0,F0100815019488000_text,"0100815019488000","1.0.0"}},
+        {0x80659EE0,{CODEC_UTF8,1,0,0,F0100815019488000_name,"0100815019488000","1.0.0"}},
+
     };
     return 1;
 }();
