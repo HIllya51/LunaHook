@@ -118,7 +118,40 @@ enum PyUnicode_Kind {
 
 }
  #ifdef _WIN64
+void DoReadPyString(PyObject* fmtstr,HookParam* hp,uintptr_t* data, size_t* len){
+    
+    if (fmtstr == NULL ) 
+        return ;
+    
+    auto fmtdata = PyUnicode_DATA(fmtstr);
+    auto fmtkind = PyUnicode_KIND(fmtstr);
+    auto fmtcnt = PyUnicode_GET_LENGTH(fmtstr);
+    for(auto i=0;i<fmtcnt;i++){ 
+        if(PyUnicode_READ(fmtkind,fmtdata,i)=='%')
+            return;
+    }
+    *data=(uintptr_t)fmtdata;
+    
+    hp->type&=~CODEC_UTF8;
+    hp->type&=~CODEC_UTF16;
+    hp->type&=~CODEC_UTF32;
 
+    switch (fmtkind)
+    {
+    case PyUnicode_WCHAR_KIND:
+    case PyUnicode_2BYTE_KIND:
+        hp->type|=CODEC_UTF16;
+        *len=fmtcnt*sizeof(Py_UCS2);
+        break;
+    case PyUnicode_1BYTE_KIND:
+        hp->type|=CODEC_UTF8;
+        *len=fmtcnt*sizeof(Py_UCS1);
+        break;
+    case PyUnicode_4BYTE_KIND://Py_UCS4,utf32
+        hp->type|=CODEC_UTF32;
+        *len=fmtcnt*sizeof(Py_UCS4);
+    }
+}
 bool InsertRenpy3Hook()
 {
     wchar_t pythonf[] = L"python3%d.dll", libpython[] = L"libpython3.%d.dll";
@@ -130,16 +163,23 @@ bool InsertRenpy3Hook()
             wsprintf(python, pythonff, pythonMinorVersion);
             if (HMODULE module = GetModuleHandleW(python))
             {
-                auto succ=false;
-                uintptr_t addr = (uintptr_t)GetProcAddress(module, "PyUnicode_Format");
-                if (addr) {
-                    HookParam hp;
-                    PyUnicode_FromString=(PyUnicode_FromString_t)GetProcAddress(module, "PyUnicode_FromString");
+                auto f1=[=](){
+                    uintptr_t addr = (uintptr_t)GetProcAddress(module, "PyUnicode_Format");
+                    //PyUnicode_FromString=(PyUnicode_FromString_t)GetProcAddress(module, "PyUnicode_FromString");
                     PyUnicode_FromKindAndData=(PyUnicode_FromKindAndData_t)GetProcAddress(module, "PyUnicode_FromKindAndData");
+                    if(!addr)return false;
+                    HookParam hp;
                     hp.address = addr;
+                    hp.type=NO_CONTEXT|USING_STRING;
+                    hp.text_fun = [](hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len)
+                    {
+                        auto fmtstr=(PyObject *)stack->rcx;
+
+                        DoReadPyString(fmtstr,hp,data,len);
+                    };
                     if(PyUnicode_FromKindAndData)
                     {
-                        hp.type=EMBED_ABLE|EMBED_BEFORE_SIMPLE|EMBED_CODEC_UTF16;
+                        hp.type|=EMBED_ABLE|EMBED_BEFORE_SIMPLE|EMBED_CODEC_UTF16;
                         hp.hook_after=[](hook_stack* stack,void* data, size_t len)
                             {
                                 auto format=(PyObject *)stack->rcx;
@@ -147,72 +187,12 @@ bool InsertRenpy3Hook()
                                     return;
                                 stack->rcx=(uintptr_t)PyUnicode_FromKindAndData(PyUnicode_2BYTE_KIND,data,len/2);
                             };
-                        hookrenpy(module);
                     };
-                    hp.text_fun = [](hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len)
-                    {
-                        auto format=(PyObject *)stack->rcx;
-                        if (format == NULL ) 
-                            return ;
-                            
-                        auto fmtstr=format;
-                        auto fmtdata = PyUnicode_DATA(fmtstr);
-                        auto fmtkind = PyUnicode_KIND(fmtstr);
-                        auto fmtcnt = PyUnicode_GET_LENGTH(fmtstr);
-                        
-                        for(auto i=0;i<fmtcnt;i++){ 
-                            if(PyUnicode_READ(fmtkind,fmtdata,i)=='%')
-                                return;
-                        }
-
-                        *data=(uintptr_t)fmtdata;
-                        if(PyUnicode_FromString)
-                            hp->type=EMBED_ABLE|EMBED_BEFORE_SIMPLE|EMBED_CODEC_UTF16;
-                        switch (fmtkind)
-                        {
-                        case PyUnicode_WCHAR_KIND:
-                        case PyUnicode_2BYTE_KIND:
-                            hp->type|=CODEC_UTF16|USING_STRING|NO_CONTEXT;
-                            *len=fmtcnt*sizeof(Py_UCS2);
-                            break;
-                        case PyUnicode_1BYTE_KIND:
-                            hp->type|=CODEC_UTF8|USING_STRING|NO_CONTEXT;
-                            *len=fmtcnt*sizeof(Py_UCS1);
-                            break;
-                        case PyUnicode_4BYTE_KIND://Py_UCS4,utf32
-                            hp->type|=CODEC_UTF32|USING_STRING|NO_CONTEXT;
-                            *len=fmtcnt*sizeof(Py_UCS4);
-                        }
-                    };
-                    succ|=NewHook(hp, "python3");
-                }
-#if 0
-                addr = (uintptr_t)GetProcAddress(module, "PyUnicode_FromWideChar");
-                if (addr) {
-                    HookParam hp;
-                    hp.address = addr;
-                    hp.offset=get_reg(regs::rcx);
-                    hp.type = USING_STRING | CODEC_UTF16 | NO_CONTEXT;
-                    succ|=NewHook(hp, "python3");
-                }
-                addr = (uintptr_t)GetProcAddress(module, "PyUnicode_FromFormatV"); //ansi
-                if (addr) {
-                    HookParam hp;
-                    hp.address = addr;
-                    hp.offset=get_reg(regs::rcx);
-                    hp.type = USING_STRING  | NO_CONTEXT;
-                    succ|=NewHook(hp, "python3");
-                }
-                addr = (uintptr_t)GetProcAddress(module, "PyUnicode_FromFormat");
-                if (addr) {
-                    HookParam hp;
-                    hp.address = addr;
-                    hp.offset=get_reg(regs::rcx);
-                    hp.type = USING_STRING  | NO_CONTEXT;
-                    succ|=NewHook(hp, "python3");
-                }
-#endif
-                return succ;
+                    return NewHook(hp, "python3");
+                }();
+                
+                auto f2=hookrenpy(module);
+                return f1||f2;
             }
         }
     }

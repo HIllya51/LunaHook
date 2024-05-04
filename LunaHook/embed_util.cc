@@ -76,8 +76,6 @@ bool _1f()
 #undef ADD_FUN
 return 0;
 }
-extern bool DetourAttachedUserAddr;
-extern bool hostconnected;
 bool _1=_1f();
 void ReplaceFunction(PVOID* oldf,PVOID newf){
   
@@ -121,7 +119,7 @@ void solvefont(HookParam hp){
  
   if (auto current_patch_fun = patch_fun.exchange(nullptr)){
     current_patch_fun();
-    DetourAttachedUserAddr=true;
+    dont_detach=true;
   }
 }
 static std::wstring alwaysInsertSpacesSTD(const std::wstring& text)
@@ -187,7 +185,7 @@ bool check_is_thread_selected(const ThreadParam& tp){
   return false;
 }
 bool check_embed_able(const ThreadParam& tp){
-  return hostconnected&&check_is_thread_selected(tp)&&((isPauseKeyPressed()==false)?true:!embedsharedmem->fastskipignore);
+  return host_connected&&check_is_thread_selected(tp)&&((isPauseKeyPressed()==false)?true:!embedsharedmem->fastskipignore);
 }
 bool waitforevent(UINT32 timems,const ThreadParam& tp,const std::wstring &origin){
     char eventname[1000];

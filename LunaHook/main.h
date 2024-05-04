@@ -29,3 +29,7 @@ void context_set(hook_stack*,PCONTEXT);
 inline std::map<uintptr_t,std::pair<std::string,HookParam>>delayinserthook;
 void delayinsertadd(HookParam,std::string);
 void delayinsertNewHook(uintptr_t);
+
+
+inline bool dont_detach=false;
+inline bool host_connected=false;

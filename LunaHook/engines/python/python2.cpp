@@ -39,21 +39,22 @@ namespace {
 
     PyUnicode_FromObject_t PyUnicode_FromObject;
 
-    inline std::pair<Py_UNICODE*,Py_ssize_t> GetPyUnicodeString(PyObject *object){
-        if(PyUnicode_FromObject==NULL)
-            return {};
+    inline void GetPyUnicodeString(PyObject *object,uintptr_t* data, size_t* len){
         if (object == NULL)
-            return {};
+            return;
         
         auto uformat = PyUnicode_FromObject(object);
         
         if (uformat == NULL){
-            return {};
+            return;
         }
         
         auto fmt = PyUnicode_AS_UNICODE(uformat);
         auto fmtcnt = PyUnicode_GET_SIZE(uformat);
-        return {fmt,fmtcnt};   
+        *data=(uintptr_t)fmt;
+        
+        if(wcschr(fmt, L'%') == nullptr)
+            *len=sizeof(wchar_t)*fmtcnt;
     }
 
     typedef PyObject* (*PyUnicode_FromUnicode_t)(
@@ -74,25 +75,19 @@ bool InsertRenpyHook(){
             *pos = L'0' + pythonMinorVersion;
             if (HMODULE module = GetModuleHandleW(name))
             {
-                PyUnicode_FromObject=(PyUnicode_FromObject_t)GetProcAddress(module, "PyUnicodeUCS2_FromObject");
-                PyUnicode_FromUnicode=(PyUnicode_FromUnicode_t)GetProcAddress(module, "PyUnicodeUCS2_FromUnicode");
                 auto f1=[=](){
+                    PyUnicode_FromObject=(PyUnicode_FromObject_t)GetProcAddress(module, "PyUnicodeUCS2_FromObject");
+                    PyUnicode_FromUnicode=(PyUnicode_FromUnicode_t)GetProcAddress(module, "PyUnicodeUCS2_FromUnicode");
+                    auto addr= (uintptr_t)GetProcAddress(module, "PyUnicodeUCS2_Format");
+                    if (!addr||!PyUnicode_FromObject) return false;
                     HookParam hp;
-                    hp.address = (uintptr_t)GetProcAddress(module, "PyUnicodeUCS2_Format");
-                    if (!hp.address) return false;
-                    
+                    hp.address =addr;
+                    hp.type = USING_STRING | CODEC_UTF16 | NO_CONTEXT;
                     hp.text_fun = [](hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len)
                     {
                         auto format=(PyObject *)stack->ARG1;
-                        auto [strptr,strlen]=GetPyUnicodeString(format);
-                        *data=(uintptr_t)strptr;
-                        *len=0;
-                        
-                        if(wcschr(strptr, L'%') == nullptr)
-                            *len=sizeof(wchar_t)*strlen;
-                        
+                        GetPyUnicodeString(format,data,len);
                     };
-                    hp.type = USING_STRING | CODEC_UTF16 | NO_CONTEXT;
                     if(PyUnicode_FromUnicode)
                     {
                         hp.type|=EMBED_ABLE|EMBED_BEFORE_SIMPLE;
@@ -102,48 +97,12 @@ bool InsertRenpyHook(){
                                 if(format==NULL)return;
                                 stack->ARG1=(uintptr_t)PyUnicode_FromUnicode((Py_UNICODE *)data,len/2);
                             };
-                        hookrenpy(module);
                     }
                     return NewHook(hp, "Ren'py");
                 }();
+                auto f3=hookrenpy(module);
                 
-                #if 0
-                auto f2=[=](){
-                    HookParam hp;
-                    hp.address = (uintptr_t)GetProcAddress(module, "PyUnicodeUCS2_Concat");
-                    if (!hp.address) return false; 
-                    hp.text_fun = [](hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len)
-                    {
-                        auto left=(PyObject *)stack->stack[1]; 
-                        auto right=(PyObject *)stack->stack[2]; 
-                         
-                        auto [strptr,strlen]=GetPyUnicodeString(right);
-                        *data=(uintptr_t)strptr;
-                        *len=sizeof(wchar_t)*strlen;
-                    }; 
-                    hp.filter_fun = [](void* data, size_t* len, HookParam* hp)
-                    {
-                        auto str=std::wstring(reinterpret_cast<LPWSTR>(data),*len/2);
-                        auto filterpath={
-                            L".rpy",L".rpa",L".py",L".pyc",L".txt",
-                            L".png",L".jpg",L".bmp",
-                            L".mp3",L".ogg",
-                            L".webm",L".mp4",
-                            L".otf",L".ttf"
-                        };
-                        for(auto _ :filterpath)
-                            if(str.find(_)!=str.npos)
-                                return false;
-                        return true;
-                    };
-                    hp.type = USING_STRING | CODEC_UTF16;
-                    //hp.filter_fun = [](void* str, auto, auto, auto) { return *(wchar_t*)str != L'%'; };
-                    return NewHook(hp, "Ren'py");
-                }();
-                #else
-                auto f2=false;
-                #endif
-                return f1||f2;
+                return f1||f3;
             }
         }
     }

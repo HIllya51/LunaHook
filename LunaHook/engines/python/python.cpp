@@ -23,11 +23,12 @@ PyRun_SimpleString_t PyRun_SimpleString;
 PyGILState_Release_t PyGILState_Release;
 PyGILState_Ensure_t PyGILState_Ensure;
     
-void LoadPyRun(HMODULE module)
+bool LoadPyRun(HMODULE module)
 {
     PyGILState_Ensure=(PyGILState_Ensure_t)GetProcAddress(module, "PyGILState_Ensure");
     PyGILState_Release=(PyGILState_Release_t)GetProcAddress(module, "PyGILState_Release");
     PyRun_SimpleString=(PyRun_SimpleString_t)GetProcAddress(module, "PyRun_SimpleString");
+    return PyGILState_Ensure&&PyGILState_Release&&PyRun_SimpleString;
 }
 
 void PyRunScript(const char* script)
@@ -254,10 +255,12 @@ extern "C" __declspec(dllexport) const wchar_t* internal_renpy_get_font(){
         else return fontname2fontfile.at(embedsharedmem->fontFamily).c_str();
     }
 }
-void hookrenpy(HMODULE module){
-    LoadPyRun(module);
+bool hookrenpy(HMODULE module){
+    if(!LoadPyRun(module))return false;
     patch_fun=[](){
         PyRunScript(LoadResData(L"renpy_hook_font",L"PYSOURCE").c_str());
     };
     hook_internal_renpy_call_host();
+    dont_detach=true;
+    return true;
 }

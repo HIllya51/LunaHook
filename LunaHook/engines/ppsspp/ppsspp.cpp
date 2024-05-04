@@ -444,7 +444,7 @@ bool hookPPSSPPDoJit(){
             auto em_address=*(uintptr_t*)(hp->user_value);
             if(!IsValidAddress(em_address))return;
 			[&](){
-                auto ret=stack->RETADDR;
+                auto ret=stack->LASTRETVAL;
                 if(breakpoints.find(ret)!=breakpoints.end())return;
                 breakpoints.insert(ret);
 

@@ -24,8 +24,6 @@ namespace
 	TextHook(*hooks)[MAX_HOOK]; 
 	int currentHook = 0;
 }
-bool DetourAttachedUserAddr=false;
-bool hostconnected=false;
 DWORD WINAPI Pipe(LPVOID)
 {
 	for (bool running = true; running; hookPipe = INVALID_HANDLE_VALUE)
@@ -50,7 +48,7 @@ DWORD WINAPI Pipe(LPVOID)
 
 		ConsoleOutput(PIPE_CONNECTED);
 		Hijack();
-		hostconnected=true;
+		host_connected=true;
 		while (running && ReadFile(hostPipe, buffer, PIPE_BUFFER_SIZE, &count, nullptr))
 			switch (*(HostCommandType*)buffer)
 			{
@@ -82,8 +80,8 @@ DWORD WINAPI Pipe(LPVOID)
 			}
 	}
 
-	if(DetourAttachedUserAddr){
-		hostconnected=false;
+	if(dont_detach){
+		host_connected=false;
 		return Pipe(0);
 	}else{
 			

@@ -87,7 +87,7 @@ inline uintptr_t regof(regs reg,hook_stack* stack){
 #define ARG1	stack[1]
 #define ARG2	stack[2]
 #define ARG3	stack[3]
-#define RETADDR eax
+#define LASTRETVAL eax
 #define THISCALL __thiscall
 #define THISCALLTHIS ecx
 #define THISCALLARG1 stack[1]
@@ -99,7 +99,7 @@ inline uintptr_t regof(regs reg,hook_stack* stack){
 #define ARG1	rcx
 #define ARG2	rdx
 #define ARG3	r8
-#define RETADDR rax
+#define LASTRETVAL rax
 #define THISCALLTHIS rcx
 #define THISCALLARG1 rdx
 #define THISCALL 
