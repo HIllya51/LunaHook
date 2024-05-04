@@ -11,6 +11,24 @@
 extern "C" __declspec(dllexport) const wchar_t* internal_renpy_call_host(const wchar_t* text,int split){
     return text;
 }
+bool Luna_checkisusingembed(uint64_t address, uint64_t ctx1, uint64_t ctx2)
+{
+    auto sm = embedsharedmem;
+    if (!sm)
+        return false;
+    for (int i = 0; i < 10; i++)
+    {
+        if (sm->use[i])
+        {
+            if ((sm->addr[i] == address) && (sm->ctx1[i] == ctx1) && (sm->ctx2[i] == ctx2))
+                return true;
+        }
+    }
+    return false;
+}
+extern "C" __declspec(dllexport) bool internal_renpy_call_is_embed_using(int split){
+    return Luna_checkisusingembed((uint64_t)internal_renpy_call_host,0,split);
+}
 namespace{
 
 typedef enum {PyGILState_LOCKED, PyGILState_UNLOCKED}
@@ -45,7 +63,7 @@ void hook_internal_renpy_call_host(){
     hp_internal.address=(uintptr_t)internal_renpy_call_host;
     hp_internal.offset=GETARG1;
     hp_internal.split=GETARG2;
-    hp_internal.type=USING_SPLIT|USING_STRING|CODEC_UTF16|EMBED_ABLE|EMBED_BEFORE_SIMPLE|EMBED_AFTER_NEW;
+    hp_internal.type=USING_SPLIT|USING_STRING|CODEC_UTF16|EMBED_ABLE|EMBED_BEFORE_SIMPLE|EMBED_AFTER_NEW|NO_CONTEXT;
     NewHook(hp_internal, "internal_renpy_call_host");
     PyRunScript(LoadResData(L"renpy_hook_text",L"PYSOURCE").c_str());
 }
