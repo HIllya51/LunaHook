@@ -109,7 +109,6 @@ bool FPCSG01282(void* data, size_t* len, HookParam* hp){
 	return write_string_overwrite(data,len,s);
 }
 
-
 template<int index>
 void ReadU16TextAndLenDW(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
     auto address=VITA3K::emu_arg(stack)[index];
@@ -206,7 +205,40 @@ bool FPCSG00405(void* data, size_t* len, HookParam* hp){
     s = std::regex_replace(s, std::regex("[\\s]"), "");
 	return write_string_overwrite(data,len,s);
 }
+bool PCSG00776(void* data, size_t* len, HookParam* hp){
+    auto s = std::string((char*)data,*len);
+    auto ws=StringToWideString(s,932).value();
+    strReplace(ws,L"\x02",L"");
+    Trim(ws);
+	return write_string_overwrite(data,len,WideStringToString(ws));
+}
 
+void PCSG00911(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
+    auto address = VITA3K::emu_arg(stack)[1];
+    std::string final_string = "";
+    BYTE pattern[] = {0x47,0xff,0xff};
+    auto results = MemDbg::findBytes(pattern,sizeof(pattern),address,address+0x50);
+    if (!results) return;
+    
+    address = results+5;
+
+    while (true) {
+        std::string text= (char*)address;
+        final_string += text;
+        address = address+(text.size() + 1);
+
+        auto bytes=(BYTE*)address;
+
+        if (!(bytes[0] == 0x48 && bytes[1] == 0xFF && bytes[2] == 0xFF)) break;
+        address = address+(3);
+        bytes=(BYTE*)address;
+        if (!(bytes[0] == 0x47 && bytes[1] == 0xFF && bytes[2] == 0xFF)) break;
+
+        address = address+(5);
+
+    }
+	write_string_new(data,len,final_string);
+}
 void TPCSG00291(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
      auto a2= VITA3K::emu_arg(stack)[0];
 
@@ -318,6 +350,14 @@ auto _=[](){
         {0x81003db0,{CODEC_UTF8,1,0,0,FPCSG00839,"PCSG00216"}},//dialogue
         //Reine des Fleurs
         {0x8001bff2,{0,0,0,0,FPCSG00405,"PCSG00405"}},//dialogue,sjis
+        //Muv-Luv
+        {0x80118f10,{0,5,0,0,PCSG00776,"PCSG00776"}},//dialogue, choices
+        {0x80126e7e,{0,0,0,0,PCSG00776,"PCSG00776"}},//dialogue
+        //Re:Birthday Song ~Koi o Utau Shinigami~
+        {0x80033af6,{0,0,2,0,0,"PCSG00911"}},//dialogue
+        //Un:Birthday Song ~Ai o Utau Shinigami~
+        {0x80038538,{0,0,0,PCSG00911,0,"PCSG00911"}},
+        {0x80004b52,{0,3,5,0,0,"PCSG00911"}},
 
     };
     return 1;

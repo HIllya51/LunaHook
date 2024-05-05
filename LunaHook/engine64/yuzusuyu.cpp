@@ -859,6 +859,18 @@ bool F01009B50139A8000(void* data, size_t* len, HookParam* hp){
     last=s;
 	return write_string_overwrite(data,len,s);
 }
+bool F010027401A2A2000(void* data, size_t* len, HookParam* hp){
+    auto s = std::wstring((wchar_t*)data,*len/2);
+    std::wregex dicRegex(L"\\[dic.*?text=");
+    s = std::regex_replace(s, dicRegex, L"");
+    std::wregex rubyRegex(L"\\[|'.*?\\]");
+    s = std::regex_replace(s, rubyRegex, L"");
+    std::wregex closingBraceRegex(L"\\]");
+    s = std::regex_replace(s, closingBraceRegex, L"");
+    std::wregex whitespaceRegex(L"\\s|　");
+    s = std::regex_replace(s, whitespaceRegex, L"");
+	return write_string_overwrite(data,len,s);
+}
 template<int i>
 bool F0100BD4014D8C000(void* data, size_t* len, HookParam* hp){
     auto s = std::wstring((wchar_t*)data,*len/2);
@@ -915,7 +927,7 @@ bool F0100B5500CA0C000(void* data, size_t* len, HookParam* hp){
 	return write_string_overwrite(data,len,s);
 }
 void T0100B5500CA0C000(hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
-    auto address=YUZU::emu_arg(stack)[3];
+    auto address=YUZU::emu_arg(stack)[6];
     *data=address;
     *len=*(WORD*)(address-2);
 }
@@ -1540,7 +1552,7 @@ auto _=[](){
         //AIR
         {0x800a6b10,{CODEC_UTF16,1,0,0,F0100ADC014DA0000,"0100ADC014DA0000","1.0.1"}},//Text + Name
         //Shinigami to Shoujo
-        {0x21cb08+0x80004000,{0,1,0,0,F0100AFA01750C000,"0100AFA01750C000","1.0.2"}},//Text,sjis
+        {0x21cb08-0x204000+0x80004000,{0,1,0,0,F0100AFA01750C000,"0100AFA01750C000","1.0.2"}},//Text,sjis
         //Octopath Traveler II
         {0x8088a4d4,{CODEC_UTF16,0,0,0,0,"0100A3501946E000","1.0.0"}},//main text
         //NieR:Automata The End of YoRHa Edition
@@ -1612,7 +1624,7 @@ auto _=[](){
         {0x80149b10,{CODEC_UTF16,0,0,ReadTextAndLenDW<1>,F0100982015606000,"0100B5700CDFC000","1.0.0"}},// dialogue
         {0x803add50,{CODEC_UTF16,0,0,ReadTextAndLenDW<1>,F0100982015606000,"0100B5700CDFC000","1.0.0"}},// choice
         //Hanayaka Nari, Waga Ichizoku Gentou Nostalgie
-        {0x27ca10+0x80004000,{CODEC_UTF8,0,0,T0100B5500CA0C000,F0100B5500CA0C000,"0100B5500CA0C000","1.0.0"}},// x3 (double trigged), name+text, onscreen 
+        {0x27ca10-0x204000+0x80004000,{CODEC_UTF8,0,0,T0100B5500CA0C000,F0100B5500CA0C000,"0100B5500CA0C000","1.0.0"}},// x3 (double trigged), name+text, onscreen 
         //Natsumon! 20th Century Summer Vacation
         {0x80db5d34,{CODEC_UTF16,0,0,0,F0100A8401A0A8000,"0100A8401A0A8000","1.1.0"}},// tutorial
         {0x846fa578,{CODEC_UTF16,0,0,0,F0100A8401A0A8000,"0100A8401A0A8000","1.1.0"}},// choice
@@ -1819,9 +1831,9 @@ auto _=[](){
         //Olympia Soiree
         {0x8002ad04,{CODEC_UTF8,0,0,0,F0100C310110B4000,"0100F9D00C186000","1.0.0"}},
         //Getsuei no Kusari -Sakuran Paranoia-
-        {0x21801c+0x80004000,{0,2,0,0,F0100F7401AA74000,"0100F7401AA74000","1.0.0"}},//text,sjis  
-        {0x228fac+0x80004000,{0,1,0,0,F0100F7401AA74000,"0100F7401AA74000","1.0.0"}},//choices
-        {0x267f24+0x80004000,{0,1,0,0,F0100F7401AA74000,"0100F7401AA74000","1.0.0"}},//dictionary
+        {0x21801c-0x204000+0x80004000,{0,2,0,0,F0100F7401AA74000,"0100F7401AA74000","1.0.0"}},//text,sjis  
+        {0x228fac-0x204000+0x80004000,{0,1,0,0,F0100F7401AA74000,"0100F7401AA74000","1.0.0"}},//choices
+        {0x267f24-0x204000+0x80004000,{0,1,0,0,F0100F7401AA74000,"0100F7401AA74000","1.0.0"}},//dictionary
         //Xenoblade Chronicles 2
         {0x8010b180,{CODEC_UTF8,1,0,0,F01006F000B056000,"0100F3400332C000","2.0.2"}},//Text
         //Kanon
@@ -1998,7 +2010,7 @@ auto _=[](){
         {0x8005fd5c,{CODEC_UTF8,0,0,0,F0100BDD01AAE4000,"01002BB00A662000","1.0.0"}},//name
         {0x800db0d8,{CODEC_UTF8,0,20,0,F0100BDD01AAE4000,"01002BB00A662000","1.0.0"}},//name
         //Hanayaka Nari, Waga Ichizoku Modern Nostalgie
-        {0x2509ac+0x80004000,{CODEC_UTF8,0,0,T0100B5500CA0C000,F0100B5500CA0C000,"01008DE00C022000","1.0.0"}},
+        {0x2509ac-0x204000+0x80004000,{CODEC_UTF8,0,0,T0100B5500CA0C000,F0100B5500CA0C000,"01008DE00C022000","1.0.0"}},
         //Master Detective Archives: Rain Code
         {0x80bf2034,{CODEC_UTF16,0,0,0,F0100F4401940A000,"0100F4401940A000","1.3.3"}},//Dialogue text
         {0x80c099d4,{CODEC_UTF16,0,0,0,F0100F4401940A000,"0100F4401940A000","1.3.3"}},//Cutscene text
@@ -2026,8 +2038,8 @@ auto _=[](){
         {0x802f7df4,{CODEC_UTF8,0,0,0,F010055D009F78000<11>,"010055D009F78000","1.2.0"}},//Quest Description
         {0x8031af0c,{CODEC_UTF8,0,0,0,F010055D009F78000<12>,"010055D009F78000","1.2.0"}},//Aproach Text
         //Sweet Clown ~Gozen San-ji no Okashi na Doukeshi~
-        {0x20dbfc+0x80004000,{0,0,0x28,0,F010028D0148E6000,"010028D0148E6000","1.2.0"}},//dialog, sjis
-        {0x214978+0x80004000,{0,2,0xC,0,F010028D0148E6000,"010028D0148E6000","1.2.0"}},//choices
+        {0x20dbfc-0x204000+0x80004000,{0,0,0x28,0,F010028D0148E6000,"010028D0148E6000","1.2.0"}},//dialog, sjis
+        {0x214978-0x204000+0x80004000,{0,2,0xC,0,F010028D0148E6000,"010028D0148E6000","1.2.0"}},//choices
         //Another Code: Recollection
         {0x82dcad30,{CODEC_UTF16,0,0,ReadTextAndLenDW<1>,F0100CB9018F5A000,"0100CB9018F5A000","1.0.0"}},//Main Text
         {0x82f2cfb0,{CODEC_UTF16,0,0,ReadTextAndLenDW<0>,F0100CB9018F5A000,"0100CB9018F5A000","1.0.0"}},//Item Description
@@ -2161,7 +2173,7 @@ auto _=[](){
         {0x80c43d50,{CODEC_UTF16,0,0,0,F0100217014266000,"0100217014266000","1.0.1"}},//Tutorial Description
         {0x80a72598,{CODEC_UTF16,0,0,0,F0100217014266000,"0100217014266000","1.0.1"}},//Aproach Text
         //Rune Factory 4 Special
-        {0x48b268+0x80004000,{CODEC_UTF8,3,0,0,F010027100C79A000,"010027100C79A000","1.0.1"}},//All Text
+        {0x48b268-0x204000+0x80004000,{CODEC_UTF8,3,0,0,F010027100C79A000,"010027100C79A000","1.0.1"}},//All Text
         //The Legend of Zelda: Skyward Sword HD
         {0x80dc36dc,{CODEC_UTF16|FULL_STRING,3,0,0,F01001EF017BE6000,"01002DA013484000","1.0.1"}},//All Text
         //World of Final Fantasy Maxima
@@ -2201,7 +2213,16 @@ auto _=[](){
         //ヤマノススメ Next Summit ～あの山に、もう一度～
         {0x806E1444,{CODEC_UTF8,0,0,0,F0100815019488000_text,"0100815019488000","1.0.0"}},
         {0x80659EE0,{CODEC_UTF8,1,0,0,F0100815019488000_name,"0100815019488000","1.0.0"}},
-
+        //Prison Princess
+        {0x800eba00,{CODEC_UTF16,2,0x14,0,0,"0100F4800F872000","1.0.0"}},
+        //Utakata no Uchronia
+        {0x8180de40,{CODEC_UTF16,0,0,ReadTextAndLenW<0>,F010027401A2A2000,"010027401A2A2000","1.0.0"}},//text box
+        {0x816b61c0,{CODEC_UTF16,0,0,ReadTextAndLenW<0>,F010027401A2A2000,"010027401A2A2000","1.0.0"}},//dictionary
+        {0x815fe594,{CODEC_UTF16,0,0,ReadTextAndLenW<0>,F010027401A2A2000,"010027401A2A2000","1.0.0"}},//choices
+        //GrimGrimoire OnceMore
+        {0x80020bd4,{CODEC_UTF8,0,0,0,0,"01003F5017760000","1.0.0"}},
+        {0x800375a0,{CODEC_UTF8,2,0,0,0,"01003F5017760000","1.0.0"}},//tutorial
+        {0x800781dc,{CODEC_UTF8,0,0,0,0,"01003F5017760000","1.0.0"}},
     };
     return 1;
 }();
