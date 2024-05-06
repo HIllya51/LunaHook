@@ -291,15 +291,14 @@ namespace Host
 	}
 	void InjectProcess(DWORD processId,const std::wstring locationX)
 	{
-		CreatePipe(processId);
-		std::thread([processId,locationX]
-		{
-			if(CheckProcess(processId)==false)return;
+	
+		auto check=CreatePipeAndCheck(processId);
+		if(check==false)return;
 
+		std::thread([=]
+		{
 			if(InjectDll(processId,locationX))return ;
 			AddConsoleOutput(INJECT_FAILED);
-
-			
 		}).detach();
 	}
 
