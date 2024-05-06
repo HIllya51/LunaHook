@@ -1,6 +1,5 @@
 #include"Nitroplus2.h"
 
-#include"embed_util.h"
 /**
  *  Jazzinghen 23/05/2020: Add TokyoNecro hook
  *

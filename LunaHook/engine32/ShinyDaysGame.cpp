@@ -1,5 +1,4 @@
 #include"ShinyDaysGame.h"
-#include"util/textunion.h"
 
 
 /** Game-specific engines */

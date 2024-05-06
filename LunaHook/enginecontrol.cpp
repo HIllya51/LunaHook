@@ -1,7 +1,4 @@
 
-#include "util/util.h"
-#include"engine.h"
-#include"Lang/Lang.h"
 WCHAR* processName, // cached
 processPath[MAX_PATH]; // cached
 WCHAR processName_lower[MAX_PATH];
@@ -109,7 +106,7 @@ bool checkengine(){
     
     return false;
 }
-void Hijack(){
+void HIJACK(){
     static bool once = false;
     if(once)return;
     once=true;

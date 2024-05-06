@@ -1,7 +1,4 @@
-#include"main.h"
 #include"v8.h"
-#include"embed_util.h"
-#include"stackoffset.hpp"
 namespace{
     constexpr auto magicsend =L"\x01LUNAFROMJS\x01";
     constexpr auto magicrecv =L"\x01LUNAFROMHOST\x01";

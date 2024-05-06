@@ -1,9 +1,5 @@
 #pragma once
 
-// hijackfuns.h
-// 6/3/2015 jichi
-
-#include <windows.h>
 
 namespace Hijack {
 

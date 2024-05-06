@@ -1,6 +1,4 @@
 #include"CatSystem.h"
-#include"embed_util.h"
-#include"dyncodec/dynsjis.h"
 // jichi 5/10/2014
 // See also: http://bbs.sumisora.org/read.php?tid=11044704&fpage=2
 //

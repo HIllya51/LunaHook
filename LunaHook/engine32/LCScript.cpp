@@ -1,7 +1,4 @@
 #include"LCScript.h"
-#include"embed_util.h"
-#include"dyncodec/dynsjis.h"
-#include"detours.h"
 namespace { // unnamed
 namespace ScenarioHook {
 namespace Private {

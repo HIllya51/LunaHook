@@ -1,7 +1,4 @@
 #include"RPGMakerRGSS3.h"
-#include<Shlwapi.h>
-#include"embed_util.h"
-#pragma comment(lib,"shlwapi.lib")
 namespace { // unnamed
 
 namespace RGSS3 {

@@ -1,6 +1,4 @@
 #include"ShinaRio.h"
-#include"embed_util.h"
-#include<shlwapi.h>
 	template <void* funcA, void* funcW, int depth = 100>
 	bool StackSearchingTrigger(LPVOID funcAddr, DWORD, DWORD stack)
 	{

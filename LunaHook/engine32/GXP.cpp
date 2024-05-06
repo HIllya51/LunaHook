@@ -312,7 +312,6 @@ bool InsertGXPHook()
   ok = InsertGXP2Hook() || ok;
   return ok;
 }
-#include"util/textunion.h"
 namespace { // unnamed
 
 ULONG moduleBaseAddress_; // saved only for debugging purposes

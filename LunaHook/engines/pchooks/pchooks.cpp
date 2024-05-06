@@ -2,7 +2,6 @@
 // 8/1/2014 jichi
 
 #include "pchooks.h"
-#include "main.h"
 //#include <gdiplus.h>
 
 

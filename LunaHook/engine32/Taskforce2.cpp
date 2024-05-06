@@ -1,5 +1,4 @@
 #include"Taskforce2.h"
-#include"embed_util.h"
 /**
  *  jichi 1/2/2014: Taskforce2 Engine
  *

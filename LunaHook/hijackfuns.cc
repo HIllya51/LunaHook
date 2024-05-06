@@ -1,10 +1,4 @@
-// hijackfuns.cc
-// 6/3/2015 jichi
-#include "hijackfuns.h"
-#include"embed_util.h"
-//#define DEBUG "hijackfuns"
-#include"dyncodec/dynsjis.h"
-//#include "sakurakit/skdebug.h"
+
 #pragma intrinsic(_ReturnAddress)
 
 // Disable only for debugging purpose
@@ -461,7 +455,6 @@ UINT decodeChar(UINT ch, bool *dynamic)
       } \
     } \
 }
-#include<intrin.h>
 #define TRANSLATE_TEXT_A(lpString, cchString, ...) \
 { \
   if (auto q = EngineController::instance()) { \

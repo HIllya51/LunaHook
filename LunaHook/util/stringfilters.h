@@ -1,4 +1,4 @@
-#include "cpputil/cppcstring.h"
+
 void CharReplacer(char *str, size_t *size, char fr, char to);
 void CharReplacer(wchar_t *str, size_t *size, wchar_t fr, wchar_t to);
 

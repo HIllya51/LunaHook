@@ -2,6 +2,7 @@
 
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
+#include <windowsx.h>
 #include <concrt.h>
 #include <string>
 #include <vector>
@@ -29,7 +30,8 @@
 #include <utility>
 #include <cassert>
 #include <variant>
-
+#include <shlobj.h>
+#include <Shlwapi.h>
 
 #include"stringutils.h"
 #include"utils.h"

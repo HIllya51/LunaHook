@@ -3640,7 +3640,7 @@ bool InsertPPSSPPHooks()
 }
 #endif
 
-bool PPSSPP::attach_function() {
+bool PPSSPPengine::attach_function() {
   return InsertPPSSPPcommonhooks();
 }
  

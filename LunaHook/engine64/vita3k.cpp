@@ -1,5 +1,4 @@
 #include"vita3k.h"
-#include"engines/emujitarg.hpp"
 namespace{
     auto isVirtual = true;
     auto idxDescriptor = isVirtual == true ? 2 : 1;

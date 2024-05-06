@@ -1,4 +1,4 @@
-#include"engine.h"
+
 
 class jukujojidai:public ENGINE{
     public:

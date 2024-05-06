@@ -1,10 +1,5 @@
-#include "hookfinder.h"
-#include "main.h"
-#include "util.h"
+
 #include "MinHook.h"
-#include"Lang/Lang.h"
-#include"veh_hook.h"
-#include"engines/emujitarg.hpp"
 namespace
 {
 	SearchParam sp;

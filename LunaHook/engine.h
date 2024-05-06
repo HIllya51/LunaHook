@@ -1,14 +1,6 @@
 #ifndef __LUNA_ENGINE_H
 #define __LUNA_ENGINE_H
 
-#include"stackoffset.hpp"
-#include"stringutils.h"
-#include"stringfilters.h"
-#include "util/util.h"
-#include "ithsys/ithsys.h"
-#include"pchooks/pchooks.h"
-#include "disasm/disasm.h"
-#include"main.h"
 
 extern WCHAR* processName,  processPath[MAX_PATH],processName_lower[MAX_PATH]; // cached
 extern uintptr_t processStartAddress, processStopAddress;

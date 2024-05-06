@@ -1,4 +1,4 @@
-#include"engine.h"
+
 //https://vndb.org/v760
 //魔界天使ジブリール
 /*

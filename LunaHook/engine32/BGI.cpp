@@ -1,5 +1,4 @@
 #include"BGI.h"
-#include"embed_util.h"
 /********************************************************************************************
 BGI hook:
   Usually game folder contains BGI.*. After first run BGI.gdb appears.

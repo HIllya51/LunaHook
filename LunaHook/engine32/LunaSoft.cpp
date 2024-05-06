@@ -1,5 +1,4 @@
 #include"LunaSoft.h"
-#include"embed_util.h"
 /** jichi 12/27/2014 LunaSoft
  * Sample game: [141226] [LunaSoft] 悪堕ラビリンス -- /hsn8@46C5EF
  *

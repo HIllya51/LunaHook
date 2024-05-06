@@ -1,5 +1,4 @@
 #include"Nexton.h"
-#include"embed_util.h"
 /**
  *  jichi 9/5/2013: NEXTON games with aInfo.db
  *  Sample games:

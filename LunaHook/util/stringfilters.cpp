@@ -1,5 +1,3 @@
-#include"stringfilters.h"
-#include"stringutils.h"
 
 inline char* str_chr(char *s, char c, size_t n){return (char*)::memchr(s, c, n);}
 inline wchar_t* str_chr(wchar_t *s, wchar_t c, size_t n){return  cpp_wcsnchr(s, c, n);}

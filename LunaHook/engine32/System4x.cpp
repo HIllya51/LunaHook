@@ -1,5 +1,4 @@
 #include"System4x.h"
-#include"embed_util.h"
 
 /**
  *  jichi 12/26/2013: Rance hook

@@ -1,5 +1,4 @@
 #include"Lucifen.h"
- #include"embed_util.h"
 /********************************************************************************************
 Lucifen hook:
   Game folder contains *.lpk. Used by Navel games.
@@ -149,7 +148,6 @@ bool attach_navel(ULONG startAddress, ULONG stopAddress) // attach scenario
     hp.hook_font=F_GetGlyphOutlineA|F_GetTextExtentPoint32A;
     return NewHook(hp, "LucifenEmbed"); 
 }
-#include"dyncodec/dynsjis.h"
 namespace { // unnamed
 namespace ScenarioHook {
 

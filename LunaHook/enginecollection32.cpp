@@ -167,7 +167,7 @@
 std::vector<ENGINE*> check_engines(){ 
     return  { 
         new LovaGame,
-        new PPSSPP,
+        new PPSSPPengine,
         new PCSX2,
         new VanillawareGC,
         new V8,

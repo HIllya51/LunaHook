@@ -1,6 +1,5 @@
 #ifndef __LUNA_EMBED_ENGINE_H
 #define __LUNA_EMBED_ENGINE_H
-#include"dyncodec/dynsjiscodec.h"
 
 extern EmbedSharedMem *embedsharedmem;
 extern DynamicShiftJISCodec *dynamiccodec ;

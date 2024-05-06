@@ -25,6 +25,12 @@ set(texthook_src
 		hijackfuns.cc
 		veh_hook.cpp
 ) 
+
+
+add_library(pchhook pchhook.cpp)
+target_precompile_headers(pchhook PUBLIC pchhook.h)
+
+
 add_subdirectory(util)
 add_subdirectory(engines)
 
@@ -41,7 +47,7 @@ generate_product_version(
 
 add_library(LunaHook MODULE ${texthook_src} resource.rc ${versioninfohook})
 
-target_precompile_headers(LunaHook REUSE_FROM pch) 
+target_precompile_headers(LunaHook REUSE_FROM pchhook) 
 
 set_target_properties(LunaHook PROPERTIES OUTPUT_NAME "LunaHook${bitappendix}")
 

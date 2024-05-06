@@ -1,5 +1,4 @@
 #include"Wolf.h"
-#include"embed_util.h"
 /**
  *  jichi 10/12/2014
  *  P.S.: Another approach

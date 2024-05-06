@@ -1,5 +1,4 @@
 #include"Minori.h"
-#include"util/textunion.h"
 
 
 bool Minori1EngFilter(LPVOID data, size_t* size, HookParam*)

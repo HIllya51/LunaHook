@@ -174,7 +174,6 @@ namespace{
     return  false;
   }
 }
-#include"embed_util.h"
 namespace { // unnamed
 namespace ScenarioHook {
 namespace Private {

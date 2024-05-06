@@ -1,5 +1,4 @@
 #include"python.h"
-#include"main.h"
 namespace {
 #define PyUnicode_IS_READY(op) 1
 #define PyUnicode_Check(op) 1

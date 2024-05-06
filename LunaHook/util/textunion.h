@@ -1,6 +1,5 @@
 #pragma once
 
-#include"embed_util.h"
  
 inline size_t str_len(const char *s){return strlen(s);}
 inline size_t str_len(const wchar_t *s){return wcslen(s);}

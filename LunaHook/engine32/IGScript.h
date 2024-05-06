@@ -1,4 +1,4 @@
-#include"engine.h"
+
 
 class IGScript:public ENGINE{
     public:

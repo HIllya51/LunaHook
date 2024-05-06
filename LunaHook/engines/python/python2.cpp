@@ -1,6 +1,4 @@
 #include"python.h"
-#include"main.h"
-#include"stackoffset.hpp"
 namespace {
     typedef wchar_t Py_UNICODE ;
     typedef size_t         Py_ssize_t;

@@ -1,6 +1,5 @@
 #pragma once
 
-#include"memdbg/memsearch.h"
 // util.h
 // 8/23/2013 jichi
 

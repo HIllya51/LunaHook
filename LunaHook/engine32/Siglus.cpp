@@ -1,6 +1,4 @@
 #include"Siglus.h"
-#include"util/textunion.h"
-#include"embed_util.h"
 namespace { // unnamed
 
 /**

@@ -1,11 +1,5 @@
 #include"python.h"
-#include"embed_util.h"
-#include"main.h"
-#include"stackoffset.hpp"
-#include <windows.h>
-#include <shlobj.h>
 #include <dwrite.h>
-#include <windowsx.h>
 extern "C" __declspec(dllexport) const wchar_t* internal_renpy_call_host(const wchar_t* text,int split){
     return text;
 }

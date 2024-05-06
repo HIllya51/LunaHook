@@ -1,6 +1,4 @@
 
-#include"engine.h"
-#include"util/util.h"
 #include"psputils.hpp"
 #include"specialgames.hpp"
 // See: https://github.com/hrydgard/ppsspp

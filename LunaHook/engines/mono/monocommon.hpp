@@ -1,6 +1,5 @@
 
 #include"il2cpp.hpp"
-#include "main.h"
 #include "monoobject.h"
 #include"monofuncinfo.h"
 namespace {

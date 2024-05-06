@@ -1,14 +1,6 @@
-// main.cc
-// 8/24/2013 jichi
-// Branch: LUNA_HOOK_DLL/main.cpp, rev 128
-// 8/24/2013 TODO: Clean up this file
 
-#include "main.h"
-#include "hookfinder.h"
-#include "util.h"
 #include "MinHook.h"
-#include"Lang/Lang.h"
-void Hijack();
+void HIJACK();
 void detachall();
 HMODULE hLUNAHOOKDLL;
 WinMutex viewMutex;
@@ -44,7 +36,7 @@ DWORD WINAPI Pipe(LPVOID)
 		WriteFile(hookPipe, buffer, sizeof(DWORD), &count, nullptr);
 
 		ConsoleOutput(PIPE_CONNECTED);
-		Hijack();
+		HIJACK();
 		host_connected=true;
 		while (running && ReadFile(hostPipe, buffer, PIPE_BUFFER_SIZE, &count, nullptr))
 			switch (*(HostCommandType*)buffer)

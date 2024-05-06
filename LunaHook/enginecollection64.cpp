@@ -40,7 +40,7 @@ std::vector<ENGINE*> check_engines(){
         new TYPEMOON,
         new ENTERGRAM,
         new yuzusuyu,
-        new PPSSPP,
+        new PPSSPPengine,
         new vita3k,
         new rpcs3
     };

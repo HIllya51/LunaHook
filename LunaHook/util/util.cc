@@ -1,12 +1,4 @@
-﻿// util/util.cc
-// 8/23/2013 jichi
-// Branch: ITH_Engine/engine.cpp, revision 133
-// See: http://ja.wikipedia.org/wiki/プロジェクト:美少女ゲーム系/ゲームエンジン
-
-#include "util/util.h"
-#include "ithsys/ithsys.h"
-#include "main.h"
-#include <Psapi.h>
+﻿
 
 namespace { // unnamed
 

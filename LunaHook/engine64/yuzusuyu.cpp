@@ -1,7 +1,5 @@
 ﻿#include"yuzusuyu.h"
 #include"mages/mages.h"
-#include"hookfinder.h"
-#include"emujitarg.hpp"
 namespace{
     auto isFastMem = true;
 

@@ -1,14 +1,5 @@
-// texthook.cc
-// 8/24/2013 jichi
-// Branch: LUNA_HOOK_DLL/texthook.cpp, rev 128
-// 8/24/2013 TODO: Clean up this file
-#include"embed_util.h"
-#include "main.h"
-#include "ithsys/ithsys.h"
+
 #include "MinHook.h"
-#include"Lang/Lang.h"
-#include"veh_hook.h"
-#include"engines/emujitarg.hpp"
 extern WinMutex viewMutex;
 
 // - Unnamed helpers -

@@ -1,8 +1,8 @@
-#include"engine.h"
 
-class PPSSPP:public ENGINE{
+
+class PPSSPPengine:public ENGINE{
     public:
-    PPSSPP(){
+    PPSSPPengine(){
         
         check_by=CHECK_BY::FILE;
         check_by_target=L"PPSSPP*.exe";

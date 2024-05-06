@@ -1,5 +1,4 @@
 #include"QLIE.h"
-#include"embed_util.h"
 /**
  * jichi 8/18/2013:  QLIE identified by GameData/data0.pack
  *

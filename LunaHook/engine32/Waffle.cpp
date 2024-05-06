@@ -1,7 +1,5 @@
 #include"Waffle.h"
-#include"embed_util.h"
-#include"util/textunion.h"
-#include"ntxpundef.h"
+
 bool InsertWaffleDynamicHook(LPVOID addr, uintptr_t frame, uintptr_t stack)
 {
 	ConsoleOutput("WaffleDynamic:triggered");

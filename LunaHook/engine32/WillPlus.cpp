@@ -1,6 +1,4 @@
 #include"WillPlus.h"
-#include"embed_util.h"
-#include"dyncodec/dynsjis.h"
 /** 1/18/2015 jichi Add new WillPlus
  *  The old hook no longer works for new game.
  *  Sample game: [150129] [honeybee] RE:BIRTHDAY SONG

@@ -1,5 +1,4 @@
 #include"Circus2.h"
-#include"embed_util.h"
 namespace{
   bool filter(void* data, size_t* len, HookParam* hp){
     if (strstr((char*)data,"@i")||strstr((char*)data,"@y"))return false;

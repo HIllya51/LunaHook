@@ -1,5 +1,4 @@
 #include"Ryokucha.h"
-#include"ntxpundef.h"
 static void SpecialHookRyokucha(hook_stack* stack,  HookParam *hp, uintptr_t *data, uintptr_t *split, size_t*len)
 {
   for (DWORD i = 1; i < 5; i++) {

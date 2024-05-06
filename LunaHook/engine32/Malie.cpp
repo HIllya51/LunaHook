@@ -1,5 +1,4 @@
 #include"Malie.h"
- #include"embed_util.h"
 namespace { // unnamed Malie
 /********************************************************************************************
 Malie hook:

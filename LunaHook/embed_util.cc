@@ -1,11 +1,3 @@
-#include"embed_util.h"
-#include"MinHook.h"
-#include"stringutils.h"
-#include"main.h"
-#include"detours.h"
-#include"hijackfuns.h"
-#include"stringfilters.h"
-#include"util.h"
 DynamicShiftJISCodec *dynamiccodec=new DynamicShiftJISCodec(932);
 
 
