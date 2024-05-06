@@ -1,7 +1,4 @@
 #include "host.h"
-#include "hookcode.h"
-#include "defs.h"
-#include "winevent.hpp"
 #define C_LUNA_API extern "C" __declspec(dllexport)
 BOOL APIENTRY DllMain(HMODULE hModule,
                       DWORD ul_reason_for_call,

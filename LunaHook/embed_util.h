@@ -1,7 +1,5 @@
 #ifndef __LUNA_EMBED_ENGINE_H
 #define __LUNA_EMBED_ENGINE_H
-#include"types.h"
-#include "texthook.h"
 #include"dyncodec/dynsjiscodec.h"
 
 extern EmbedSharedMem *embedsharedmem;

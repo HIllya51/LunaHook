@@ -1,7 +1,6 @@
 #pragma once
 
 #include "textthread.h"
-#include"texthook.h"
 namespace Host
 {
 	using ConsoleHandler =std::function<void(std::wstring&)>;

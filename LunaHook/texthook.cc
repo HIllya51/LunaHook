@@ -3,7 +3,6 @@
 // Branch: LUNA_HOOK_DLL/texthook.cpp, rev 128
 // 8/24/2013 TODO: Clean up this file
 #include"embed_util.h"
-#include "texthook.h"
 #include "main.h"
 #include "ithsys/ithsys.h"
 #include "MinHook.h"

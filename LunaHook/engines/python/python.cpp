@@ -2,8 +2,6 @@
 #include"embed_util.h"
 #include"main.h"
 #include"stackoffset.hpp"
-#include"types.h"
-#include"defs.h"
 #include <windows.h>
 #include <shlobj.h>
 #include <dwrite.h>

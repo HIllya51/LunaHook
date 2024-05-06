@@ -1,5 +1,4 @@
-﻿#include "hookcode.h"
-
+﻿
 namespace
 {
 	std::optional<HookParam> ParseRCode(std::wstring RCode)

@@ -4,12 +4,9 @@
 // 8/24/2013 TODO: Clean up this file
 
 #include "main.h"
-#include "defs.h"
-#include "texthook.h"
 #include "hookfinder.h"
 #include "util.h"
 #include "MinHook.h"
-#include"hookcode.h"
 #include"Lang/Lang.h"
 void Hijack();
 void detachall();

@@ -1,5 +1,4 @@
 #include "hookfinder.h"
-#include "defs.h"
 #include "main.h"
 #include "util.h"
 #include "MinHook.h"

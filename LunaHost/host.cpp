@@ -1,7 +1,4 @@
 #include "host.h"
-#include "defs.h"
-#include "hookcode.h"
-#include "texthook.h"
 typedef LONG NTSTATUS;
 #include"yapi.hpp"
 #include"Lang/Lang.h"

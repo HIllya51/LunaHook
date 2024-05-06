@@ -1,7 +1,3 @@
-
-#include"common.h"
-#include"defs.h"
-#include"types.h"
 #include"main.h"
 #include"v8.h"
 #include"embed_util.h"

@@ -203,8 +203,6 @@ std::wstring acastw(const std::string x){
         xx+=c;
     return xx;
 }
-#include"const.h"
-#include"types.h"
 std::optional<std::wstring> commonparsestring(void* data,size_t length,void* php,DWORD df){
   auto hp=(HookParam*)php;
   if (hp->type & CODEC_UTF16) return std::wstring((wchar_t*)data, length / sizeof(wchar_t));

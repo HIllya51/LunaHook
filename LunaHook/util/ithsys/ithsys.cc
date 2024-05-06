@@ -7,7 +7,6 @@
 // - Move my old create remote thread for ITH2 here
 
 #include "ithsys/ithsys.h"
-#include "const.h"
 
 /**
 *  Return the address of the first matched pattern.

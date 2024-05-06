@@ -1,7 +1,5 @@
 #pragma once
 
-#include "types.h"
-
 namespace HookCode
 {
 	std::optional<HookParam> Parse(std::wstring code);

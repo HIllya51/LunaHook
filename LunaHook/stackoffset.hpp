@@ -1,4 +1,3 @@
-#include"texthook.h"
 enum class regs
 {
 	_flags,

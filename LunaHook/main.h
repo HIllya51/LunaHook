@@ -4,7 +4,6 @@
 // 8/23/2013 jichi
 // Branch: ITH/IHF_DLL.h, rev 66
 
-#include "types.h"
 
 void TextOutput(ThreadParam tp, TextOutput_T (*buffer), int len);
 void ConsoleOutput(LPCSTR text, ...);

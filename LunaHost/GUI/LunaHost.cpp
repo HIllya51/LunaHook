@@ -5,7 +5,6 @@
 #include<thread>
 #include<fstream>
 #include"host.h"
-#include"hookcode.h"
 #include"textthread.h"
 #include"LunaHost.h"
 #include"Lang/Lang.h"

@@ -7,7 +7,7 @@
 // 8/24/2013 TODO:
 // - Clean up this file
 // - Reduce global variables. Use namespaces or singleton classes instead.
-#include "types.h"
+
 
 // Artikash 6/17/2019 TODO: These have the wrong values on x64
 /** jichi 12/24/2014

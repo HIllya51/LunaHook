@@ -9,7 +9,6 @@
 #include"pchooks/pchooks.h"
 #include "disasm/disasm.h"
 #include"main.h"
-#include"const.h"
 
 extern WCHAR* processName,  processPath[MAX_PATH],processName_lower[MAX_PATH]; // cached
 extern uintptr_t processStartAddress, processStopAddress;

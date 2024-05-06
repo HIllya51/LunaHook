@@ -1,7 +1,5 @@
 #include"python.h"
-#include"types.h"
 #include"main.h"
-#include"defs.h"
 namespace {
 #define PyUnicode_IS_READY(op) 1
 #define PyUnicode_Check(op) 1
