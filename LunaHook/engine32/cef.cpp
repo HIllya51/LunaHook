@@ -121,49 +121,58 @@ bool InsertlibcefHook(HMODULE module)
 	return ret;
 }
 bool libcefhook(HMODULE module) {
+	//https://vndb.org/v12297
+	//魔降ル夜ノ凜 Animation ダウンロード版
+
 	if (module == 0)return false;
 	auto [minAddress, maxAddress] = Util::QueryModuleLimits(module);
 	ConsoleOutput("check v8libcefhook %p %p", minAddress,maxAddress);
 	const BYTE bytes[] = {
-
+		0x50,
+		0x51,
+		0x52,
+		0x57,
+		0xff,0xd6,
 		0x83,0xc4,0x10,
 		0x8b,0x4d,XX,
 		0x89,0xc6,
 		0x31,0xe9,
 		0xe8,XX4,
 		0x89,0xF0,
-		0x83,0xC4,0x18
+		0x83,0xC4,0x18,
+		0x5e,
+		0x5f,
+		0x5d,
+		0xc3
 
 	};
-	auto addrs = Util::SearchMemory(bytes, sizeof(bytes), PAGE_EXECUTE_READ, minAddress, maxAddress);
-	ConsoleOutput("v8libcefhook matches %d", addrs.size());
-	bool succ=false;
-	for (auto addr : addrs) {
+	auto addr = reverseFindBytes(bytes, sizeof(bytes), minAddress, maxAddress);
 
-		HookParam hp; 
-		hp.address = addr; 
-		hp.offset=get_stack(1); 
-		hp.filter_fun=[] (void* data, uintptr_t * size, HookParam*) {
-			std::wstring s = L""; 
-			int i = 0;
-			for (; i < *size /2; i++) {
-				auto c = ((LPWSTR)data)[i];
-				if (c == L'[') {
-					break;
-				}
-				else {
-					s += c;
-				}
+	HookParam hp; 
+	hp.address = addr+6; 
+	hp.offset=get_stack(1); 
+	hp.filter_fun=[] (void* data, uintptr_t * size, HookParam*) {
+		std::wstring s = L""; 
+		int i = 0;
+		for (; i < *size /2; i++) {
+			auto c = ((LPWSTR)data)[i];
+			if (c == L'[') {
+				break;
 			}
-			return write_string_overwrite(data,size,s);
-		};
-		hp.type = USING_STRING | CODEC_UTF16|NO_CONTEXT; 
-		ConsoleOutput("v8libcefhook %p", addr);
+			else {
+				s += c;
+			}
+		}
+		strReplace(s,L"<br>",L"\n");
+		static std::wstring last;
+		if(s==last)return false;
+		last=s;
+		return write_string_overwrite(data,size,s);
+	};
+	hp.type = USING_STRING | CODEC_UTF16|NO_CONTEXT; 
+	ConsoleOutput("v8libcefhook %p", addr);
 
-		succ|=NewHook(hp, "v8libcefhook");
-	}
-		
-	return succ;
+	return NewHook(hp, "v8libcefhook");
 
 }
 bool cef::attach_function(){
