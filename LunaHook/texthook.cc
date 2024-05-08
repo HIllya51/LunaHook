@@ -122,15 +122,37 @@ bool TextHook::Insert(HookParam hp)
 	if (hp.type & BREAK_POINT) return InsertBreakPoint();
 	return InsertHookCode();
 }
-
-uintptr_t queryrelativeret(uintptr_t retaddr){
+uintptr_t win64find0000(uintptr_t addr){
+  uintptr_t r = 0;
+  __try{
+    addr &= ~0xf;
+	for (uintptr_t i = addr, j = addr - 0x10000; i > j; i-=0x10) {
+		DWORD k = *(DWORD *)(i-4);
+		if (k == 0x00000000
+		)
+		return i;
+	}
+	return 0;
+  }__except(EXCEPTION_EXECUTE_HANDLER) {}
+  return r;
+}
+uintptr_t queryrelativeret(HookParam&hp, uintptr_t retaddr){
 	//不需要区分是相对于哪个module的偏移，只需要得到偏移就可以了，用来确保重启程序后ret值恒定
 	static Synchronized<std::unordered_map<uintptr_t, uintptr_t>> retaddr2relative;
 	auto &re=retaddr2relative.Acquire().contents;
 	if(re.find(retaddr)!=re.end())return re.at(retaddr);
 	uintptr_t relative=retaddr;
+	if(hp.jittype==JITTYPE::UNITY){
+		#ifndef _WIN64
+		relative=retaddr-SafeFindEnclosingAlignedFunction(retaddr,0x10000);
+		#else
+		relative=retaddr-win64find0000(retaddr);
+		#endif
+	}
+	else{
 	if (MEMORY_BASIC_INFORMATION info = {}; VirtualQuery((LPCVOID)retaddr, &info, sizeof(info)))
 		relative-=(uintptr_t)info.AllocationBase;
+	}
 	re.insert(std::make_pair(retaddr,relative));
 	return relative;
 }
@@ -174,7 +196,7 @@ void TextHook::Send(uintptr_t lpDataBase)
 			plpdatain=(lpDataBase + hp.offset),
 			lpDataIn=*(uintptr_t*)plpdatain;
 		bool isstring=false;
-		if(hp.jittype!=JITTYPE::PC)
+		if(hp.jittype!=JITTYPE::PC&&hp.jittype!=JITTYPE::UNITY)
 		{
 			lpDataIn=jitgetaddr(stack,&hp);
 			plpdatain=(uintptr_t)&lpDataIn;
@@ -191,6 +213,10 @@ void TextHook::Send(uintptr_t lpDataBase)
 		{
 			isstring=true;
 			hp.text_fun(stack, &hp, &lpDataIn, &lpSplit, &lpCount);
+		}
+		else if(hp.jittype==JITTYPE::UNITY)
+		{
+			commonsolvemonostring(*argidx(stack,hp.argidx),&lpDataIn,&lpCount);
 		}
 		else 
 		{
@@ -243,7 +269,7 @@ void TextHook::Send(uintptr_t lpDataBase)
 		
 		buffer->type=hp.type;
 		
-		lpRetn=queryrelativeret(lpRetn);
+		lpRetn=queryrelativeret(hp,lpRetn);
 		ThreadParam tp{ GetCurrentProcessId(), address, lpRetn, lpSplit };
 
 		parsenewlineseperator(pbData, &lpCount);
@@ -272,8 +298,11 @@ void TextHook::Send(uintptr_t lpDataBase)
 					for(int i=lpCount;i<lpCountsave;i++)
 						((BYTE*)(lpDataIn))[i]=0;
 				}
-				else
+				else if(hp.hook_after)
 					hp.hook_after(stack,pbData,lpCount);
+				else if(hp.jittype==JITTYPE::UNITY){
+					unity_ui_string_hook_after(argidx(stack,hp.argidx),pbData,lpCount);
+				}
 			}
 		}
 	}

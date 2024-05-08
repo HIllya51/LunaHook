@@ -64,6 +64,8 @@ namespace
 			hp.jittype=JITTYPE::VITA3K;
 		else if(endWith(HCode,L":JIT:RPCS3"))
 			hp.jittype=JITTYPE::RPCS3;
+		else if(endWith(HCode,L":JIT:UNITY"))
+			hp.jittype=JITTYPE::UNITY;
 
 		// {A|B|W|H|S|Q|V|M}
 		switch (HCode[0])
@@ -163,6 +165,19 @@ namespace
 				hp.split_index = ConsumeHexInt();
 			}
 		}
+		if(hp.jittype==JITTYPE::UNITY){
+			if(HCode[0]!=L'@')return {};
+			HCode.erase(0,1);
+			hp.argidx=hp.offset;
+			hp.offset=0;
+			hp.address=0;
+			hp.type &= ~MODULE_OFFSET;
+			hp.type &= ~FUNCTION_OFFSET;
+			strcpy(hp.function,"");
+			wcscpy(hp.module,L"");
+			strcpy(hp.unityfunctioninfo,wcasta(HCode).c_str());
+		}
+		else{
 
 		// @addr[:module[:func]]
 		if (!std::regex_match(HCode, match, std::wregex(L"^@([[:xdigit:]]+)(:.+?)?(:.+)?"))) return {};
@@ -193,6 +208,7 @@ namespace
 			strcpy(hp.function,"");
 			wcscpy(hp.module,L"");
 		}
+		}
 		return hp;
 	}
 
@@ -217,7 +233,7 @@ namespace
 			else if(code[0]==L'O')
 				hp.type|=EMBED_AFTER_OVERWRITE;
 			else
-				return {};
+				return ParseHCode(code,hp);
 			code.erase(0,1);
 		}
 		 
@@ -345,22 +361,30 @@ namespace
 			if (hp.type & FUNCTION_OFFSET) HCode += L':' + StringToWideString(hp.function);
 		}
 		else
-		{
-			HCode += L'@' + HexString(hp.emu_addr);
-			switch (hp.jittype)
-			{
-			case  JITTYPE::YUZU:
-				HCode+=L":JIT:YUZU";
-				break;
-			case JITTYPE::PPSSPP:
-				HCode+=L":JIT:PPSSPP";
-				break;
-			case JITTYPE::VITA3K:
-				HCode+=L":JIT:VITA3K";
-				break;
-			case JITTYPE::RPCS3:
-				HCode+=L":JIT:RPCS3";
-				break;
+		{	
+			if(hp.jittype== JITTYPE::UNITY){
+				HCode+=L'@';
+				HCode+=acastw(hp.unityfunctioninfo);
+				HCode+=L":JIT:UNITY";
+			}
+			else{
+
+				HCode += L'@' + HexString(hp.emu_addr);
+				switch (hp.jittype)
+				{
+				case  JITTYPE::YUZU:
+					HCode+=L":JIT:YUZU";
+					break;
+				case JITTYPE::PPSSPP:
+					HCode+=L":JIT:PPSSPP";
+					break;
+				case JITTYPE::VITA3K:
+					HCode+=L":JIT:VITA3K";
+					break;
+				case JITTYPE::RPCS3:
+					HCode+=L":JIT:RPCS3";
+					break;
+				}
 			}
 		}
 

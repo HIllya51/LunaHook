@@ -205,6 +205,15 @@ void delayinsertNewHook(uintptr_t em_address){
 bool NewHook(HookParam hp, LPCSTR name){
 	if(hp.address||hp.jittype==JITTYPE::PC)
 		return NewHook_1(hp,name);
+	if(hp.jittype==JITTYPE::UNITY){
+		auto spls=strSplit(hp.unityfunctioninfo,":");
+		hp.address = il2cpp_symbols::get_method_pointer(spls[0].c_str(),spls[1].c_str() ,spls[2].c_str(),spls[3].c_str(),std::stoi(spls[4]));
+		if(!hp.address)
+			hp.address=getmonofunctionptr(spls[0].c_str(),spls[1].c_str() ,spls[2].c_str(),spls[3].c_str(),std::stoi(spls[4]));
+		if(!hp.address)
+			return false;
+		return NewHook_1(hp,name);
+	}
 	//下面的是手动插入
 	if(emuaddr2jitaddr.find(hp.emu_addr)==emuaddr2jitaddr.end()){
 		delayinsertadd(hp,name);

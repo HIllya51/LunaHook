@@ -144,8 +144,8 @@ bool yuzusuyu::attach_function()
    HookParam hp;
    hp.address=DoJitPtr;
    hp.text_fun=[](hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
-        auto descriptor = *argidx(stack,idxDescriptor); // r8
-        auto entrypoint = *argidx(stack,idxEntrypoint); // r9
+        auto descriptor = *argidx(stack,idxDescriptor+1); // r8
+        auto entrypoint = *argidx(stack,idxEntrypoint+1); // r9
         auto em_address = *(uintptr_t*)descriptor;
         if(!entrypoint)return;
         jitaddraddr(em_address,entrypoint,JITTYPE::YUZU);

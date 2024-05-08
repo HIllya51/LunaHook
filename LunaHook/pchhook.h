@@ -19,7 +19,7 @@
 #include"Lang/Lang.h"
 #include"veh_hook.h"
 #include"engines/emujitarg.hpp"
-
+#include"engines/mono/monoil2cpp.hpp"
 #include "hookfinder.h"
 #include"util/textunion.h"
 #include"util/ntxpundef.h"

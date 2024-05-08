@@ -81,7 +81,8 @@ enum class JITTYPE{
     YUZU,
     PPSSPP,
 	VITA3K,
-	RPCS3
+	RPCS3,
+	UNITY
 };
 struct HookParam
 {
@@ -113,6 +114,7 @@ struct HookParam
 	ALIGNPTR(uint64_t __10,uintptr_t emu_addr);
 	int argidx;
 	JITTYPE jittype;
+	char unityfunctioninfo[1024];
 };
 
 struct ThreadParam
