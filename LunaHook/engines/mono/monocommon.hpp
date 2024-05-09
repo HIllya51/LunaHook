@@ -15,17 +15,13 @@ void mscorlib_system_string_InternalSubString_hook_fun(hook_stack* stack,  HookP
     *len = length * 2;
     
 }
-void mscorlib_system_string_hook_fun(hook_stack* stack,  HookParam *hp, uintptr_t *data, uintptr_t *split, size_t*len)
-{ 
-    commonsolvemonostring(stack->ARG1,data,len);
-}
 
 /** jichi 12/26/2014 Mono
  *  Sample game: [141226] ハ�レ�めいと
  */
 void SpecialHookMonoString(hook_stack* stack,  HookParam *hp, uintptr_t *data, uintptr_t *split, size_t*len)
 {
-  mscorlib_system_string_hook_fun(stack,hp,data,split,len);
+  commonsolvemonostring(stack->ARG1,data,len);
 
   #ifndef _WIN64
   auto s = stack->ecx;
