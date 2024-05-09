@@ -88,6 +88,9 @@ namespace
 		case L'Q':
 			hp.type |= USING_STRING | CODEC_UTF16;
 			break;
+		case L'M':
+			hp.type |=SPECIAL_JIT_STRING|USING_STRING|CODEC_UTF16;
+			break;
 		case L'U':
 			hp.type |= USING_STRING | CODEC_UTF32;
 			break;
@@ -299,7 +302,9 @@ namespace
 		
 		if(hp.type & USING_STRING)
 		{
-			if(hp.type&CODEC_UTF16)
+			if(hp.type&SPECIAL_JIT_STRING)
+				HCode+=L'M';
+			else if(hp.type&CODEC_UTF16)
 				HCode += L'Q';
 			else if(hp.type&CODEC_UTF8)
 				HCode += L'V';

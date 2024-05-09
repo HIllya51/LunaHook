@@ -175,7 +175,7 @@ bool NewHook_1(HookParam& hp, LPCSTR lpname)
 		return false;
 	}
 	if (lpname && *lpname) strncpy_s(hp.name, lpname, HOOK_NAME_SIZE - 1);
-	ConsoleOutput(INSERTING_HOOK, hp.name);
+	ConsoleOutput(INSERTING_HOOK, hp.name,hp.address);
 
 	wcscpy_s(hp.hookcode,HOOKCODE_LEN,HookCode::Generate(hp, GetCurrentProcessId()).c_str());
 	if (!(*hooks)[currentHook].Insert(hp))
@@ -193,7 +193,7 @@ static std::mutex delayinsertlock;
 void delayinsertadd(HookParam hp,std::string name){
 	std::lock_guard _(maplock);
 	delayinserthook[hp.emu_addr]={name,hp};
-	ConsoleOutput(INSERTING_HOOK, name.c_str());
+	ConsoleOutput(INSERTING_HOOK, name.c_str(),hp.emu_addr);
 }
 void delayinsertNewHook(uintptr_t em_address){
 	if(delayinserthook.find(em_address)==delayinserthook.end())return;

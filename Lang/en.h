@@ -5,7 +5,7 @@
 #define INJECT_FAILED L"couldn't inject" 
 #define INVALID_CODEPAGE L"couldn't convert text (invalid codepage?)" 
 #define PIPE_CONNECTED u8"pipe connected" 
-#define INSERTING_HOOK u8"inserting hook: %s" 
+#define INSERTING_HOOK u8"inserting hook: %s %p" 
 #define REMOVING_HOOK u8"removing hook: %s" 
 #define TOO_MANY_HOOKS u8"too many hooks: can't insert" 
 #define HOOK_SEARCH_STARTING u8"starting hook search" 

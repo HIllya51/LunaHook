@@ -98,6 +98,7 @@ namespace monocommon{
         hp.argidx=hook.argidx;
         hp.type = USING_STRING | CODEC_UTF16|FULL_STRING;
         hp.text_fun =(decltype(hp.text_fun))hook.text_fun;
+        if(!hp.text_fun)hp.type|=SPECIAL_JIT_STRING;
         hp.jittype=JITTYPE::UNITY;
         strcpy(hp.unityfunctioninfo,hook.info().c_str());
         if(hook.Embed)

@@ -38,6 +38,8 @@ enum HookParamType : uint64_t
 
   USING_CHAR =0x2000000,//text_fun!=nullptr && (CODE_ANSI_BE||CODE_UTF16)
 	USING_STRING = 0x1,
+
+  SPECIAL_JIT_STRING=0x10000000,
   
 	DATA_INDIRECT = 0x8,
 	USING_SPLIT = 0x10, // use ctx2 or not

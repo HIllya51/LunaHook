@@ -201,6 +201,10 @@ void TextHook::Send(uintptr_t lpDataBase)
 			lpDataIn=jitgetaddr(stack,&hp);
 			plpdatain=(uintptr_t)&lpDataIn;
 		}
+		else if(hp.jittype==JITTYPE::UNITY){
+			plpdatain=(uintptr_t)argidx(stack,hp.argidx);
+			lpDataIn=*(uintptr_t*)plpdatain;
+		}
 
 		auto use_custom_embed_fun=(hp.type&EMBED_ABLE)&&!(hp.type&EMBED_BEFORE_SIMPLE);
 		if(use_custom_embed_fun)
@@ -214,15 +218,10 @@ void TextHook::Send(uintptr_t lpDataBase)
 			isstring=true;
 			hp.text_fun(stack, &hp, &lpDataIn, &lpSplit, &lpCount);
 		}
-		else if(hp.jittype==JITTYPE::UNITY)
+		else if(hp.type&SPECIAL_JIT_STRING)
 		{
-			auto ptr=*argidx(stack,hp.argidx);
-			if(hp.type&USING_STRING)
-				commonsolvemonostring(ptr,&lpDataIn,&lpCount);
-			else{
-				lpDataIn=(wchar_t)ptr;
-				lpCount=2;
-			}
+			if(hp.jittype==JITTYPE::UNITY)
+				commonsolvemonostring(lpDataIn,&lpDataIn,&lpCount);
 		}
 		else 
 		{
@@ -306,7 +305,8 @@ void TextHook::Send(uintptr_t lpDataBase)
 				}
 				else if(hp.hook_after)
 					hp.hook_after(stack,pbData,lpCount);
-				else if(hp.jittype==JITTYPE::UNITY){
+				else if(hp.type&SPECIAL_JIT_STRING){
+					if(hp.jittype==JITTYPE::UNITY)
 					unity_ui_string_hook_after(argidx(stack,hp.argidx),pbData,lpCount);
 				}
 			}

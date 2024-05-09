@@ -5,7 +5,7 @@
 #define INJECT_FAILED L"注入失败" 
 #define INVALID_CODEPAGE L"无法转换文本 (无效的代码页?)" 
 #define PIPE_CONNECTED u8"管道已连接" 
-#define INSERTING_HOOK u8"注入钩子: %s" 
+#define INSERTING_HOOK u8"注入钩子: %s %p" 
 #define REMOVING_HOOK u8"移除钩子: %s" 
 #define TOO_MANY_HOOKS u8"钩子数量已达上限: 无法注入" 
 #define HOOK_SEARCH_STARTING u8"开始搜索钩子" 
