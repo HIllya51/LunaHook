@@ -216,7 +216,13 @@ void TextHook::Send(uintptr_t lpDataBase)
 		}
 		else if(hp.jittype==JITTYPE::UNITY)
 		{
-			commonsolvemonostring(*argidx(stack,hp.argidx),&lpDataIn,&lpCount);
+			auto ptr=*argidx(stack,hp.argidx);
+			if(hp.type&USING_STRING)
+				commonsolvemonostring(ptr,&lpDataIn,&lpCount);
+			else{
+				lpDataIn=(wchar_t)ptr;
+				lpCount=2;
+			}
 		}
 		else 
 		{
