@@ -121,15 +121,15 @@ namespace il2cpp_symbols
 		}
 		return maybes;
 	}
-	struct AuthThread{
+	struct AutoThread{
 		void*thread=NULL;
-		AuthThread(){
+		AutoThread(){
 			if(!(il2cpp_thread_attach&&il2cpp_domain_get))return;
 			auto il2cpp_domain=il2cpp_domain_get();
 			if (!il2cpp_domain) return;
 			thread= il2cpp_thread_attach(il2cpp_domain);
 		}
-		~AuthThread(){
+		~AutoThread(){
 			if(!thread)return;
 			if(!il2cpp_thread_detach)return;
 			il2cpp_thread_detach(thread);
@@ -145,7 +145,7 @@ namespace il2cpp_symbols
 	uintptr_t get_method_pointer(const char* assemblyName, const char* namespaze,
 								 const char* klassName, const char* name, int argsCount)
 	{
-		auto thread=AuthThread();
+		auto thread=AutoThread();
 		if(!thread.thread)return NULL;
 
 		auto klass=get_il2cppclass1(assemblyName,namespaze,klassName);//正向查询，assemblyName可以为空

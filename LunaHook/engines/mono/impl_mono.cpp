@@ -520,9 +520,6 @@ std::vector<MonoClass*> mono_findklassby_class(std::vector<MonoImage*>& images,c
     }
     return maybes;
 }
-MonoThread* tryattach(){
-    
-}
 uintptr_t getmethodofklass(MonoClass* klass,const char* name, int argsCount){
     if(!(mono_class_get_method_from_name&&mono_compile_method))return NULL;
     if(!klass)return NULL;
@@ -530,15 +527,15 @@ uintptr_t getmethodofklass(MonoClass* klass,const char* name, int argsCount){
     if(!MonoClassMethod)return NULL;
 	return (uintptr_t)mono_compile_method((uintptr_t)MonoClassMethod);
 }
-struct AuthThread{
+struct AutoThread{
     MonoThread *thread=NULL;
-    AuthThread(){
+    AutoThread(){
         if(!(mono_get_root_domain&&mono_thread_attach))return ;
         auto _root=mono_get_root_domain();
         if(!_root)return ;
         thread= mono_thread_attach(_root);
     }
-    ~AuthThread(){
+    ~AutoThread(){
         if(!thread)return;
         if(!mono_thread_detach)return;
         mono_thread_detach(thread);
@@ -546,7 +543,7 @@ struct AuthThread{
 };
 }
 uintptr_t getmonofunctionptr(const char *_dll, const char *_namespace, const char *_class, const char *_method, int paramCount) {
-    auto thread=AuthThread();
+    auto thread=AutoThread();
 	if(!thread.thread)return NULL;
 
     auto images=mono_loop_images();
