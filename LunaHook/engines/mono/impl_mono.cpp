@@ -512,7 +512,7 @@ std::vector<MonoClass*> mono_findklassby_class(std::vector<MonoImage*>& images,c
 			maybes.push_back(klass);
 			if(mono_class_get_namespace){
 				auto namespacename=mono_class_get_namespace(klass);
-				if(strcmp(namespacename,_namespace)==0){
+				if(strlen(_namespace)&&(strcmp(namespacename,_namespace)==0)){
 					return {klass};
 				}
 			}

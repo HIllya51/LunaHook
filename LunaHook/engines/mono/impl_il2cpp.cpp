@@ -114,7 +114,7 @@ namespace il2cpp_symbols
 			maybes.push_back(klass);
 			if(il2cpp_class_get_namespace){
 				auto namespacename=il2cpp_class_get_namespace(klass);
-				if(strcmp(namespacename,namespaze)==0){
+				if(strlen(namespaze)&&(strcmp(namespacename,namespaze)==0)){
 					return {klass};
 				}
 			}
