@@ -120,7 +120,6 @@ namespace monocommon{
         {"mscorlib","System","String","Replace",2,1,nullptr,false},
         {"mscorlib","System","String","ToString",0,1,nullptr,false},
         {"mscorlib","System","String","IndexOf",1,1,nullptr,false},
-        {"mscorlib","System","String","Substring",1,1,nullptr,false},
         {"mscorlib","System","String","Substring",2,1,nullptr,false},
         {"mscorlib","System","String","op_Inequality",2,1,0,false},
         {"mscorlib","System","String","InternalSubString",2,99999,mscorlib_system_string_InternalSubString_hook_fun,false},
