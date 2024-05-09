@@ -14,6 +14,7 @@
 #include"engine32/FrontWing.h"
 #include"engine32/GSX.h"
 #include"engine32/pchooks.h"
+#include"engine32/mirage.h"
 #include"engine32/Sprite.h"
 #include"engine32/PONScripter.h"
 #include"engine32/Ruf.h"
@@ -324,7 +325,8 @@ std::vector<ENGINE*> check_engines(){
         new solfasys,
         new FrontWing,
         new tamasoft,
-        new CisLugI
+        new CisLugI,
+        new mirage
     };
      
 }
