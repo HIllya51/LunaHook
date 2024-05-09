@@ -207,10 +207,16 @@ bool NewHook(HookParam hp, LPCSTR name){
 		return NewHook_1(hp,name);
 	if(hp.jittype==JITTYPE::UNITY){
 		auto spls=strSplit(hp.unityfunctioninfo,":");
+		if(spls.size()!=5){
+			ConsoleOutput("invalid");
+			return false;
+		}
 		hp.address = tryfindmonoil2cpp(spls[0].c_str(),spls[1].c_str() ,spls[2].c_str(),spls[3].c_str(),std::stoi(spls[4]));
 		
-		if(!hp.address)
+		if(!hp.address){
+			ConsoleOutput("not find");
 			return false;
+		}
 		return NewHook_1(hp,name);
 	}
 	//下面的是手动插入

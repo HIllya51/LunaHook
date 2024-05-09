@@ -168,6 +168,7 @@ namespace
 		if(hp.jittype==JITTYPE::UNITY){
 			if(HCode[0]!=L'@')return {};
 			HCode.erase(0,1);
+			HCode=HCode.substr(0,HCode.size()-wcslen(L":JIT:UNITY"));
 			hp.argidx=hp.offset;
 			hp.offset=0;
 			hp.address=0;
