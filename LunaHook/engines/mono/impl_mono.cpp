@@ -520,11 +520,18 @@ std::vector<MonoClass*> mono_findklassby_class(std::vector<MonoImage*>& images,c
     }
     return maybes;
 }
+void tryprintimage(MonoClass* klass){
+    if(!(mono_class_get_image&&mono_image_get_name&&mono_class_get_namespace))return;
+    auto image=mono_class_get_image(klass);
+    if(!image)return;
+    ConsoleOutput("%s:%s",mono_image_get_name(image),mono_class_get_namespace(klass));
+}
 uintptr_t getmethodofklass(MonoClass* klass,const char* name, int argsCount){
     if(!(mono_class_get_method_from_name&&mono_compile_method))return NULL;
     if(!klass)return NULL;
     MonoMethod* MonoClassMethod = mono_class_get_method_from_name(klass, name, argsCount);
     if(!MonoClassMethod)return NULL;
+    tryprintimage(klass);
 	return (uintptr_t)mono_compile_method((uintptr_t)MonoClassMethod);
 }
 struct AutoThread{

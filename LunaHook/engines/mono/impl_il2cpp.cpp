@@ -28,14 +28,16 @@ il2cpp_runtime_invoke_t il2cpp_runtime_invoke;
 il2cpp_class_get_name_t il2cpp_class_get_name;
 il2cpp_class_get_namespace_t il2cpp_class_get_namespace;
 il2cpp_domain_get_assemblies_t il2cpp_domain_get_assemblies;
-
-
+il2cpp_class_get_image_t il2cpp_class_get_image;
+il2cpp_image_get_name_t il2cpp_image_get_name;
 namespace il2cpp_symbols
 {
 #define RESOLVE_IMPORT(name) name = reinterpret_cast<name##_t>(GetProcAddress(game_module, #name))
 
 	void init(HMODULE game_module)
 	{
+		RESOLVE_IMPORT(il2cpp_image_get_name);
+		RESOLVE_IMPORT(il2cpp_class_get_image);
 		RESOLVE_IMPORT(il2cpp_string_new_utf16);
 		RESOLVE_IMPORT(il2cpp_string_new);
 		RESOLVE_IMPORT(il2cpp_domain_get);
@@ -135,11 +137,18 @@ namespace il2cpp_symbols
 			il2cpp_thread_detach(thread);
 		}
 	};
+	void tryprintimage(Il2CppClass* klass){
+		if(!(il2cpp_class_get_namespace&&il2cpp_class_get_image&&il2cpp_image_get_name))return;
+		auto image=il2cpp_class_get_image(klass);
+		if(!image)return;
+		ConsoleOutput("%s:%s",il2cpp_image_get_name(image),il2cpp_class_get_namespace(klass));
+	}
 	uintptr_t getmethodofklass(Il2CppClass* klass,const char* name, int argsCount){
 		if(!(il2cpp_class_get_method_from_name))return NULL;
 		if(!klass)return NULL;
 		auto ret = il2cpp_class_get_method_from_name(klass, name, argsCount);
 		if(!ret)return NULL;
+		tryprintimage(klass);
 		return ret->methodPointer;
 	}
 	uintptr_t get_method_pointer(const char* assemblyName, const char* namespaze,

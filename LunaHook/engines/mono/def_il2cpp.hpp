@@ -527,6 +527,7 @@ typedef const char* (*il2cpp_method_get_param_name_t)(const MethodInfo* method, 
 typedef Il2CppClass* (*il2cpp_class_get_parent_t)(Il2CppClass* klass);
 typedef Il2CppClass* (*il2cpp_class_get_interfaces_t)(Il2CppClass* klass, void** iter);
 typedef const char* (*il2cpp_class_get_namespace_t)(Il2CppClass* klass);
+typedef void* (*il2cpp_class_get_image_t)(Il2CppClass* klass);
 typedef int (*il2cpp_class_get_flags_t)(const Il2CppClass* klass);
 typedef bool (*il2cpp_class_is_valuetype_t)(const Il2CppClass* klass);
 typedef uint32_t(*il2cpp_property_get_flags_t) (PropertyInfo* prop);
