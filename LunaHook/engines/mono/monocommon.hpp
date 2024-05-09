@@ -131,7 +131,7 @@ namespace monocommon{
         {"UnityEngine.UIElementsModule","UnityEngine.UIElements","TextField","set_value",1,2,nullptr,true},
         {"UnityEngine.TextRenderingModule","UnityEngine","GUIText","set_text",1,2,nullptr,true},    
         {"UnityEngine.TextRenderingModule","UnityEngine","TextMesh","set_text",1,2,nullptr,true},    
-        
+        {"UGUI","","UILabel","set_text",1,2,nullptr,true},
     };
     bool hook_mono_il2cpp(){
         for (const wchar_t* monoName : { L"mono.dll", L"mono-2.0-bdwgc.dll",L"GameAssembly.dll" }) 
