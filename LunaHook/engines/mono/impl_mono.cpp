@@ -230,9 +230,12 @@ mono_profiler_install_allocation_t mono_profiler_install_allocation = nullptr;
 mono_profiler_install_jit_end_t mono_profiler_install_jit_end = nullptr;
 mono_profiler_install_exception_t mono_profiler_install_exception = nullptr;
 mono_profiler_install_thread_t mono_profiler_install_thread = nullptr;
-
+mono_image_get_table_info_t mono_image_get_table_info=nullptr;
+mono_table_info_get_rows_t mono_table_info_get_rows=nullptr;
 void load_mono_functions_from_dll(HMODULE dll)
 {
+    mono_table_info_get_rows=(mono_table_info_get_rows_t)(GetProcAddress(dll, "mono_table_info_get_rows"));
+    mono_image_get_table_info=(mono_image_get_table_info_t)(GetProcAddress(dll, "mono_image_get_table_info"));
     mono_compile_method=(mono_compile_method_t)(GetProcAddress(dll, "mono_compile_method"));
     mono_thread_suspend_all_other_threads = (mono_thread_suspend_all_other_threads_t)(GetProcAddress(dll, "mono_thread_suspend_all_other_threads"));
     mono_thread_pool_cleanup = (mono_thread_pool_cleanup_t)(GetProcAddress(dll, "mono_thread_pool_cleanup"));
@@ -464,65 +467,97 @@ void load_mono_functions_from_dll(HMODULE dll)
     mono_profiler_install_exception = (mono_profiler_install_exception_t)(GetProcAddress(dll, "mono_profiler_install_exception"));
     mono_profiler_install_thread = (mono_profiler_install_thread_t)(GetProcAddress(dll, "mono_profiler_install_thread"));
 }
-struct callbackstruct{
-    const char* _dll;
-    const char* _namespace;
-    const char* _class;
-    bool goodmatch;
-    MonoImage* Image;
-    MonoClass* klass;
-};
-static void MonoCallBack(void* assembly, void* userData) {
+namespace{
+void MonoCallBack(void* assembly, void* userData) {
     auto Image=mono_assembly_get_image((MonoAssembly*)assembly);
     if(!Image)return;
-    auto st=reinterpret_cast<callbackstruct*>(userData);
-    if(st->goodmatch)return;
-    if(mono_image_get_name){
-        auto name=mono_image_get_name(Image);
-        if(strcmp(st->_dll,name)==0){
-            st->Image=Image;
-            st->goodmatch=true;
-            st->klass=mono_class_from_name(Image, st->_namespace,st->_class);
-            return;
+    auto st=reinterpret_cast<std::vector<MonoImage*>*>(userData);
+    st->push_back(Image);
+}
+std::vector<MonoImage*>mono_loop_images(){
+    if(!(mono_assembly_get_image&&mono_assembly_foreach))return {};
+    std::vector<MonoImage*>images;
+    mono_assembly_foreach(MonoCallBack,(void*)&images);
+    return images;
+}
+MonoClass* mono_findklassby_ass_namespace(std::vector<MonoImage*>& images,const char *_dll, const char *_namespace,const char *_class){
+    if(!(mono_class_from_name))return NULL;
+    MonoClass* maybe=NULL;
+
+    for(auto Image:images){
+        auto tmp=mono_class_from_name(Image, _namespace,_class);
+        if(tmp){
+            maybe=tmp;
+            if(mono_image_get_name){
+                auto name=mono_image_get_name(Image);
+                if(name&&(strcmp(_dll,name)==0))return tmp;
+            }
         }
     }
-    
-    if(!st->klass)
-    {
-        auto mono_class=mono_class_from_name(Image,st->_namespace,st->_class);
-        if(mono_class)
-            st->klass=mono_class;
-    }
-
+    return maybe;
 }
-// Function to invoke a dll method in a mono application
-uintptr_t getmonofunctionptr(const char *_dll, const char *_namespace, const char *_class, const char *_method, int paramCount) {
-	if(!(mono_thread_attach&&mono_class_from_name&&mono_class_get_method_from_name&&mono_assembly_foreach&&mono_get_root_domain&&mono_compile_method))return NULL;
-    mono_thread_attach(mono_get_root_domain());
+std::vector<MonoClass*> mono_findklassby_class(std::vector<MonoImage*>& images,const char *_namespace,const char *_class){
+    if(!(mono_image_get_table_info&&mono_table_info_get_rows&&mono_class_get&&mono_class_get_name))return {};
     
-    callbackstruct st;
-    st.Image=NULL;
-    st.klass=NULL;
-    st._dll=_dll;
-    st._namespace=_namespace;
-    st._class=_class;
-    st.goodmatch=false;
-    mono_assembly_foreach(MonoCallBack,(void*)&st);
+    std::vector<MonoClass*>maybes;
+    for(auto image:images){
+        auto _1=mono_image_get_table_info((void*)image,MONO_TABLE_TYPEDEF);
+        auto tdefcount=mono_table_info_get_rows(_1);
+        for (int i = 0; i < tdefcount; i++)
+        {		
+            auto klass = (MonoClass*)mono_class_get(image, MONO_TOKEN_TYPE_DEF | i+1);
+            
+            auto name=mono_class_get_name(klass);
+            if(strcmp(name,_class)!=0)continue;
+			maybes.push_back(klass);
+			if(mono_class_get_namespace){
+				auto namespacename=mono_class_get_namespace(klass);
+				if(strcmp(namespacename,_namespace)==0){
+					return {klass};
+				}
+			}
+        }
+    }
+    return maybes;
+}
+MonoThread* tryattach(){
     
-    #if 0
-	MonoDomain* domain = mono_get_root_domain();
-    if(!domain)return NULL;
-	//Opening a custom assembly in the domain.
-	MonoAssembly* domainassembly = mono_domain_assembly_open(domain, _dll);
-    if(!domainassembly)return NULL;
-	//Getting the assembly's Image(Binary image, essentially a file-module).
-	MonoImage* Image = mono_assembly_get_image(domainassembly);
-    #endif
-    
-    auto pClass=st.klass;
-    if(!pClass)return NULL;
-	//Declaring the method, that attaches our assembly to the game. (Class, MethodName, Parameters)
-	MonoMethod* MonoClassMethod = mono_class_get_method_from_name(pClass, _method, paramCount);
+}
+uintptr_t getmethodofklass(MonoClass* klass,const char* name, int argsCount){
+    if(!(mono_class_get_method_from_name&&mono_compile_method))return NULL;
+    if(!klass)return NULL;
+    MonoMethod* MonoClassMethod = mono_class_get_method_from_name(klass, name, argsCount);
     if(!MonoClassMethod)return NULL;
 	return (uintptr_t)mono_compile_method((uintptr_t)MonoClassMethod);
+}
+struct AuthThread{
+    MonoThread *thread=NULL;
+    AuthThread(){
+        if(!(mono_get_root_domain&&mono_thread_attach))return ;
+        auto _root=mono_get_root_domain();
+        if(!_root)return ;
+        thread= mono_thread_attach(_root);
+    }
+    ~AuthThread(){
+        if(!thread)return;
+        if(!mono_thread_detach)return;
+        mono_thread_detach(thread);
+    }
+};
+}
+uintptr_t getmonofunctionptr(const char *_dll, const char *_namespace, const char *_class, const char *_method, int paramCount) {
+    auto thread=AuthThread();
+	if(!thread.thread)return NULL;
+
+    auto images=mono_loop_images();
+
+    auto pClass=mono_findklassby_ass_namespace(images,_dll,_namespace,_class);//dll可以为空
+    if(pClass)
+			return getmethodofklass(pClass,_method,paramCount);
+    auto klasses=mono_findklassby_class(images,_namespace,_class);//namespace可以为空
+    for(auto klass:klasses){
+        auto method= getmethodofklass(klass,_method,paramCount);
+        if(method)return method;
+    }
+    return NULL;
 }

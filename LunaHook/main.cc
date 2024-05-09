@@ -207,9 +207,8 @@ bool NewHook(HookParam hp, LPCSTR name){
 		return NewHook_1(hp,name);
 	if(hp.jittype==JITTYPE::UNITY){
 		auto spls=strSplit(hp.unityfunctioninfo,":");
-		hp.address = il2cpp_symbols::get_method_pointer(spls[0].c_str(),spls[1].c_str() ,spls[2].c_str(),spls[3].c_str(),std::stoi(spls[4]));
-		if(!hp.address)
-			hp.address=getmonofunctionptr(spls[0].c_str(),spls[1].c_str() ,spls[2].c_str(),spls[3].c_str(),std::stoi(spls[4]));
+		hp.address = tryfindmonoil2cpp(spls[0].c_str(),spls[1].c_str() ,spls[2].c_str(),spls[3].c_str(),std::stoi(spls[4]));
+		
 		if(!hp.address)
 			return false;
 		return NewHook_1(hp,name);

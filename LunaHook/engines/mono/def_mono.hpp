@@ -401,3 +401,6 @@ typedef void (*mono_profiler_install_jit_end_t)(MonoProfileJitResult end);
 typedef void (*mono_profiler_install_exception_t)(MonoProfileExceptionFunc throw_callback, MonoProfileMethodFunc exc_method_leave, MonoProfileExceptionClauseFunc clause_callback);
 typedef void (*mono_profiler_install_thread_t)(MonoProfileThreadFunc start, MonoProfileThreadFunc end);
 typedef uint64_t* (*mono_compile_method_t)(uintptr_t);
+
+typedef void*(*mono_image_get_table_info_t)(void*,uint32_t);
+typedef int (*mono_table_info_get_rows_t)(void*);

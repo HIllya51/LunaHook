@@ -28,10 +28,7 @@ il2cpp_runtime_invoke_t il2cpp_runtime_invoke;
 il2cpp_class_get_name_t il2cpp_class_get_name;
 il2cpp_class_get_namespace_t il2cpp_class_get_namespace;
 il2cpp_domain_get_assemblies_t il2cpp_domain_get_assemblies;
-char* il2cpp_array_addr_with_size(void* array, int32_t size, uintptr_t idx)
-{
-	return ((char*)array) + kIl2CppSizeOfArray + size * idx;
-}
+
 
 namespace il2cpp_symbols
 {
@@ -72,10 +69,7 @@ namespace il2cpp_symbols
 	Il2CppClass* get_il2cppclass1(const char* assemblyName, const char* namespaze,
 								 const char* klassName)
 	{
-		if(!(il2cpp_thread_attach&&il2cpp_domain_get&&il2cpp_assembly_get_image&&il2cpp_class_from_name))return NULL;
-		auto il2cpp_domain=il2cpp_domain_get();
-		if (!il2cpp_domain) return NULL; 
-		il2cpp_thread_attach(il2cpp_domain);
+		if(!(il2cpp_assembly_get_image&&il2cpp_class_from_name))return NULL;
 		void* assembly=0;
 		if(il2cpp_domain_assembly_open){
 		do{
@@ -101,41 +95,67 @@ namespace il2cpp_symbols
 		return NULL;
 		 
 	}
-	struct callbackstruct{
-		const char* classname;
-		const char* namespacename;
-		Il2CppClass* klass;
-	};
 	void foreach_func(Il2CppClass* klass, void* userData){
-		auto st=(callbackstruct*)userData;		
-        auto classname = il2cpp_class_get_name(klass);
-        auto namespacename=il2cpp_class_get_namespace(klass);
-        if(strcmp(classname,st->classname)==0&&strcmp(namespacename,st->namespacename)==0)
-			st->klass=klass;
+		auto st=(std::vector<Il2CppClass*>*)userData;
+		st->push_back(klass);
+		
 	}
-	Il2CppClass* get_il2cppclass2(const char* namespaze,
+	std::vector<Il2CppClass*> get_il2cppclass2(const char* namespaze,
 								 const char* klassName)
 	{
-		if(!(il2cpp_class_for_each&&il2cpp_class_get_name&&il2cpp_class_get_namespace))return NULL;
-		callbackstruct st;
-		st.klass=NULL;
-		st.classname=klassName;
-		st.namespacename=namespaze;
-		il2cpp_class_for_each(foreach_func,&st);
+		if(!(il2cpp_class_for_each&&il2cpp_class_get_name))return {};
+		std::vector<Il2CppClass*>maybes;
+		std::vector<Il2CppClass*>klasses;
+		il2cpp_class_for_each(foreach_func,&klasses);
 		
-		return st.klass;
+		for(auto klass:klasses){
+			auto classname = il2cpp_class_get_name(klass);
+			if(strcmp(classname,klassName)!=0)continue;
+			maybes.push_back(klass);
+			if(il2cpp_class_get_namespace){
+				auto namespacename=il2cpp_class_get_namespace(klass);
+				if(strcmp(namespacename,namespaze)==0){
+					return {klass};
+				}
+			}
+		}
+		return maybes;
+	}
+	struct AuthThread{
+		void*thread=NULL;
+		AuthThread(){
+			if(!(il2cpp_thread_attach&&il2cpp_domain_get))return;
+			auto il2cpp_domain=il2cpp_domain_get();
+			if (!il2cpp_domain) return;
+			thread= il2cpp_thread_attach(il2cpp_domain);
+		}
+		~AuthThread(){
+			if(!thread)return;
+			if(!il2cpp_thread_detach)return;
+			il2cpp_thread_detach(thread);
+		}
+	};
+	uintptr_t getmethodofklass(Il2CppClass* klass,const char* name, int argsCount){
+		if(!(il2cpp_class_get_method_from_name))return NULL;
+		if(!klass)return NULL;
+		auto ret = il2cpp_class_get_method_from_name(klass, name, argsCount);
+		if(!ret)return NULL;
+		return ret->methodPointer;
 	}
 	uintptr_t get_method_pointer(const char* assemblyName, const char* namespaze,
 								 const char* klassName, const char* name, int argsCount)
 	{
-		if(!il2cpp_class_get_method_from_name)return NULL;
-		auto klass=get_il2cppclass1(assemblyName,namespaze,klassName);
-		if (!klass)
-			klass=get_il2cppclass2(namespaze,klassName);
-		if (!klass)
-			return NULL;
-		auto ret = il2cpp_class_get_method_from_name(klass, name, argsCount);
-		if (ret)  return ret->methodPointer; 
+		auto thread=AuthThread();
+		if(!thread.thread)return NULL;
+
+		auto klass=get_il2cppclass1(assemblyName,namespaze,klassName);//正向查询，assemblyName可以为空
+		if(klass)
+			return getmethodofklass(klass,name,argsCount);
+		auto klasses=get_il2cppclass2(namespaze,klassName);//反向查询，namespace可以为空
+		for(auto klass:klasses){
+			auto method= getmethodofklass(klass,name,argsCount);
+			if(method)return method;
+		}
 		return NULL;
 	}
 }

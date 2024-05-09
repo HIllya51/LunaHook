@@ -33,3 +33,10 @@ namespace il2cpp_symbols
 void load_mono_functions_from_dll(HMODULE dll);
 
 uintptr_t getmonofunctionptr(const char *_dll, const char *_namespace, const char *_class, const char *_method, int paramCount);
+
+
+inline uintptr_t tryfindmonoil2cpp(const char *_dll, const char *_namespace, const char *_class, const char *_method, int paramCoun){
+    auto addr=il2cpp_symbols::get_method_pointer(_dll,_namespace,_class,_method,paramCoun);
+    if(addr)return addr;
+    return getmonofunctionptr(_dll,_namespace,_class,_method,paramCoun);
+}

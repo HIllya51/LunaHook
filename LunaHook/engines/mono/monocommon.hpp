@@ -133,35 +133,19 @@ namespace monocommon{
         {"UnityEngine.TextRenderingModule","UnityEngine","TextMesh","set_text",1,2,nullptr,true},    
         
     };
-    bool il2cpp() {
-        HMODULE module = GetModuleHandleW(L"GameAssembly.dll");
-        if (module == 0)return false;
-        il2cpp_symbols::init(module);
-        bool succ=false;
-        for(auto hook:commonhooks){
-            auto addr=il2cpp_symbols::get_method_pointer(hook.assemblyName,hook.namespaze,hook.klassName,hook.name,hook.argsCount);
-            //ConsoleOutput("%s %p",hook.name,addr-(uintptr_t)module);
-            if(!addr)continue;
-            succ|=NewHook_check(addr,hook);
-        }
-        return succ;
-    }
-    bool InsertMonoHooksByAssembly(HMODULE module){
-        load_mono_functions_from_dll(module);
-        bool succ=false;
-        for(auto hook:commonhooks){
-            auto addr=getmonofunctionptr(hook.assemblyName,hook.namespaze,hook.klassName,hook.name,hook.argsCount);
-            if(!addr)continue;
-            succ|=NewHook_check(addr,hook);
-        }
-        return succ;
-    }
-    bool hook_mono(){
+    bool hook_mono_il2cpp(){
         for (const wchar_t* monoName : { L"mono.dll", L"mono-2.0-bdwgc.dll",L"GameAssembly.dll" }) 
             if (HMODULE module = GetModuleHandleW(monoName)) {
-                bool b1=InsertMonoHooksByAssembly(module);
                 bool b2=monodllhook(module);
-                if(b1||b2)return true;
+                load_mono_functions_from_dll(module);
+                il2cpp_symbols::init(module);
+                bool succ=false;
+                for(auto hook:commonhooks){
+                    auto addr=tryfindmonoil2cpp(hook.assemblyName,hook.namespaze,hook.klassName,hook.name,hook.argsCount);
+                    if(!addr)continue;
+                    succ|=NewHook_check(addr,hook);
+                }
+                if(succ||b2)return true;
             }
         return false;
     }

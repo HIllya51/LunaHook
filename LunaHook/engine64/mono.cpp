@@ -77,8 +77,7 @@ _BYTE *__fastcall sub_18005B290(
   }  
 }
 bool mono::attach_function(){
-  bool il2=monocommon::il2cpp();
+  bool common=monocommon::hook_mono_il2cpp();
   bool bmonobdwgc=monobdwgc();
-  bool mono=monocommon::hook_mono();
-  return il2||bmonobdwgc||mono;
+  return common||bmonobdwgc;
 }
