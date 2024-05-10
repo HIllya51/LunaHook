@@ -79,7 +79,6 @@ public:
 };
 class LunaHost:public mainwindow{
     Pluginwindow* pluginwindow=0;
-    std::map<int64_t,std::vector<std::wstring>>savetext;
     std::set<DWORD>attachedprocess;
     std::mutex settextmutex;
     lineedit* g_hEdit_userhook;

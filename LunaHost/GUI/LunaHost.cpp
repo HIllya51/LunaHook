@@ -215,12 +215,10 @@ LunaHost::LunaHost(){
     g_hListBox_listtext->oncurrentchange=[&](int idx){
         uint64_t handle = g_hListBox_listtext->getdata(idx);
         std::wstring get;
-        for(auto& _:savetext.at(handle)){
-            get+=_;
-            get+=L"\n";
-        }
         currentselect=handle;
-        showtext(get,true);
+        std::wstring copy=Host::GetThread(handle)->storage->c_str();
+        strReplace(copy,L"\n",L"\r\n");
+        showtext(copy,true);
     };
     g_hListBox_listtext->on_menu=[&]()->maybehavemenu{
         auto handle = g_hListBox_listtext->getdata(g_hListBox_listtext->currentidx());
@@ -403,10 +401,10 @@ bool LunaHost::on_text_recv(TextThread& thread, std::wstring& output){
 
     updatelisttext(output,thread.handle);
             
-    savetext.at(thread.handle).push_back(output);
     if(currentselect==thread.handle){ 
         showtext(output,false);
     }
+    output+=L'\n';
     return true;
 }
 void LunaHost::on_thread_create(TextThread& thread){
@@ -418,7 +416,6 @@ void LunaHost::on_thread_create(TextThread& thread){
         thread.tp.ctx,
         thread.tp.ctx2
     );
-    savetext.insert({thread.handle,{}});
     int index=g_hListBox_listtext->additem(buff,NULL); 
     g_hListBox_listtext->setdata(index,thread.handle);
 }

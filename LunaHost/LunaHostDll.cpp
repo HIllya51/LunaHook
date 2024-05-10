@@ -44,6 +44,7 @@ C_LUNA_API void Luna_Start(ProcessEvent Connect, ProcessEvent Disconnect, Thread
         {
             XXXX
             Output(hookcode, name, thread.tp, output.c_str());
+            output+=L'\n';
             return true;
         },
         [=](std::wstring &output)
@@ -72,12 +73,13 @@ C_LUNA_API void Luna_Detach(DWORD pid)
     Host::DetachProcess(pid);
 }
 
-C_LUNA_API void Luna_Settings(int flushDelay, bool filterRepetition, int defaultCodepage, int maxBufferSize)
+C_LUNA_API void Luna_Settings(int flushDelay, bool filterRepetition, int defaultCodepage, int maxBufferSize, int maxHistorySize)
 {
     TextThread::flushDelay = flushDelay;
     TextThread::filterRepetition = filterRepetition;
     Host::defaultCodepage = defaultCodepage;
     TextThread::maxBufferSize = maxBufferSize;
+    TextThread::maxHistorySize=maxHistorySize;
 }
 
 C_LUNA_API bool Luna_InsertHookCode(DWORD pid, LPCWSTR hookcode)
@@ -87,7 +89,15 @@ C_LUNA_API bool Luna_InsertHookCode(DWORD pid, LPCWSTR hookcode)
         Host::InsertHook(pid, hp.value());
     return hp.has_value();
 }
-
+C_LUNA_API wchar_t* Luna_QueryThreadHistory(ThreadParam tp){
+    auto s=Host::GetThread(tp).storage.Acquire();
+    auto str=(wchar_t*)malloc(sizeof(wchar_t)*(s->size()+1));
+    wcscpy(str,s->c_str());
+    return str;
+}
+C_LUNA_API void Luna_FreePtr(void* ptr){
+    free(ptr);
+}
 C_LUNA_API void Luna_RemoveHook(DWORD pid, uint64_t addr)
 {
     Host::RemoveHook(pid, addr);
