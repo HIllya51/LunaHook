@@ -25,72 +25,86 @@ enum HostNotificationType {
   HOST_NOTIFICATION_INSERTING_HOOK,
   HOST_SETTEXTTHREADTYPE
 };
+#define NEXT_MASK(x)         \
+    DUMMY1_##x,              \
+    x = (1U << (DUMMY1_##x)), \
+    DUMMY2_##x = DUMMY1_##x
+#define DECLARE_VALUE( x,v) \
+    DUMMY1_##x,\
+    x=v,\
+    DUMMY2_##x=DUMMY1_##x-1
 
 enum HookParamType : uint64_t
 {
   //默认为CODEC_ANSI_LE&USING_CHAR
   //若使用了text_fun|hook_before，会改为默认USING_STRING，这时若其实是USING_CHAR，需标明USING_STRING
-  CODEC_ANSI_LE = 0,
-  CODEC_ANSI_BE = 0x4,
-	CODEC_UTF8 = 0x100,
-	CODEC_UTF16 = 0x2, 
-  CODEC_UTF32=0x1000000,
+  DECLARE_VALUE(CODEC_ANSI_LE,0),
+  NEXT_MASK(CODEC_ANSI_BE),
+	NEXT_MASK(CODEC_UTF8),
+	NEXT_MASK(CODEC_UTF16), 
+  NEXT_MASK(CODEC_UTF32),
 
-  USING_CHAR =0x2000000,//text_fun!=nullptr && (CODE_ANSI_BE||CODE_UTF16)
-	USING_STRING = 0x1,
-
-  SPECIAL_JIT_STRING=0x10000000,
+  NEXT_MASK(USING_CHAR),//text_fun!=nullptr && (CODE_ANSI_BE||CODE_UTF16)
+	NEXT_MASK(USING_STRING),
+  NEXT_MASK(SPECIAL_JIT_STRING),
   
-	DATA_INDIRECT = 0x8,
-	USING_SPLIT = 0x10, // use ctx2 or not
-	SPLIT_INDIRECT = 0x20,
-	MODULE_OFFSET = 0x40, // address is relative to module
-	FUNCTION_OFFSET = 0x80, // address is relative to function
-	NO_CONTEXT = 0x200,
-	HOOK_EMPTY = 0x400,
-	FIXING_SPLIT = 0x800,
-	DIRECT_READ = 0x1000, // /R read code instead of classic /H hook code
-	FULL_STRING = 0x2000,
-	KNOWN_UNSTABLE = 0x20000,
-	EMBED_ABLE=0x40000,
-	EMBED_DYNA_SJIS=0x80000,
-	EMBED_BEFORE_SIMPLE=0x200000,
-	EMBED_AFTER_NEW=0x400000,  
-	EMBED_AFTER_OVERWRITE=0x800000,
-  EMBED_CODEC_UTF16=0x4000000,
+	NEXT_MASK(FULL_STRING),
 
-  BREAK_POINT=0x8000000
+	NEXT_MASK(DATA_INDIRECT),
+	NEXT_MASK(USING_SPLIT), // use ctx2 or not
+	NEXT_MASK(SPLIT_INDIRECT),
+	NEXT_MASK(FIXING_SPLIT),
+	NEXT_MASK(NO_CONTEXT),
+
+	NEXT_MASK(MODULE_OFFSET), // address is relative to module
+	NEXT_MASK(FUNCTION_OFFSET), // address is relative to function
+
+	NEXT_MASK(KNOWN_UNSTABLE),
+
+	NEXT_MASK(EMBED_ABLE),
+	NEXT_MASK(EMBED_DYNA_SJIS),
+	NEXT_MASK(EMBED_BEFORE_SIMPLE),
+	NEXT_MASK(EMBED_AFTER_NEW),  
+	NEXT_MASK(EMBED_AFTER_OVERWRITE),
+  NEXT_MASK(EMBED_CODEC_UTF16),
+
+  DECLARE_VALUE(NORMAL_INLINEHOOK,0),
+  NEXT_MASK(BREAK_POINT),
+	NEXT_MASK(HOOK_EMPTY),
+	NEXT_MASK(DIRECT_READ), // /R read code instead of classic /H hook code
+  
 };
 
 
 enum HookFontType : unsigned
 {
-  F_CreateFontA=0x1,
-  F_CreateFontW=0x2,
-  F_CreateFontIndirectA=0x4,
-  F_CreateFontIndirectW=0x8,
-  F_GetGlyphOutlineA=0x10,
-  F_GetGlyphOutlineW=0x20,
-  F_GetTextExtentPoint32A=0x40,
-  F_GetTextExtentPoint32W=0x80,
-  F_GetTextExtentExPointA=0x100,
-  F_GetTextExtentExPointW=0x200,
+  DECLARE_VALUE(NOT_HOOK_FONT,0),
+  NEXT_MASK(F_CreateFontA),
+  NEXT_MASK(F_CreateFontW),
+  NEXT_MASK(F_CreateFontIndirectA),
+  NEXT_MASK(F_CreateFontIndirectW),
+  NEXT_MASK(F_GetGlyphOutlineA),
+  NEXT_MASK(F_GetGlyphOutlineW),
+  NEXT_MASK(F_GetTextExtentPoint32A),
+  NEXT_MASK(F_GetTextExtentPoint32W),
+  NEXT_MASK(F_GetTextExtentExPointA),
+  NEXT_MASK(F_GetTextExtentExPointW),
   //F_GetCharABCWidthsA=0x
   //F_GetCharABCWidthsW=0x
-  F_TextOutA=0x400,
-  F_TextOutW=0x800,
-  F_ExtTextOutA=0x1000,
-  F_ExtTextOutW=0x2000,
-  F_DrawTextA=0x4000,
-  F_DrawTextW=0x8000,
-  F_DrawTextExA=0x10000,
-  F_DrawTextExW=0x20000,
-  F_CharNextA=0x40000,
+  NEXT_MASK(F_TextOutA),
+  NEXT_MASK(F_TextOutW),
+  NEXT_MASK(F_ExtTextOutA),
+  NEXT_MASK(F_ExtTextOutW),
+  NEXT_MASK(F_DrawTextA),
+  NEXT_MASK(F_DrawTextW),
+  NEXT_MASK(F_DrawTextExA),
+  NEXT_MASK(F_DrawTextExW),
+  NEXT_MASK(F_CharNextA),
   //F_CharNextW=0x
   //F_CharNextExA=0x
   //F_CharNextExW=0x
-  F_CharPrevA=0x80000,
+  NEXT_MASK(F_CharPrevA),
   //F_CharPrevW=0x
-  F_MultiByteToWideChar=0x100000,
-  F_WideCharToMultiByte=0x200000
+  NEXT_MASK(F_MultiByteToWideChar),
+  NEXT_MASK(F_WideCharToMultiByte),
 };
