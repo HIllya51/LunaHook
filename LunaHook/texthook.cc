@@ -194,6 +194,11 @@ void TextHook::Send(uintptr_t lpDataBase)
 			//清除jit hook特征，防止手动插入
 			strcpy(hp.unityfunctioninfo,"");
 			hp.emu_addr=0;
+			//清除module
+			hp.type &= ~MODULE_OFFSET;
+			hp.type &= ~FUNCTION_OFFSET;
+			strcpy(hp.function,"");
+			wcscpy(hp.module,L"");
 
 			NewHook(hp,hp.name);
 			hp.type|=HOOK_EMPTY;

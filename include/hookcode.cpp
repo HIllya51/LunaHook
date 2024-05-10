@@ -43,9 +43,10 @@ namespace
 	std::optional<HookParam> ParseHCode(std::wstring HCode,std::optional<HookParam> hpo={})
 	{
 		auto hp=hpo?hpo.value():HookParam{};
-		if(HCode[0]=='L')
+		if(HCode[0]=='L'){
 			hp.type|=HOOK_RETURN;
-			
+			HCode.erase(0,1);
+		}
 		switch (HCode[0])
 		{
 			case L'B':
