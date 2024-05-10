@@ -120,6 +120,7 @@ inline uintptr_t *argidx(hook_stack* stack,int idx){
     case 2:offset=get_reg(regs::rdx);break;
     case 3:offset=get_reg(regs::r8);break;
     case 4:offset=get_reg(regs::r9);break;
+	default:offset=get_stack(idx);
     }
     return (uintptr_t*)((uintptr_t)stack+sizeof(hook_stack)-sizeof(uintptr_t)+offset);
 	#else

@@ -187,7 +187,18 @@ void TextHook::Send(uintptr_t lpDataBase)
 		if (auto current_trigger_fun = trigger_fun.exchange(nullptr))
 			if (!current_trigger_fun(location, stack->ebp, stack->esp)) trigger_fun = current_trigger_fun;
 		#endif
-		
+		if(hp.type&HOOK_RETURN){
+			hp.type&=~HOOK_RETURN;
+			hp.address=stack->retaddr;
+			strcat(hp.name,"_Return");
+			//清除jit hook特征，防止手动插入
+			strcpy(hp.unityfunctioninfo,"");
+			hp.emu_addr=0;
+
+			NewHook(hp,hp.name);
+			hp.type|=HOOK_EMPTY;
+			__leave;
+		}
 		if (hp.type & HOOK_EMPTY) __leave; // jichi 10/24/2014: dummy hook only for dynamic hook
 		
 		size_t lpCount = 0;

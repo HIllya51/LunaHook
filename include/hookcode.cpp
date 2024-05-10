@@ -46,6 +46,9 @@ namespace
 		
 		switch (HCode[0])
 		{
+			case L'L':
+				hp.type|=HOOK_RETURN;
+				break;
 			case L'B':
 				hp.type|=BREAK_POINT;
 			case L'H':

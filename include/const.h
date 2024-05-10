@@ -70,9 +70,10 @@ enum HookParamType : uint64_t
 
   DECLARE_VALUE(NORMAL_INLINEHOOK,0),
   NEXT_MASK(BREAK_POINT),
-	NEXT_MASK(HOOK_EMPTY),
 	NEXT_MASK(DIRECT_READ), // /R read code instead of classic /H hook code
-  
+
+  NEXT_MASK(HOOK_RETURN),
+	NEXT_MASK(HOOK_EMPTY),
 };
 
 
