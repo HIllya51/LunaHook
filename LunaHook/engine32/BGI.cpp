@@ -1142,6 +1142,8 @@ bool InsertBGI2Hook()
     hp.offset=get_stack(Private::textIndex_);
       Private::type_ = Private::Type_BGI3;
       hp.hook_font|=F_GetTextExtentPoint32W;
+    if(addr-processStartAddress==0x3B860)//[220729][1171051][きゃべつそふと] ジュエリー・ハーツ・アカデミア -We will wing wonder world-，无法处理的乱码，不知道怎么回事。
+      addr=0;
  }
   else if ( search_tayutama(&funaddr,&addr)) {
  
@@ -1474,6 +1476,38 @@ bool InsertBGIHook()
 
 bool InsertBGI4Hook()
 { 
+  /*
+    int __cdecl sub_4A3AD0(LPSTR lpMultiByteStr, LPCWCH lpWideCharStr, int a3)
+{
+  int v3; // edi
+  UINT v4; // esi
+  int v5; // ebx
+  CHAR *v6; // ecx
+
+  v3 = 0;
+  v4 = sub_4A37B0();
+  if ( a3 )
+  {
+    if ( a3 == 1 )
+      v4 = 65001;
+  }
+  else
+  {
+    v4 = 932;
+  }
+  v5 = WideCharToMultiByte(v4, 0, lpWideCharStr, -1, 0, 0, 0, 0);
+  if ( v5 >= 1 )
+  {
+    v6 = lpMultiByteStr;
+    if ( !lpMultiByteStr )
+    {
+      v3 = unknown_libname_1(v5 + 1);
+      v6 = (CHAR *)v3;
+    }
+    WideCharToMultiByte(v4, 0, lpWideCharStr, -1, v6, v5, 0, 0);
+  }
+  return v3;
+}*/
   const BYTE bytes[] = {
       0xBE,0xE9,0xFD,0x00,0x00, //cp=65001
       XX2,
@@ -1485,9 +1519,19 @@ bool InsertBGI4Hook()
   if (addr == 0)return false; 
   HookParam hp;
   hp.address = addr;
-  hp.offset=get_reg(regs::eax);
-  hp.split = get_reg(regs::esp);
-  hp.type = CODEC_UTF16 | USING_STRING| USING_SPLIT |EMBED_ABLE|EMBED_BEFORE_SIMPLE|EMBED_AFTER_OVERWRITE;
+  // hp.offset=get_reg(regs::eax);
+  // hp.split = get_reg(regs::esp);
+  hp.text_fun=[](hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
+    *data=stack->stack[2];
+    *split=stack->stack[6];//不一定对
+    switch(*split){
+      case 0://name
+      case 1:
+        *len=2*wcslen((wchar_t*)*data);
+      break;
+    }
+  };
+  hp.type = CODEC_UTF16 | USING_STRING|NO_CONTEXT |EMBED_ABLE|EMBED_BEFORE_SIMPLE|EMBED_AFTER_OVERWRITE;
   hp.hook_font=F_TextOutW|F_GetTextExtentPoint32W;
   hp.filter_fun = BGI7Filter;
   ConsoleOutput("BGI4");
@@ -1516,16 +1560,68 @@ namespace{
     hp.offset=get_stack(2);
     hp.split =get_stack(1);
     hp.type = CODEC_ANSI_BE |USING_SPLIT;
-    
+
     return NewHook(hp, "BGI5"); 
 
   }
 }
+namespace{
+  //[220729][1171051][きゃべつそふと] ジュエリー・ハーツ・アカデミア -We will wing wonder world-
+  //int __fastcall sub_438E90(int a1, int *a2, int a3, _DWORD *a4, int a5)
+  bool hook7(){
+    BYTE sig[]={
+      0x55,0x8b,0xec,
+      0x83,0xe4,0xf0,
+      0x83,0xec,XX,
+      0x56,
+      0x57,
+      0x8b,XX,0x08,
+      0x8b,0xf2,
+      0x8b,0xd1,
+      0x81,0xcf,0x00,0x00,0x00,0x80,
+      0x8b,0xcf,
+      0x89,0x54,0x24,0x0c,
+      0xe8,XX4,
+      0x85,0xc0,
+      0x0f,0x84,XX4,
+      0x8b,0x45,0x08
 
+    };
+    auto addr=MemDbg::findBytes(sig,sizeof(sig),processStartAddress,processStopAddress);
+    if(!addr)return false;
+    HookParam hp;
+    hp.address=addr;
+    //hp.offset=get_stack(1);
+    //hp.split=get_stack(3);
+    hp.type=USING_CHAR|CODEC_UTF16|NO_CONTEXT;//|USING_SPLIT;
+    hp.text_fun=[](hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
+      *data=(wchar_t)stack->stack[1];
+      switch(stack->stack[3]){
+        case 0xfefefe:
+          hp->user_value=stack->retaddr;
+          *len=2;
+          *split=1;
+          break;
+        case 0xffffff://名字&历史+零散的文字，由于no_context他们被合并，但是和名字和文本是同一个调用地址
+          
+          if(hp->user_value==stack->retaddr){
+            *len=2;
+            *split=2;
+          }
+          break;
+        case 0xfcfcc0://历史
+        default:
+          ;
+      }
+    };
+    return NewHook(hp,"bgi7");
+  }
+}
 bool BGI::attach_function() {
     bool b1= InsertBGIHook();
     bool b2=InsertBGI4Hook();
     bool ok= b1||b2||veryold();
+    ok|=hook7();
     ok=InsertBGI7Hook()|| InsertBGI5Hook() || InsertBGI6Hook()||ok;
     return ok;
 }  
