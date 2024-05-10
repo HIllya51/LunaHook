@@ -17,7 +17,7 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 
 typedef void (*ProcessEvent)(DWORD);
 typedef void (*ThreadEvent)(wchar_t *, char *, ThreadParam);
-typedef void (*OutputCallback)(wchar_t *, char *, ThreadParam, const wchar_t *);
+typedef bool (*OutputCallback)(wchar_t *, char *, ThreadParam, const wchar_t *);
 typedef void (*ConsoleHandler)(const wchar_t *);
 typedef void (*HookInsertHandler)(uint64_t, const wchar_t *);
 typedef void (*EmbedCallback)(const wchar_t *, ThreadParam);
@@ -43,9 +43,12 @@ C_LUNA_API void Luna_Start(ProcessEvent Connect, ProcessEvent Disconnect, Thread
         [=](TextThread &thread, std::wstring &output)
         {
             XXXX
-            Output(hookcode, name, thread.tp, output.c_str());
-            output+=L'\n';
-            return true;
+            if(Output(hookcode, name, thread.tp, output.c_str()))
+            {
+                output+=L'\n';
+                return true;
+            }
+            else return false;
         },
         [=](std::wstring &output)
         {
