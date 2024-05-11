@@ -195,13 +195,14 @@ namespace
 
 namespace Host
 {
+	std::mutex syncmutex;
 	void Start(ProcessEventHandler Connect, ProcessEventHandler Disconnect, ThreadEventHandler Create, ThreadEventHandler Destroy, TextThread::OutputCallback Output,bool createconsole)
 	{
-		OnConnect = Connect;
-		OnDisconnect = Disconnect;
-		OnCreate = [Create](TextThread& thread) { Create(thread); thread.Start(); };
-		OnDestroy = [Destroy](TextThread& thread) { thread.Stop(); Destroy(thread); };
-		TextThread::Output = Output;
+		OnConnect = [=](auto &&...args){std::lock_guard _(syncmutex);Connect(args...);};
+		OnDisconnect = [=](auto &&...args){std::lock_guard _(syncmutex);Disconnect(args...);};
+		OnCreate = [=](TextThread& thread) {std::lock_guard _(syncmutex); Create(thread); thread.Start(); };
+		OnDestroy = [=](TextThread& thread) {std::lock_guard _(syncmutex); thread.Stop(); Destroy(thread); };
+		TextThread::Output = [=](auto &&...args){std::lock_guard _(syncmutex);return Output(args...);};
 
 		textThreadsByParams->try_emplace(console, console, HookParam{}, CONSOLE);
 		
@@ -216,9 +217,9 @@ namespace Host
 	void StartEx(ProcessEventHandler Connect, ProcessEventHandler Disconnect, ThreadEventHandler Create, ThreadEventHandler Destroy, TextThread::OutputCallback Output,ConsoleHandler console,HookInsertHandler hookinsert,EmbedCallback embed){
 		Start(Connect,Disconnect,Create,Destroy,Output,false);
 
-		OnConsole=console;
-		HookInsert=hookinsert;
-		embedcallback=embed;
+		OnConsole=[=](auto &&...args){std::lock_guard _(syncmutex);console(args...);};
+		HookInsert=[=](auto &&...args){std::lock_guard _(syncmutex);hookinsert(args...);};
+		embedcallback=[=](auto &&...args){std::lock_guard _(syncmutex);embed(args...);};
 		Host::AddConsoleOutput(ProjectHomePage);
 	}
 	constexpr auto  PROCESS_INJECT_ACCESS=(

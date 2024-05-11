@@ -80,7 +80,6 @@ public:
 class LunaHost:public mainwindow{
     Pluginwindow* pluginwindow=0;
     std::set<DWORD>attachedprocess;
-    std::mutex settextmutex;
     lineedit* g_hEdit_userhook;
     gridlayout* mainlayout;
     button* g_hButton_insert;
