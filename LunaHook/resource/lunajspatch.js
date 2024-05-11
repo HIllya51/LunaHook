@@ -20,7 +20,6 @@ function splitfonttext(transwithfont) {
     }
 }
 function clipboardsender(s, lpsplit) {
-    lpsplit = typeof lpsplit !== 'undefined' ? lpsplit : 0
     //magic split \x02 text
     s = magicsend + lpsplit.toString() + '\x02' + s;
     try {
@@ -43,19 +42,36 @@ function clipboardsender(s, lpsplit) {
 }
 function rpgmakerhook() {
 
-    if (Window_Message.prototype.originstartMessage) return;
-    Window_Base.prototype.drawTextEx_origin = Window_Base.prototype.drawTextEx;
-    Window_Base.prototype.drawText_origin = Window_Base.prototype.drawText;
-    Window_Message.prototype.originstartMessage = Window_Message.prototype.startMessage;
-    Bitmap.prototype.origin_makeFontNameText = Bitmap.prototype._makeFontNameText;
+    if (Window_Message.prototype.originstartMessage) { }
+    else {
+        Window_Base.prototype.drawTextEx_origin = Window_Base.prototype.drawTextEx;
+        Window_Base.prototype.drawText_origin = Window_Base.prototype.drawText;
+        Window_Message.prototype.originstartMessage = Window_Message.prototype.startMessage;
+
+        Bitmap.prototype.drawText_ori = Bitmap.prototype.drawText;
+        Bitmap.prototype.last_y = 0;
+
+        Bitmap.prototype.origin_makeFontNameText = Bitmap.prototype._makeFontNameText;
+    }
     Bitmap.prototype._makeFontNameText = function () {
         if (fontface == '') return this.origin_makeFontNameText();
         return (this.fontItalic ? 'Italic ' : '') +
             this.fontSize + 'px ' + fontface;
     }
+    Bitmap.prototype.drawText = function (text, x, y, maxWidth, lineHeight, align) {
+        //y>100的有重复；慢速是单字符，快速是多字符
+        if (y < 100) {
+            extra = 5 + ((text.length == 1) ? 0 : 1);
+            if (y != Bitmap.prototype.last_y)
+                clipboardsender('\n', extra)
+            clipboardsender(text, extra)
+            Bitmap.prototype.last_y = y;
+        }
+        return this.drawText_ori(text, x, y, maxWidth, lineHeight, align);
+    }
     Window_Message.prototype.startMessage = function () {
         gametext = $gameMessage.allText();
-        resp = clipboardsender(gametext);
+        resp = clipboardsender(gametext, 0);
         $gameMessage._texts = [resp]
         this.originstartMessage();
     };
@@ -64,7 +80,7 @@ function rpgmakerhook() {
         return this.drawText_origin(text, x, y, maxWidth, align)
     }
     Window_Base.prototype.drawTextEx = function (text, x, y) {
-        text = clipboardsender(text, 1)
+        text = clipboardsender(text, 2)
         return this.drawTextEx_origin(text, x, y)
     }
 }
@@ -76,7 +92,7 @@ function tyranohook() {
     tyrano.plugin.kag.tag.chara_ptext.startorigin = tyrano.plugin.kag.tag.chara_ptext.start;
     tyrano.plugin.kag.tag.text.start = function (pm) {
         if (1 != this.kag.stat.is_script && 1 != this.kag.stat.is_html) {
-            pm.val = clipboardsender(pm.val);
+            pm.val = clipboardsender(pm.val, 0);
             if (fontface != '') {
                 this.kag.stat.font.face = fontface
             }

@@ -5,7 +5,7 @@ namespace{
 	bool hookClipboard(){
 		HookParam hp;
 		hp.address=(uintptr_t)SetClipboardData;
-		hp.type= USING_STRING|CODEC_UTF16|EMBED_ABLE|EMBED_BEFORE_SIMPLE;
+		hp.type= USING_STRING|NO_CONTEXT|CODEC_UTF16|EMBED_ABLE|EMBED_BEFORE_SIMPLE;
 		hp.text_fun=[](hook_stack* stack, HookParam *hp, uintptr_t* data, uintptr_t* split, size_t* len){
 			HGLOBAL hClipboardData=(HGLOBAL)stack->ARG2;
 			auto text=(wchar_t*)GlobalLock(hClipboardData);

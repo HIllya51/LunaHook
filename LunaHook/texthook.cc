@@ -110,7 +110,7 @@ bool TextHook::Insert(HookParam hp)
 	if(!addr)return false;
 
 	RemoveHook(addr, 0);
-
+	ConsoleOutput(INSERTING_HOOK, hp.name,addr);
 	local_buffer=new BYTE[PIPE_BUFFER_SIZE];
 	{
 		std::scoped_lock lock(viewMutex);
@@ -173,6 +173,18 @@ uintptr_t jitgetaddr(hook_stack* stack, HookParam* hp){
 	default:
 		return 0;
 	}
+}
+bool checklengthembedable(const HookParam&hp,size_t size){
+	size_t len;
+	if (hp.type & CODEC_UTF16)
+			len = 2;
+		else if(hp.type&CODEC_UTF32)
+			len = 4;
+		else 
+		{	
+			len = 1;
+		} 
+	return size>len;
 }
 void TextHook::Send(uintptr_t lpDataBase)
 {
@@ -295,12 +307,24 @@ void TextHook::Send(uintptr_t lpDataBase)
 
 		parsenewlineseperator(pbData, &lpCount);
 		
-		if((hp.type&EMBED_ABLE)&&(checktranslatedok(pbData,lpCount)))
-			buffer->type=buffer->type&(~EMBED_ABLE);
+		bool canembed;;
+		if(hp.type&EMBED_ABLE){
+			if(!checklengthembedable(hp,lpCount)){
+				buffer->type&=(~EMBED_ABLE);
+				canembed=false;
+			}
+			else if(checktranslatedok(pbData,lpCount)){
+				buffer->type&=(~EMBED_ABLE);
+				canembed=true;
+			}
+			else{
+				canembed=true;
+			}
+		}
 
 		TextOutput(tp, buffer, lpCount);
 
-		if((hp.type&EMBED_ABLE)&&(check_embed_able(tp)))
+		if(canembed&&(check_embed_able(tp)))
 		{
 			auto lpCountsave=lpCount;
 			if(waitfornotify(buffer,pbData,&lpCount,tp))
