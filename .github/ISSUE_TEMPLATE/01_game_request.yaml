@@ -19,3 +19,12 @@ body:
       使用onedrive或googledrive或其他不限速网盘给我游戏资源
   validations:
     required: true
+- type: textarea
+  attributes:
+    label: screenshot 截图
+    description: >
+      screenshot of game and screenshot of extracted text
+
+      游戏截图和提取的文本截图
+  validations:
+    required: true
