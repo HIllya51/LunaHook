@@ -68,7 +68,10 @@ DWORD WINAPI Pipe(LPVOID)
 			break;
 			}
 	}
-
+	#if (_WIN32_WINNT <= _WIN32_WINNT_WIN7)
+		//xp版FreeLibraryAndExitThread会导致游戏崩溃
+		dont_detach=true;
+	#endif
 	if(dont_detach){
 		host_connected=false;
 		return Pipe(0);
