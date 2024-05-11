@@ -82,6 +82,7 @@ bool WendyBell_filter(void* data, size_t* len, HookParam* hp){
       
     }
   } 
+  strReplace(wc,L"\xfe",L"");
   write_string_overwrite(data,len,wc);
   return true;
 }
@@ -188,6 +189,13 @@ bool InsertWendyBellHook() {
     hp.type = USING_STRING | CODEC_UTF16 | NO_CONTEXT;
     ConsoleOutput("%p",addr);
     succ|=NewHook(hp, "WendyBell");
+    if(*(WORD*)(6+addr)==0x006a){
+      //https://vndb.org/r94776
+      //悪魔と夜と異世界と パッケージ版
+      hp.address=6+addr;
+      hp.offset=get_reg(regs::edx);
+      succ|=NewHook(hp, "WendyBell");
+    }
   }
     
   
@@ -215,14 +223,44 @@ bool _2() {
     HookParam hp;
     hp.address = addr;
     hp.offset=get_stack(2); 
-    hp.type = CODEC_UTF16;
+    hp.type = CODEC_UTF16|USING_CHAR|NO_CONTEXT;
+    struct savecontext{
+      int cnt=0;
+      int cntx=0;
+    };
+    hp.user_value=(uintptr_t)new savecontext;
+    hp.filter_fun=[](void* data, size_t* len, HookParam* hp){
+      //ff ff 4 305f 305f 304b 304b 306a 306a 3057 3057 3 5c0f 5c0f 9ce5 9ce5 904a 904a
+      auto wc=*(wchar_t*)data;
+      switch(wc){
+        case L'\xfe':return false;//换行
+        case L'\xff':((savecontext*)hp->user_value)->cnt+=1;return false;
+        default:
+          if(((savecontext*)hp->user_value)->cntx==0 && ((savecontext*)hp->user_value)->cnt){
+            ((savecontext*)hp->user_value)->cntx=wc*2;
+            ((savecontext*)hp->user_value)->cnt-=1;
+            return false;
+          }
+          if(((savecontext*)hp->user_value)->cntx && ((savecontext*)hp->user_value)->cnt==1){
+            ((savecontext*)hp->user_value)->cntx-=1;
+            return false;
+          }
+          if(((savecontext*)hp->user_value)->cntx && ((savecontext*)hp->user_value)->cnt==0){
+            ((savecontext*)hp->user_value)->cntx-=1;
+            if(((savecontext*)hp->user_value)->cntx%2)return true;
+            return false;
+          }
+          return true;
+      }
+      
+    };
     succ|=NewHook(hp, "TinkerBell");
   } 
   return succ;
 }
 }
 bool TinkerBell::attach_function() { 
-    return InsertTinkerBellHook()||tkbl()||InsertWendyBellHook()||_2();
+    return InsertTinkerBellHook()||tkbl()||(InsertWendyBellHook()|_2());
 } 
 bool TinkerBellold::attach_function(){
   HookParam hp;
