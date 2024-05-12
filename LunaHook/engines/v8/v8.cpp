@@ -111,7 +111,21 @@ bool v8runscript_isolate(void* isolate){
 		GetCurrentContext(isolate,&context);
 		ConsoleOutput("context %p",context);
 		if(context==0)return;
-		NewFromUtf8(&v8string,isolate,LoadResData(L"lunajspatch",L"JSSOURCE").c_str(),1,-1);
+		int is_packed=0;
+		if(auto moduleFileName=getModuleFilename()){
+					
+			AutoHandle hFile = CreateFile(moduleFileName.value().c_str(), FILE_READ_ATTRIBUTES , FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+			if(hFile){
+			LARGE_INTEGER fileSize;
+			if (GetFileSizeEx(hFile, &fileSize)) {
+				if(fileSize.QuadPart>1024*1024*200){
+					//200mb
+					is_packed=1;
+				}
+			}
+			}
+		}
+		NewFromUtf8(&v8string,isolate,FormatString(LoadResData(L"lunajspatch",L"JSSOURCE").c_str(),is_packed).c_str(),1,-1);
 		ConsoleOutput("v8string %p",v8string);
 		if(v8string==0)return;
 		if(NewFromUtf8v1)
@@ -246,7 +260,7 @@ namespace{
 }
 bool tryhookv8_internal(HMODULE hm){
     auto succ=hookstring(hm);
-	if(!std::filesystem::exists(std::filesystem::path(GetModuleFilename().value()).replace_filename("disable.clipboard")))
+	if(!std::filesystem::exists(std::filesystem::path(getModuleFilename().value()).replace_filename("disable.clipboard")))
 	    if(v8script::v8runscript(hm))
 			succ|= hookClipboard();
     return succ;

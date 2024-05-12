@@ -165,7 +165,7 @@ void Localize();
 #define TEST(...)
 #endif
 
-inline std::optional<std::wstring> GetModuleFilename(DWORD processId, HMODULE module = NULL)
+inline std::optional<std::wstring> getModuleFilename(DWORD processId, HMODULE module = NULL)
 {
 	std::vector<wchar_t> buffer(MAX_PATH);
 	if (AutoHandle<> process = OpenProcess(PROCESS_VM_READ | PROCESS_QUERY_INFORMATION, FALSE, processId))
@@ -173,7 +173,7 @@ inline std::optional<std::wstring> GetModuleFilename(DWORD processId, HMODULE mo
 	return {};
 }
 
-inline std::optional<std::wstring> GetModuleFilename(HMODULE module = NULL)
+inline std::optional<std::wstring> getModuleFilename(HMODULE module = NULL)
 {
 	std::vector<wchar_t> buffer(MAX_PATH);
 	if (GetModuleFileNameW(module, buffer.data(), MAX_PATH)) return buffer.data();
@@ -186,6 +186,6 @@ inline std::vector<std::pair<DWORD, std::optional<std::wstring>>> GetAllProcesse
 	DWORD spaceUsed = 0;
 	EnumProcesses(processIds.data(), 10000 * sizeof(DWORD), &spaceUsed);
 	std::vector<std::pair<DWORD, std::optional<std::wstring>>> processes;
-	for (int i = 0; i < spaceUsed / sizeof(DWORD); ++i) processes.push_back({ processIds[i], GetModuleFilename(processIds[i]) });
+	for (int i = 0; i < spaceUsed / sizeof(DWORD); ++i) processes.push_back({ processIds[i], getModuleFilename(processIds[i]) });
 	return processes;
 }

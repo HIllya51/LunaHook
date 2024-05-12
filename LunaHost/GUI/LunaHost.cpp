@@ -9,13 +9,7 @@
 #include"LunaHost.h"
 #include"Lang/Lang.h"
 #include"http.hpp"
-auto gmf=[&](DWORD processId)->std::optional<std::wstring>{
-     //见鬼了，GetModuleFileName找不到标识符
-    std::vector<wchar_t> buffer(MAX_PATH);
-    if (AutoHandle<> process = OpenProcess(PROCESS_VM_READ | PROCESS_QUERY_INFORMATION, FALSE, processId))
-        if (GetModuleFileNameExW(process, 0, buffer.data(), MAX_PATH)) return buffer.data();
-    return {};
-};
+
 bool sendclipboarddata_i(const std::wstring&text,HWND hwnd){
     if (!OpenClipboard((HWND)hwnd)) return false;
     HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, (text.size() + 1) * sizeof(wchar_t));
@@ -110,7 +104,7 @@ void LunaHost::on_proc_connect(DWORD pid)
 {
     attachedprocess.insert(pid);
     
-    if(auto pexe=GetModuleFilename(pid))
+    if(auto pexe=getModuleFilename(pid))
     {
         autoattachexes.insert(WideStringToString(pexe.value()));
         auto u8procname=WideStringToString(pexe.value());
@@ -235,7 +229,7 @@ LunaHost::LunaHost(){
         });
         menu.add_sep();
         menu.add(MenuRemeberSelect,[&,tt](){
-            if(auto pexe=gmf(tt->tp.processId))
+            if(auto pexe=getModuleFilename(tt->tp.processId))
                 savedhookcontext[WideStringToString(pexe.value())]={
                     {"hookcode",WideStringToString(tt->hp.hookcode)},
                     {"ctx1",tt->tp.ctx},
@@ -244,7 +238,7 @@ LunaHost::LunaHost(){
                 };
         }); 
         menu.add(MenuForgetSelect,[&,tt](){
-                if(auto pexe=gmf(tt->tp.processId))
+                if(auto pexe=getModuleFilename(tt->tp.processId))
                         savedhookcontext.erase(WideStringToString(pexe.value())); 
         });  
         return menu;
@@ -343,7 +337,7 @@ void LunaHost::on_text_recv_checkissaved(TextThread& thread)
     
     onceautoselectthread.insert(thread.handle);
         
-    if(auto exe=GetModuleFilename(thread.tp.processId))
+    if(auto exe=getModuleFilename(thread.tp.processId))
     {
         auto exea=WideStringToString(exe.value());
         if(savedhookcontext.find(exea)==savedhookcontext.end())return;
@@ -758,7 +752,7 @@ std::vector<BYTE> hexStringToBytes(const std::wstring& hexString_) {
 void Hooksearchsetting::call(std::set<DWORD>pids,std::wstring reg){
     if(pids.empty())return;
     
-    if(auto filename=gmf(*pids.begin()))
+    if(auto filename=getModuleFilename(*pids.begin()))
         editmodule->settext(std::filesystem::path(filename.value()).filename().wstring());
     editregex->settext(reg);
     spincodepage->setcurr(Host::defaultCodepage);

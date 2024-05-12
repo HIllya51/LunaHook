@@ -277,7 +277,7 @@ namespace Host
 		if(!process)return false;
 		bool proc64=Is64BitProcess(process);
 		auto dllname=proc64?LUNA_HOOK_DLL_64:LUNA_HOOK_DLL_32;
-		std::wstring location =locationX.size()?(locationX+L"\\"+dllname): std::filesystem::path(GetModuleFilename().value()).replace_filename(dllname);
+		std::wstring location =locationX.size()?(locationX+L"\\"+dllname): std::filesystem::path(getModuleFilename().value()).replace_filename(dllname);
 		AddConsoleOutput(location);
 		if(proc64==x64){
 			return (SafeInject(process,location));

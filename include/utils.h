@@ -78,8 +78,7 @@ inline auto Swallow = [](auto&&...) {};
 template <typename T> std::optional<std::remove_cv_t<T>> Copy(T* ptr) { if (ptr) return *ptr; return {}; }
 
 
-
-inline std::optional<std::wstring> GetModuleFilename(DWORD processId, HMODULE module = NULL)
+inline std::optional<std::wstring> getModuleFilename(DWORD processId, HMODULE module = NULL)
 {
 	std::vector<wchar_t> buffer(MAX_PATH);
 	if (AutoHandle<> process = OpenProcess(PROCESS_VM_READ | PROCESS_QUERY_INFORMATION, FALSE, processId))
@@ -87,7 +86,7 @@ inline std::optional<std::wstring> GetModuleFilename(DWORD processId, HMODULE mo
 	return {};
 }
 
-inline std::optional<std::wstring> GetModuleFilename(HMODULE module = NULL)
+inline std::optional<std::wstring> getModuleFilename(HMODULE module = NULL)
 {
 	std::vector<wchar_t> buffer(MAX_PATH);
 	if (GetModuleFileNameW(module, buffer.data(), MAX_PATH)) return buffer.data();

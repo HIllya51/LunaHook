@@ -166,7 +166,7 @@ mainwindow::mainwindow(mainwindow* _parent){
     wc.hInstance = GetModuleHandle(0);
     wc.lpszClassName = CLASS_NAME;
     wc.hbrBackground = (HBRUSH)(COLOR_WINDOW );
-    wc.hIcon= GetExeIcon(GetModuleFilename().value());//LoadIconW(GetModuleHandle(0),L"IDI_ICON1");
+    wc.hIcon= GetExeIcon(getModuleFilename().value());//LoadIconW(GetModuleHandle(0),L"IDI_ICON1");
     
     static auto _=RegisterClass(&wc); 
     HWND hWnd = CreateWindowEx(

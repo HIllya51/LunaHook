@@ -1,6 +1,7 @@
 var fontface = '';
 var magicsend = '\x01LUNAFROMJS\x01'
 var magicrecv = '\x01LUNAFROMHOST\x01'
+var is_packed = %d 
 function splitfonttext(transwithfont) {
     if (transwithfont.substr(0, magicsend.length) == magicsend) //not trans
     {
@@ -75,17 +76,18 @@ function rpgmakerhook() {
         return (this.fontItalic ? 'Italic ' : '') +
             this.fontSize + 'px ' + fontface;
     }
-    Bitmap.prototype.drawText = function (text, x, y, maxWidth, lineHeight, align) {
-        //y>100的有重复；慢速是单字符，快速是多字符
-        if (text && (y < 100)) {
-            extra = 5 + ((text.length == 1) ? 0 : 1);
-            if (y != Bitmap.prototype.last_y)
-                clipboardsender_only_send('\n', extra)
-            clipboardsender_only_send(text, extra)
-            Bitmap.prototype.last_y = y;
+    if(!is_packed)
+        Bitmap.prototype.drawText = function (text, x, y, maxWidth, lineHeight, align) {
+            //y>100的有重复；慢速是单字符，快速是多字符
+            if (text && (y < 100)) {
+                extra = 5 + ((text.length == 1) ? 0 : 1);
+                if (y != Bitmap.prototype.last_y)
+                    clipboardsender_only_send('\n', extra)
+                clipboardsender_only_send(text, extra)
+                Bitmap.prototype.last_y = y;
+            }
+            return this.drawText_ori(text, x, y, maxWidth, lineHeight, align);
         }
-        return this.drawText_ori(text, x, y, maxWidth, lineHeight, align);
-    }
     Window_Message.prototype.startMessage = function () {
         gametext = $gameMessage.allText();
         resp = clipboardsender(gametext, 0);

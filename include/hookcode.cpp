@@ -358,7 +358,7 @@ namespace
 			if (processId && !(hp.type & MODULE_OFFSET))
 				if (AutoHandle<> process = OpenProcess(PROCESS_VM_READ | PROCESS_QUERY_INFORMATION, FALSE, processId))
 					if (MEMORY_BASIC_INFORMATION info = {}; VirtualQueryEx(process, (LPCVOID)hp.address, &info, sizeof(info)))
-						if (auto moduleName = GetModuleFilename(processId, (HMODULE)info.AllocationBase))
+						if (auto moduleName = getModuleFilename(processId, (HMODULE)info.AllocationBase))
 						{
 							hp.type |= MODULE_OFFSET;
 							hp.address -= (uint64_t)info.AllocationBase;

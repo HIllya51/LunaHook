@@ -44,7 +44,7 @@ private:
 	{
 		auto formatted = FormatString(
 			L"\xfeff|PROCESS|%s|FILTER|%s|END|\r\n",
-			GetModuleFilename(GetSelectedProcessId()).value_or(FormatString(L"Error getting name of process 0x%X", GetSelectedProcessId())),
+			getModuleFilename(GetSelectedProcessId()).value_or(FormatString(L"Error getting name of process 0x%X", GetSelectedProcessId())),
 			S(ui.regexEdit->text())
 		);
 		std::ofstream(REGEX_SAVE_FILE, std::ios::binary | std::ios::app).write((const char*)formatted.c_str(), formatted.size() * sizeof(wchar_t));
@@ -57,7 +57,7 @@ bool ProcessSentence(std::wstring& sentence, SentenceInfo sentenceInfo)
 {
 	static auto _ = GetSelectedProcessId = (DWORD(*)())sentenceInfo["get selected process id"];
 	if (sentenceInfo["text number"] == 0) return false;
-	if (/*sentenceInfo["current select"] && */!regex) if (auto processName = GetModuleFilename(sentenceInfo["process id"]))
+	if (/*sentenceInfo["current select"] && */!regex) if (auto processName = getModuleFilename(sentenceInfo["process id"]))
 	{
 		std::ifstream stream(REGEX_SAVE_FILE, std::ios::binary);
 		BlockMarkupIterator savedFilters(stream, Array<std::wstring_view>{ L"|PROCESS|", L"|FILTER|" });
