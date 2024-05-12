@@ -67,6 +67,16 @@ namespace
 	Host::ConsoleHandler OnConsole=0;
 	Host::HookInsertHandler HookInsert=0;
 	Host::EmbedCallback embedcallback=0;
+	bool CreateThread(const ThreadParam& tp, const HookParam& hp,std::optional<std::wstring> name){
+		auto thread = textThreadsByParams->find(tp);
+		if (thread == textThreadsByParams->end())
+		{
+			try { thread = textThreadsByParams->try_emplace(tp, tp, hp ,name ).first; }
+			catch (std::out_of_range) { return false; } // probably garbage data in pipe, try again
+			OnCreate(thread->second);
+		}
+		return true;
+	}
 	void RemoveThreads(std::function<bool(ThreadParam)> removeIf)
 	{
 		std::vector<TextThread*> threadsToRemove;
@@ -158,14 +168,9 @@ namespace
 					auto data=(TextOutput_T*)buffer;
 					auto length= bytesRead - sizeof(TextOutput_T);
 					auto tp = data->tp;
-					auto textThreadsByParams = ::textThreadsByParams.Acquire();
+					if(!CreateThread(tp,processRecordsByIds->at(tp.processId).GetHook(tp.addr).hp,{}))
+						continue;
 					auto thread = textThreadsByParams->find(tp);
-					if (thread == textThreadsByParams->end())
-					{
-						try { thread = textThreadsByParams->try_emplace(tp, tp, processRecordsByIds->at(tp.processId).GetHook(tp.addr).hp).first; }
-						catch (std::out_of_range) { continue; } // probably garbage data in pipe, try again
-						OnCreate(thread->second);
-					}
 					thread->second.hp.type=data->type;
 					thread->second.Push(data->data, length);
 
@@ -204,10 +209,8 @@ namespace Host
 		OnDestroy = [=](TextThread& thread) {thread.Stop(); {std::lock_guard _(syncmutex); Destroy(thread);} };
 		TextThread::Output = [=](auto &&...args){std::lock_guard _(syncmutex);return Output(args...);};
 
-		textThreadsByParams->try_emplace(console, console, HookParam{}, CONSOLE);
-		
 		if(createconsole){
-			OnCreate(GetThread(console));
+			CreateThread(console,HookParam{},CONSOLE);
 			Host::AddConsoleOutput(ProjectHomePage);
 		}
 

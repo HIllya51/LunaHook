@@ -410,7 +410,6 @@ bool LunaHost::on_text_recv(TextThread& thread, std::wstring& output){
     if(currentselect==thread.handle){ 
         showtext(output,false);
     }
-    output+=L'\n';
     return true;
 }
 void LunaHost::on_thread_create(TextThread& thread){

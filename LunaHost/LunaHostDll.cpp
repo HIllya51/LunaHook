@@ -43,12 +43,7 @@ C_LUNA_API void Luna_Start(ProcessEvent Connect, ProcessEvent Disconnect, Thread
         [=](TextThread &thread, std::wstring &output)
         {
             XXXX
-            if(Output(hookcode, name, thread.tp, output.c_str()))
-            {
-                output+=L'\n';
-                return true;
-            }
-            else return false;
+            return Output(hookcode, name, thread.tp, output.c_str());
         },
         [=](std::wstring &output)
         {
