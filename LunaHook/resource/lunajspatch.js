@@ -40,6 +40,23 @@ function clipboardsender(s, lpsplit) {
     if (transwithfont.length == 0) return s;
     return splitfonttext(transwithfont)
 }
+
+function clipboardsender_only_send(s, lpsplit) {
+    //magic split \x02 text
+    s = magicsend + lpsplit.toString() + '\x02' + s;
+    try {
+        const _clipboard = require('nw.gui').Clipboard.get();
+        _clipboard.set(s, 'text');
+    }
+    catch (err) {
+        try {
+            const clipboard = require('electron').clipboard;
+            clipboard.writeText(s);
+        }
+        catch (err2) {
+        }
+    }
+}
 function rpgmakerhook() {
 
     if (Window_Message.prototype.originstartMessage) { }
@@ -60,11 +77,11 @@ function rpgmakerhook() {
     }
     Bitmap.prototype.drawText = function (text, x, y, maxWidth, lineHeight, align) {
         //y>100的有重复；慢速是单字符，快速是多字符
-        if (y < 100) {
+        if (text && (y < 100)) {
             extra = 5 + ((text.length == 1) ? 0 : 1);
             if (y != Bitmap.prototype.last_y)
-                clipboardsender('\n', extra)
-            clipboardsender(text, extra)
+                clipboardsender_only_send('\n', extra)
+            clipboardsender_only_send(text, extra)
             Bitmap.prototype.last_y = y;
         }
         return this.drawText_ori(text, x, y, maxWidth, lineHeight, align);
