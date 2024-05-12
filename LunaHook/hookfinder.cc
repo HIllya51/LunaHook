@@ -322,6 +322,10 @@ void SearchForHooks(SearchParam spUser)
 			}
 			else if(sp.search_method==1){  
 				for(uintptr_t addr=sp.minAddress;addr<sp.maxAddress;addr++){
+					if(IsBadReadPtr((void*)addr,0x1000)){
+						addr+=0x1000-1;
+						continue;
+					}
 					if(((*(DWORD*)addr)==0xCCCCCCCC)||((*(DWORD*)addr)==0x90909090)){
 						if(((*(BYTE*)(addr+4))!=0xCC)&&(*(BYTE*)(addr+4))!=0x90){
 							addresses1.push_back(addr+4);
@@ -331,6 +335,10 @@ void SearchForHooks(SearchParam spUser)
 			}
 			else if(sp.search_method==2){  
 				for(uintptr_t addr=sp.minAddress;addr<sp.maxAddress;addr++){
+					if(IsBadReadPtr((void*)addr,0x1000)){
+						addr+=0x1000-1;
+						continue;
+					}
 					if(((*(BYTE*)addr)==0xe8)){
 						auto off=*(DWORD*)(addr+1);
 						auto funcaddr=addr+5+off; 
