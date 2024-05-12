@@ -200,8 +200,8 @@ namespace Host
 	{
 		OnConnect = [=](auto &&...args){std::lock_guard _(syncmutex);Connect(args...);};
 		OnDisconnect = [=](auto &&...args){std::lock_guard _(syncmutex);Disconnect(args...);};
-		OnCreate = [=](TextThread& thread) {std::lock_guard _(syncmutex); Create(thread); thread.Start(); };
-		OnDestroy = [=](TextThread& thread) {std::lock_guard _(syncmutex); thread.Stop(); Destroy(thread); };
+		OnCreate = [=](TextThread& thread) {{std::lock_guard _(syncmutex); Create(thread);} thread.Start(); };
+		OnDestroy = [=](TextThread& thread) {thread.Stop(); {std::lock_guard _(syncmutex); Destroy(thread);} };
 		TextThread::Output = [=](auto &&...args){std::lock_guard _(syncmutex);return Output(args...);};
 
 		textThreadsByParams->try_emplace(console, console, HookParam{}, CONSOLE);

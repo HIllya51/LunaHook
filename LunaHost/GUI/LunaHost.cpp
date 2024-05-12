@@ -369,8 +369,15 @@ void LunaHost::on_text_recv_checkissaved(TextThread& thread)
             
 }
 
+std::wstring sanitize(const std::wstring& s1) {
+    std::wstring s=s1;
+    s.erase(std::remove_if(s.begin(), s.end(), [](wchar_t ch) {
+        return (ch >= 0xD800 && ch <= 0xDBFF) || (ch >= 0xDC00 && ch <= 0xDFFF);
+    }), s.end());
+    return s;
+}
 void LunaHost::showtext(const std::wstring&text,bool clear){
-    auto output=text;
+    auto output=sanitize(text);
     strReplace(output,L"\n",L"\r\n");
     if(clear)
     {
@@ -385,7 +392,7 @@ void LunaHost::showtext(const std::wstring&text,bool clear){
 void LunaHost::updatelisttext(const std::wstring&text,LONG_PTR data){
     auto idx=g_hListBox_listtext->querydataidx(data);
     if(idx>=0){
-        auto __output=text;
+        auto __output=sanitize(text);
         strReplace(__output,L"\n",L" ");
         if(__output.size()>0x40){
             __output=__output.substr(0,0x40)+L"...";
