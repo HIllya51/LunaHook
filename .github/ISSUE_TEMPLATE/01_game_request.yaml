@@ -1,10 +1,8 @@
-name: Game Request 游戏支持请求
+name: Specific Game Related 特定游戏相关
 description: >
-  Create the request for an unsupported game. 
-
-  Make sure the game hasn't been supported in latest version.
-
-  请求支持尚未支持的游戏，请确保游戏未被最新版本支持
+  Request for an unsupported game, or hooked text is incorrect 
+  
+  请求支持尚未支持的游戏，或提取的文本不正确
 labels: enhancement
 body:
 - type: input
