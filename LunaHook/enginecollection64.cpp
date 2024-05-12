@@ -14,6 +14,7 @@
 #include"engine64/lucasystem.h"
 #include"engine64/ENTERGRAM.h"
 #include"engine64/TYPEMOON.h"
+#include"engine64/Kincaid.h"
 #include"engine64/LightVN.h"
 #include"engine64/yuzusuyu.h"
 #include"engine64/vita3k.h"
@@ -42,7 +43,8 @@ std::vector<ENGINE*> check_engines(){
         new yuzusuyu,
         new PPSSPPengine,
         new vita3k,
-        new rpcs3
+        new rpcs3,
+        new Kincaid
     };
      
 }
