@@ -5,7 +5,7 @@
 // Branch: ITH/IHF_DLL.h, rev 66
 
 
-void TextOutput(ThreadParam tp, TextOutput_T (*buffer), int len);
+void TextOutput(const ThreadParam& tp, const HookParam& hp,TextOutput_T (*buffer), int len);
 void ConsoleOutput(LPCSTR text, ...);
 void NotifyHookFound(HookParam hp, wchar_t* text);
 void NotifyHookRemove(uint64_t addr, LPCSTR name);

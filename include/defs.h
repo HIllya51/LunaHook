@@ -10,7 +10,6 @@ constexpr auto HOST_PIPE = L"\\\\.\\pipe\\LUNA_HOST";
 
 // Sections
 
-constexpr auto ITH_SECTION_ = L"LUNA_VNR_SECTION_"; // _%d
 constexpr auto EMBED_SHARED_MEM = L"EMBED_SHARED_MEM"; // _%d
 
 // Mutexes

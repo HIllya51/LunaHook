@@ -3,12 +3,12 @@
 #include "textthread.h"
 namespace Host
 {
-	using ConsoleHandler =std::function<void(std::wstring&)>;
+	using ConsoleHandler =std::function<void(const std::wstring&)>;
 	using ProcessEventHandler = std::function<void(DWORD)>;
 	using ThreadEventHandler = std::function<void(TextThread&)>;
-	using HookEventHandler = std::function<void(HookParam, std::wstring text)>;
-	using HookInsertHandler= std::function<void(uint64_t,std::wstring&)>;
-	using EmbedCallback= std::function<void(std::wstring&,ThreadParam&)>;
+	using HookEventHandler = std::function<void(const HookParam&,const std::wstring& text)>;
+	using HookInsertHandler= std::function<void(uint64_t,const std::wstring&)>;
+	using EmbedCallback= std::function<void(const std::wstring&,const ThreadParam&)>;
 	void Start(ProcessEventHandler Connect, ProcessEventHandler Disconnect, ThreadEventHandler Create, ThreadEventHandler Destroy, TextThread::OutputCallback Output,bool createconsole=true);
 	void StartEx(ProcessEventHandler Connect, ProcessEventHandler Disconnect, ThreadEventHandler Create, ThreadEventHandler Destroy, TextThread::OutputCallback Output,ConsoleHandler console,HookInsertHandler hookinsert,EmbedCallback embed);
 	void InjectProcess(DWORD processId,const std::wstring locationX=L"");

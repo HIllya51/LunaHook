@@ -321,7 +321,7 @@ void TextHook::Send(uintptr_t lpDataBase)
 			}
 		}
 
-		TextOutput(tp, buffer, lpCount);
+		TextOutput(tp, hp,buffer, lpCount);
 
 		if(canembed&&(check_embed_able(tp)))
 		{
@@ -419,7 +419,7 @@ void TextHook::Read()
 				dataLen = min(currentLen, TEXT_BUFFER_SIZE);
 				memcpy(pbData, location, dataLen);
 				if (hp.filter_fun && !hp.filter_fun(pbData, &dataLen, &hp) || dataLen <= 0) continue;
-				TextOutput({ GetCurrentProcessId(), address, 0, 0 }, buffer, dataLen);
+				TextOutput({ GetCurrentProcessId(), address, 0, 0 },hp, buffer, dataLen);
 				memcpy(pbData, location, dataLen);
 			}
 		}

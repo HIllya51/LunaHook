@@ -9,9 +9,7 @@ namespace
 	public:
 		ProcessRecord(DWORD processId, HANDLE pipe) :
 			pipe(pipe),
-			mappedFile(OpenFileMappingW(FILE_MAP_READ, FALSE, (ITH_SECTION_ + std::to_wstring(processId)).c_str())),
 			mappedFile2(OpenFileMappingW(FILE_MAP_READ|FILE_MAP_WRITE, FALSE, (EMBED_SHARED_MEM + std::to_wstring(processId)).c_str())),
-			view(*(const TextHook(*)[MAX_HOOK])MapViewOfFile(mappedFile, FILE_MAP_READ, 0, 0, MAX_HOOK * sizeof(TextHook))), // jichi 1/16/2015: Changed to half to hook section sizem
 			viewMutex(ITH_HOOKMAN_MUTEX_ + std::to_wstring(processId))
 			
 		{ 
@@ -21,16 +19,7 @@ namespace
 
 		~ProcessRecord()
 		{
-			UnmapViewOfFile(view);
 			UnmapViewOfFile(embedsharedmem);
-		}
-
-		TextHook GetHook(uint64_t addr)
-		{
-			if (!view) return {};
-			std::scoped_lock lock(viewMutex);
-			for (auto hook : view) if (hook.address == addr) return hook;
-			return {};
 		}
 
 		template <typename T>
@@ -52,9 +41,7 @@ namespace
 		EmbedSharedMem *embedsharedmem;
 	private:
 		HANDLE pipe;
-		AutoHandle<> mappedFile;
 		AutoHandle<> mappedFile2;
-		const TextHook(&view)[MAX_HOOK];
 		WinMutex viewMutex;
 	};
 
@@ -67,16 +54,6 @@ namespace
 	Host::ConsoleHandler OnConsole=0;
 	Host::HookInsertHandler HookInsert=0;
 	Host::EmbedCallback embedcallback=0;
-	bool CreateThread(const ThreadParam& tp, const HookParam& hp,std::optional<std::wstring> name){
-		auto thread = textThreadsByParams->find(tp);
-		if (thread == textThreadsByParams->end())
-		{
-			try { thread = textThreadsByParams->try_emplace(tp, tp, hp ,name ).first; }
-			catch (std::out_of_range) { return false; } // probably garbage data in pipe, try again
-			OnCreate(thread->second);
-		}
-		return true;
-	}
 	void RemoveThreads(std::function<bool(ThreadParam)> removeIf)
 	{
 		std::vector<TextThread*> threadsToRemove;
@@ -150,10 +127,8 @@ namespace
 				case HOST_NOTIFICATION_INSERTING_HOOK:
 				{
 					if(HookInsert){
-						auto info = *(HookInsertingNotif*)buffer;
-						auto addr=info.addr;
-						std::wstring hc=processRecordsByIds->at(processId).GetHook(addr).hp.hookcode;
-            			HookInsert(addr,hc);
+						auto info = (HookInsertingNotif*)buffer;
+            			HookInsert(info->addr,info->hookcode);
 					}
 				}
 				break;
@@ -168,9 +143,17 @@ namespace
 					auto data=(TextOutput_T*)buffer;
 					auto length= bytesRead - sizeof(TextOutput_T);
 					auto tp = data->tp;
-					if(!CreateThread(tp,processRecordsByIds->at(tp.processId).GetHook(tp.addr).hp,{}))
-						continue;
-					auto thread = textThreadsByParams->find(tp);
+					auto hp=data->hp;
+					auto _textThreadsByParams=textThreadsByParams.Acquire();
+					
+					auto thread = _textThreadsByParams->find(tp);
+					if (thread == _textThreadsByParams->end())
+					{
+						try { thread = _textThreadsByParams->try_emplace(tp, tp, hp).first; }
+						catch (std::out_of_range) { continue; } // probably garbage data in pipe, try again
+						OnCreate(thread->second);
+					}
+					 
 					thread->second.hp.type=data->type;
 					thread->second.Push(data->data, length);
 
@@ -200,17 +183,19 @@ namespace
 
 namespace Host
 {
-	std::mutex syncmutex;
+	std::mutex threadmutex;
+	std::mutex outputmutex;
+	std::mutex procmutex;
 	void Start(ProcessEventHandler Connect, ProcessEventHandler Disconnect, ThreadEventHandler Create, ThreadEventHandler Destroy, TextThread::OutputCallback Output,bool createconsole)
 	{
-		OnConnect = [=](auto &&...args){std::lock_guard _(syncmutex);Connect(args...);};
-		OnDisconnect = [=](auto &&...args){std::lock_guard _(syncmutex);Disconnect(args...);};
-		OnCreate = [=](TextThread& thread) {{std::lock_guard _(syncmutex); Create(thread);} thread.Start(); };
-		OnDestroy = [=](TextThread& thread) {thread.Stop(); {std::lock_guard _(syncmutex); Destroy(thread);} };
-		TextThread::Output = [=](auto &&...args){std::lock_guard _(syncmutex);return Output(args...);};
+		OnConnect = [=](auto &&...args){std::lock_guard _(procmutex);Connect(std::forward<decltype(args)>(args)...);};
+		OnDisconnect = [=](auto &&...args){std::lock_guard _(procmutex);Disconnect(std::forward<decltype(args)>(args)...);};
+		OnCreate = [=](TextThread& thread) {{std::lock_guard _(threadmutex); Create(thread);} thread.Start(); };
+		OnDestroy = [=](TextThread& thread) {thread.Stop(); {std::lock_guard _(threadmutex); Destroy(thread);} };
+		TextThread::Output = [=](auto &&...args){std::lock_guard _(outputmutex);return Output(std::forward<decltype(args)>(args)...);};
 
 		if(createconsole){
-			CreateThread(console,HookParam{},CONSOLE);
+			OnCreate(textThreadsByParams->try_emplace(console, console, HookParam{} ,CONSOLE ).first->second);
 			Host::AddConsoleOutput(ProjectHomePage);
 		}
 
@@ -220,9 +205,9 @@ namespace Host
 	void StartEx(ProcessEventHandler Connect, ProcessEventHandler Disconnect, ThreadEventHandler Create, ThreadEventHandler Destroy, TextThread::OutputCallback Output,ConsoleHandler console,HookInsertHandler hookinsert,EmbedCallback embed){
 		Start(Connect,Disconnect,Create,Destroy,Output,false);
 
-		OnConsole=[=](auto &&...args){std::lock_guard _(syncmutex);console(args...);};
-		HookInsert=[=](auto &&...args){std::lock_guard _(syncmutex);hookinsert(args...);};
-		embedcallback=[=](auto &&...args){std::lock_guard _(syncmutex);embed(args...);};
+		OnConsole=[=](auto &&...args){std::lock_guard _(outputmutex);console(std::forward<decltype(args)>(args)...);};
+		HookInsert=[=](auto &&...args){std::lock_guard _(threadmutex);hookinsert(std::forward<decltype(args)>(args)...);};
+		embedcallback=[=](auto &&...args){std::lock_guard _(outputmutex);embed(std::forward<decltype(args)>(args)...);};
 		Host::AddConsoleOutput(ProjectHomePage);
 	}
 	constexpr auto  PROCESS_INJECT_ACCESS=(

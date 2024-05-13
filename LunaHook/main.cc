@@ -80,9 +80,10 @@ DWORD WINAPI Pipe(LPVOID)
 	}
 }
 
-void TextOutput(ThreadParam tp, TextOutput_T*buffer, int len)
+void TextOutput(const ThreadParam& tp, const HookParam& hp, TextOutput_T*buffer, int len)
 {
-	buffer->tp=tp;
+	memcpy(&buffer->tp,&tp,sizeof(tp));
+	memcpy(&buffer->hp,&hp,sizeof(hp));
 	WriteFile(hookPipe, buffer, sizeof(TextOutput_T) + len, DUMMY, nullptr);
 }
 
@@ -107,9 +108,10 @@ void NotifyHookRemove(uint64_t addr, LPCSTR name)
 	HookRemovedNotif buffer(addr);
 	WriteFile(hookPipe, &buffer, sizeof(buffer), DUMMY, nullptr);
 }
-void NotifyHookInserting(uint64_t addr)
+void NotifyHookInserting(uint64_t addr,wchar_t hookcode[])
 {
 	HookInsertingNotif buffer(addr);
+	wcscpy(buffer.hookcode,hookcode);
 	WriteFile(hookPipe, &buffer, sizeof(buffer), DUMMY, nullptr);
 }
 BOOL WINAPI DllMain(HINSTANCE hModule, DWORD fdwReason, LPVOID)
@@ -128,9 +130,9 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD fdwReason, LPVOID)
 			*ptr=MapViewOfFile(handle, FILE_MAP_ALL_ACCESS | FILE_MAP_EXECUTE, 0, 0, sz);
 			memset(*ptr, 0, sz);
 		};
-		createfm(mappedFile,(void**)&hooks,MAX_HOOK * sizeof(TextHook),ITH_SECTION_ + std::to_wstring(GetCurrentProcessId()));
+		hooks=(decltype(hooks))new TextHook[MAX_HOOK];
+		VirtualProtect((LPVOID)hooks,sizeof(TextHook) *MAX_HOOK,PAGE_EXECUTE_READWRITE,DUMMY);
 		createfm(mappedFile3,(void**)&embedsharedmem,  sizeof(EmbedSharedMem),EMBED_SHARED_MEM + std::to_wstring(GetCurrentProcessId()));
-		  
 
 		MH_Initialize();
 
@@ -141,7 +143,7 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD fdwReason, LPVOID)
 	{
 		MH_Uninitialize();
 		detachall( );
-		UnmapViewOfFile(hooks);
+		delete []hooks;
 		UnmapViewOfFile(embedsharedmem);
 	}
 	break;
@@ -184,7 +186,7 @@ bool NewHook_1(HookParam& hp, LPCSTR lpname)
 		return false;
 	}
 	else{
-		NotifyHookInserting(hp.address);
+		NotifyHookInserting(hp.address,hp.hookcode);
 		return true;
 	}
 }

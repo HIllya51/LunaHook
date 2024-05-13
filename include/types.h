@@ -194,10 +194,12 @@ struct HookInsertingNotif // From dll
 	HookInsertingNotif(uint64_t addr1):addr(addr1){}
 	HostNotificationType command = HOST_NOTIFICATION_INSERTING_HOOK; 
 	uint64_t addr;
+	wchar_t hookcode[HOOKCODE_LEN];
 };
 
 struct TextOutput_T
 {
+	HookParam hp;
 	ThreadParam tp;
 	uint64_t type;
 	BYTE data[0];

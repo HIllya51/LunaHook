@@ -30,30 +30,30 @@ C_LUNA_API void Luna_Start(ProcessEvent Connect, ProcessEvent Disconnect, Thread
     Host::StartEx(
         Connect,
         Disconnect,
-        [=](TextThread &thread)
+        [=](const TextThread &thread)
         {
             XXXX
             Create(hookcode, name, thread.tp);
         },
-        [=](TextThread &thread)
+        [=](const TextThread &thread)
         {
             XXXX
             Destroy(hookcode, name, thread.tp);
         },
-        [=](TextThread &thread, std::wstring &output)
+        [=](const TextThread &thread, std::wstring &output)
         {
             XXXX
             return Output(hookcode, name, thread.tp, output.c_str());
         },
-        [=](std::wstring &output)
+        [=](const std::wstring &output)
         {
             console(output.c_str());
         },
-        [=](uint64_t addr, std::wstring &output)
+        [=](uint64_t addr, const std::wstring &output)
         {
             hookinsert(addr, output.c_str());
         },
-        [=](std::wstring &output, ThreadParam &tp)
+        [=](const std::wstring &output, const ThreadParam &tp)
         {
             embed(output.c_str(), tp);
         });
