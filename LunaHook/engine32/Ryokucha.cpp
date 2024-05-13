@@ -14,7 +14,7 @@ static void SpecialHookRyokucha(hook_stack* stack,  HookParam *hp, uintptr_t *da
   }
   *len = 0;
 }
-bool InsertRyokuchaDynamicHook(LPVOID addr, uintptr_t frame, uintptr_t stack)
+bool InsertRyokuchaDynamicHook(LPVOID addr, hook_stack*, uintptr_t frame, uintptr_t stack)
 {
   if (addr != ::GetGlyphOutlineA)
     return false;

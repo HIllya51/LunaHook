@@ -155,7 +155,7 @@ bool InsertShinaHook(int ver )
   
   if (ver >= 50) {
 	  //trigger_fun = StackSearchingTrigger<GetGlyphOutlineA, NULL>;
-	  trigger_fun = [](LPVOID funcAddr, uintptr_t, uintptr_t stack)
+	  trigger_fun = [](LPVOID funcAddr, hook_stack*, auto, uintptr_t stack)
 	  {
 		  bool ret = false;
 		  if (funcAddr != GetGlyphOutlineA && funcAddr != GetTextExtentPoint32A) return false;

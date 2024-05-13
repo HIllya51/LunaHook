@@ -34,6 +34,26 @@ bool InsertTriangleHook()
 
 
 bool Triangle::attach_function() { 
+    trigger_fun=[](LPVOID addr, hook_stack* stack,auto,auto){
+      //Triangle  やっぱり妹がすきっ！
+      if((DWORD)addr!=(DWORD)TextOutA)return false;
+      if(auto addr=MemDbg::findEnclosingAlignedFunction(stack->retaddr))
+      {
+        HookParam hp;
+        hp.address=addr;
+        hp.offset=get_stack(4);
+        hp.split=get_stack(1);
+        hp.type=USING_STRING|USING_SPLIT;
+        hp.hook_font=F_TextOutA;
+        hp.filter_fun=[](void* data, size_t* len, HookParam* hp){
+          //▼
+          auto s=std::string((char*)data,*len);
+          return s.find("\x81\xa5")==s.npos;
+        };
+        NewHook(hp,"Triangle2_TextOutA");
+      }
+      return true;
+    };
     return InsertTriangleHook();
 } 
 

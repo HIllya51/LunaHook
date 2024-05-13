@@ -128,7 +128,7 @@ int GetSystemAoiVersion() // return result is cached
   return ret;
 }
 
-bool InsertSystemAoiDynamicHook(LPVOID addr, uintptr_t frame, uintptr_t stack)
+bool InsertSystemAoiDynamicHook(LPVOID addr, hook_stack*,uintptr_t frame, uintptr_t stack)
 {
   int version = GetSystemAoiVersion();
   bool utf16 = true;

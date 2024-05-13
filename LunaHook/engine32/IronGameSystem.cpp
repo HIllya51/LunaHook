@@ -1,7 +1,7 @@
 #include"IronGameSystem.h"
 
 
-bool InsertIGSDynamicHook(LPVOID addr, uintptr_t frame, uintptr_t stack)
+bool InsertIGSDynamicHook(LPVOID addr, hook_stack* ,uintptr_t frame, uintptr_t stack)
 {
   if (addr != GetGlyphOutlineW)
     return false;

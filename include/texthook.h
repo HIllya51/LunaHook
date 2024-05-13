@@ -17,7 +17,7 @@
 	  *  @return  If success, which is reverted
   */
 #ifndef _WIN64
-inline std::atomic<bool (*)(LPVOID addr, uintptr_t ebp, uintptr_t esp)> trigger_fun = nullptr;
+inline std::atomic<bool (*)(LPVOID addr, hook_stack* stack, uintptr_t ebp, uintptr_t esp)> trigger_fun = nullptr;
 #endif
 // jichi 9/25/2013: This class will be used by NtMapViewOfSectionfor
 // interprocedure communication, where constructor/destructor will NOT work.

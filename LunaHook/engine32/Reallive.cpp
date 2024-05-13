@@ -57,7 +57,7 @@ Reallive hook:
  *  012da884   83c4 08          add esp,0x8
  *  012da887   85f6             test esi,esi
  */
-static bool InsertRealliveDynamicHook(LPVOID addr, uintptr_t frame, uintptr_t stack)
+static bool InsertRealliveDynamicHook(LPVOID addr, hook_stack*, uintptr_t frame, uintptr_t stack)
 {
   if (addr != ::GetGlyphOutlineA)
     return false;
