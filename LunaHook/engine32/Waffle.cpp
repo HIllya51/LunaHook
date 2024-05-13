@@ -1,6 +1,6 @@
 #include"Waffle.h"
 
-bool InsertWaffleDynamicHook(LPVOID addr, hook_stack*, uintptr_t frame, uintptr_t stack)
+bool InsertWaffleDynamicHook(LPVOID addr, hook_stack* stack)
 {
 	ConsoleOutput("WaffleDynamic:triggered");
   if (addr != ::GetTextExtentPoint32A)

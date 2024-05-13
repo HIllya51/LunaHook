@@ -8,17 +8,8 @@
 // - Clean up this file
 // - Reduce global variables. Use namespaces or singleton classes instead.
 
+inline std::atomic<bool (*)(LPVOID addr, hook_stack* stack)> trigger_fun = nullptr;
 
-// Artikash 6/17/2019 TODO: These have the wrong values on x64
-/** jichi 12/24/2014
-	  *  @param  addr  function address
-	  *  @param  frame  real address of the function, supposed to be the same as addr
-	  *  @param  stack  address of current stack - 4
-	  *  @return  If success, which is reverted
-  */
-#ifndef _WIN64
-inline std::atomic<bool (*)(LPVOID addr, hook_stack* stack, uintptr_t ebp, uintptr_t esp)> trigger_fun = nullptr;
-#endif
 // jichi 9/25/2013: This class will be used by NtMapViewOfSectionfor
 // interprocedure communication, where constructor/destructor will NOT work.
 struct EmbedSharedMem{

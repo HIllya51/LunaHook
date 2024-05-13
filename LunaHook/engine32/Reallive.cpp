@@ -57,12 +57,12 @@ Reallive hook:
  *  012da884   83c4 08          add esp,0x8
  *  012da887   85f6             test esi,esi
  */
-static bool InsertRealliveDynamicHook(LPVOID addr, hook_stack*, uintptr_t frame, uintptr_t stack)
+static bool InsertRealliveDynamicHook(LPVOID addr, hook_stack* stack)
 {
   if (addr != ::GetGlyphOutlineA)
     return false;
   // jichi 5/13/2015: Find the enclosing caller of GetGlyphOutlineA
-  if (DWORD i = frame) {
+  if (DWORD i = stack->ebp) {
     i = *(DWORD *)(i + 4);
     for (DWORD j = i; j > i - 0x100; j--)
       if (*(WORD *)j == 0xec83) { // jichi 7/26/2014: function starts

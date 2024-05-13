@@ -34,7 +34,7 @@ bool InsertTriangleHook()
 
 
 bool Triangle::attach_function() { 
-    trigger_fun=[](LPVOID addr, hook_stack* stack,auto,auto){
+    trigger_fun=[](LPVOID addr, hook_stack* stack){
       //Triangle  やっぱり妹がすきっ！
       if((DWORD)addr!=(DWORD)TextOutA)return false;
       if(auto addr=MemDbg::findEnclosingAlignedFunction(stack->retaddr))

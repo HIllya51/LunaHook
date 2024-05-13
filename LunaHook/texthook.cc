@@ -195,10 +195,9 @@ void TextHook::Send(uintptr_t lpDataBase)
 	{
 		auto stack=get_hook_stack(lpDataBase);
 		
-		#ifndef _WIN64
 		if (auto current_trigger_fun = trigger_fun.exchange(nullptr))
-			if (!current_trigger_fun(location, stack, stack->ebp, stack->esp)) trigger_fun = current_trigger_fun;
-		#endif
+			if (!current_trigger_fun(location, stack)) trigger_fun = current_trigger_fun;
+		
 		if(hp.type&HOOK_RETURN){
 			hp.type&=~HOOK_RETURN;
 			hp.address=stack->retaddr;

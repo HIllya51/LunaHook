@@ -128,7 +128,7 @@ int GetSystemAoiVersion() // return result is cached
   return ret;
 }
 
-bool InsertSystemAoiDynamicHook(LPVOID addr, hook_stack*,uintptr_t frame, uintptr_t stack)
+bool InsertSystemAoiDynamicHook(LPVOID addr, hook_stack* stack)
 {
   int version = GetSystemAoiVersion();
   bool utf16 = true;
@@ -145,8 +145,8 @@ bool InsertSystemAoiDynamicHook(LPVOID addr, hook_stack*,uintptr_t frame, uintpt
   Util::GetCodeRange(processStartAddress, &low, &high);
 
   // jichi 2/15/2015: Traverse the stack to dynamically find the ancestor call from the main module
-  const DWORD stop = (stack & 0xffff0000) + 0x10000; // range to traverse the stack
-  for (DWORD i = stack; i < stop; i += 4) {
+  const DWORD stop = (stack->esp & 0xffff0000) + 0x10000; // range to traverse the stack
+  for (DWORD i = stack->esp; i < stop; i += 4) {
     DWORD k = *(DWORD *)i;
     if (k > low && k < high && // jichi: if the stack address falls into the code region of the main exe module
         ((*(WORD *)(k - 6) == 0x15ff) || *(BYTE *)(k - 5) == 0xe8)) { // jichi 10/20/2014: call dword ptr ds

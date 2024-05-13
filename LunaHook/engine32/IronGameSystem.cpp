@@ -1,12 +1,12 @@
 #include"IronGameSystem.h"
 
 
-bool InsertIGSDynamicHook(LPVOID addr, hook_stack* ,uintptr_t frame, uintptr_t stack)
+bool InsertIGSDynamicHook(LPVOID addr, hook_stack* stack)
 {
   if (addr != GetGlyphOutlineW)
     return false;
   DWORD i;
-  i = *(DWORD *)frame;
+  i = *(DWORD *)stack->ebp;
   i = *(DWORD *)(i+4);
   //if (SafeFillRange(L"mscorlib.ni.dll", &j, &k)) { // Artikash 6/30/2018: Dunno why addresses are needed
     while (*(BYTE *)i != 0xe8)

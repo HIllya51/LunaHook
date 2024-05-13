@@ -155,14 +155,14 @@ bool InsertShinaHook(int ver )
   
   if (ver >= 50) {
 	  //trigger_fun = StackSearchingTrigger<GetGlyphOutlineA, NULL>;
-	  trigger_fun = [](LPVOID funcAddr, hook_stack*, auto, uintptr_t stack)
+	  trigger_fun = [](LPVOID funcAddr, hook_stack* stack)
 	  {
 		  bool ret = false;
 		  if (funcAddr != GetGlyphOutlineA && funcAddr != GetTextExtentPoint32A) return false;
 		  for (int i = 0; i < 100; ++i)
 		  {
 			  // Address of text is somewhere on stack in call to func. Search for it.
-			  DWORD addr = *((DWORD*)stack + i);
+			  DWORD addr = *((DWORD*)stack->esp + i);
 			  //ConsoleOutput(std::to_string((DWORD)*addr).c_str());
 			  if (IthGetMemoryRange((void*)addr, nullptr, nullptr) && strlen((char*)addr) > 9)
 			  {
