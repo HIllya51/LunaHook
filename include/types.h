@@ -199,8 +199,8 @@ struct HookInsertingNotif // From dll
 
 struct TextOutput_T
 {
-	HookParam hp;
 	ThreadParam tp;
+	HookParam hp;
 	uint64_t type;
 	BYTE data[0];
 };
