@@ -117,7 +117,6 @@ public:
     std::set<std::string>autoattachexes;
     std::unordered_map<std::string,nlohmann::json>savedhookcontext;
     std::set<int>userdetachedpids;
-    std::set<int64_t>onceautoselectthread;
     void on_close();
     LunaHost();
     friend class Settingwindow;

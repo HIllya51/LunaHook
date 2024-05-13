@@ -207,17 +207,16 @@ LunaHost::LunaHost(){
     g_hListBox_listtext = new listview(this,false,false);
     g_hListBox_listtext->setheader({LIST_HOOK,LIST_TEXT});
     g_hListBox_listtext->oncurrentchange=[&](int idx){
-        uint64_t handle = g_hListBox_listtext->getdata(idx);
+        auto thread_p = g_hListBox_listtext->getdata(idx);
         std::wstring get;
-        currentselect=handle;
-        std::wstring copy=Host::GetThread(handle)->storage->c_str();
+        currentselect=thread_p;
+        std::wstring copy=((TextThread*)thread_p)->storage->c_str();
         strReplace(copy,L"\n",L"\r\n");
         showtext(copy,true);
     };
     g_hListBox_listtext->on_menu=[&]()->maybehavemenu{
-        auto handle = g_hListBox_listtext->getdata(g_hListBox_listtext->currentidx());
-        auto tt=Host::GetThread(handle);
-        if(!tt)return {};
+        auto tt = (TextThread*)g_hListBox_listtext->getdata(g_hListBox_listtext->currentidx());
+        
         Menu menu;
         menu.add(MenuCopyHookCode,[&,tt](){sendclipboarddata(tt->hp.hookcode,winId);});
         menu.add_sep();
@@ -332,11 +331,6 @@ LunaHost::LunaHost(){
 }
 void LunaHost::on_text_recv_checkissaved(TextThread& thread)
 {
-
-    if(onceautoselectthread.find(thread.handle)!=onceautoselectthread.end())return;
-    
-    onceautoselectthread.insert(thread.handle);
-        
     if(auto exe=getModuleFilename(thread.tp.processId))
     {
         auto exea=WideStringToString(exe.value());
@@ -350,7 +344,7 @@ void LunaHost::on_text_recv_checkissaved(TextThread& thread)
             for(int i=0;i<g_hListBox_listtext->count();i++)
             {
                 auto handle=g_hListBox_listtext->getdata(i);
-                if(handle==thread.handle)
+                if(handle==(LONG_PTR)&thread)
                 {
                     g_hListBox_listtext->setcurrent(i);
                     break;
@@ -396,12 +390,11 @@ void LunaHost::updatelisttext(const std::wstring&text,LONG_PTR data){
 }
 bool LunaHost::on_text_recv(TextThread& thread, std::wstring& output){
     if(hasstoped)return true;
-    on_text_recv_checkissaved(thread);
     if(!plugins->dispatch(thread,output))return false;
 
-    updatelisttext(output,thread.handle);
+    updatelisttext(output,(LONG_PTR)&thread);
             
-    if(currentselect==thread.handle){ 
+    if(currentselect==(LONG_PTR)&thread){ 
         showtext(output,false);
     }
     return true;
@@ -416,14 +409,17 @@ void LunaHost::on_thread_create(TextThread& thread){
         thread.tp.ctx2
     );
     int index=g_hListBox_listtext->additem(buff,NULL); 
-    g_hListBox_listtext->setdata(index,thread.handle);
+    g_hListBox_listtext->setdata(index,(LONG_PTR)&thread);
+    on_text_recv_checkissaved(thread);
 }
 void LunaHost::on_thread_delete(TextThread& thread){
+    if(currentselect==(LONG_PTR)&thread)
+        currentselect=0;
     int count = g_hListBox_listtext->count();
     for (int i = 0; i < count; i++) {
-        uint64_t handle = g_hListBox_listtext->getdata(i);
+        auto thread_p = g_hListBox_listtext->getdata(i);
         
-        if (handle== thread.handle) { 
+        if (thread_p== (LONG_PTR)&thread) { 
             g_hListBox_listtext->deleteitem(i);
             break;
         }

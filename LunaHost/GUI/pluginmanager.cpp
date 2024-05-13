@@ -387,7 +387,7 @@ std::array<InfoForExtension, 20> Pluginmanager::GetSentenceInfo(TextThread& thre
         if (TextThread* thread = Host::GetThread(number)) thread->AddSentence(sentence);;
     };
     static DWORD SelectedProcessId;
-    auto currthread=Host::GetThread(host->currentselect);
+    auto currthread=(TextThread*)host->currentselect;
     SelectedProcessId=(currthread!=0)?currthread->tp.processId:0;
     DWORD (*GetSelectedProcessId)() = [] { return SelectedProcessId; };
 
