@@ -397,8 +397,82 @@ bool elf2(){
   
   return NewHook(hp,"Elf");
 }
+namespace{
+  //リフレインブルー【Windows10対応】
+  bool _h1(){
+    //HAN-18*-4@42E12:AI5WIN.exe
+    BYTE sig[]={
+      0x33,0xff,
+      0x8b,0x06,
+      0x8b,0xce,
+      0x6a,0x01,
+      0x8b,0x40,0x08,
+      0xff,0xd0,
+      0x0f,0x0b6,0xc0,
+      0x8b,0xce,
+      0x66,0xc1,0xe0,0x08,
+      0x0f,0xb7,0xc0,
+      0x89,0x45,0xfc,
+      0x8b,0x06,
+      0x6a,0x01,
+      0x8b,0x40,0x08,
+      0xff,0xd0,
+      0x0f,0xb6,0xc0,
+      0x8b,0xce,
+      0x66,0x09,0x45,0xfc,
+      0xff,0x75,0xfc,
+      0xe8
+    };
+    ULONG addr = MemDbg::findBytes(sig, sizeof(sig), processStartAddress, processStopAddress);
+    if (!addr)return false;
+    HookParam hp;
+    hp.address=addr+sizeof(sig)-1;  
+    hp.type=NO_CONTEXT|USING_CHAR|DATA_INDIRECT|CODEC_ANSI_BE;
+    hp.offset=get_reg(regs::ebp);
+    hp.index=-4;
+    return NewHook(hp,"Elf");
+  }
+  bool _h2(){
+    //HAN4@49570:AI5WIN.exe
+    BYTE sig[]={
+      0x33,0xc5,
+      0x89,0x45,0xfc,
+      0x8a,0x81,XX4,
+
+      0x84,0xc0,
+      0x75,0x0e,
+      0x8b,0x81,XX4,
+      0x03,0x81,XX4,
+      0xeb,XX,
+
+      0x3c,0x01,
+      0x75,0x0e,
+      0x8b,0x81,XX4,
+      0x03,0x81,XX4,
+      0xeb,XX,
+
+      0x3c,0x02,
+      0x75,0x0e,
+      0x8b,0x81,XX4,
+      0x03,0x81,XX4,
+      0xeb,XX,
+    };
+    ULONG addr = MemDbg::findBytes(sig, sizeof(sig), processStartAddress, processStopAddress);
+    if (!addr)return false;
+    addr=MemDbg::findEnclosingAlignedFunction(addr);
+    if (!addr)return false;
+    HookParam hp;
+    hp.address=addr;  
+    hp.type=NO_CONTEXT|USING_CHAR|CODEC_ANSI_BE;
+    hp.offset=get_stack(1);
+    return NewHook(hp,"Elf");
+  }
+  bool all(){
+    return _h1()|_h2();
+  }
+}
 bool Elf2::attach_function(){
-  return elf2()||Elf2attach_function();
+  return elf2()||Elf2attach_function()||all();
 }
 
 
