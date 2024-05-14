@@ -50,7 +50,5 @@ bool monodll() {
 bool mono::attach_function() {
 		
 	bool common=monocommon::hook_mono_il2cpp();
-	bool bmonobdwgc=monobdwgc();
-	bool bmonodll=monodll();
-	return common||bmonobdwgc||bmonodll;
+	return common;
 }  

@@ -79,7 +79,7 @@ namespace monocommon{
     struct functioninfo{
         const char* assemblyName;const char* namespaze;
 						   const char* klassName; const char* name;int argsCount;
-                           int argidx;void* text_fun;bool Embed;
+                           int argidx;void* text_fun=nullptr;bool Embed=false;bool isstring=true;
         std::string hookname(){
             char tmp[1024];
             sprintf(tmp,"%s:%s",klassName,name);
@@ -90,15 +90,20 @@ namespace monocommon{
             sprintf(tmp,"%s:%s:%s:%s:%d",assemblyName,namespaze,klassName,name,argsCount);
             return tmp;
         }
-    }; 
+    };
     bool NewHook_check(uintptr_t addr,functioninfo&hook){
         
         HookParam hp;
         hp.address = addr;
         hp.argidx=hook.argidx;
-        hp.type = USING_STRING | CODEC_UTF16|FULL_STRING;
         hp.text_fun =(decltype(hp.text_fun))hook.text_fun;
+        if(hook.isstring){
+        hp.type = USING_STRING | CODEC_UTF16|FULL_STRING;
         if(!hp.text_fun)hp.type|=SPECIAL_JIT_STRING;
+        }
+        else{
+        hp.type = USING_CHAR | CODEC_UTF16;
+        }
         hp.jittype=JITTYPE::UNITY;
         strcpy(hp.unityfunctioninfo,hook.info().c_str());
         if(hook.Embed)
@@ -113,13 +118,13 @@ namespace monocommon{
         return succ;
     } 
     std::vector<functioninfo>commonhooks{
-        {"mscorlib","System","String","ToCharArray",0,1,nullptr,false},
-        {"mscorlib","System","String","Replace",2,1,nullptr,false},
-        {"mscorlib","System","String","ToString",0,1,nullptr,false},
-        {"mscorlib","System","String","IndexOf",1,1,nullptr,false},
-        {"mscorlib","System","String","Substring",2,1,nullptr,false},
-        {"mscorlib","System","String","op_Inequality",2,1,0,false},
-        {"mscorlib","System","String","InternalSubString",2,99999,mscorlib_system_string_InternalSubString_hook_fun,false},
+        {"mscorlib","System","String","ToCharArray",0,1},
+        {"mscorlib","System","String","Replace",2,1},
+        {"mscorlib","System","String","ToString",0,1},
+        {"mscorlib","System","String","IndexOf",1,1},
+        {"mscorlib","System","String","Substring",2,1},
+        {"mscorlib","System","String","op_Inequality",2,1},
+        {"mscorlib","System","String","InternalSubString",2,99999,mscorlib_system_string_InternalSubString_hook_fun},
         
         {"Unity.TextMeshPro","TMPro","TMP_Text","set_text",1,2,nullptr,true},
         {"Unity.TextMeshPro","TMPro","TextMeshPro","set_text",1,2,nullptr,true},
@@ -134,6 +139,8 @@ namespace monocommon{
         //https://vndb.org/r37234 && https://vndb.org/r37235
         //Higurashi When They Cry Hou - Ch.2 Watanagashi && Higurashi When They Cry Hou - Ch.3 Tatarigoroshi
         {"Assembly-CSharp","Assets.Scripts.Core.TextWindow","TextController","SetText",4,3,nullptr,true},
+        //逆転裁判123 成歩堂セレクション
+        {"Assembly-CSharp","","MessageText","Append",1,2,nullptr,false,false},
     };
     bool hook_mono_il2cpp(){
         for (const wchar_t* monoName : { L"mono.dll", L"mono-2.0-bdwgc.dll",L"GameAssembly.dll" }) 
