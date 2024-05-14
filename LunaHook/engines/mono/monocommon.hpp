@@ -1,4 +1,5 @@
-
+#include"def_mono.hpp"
+#include"def_il2cpp.hpp"
 #include"monostringapis.h"
 namespace {
 
@@ -145,9 +146,9 @@ namespace monocommon{
     bool hook_mono_il2cpp(){
         for (const wchar_t* monoName : { L"mono.dll", L"mono-2.0-bdwgc.dll",L"GameAssembly.dll" }) 
             if (HMODULE module = GetModuleHandleW(monoName)) {
-                bool b2=monodllhook(module);
-                load_mono_functions_from_dll(module);
-                il2cpp_symbols::init(module);
+                //bool b2=monodllhook(module);
+                il2cppfunctions::init(module);
+                monofunctions::init(module);
                 bool succ=false;
                 for(auto hook:commonhooks){
                     auto addr=tryfindmonoil2cpp(hook.assemblyName,hook.namespaze,hook.klassName,hook.name,hook.argsCount);
@@ -159,7 +160,7 @@ namespace monocommon{
                     if(!addr)continue;
                     succ|=NewHook_check(addr,hook);
                 }
-                if(succ||b2)return true;
+                if(succ)return true;
             }
         return false;
     }

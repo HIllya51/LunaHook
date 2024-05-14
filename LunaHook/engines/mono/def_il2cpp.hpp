@@ -483,96 +483,6 @@ typedef struct MulticastDelegate : Il2CppDelegate {
 	Il2CppArraySize* delegates;
 } MulticastDelegate;
 
-// function types
-typedef Il2CppString* (*il2cpp_string_new_utf16_t)(const wchar_t* str, unsigned int len);
-typedef Il2CppString* (*il2cpp_string_new_t)(const char* str);
-typedef void* (*il2cpp_domain_get_t)();
-typedef void** (*il2cpp_domain_get_assemblies_t)(void* domain, std::size_t* size);
-typedef void* (*il2cpp_domain_assembly_open_t)(void* domain, const char* name);
-typedef void* (*il2cpp_assembly_get_image_t)(void* assembly);
-typedef Il2CppClass* (*il2cpp_class_from_name_t)(void* image, const char* namespaze, const char* name);
-typedef MethodInfo* (*il2cpp_class_get_methods_t)(Il2CppClass* klass, void** iter);
-typedef MethodInfo* (*il2cpp_class_get_method_from_name_t)(Il2CppClass* klass, const char* name, int argsCount);
-typedef MethodInfo* (*il2cpp_method_get_from_reflection_t)(Il2CppObject* ref);
-typedef const Il2CppType* (*il2cpp_method_get_param_t)(const MethodInfo* method, uint32_t index);
-typedef Il2CppObject* (*il2cpp_object_new_t)(Il2CppClass* klass);
-typedef void (*il2cpp_add_internal_call_t)(const char* name, uintptr_t pointer);
-typedef void* (*il2cpp_resolve_icall_t)(const char* name);
-typedef Il2CppArraySize* (*il2cpp_array_new_t)(Il2CppClass* klass, uintptr_t count);
-typedef void* (*il2cpp_thread_attach_t)(void* domain);
-typedef void (*il2cpp_thread_detach_t)(void* thread);
-typedef const Il2CppType* (*il2cpp_class_get_type_t)(Il2CppClass* klass);
-typedef uint32_t(*il2cpp_class_get_type_token_t)(Il2CppClass* klass);
-typedef FieldInfo* (*il2cpp_class_get_field_from_name_t)(Il2CppClass* klass, const char* name);
-typedef void (*il2cpp_field_get_value_t)(Il2CppObject* obj, FieldInfo* field, void* value);
-typedef void (*il2cpp_field_set_value_t)(Il2CppObject* obj, FieldInfo* field, void* value);
-typedef void (*il2cpp_field_static_get_value_t)(FieldInfo* field, void* value);
-typedef void (*il2cpp_field_static_set_value_t)(FieldInfo* field, void* value);
-typedef const Il2CppType* (*il2cpp_field_get_type_t)(FieldInfo* field);
-typedef Il2CppObject* (*il2cpp_type_get_object_t)(const Il2CppType* type);
-typedef const char* (*il2cpp_image_get_name_t)(void* image);
-typedef size_t(*il2cpp_image_get_class_count_t)(void* image);
-typedef const Il2CppClass* (*il2cpp_image_get_class_t)(void* image, size_t index);
-typedef bool (*il2cpp_type_is_byref_t)(const Il2CppType* type);
-typedef uint32_t(*il2cpp_method_get_flags_t)(const MethodInfo* mehod, uint32_t* iflags);
-typedef const Il2CppType* (*il2cpp_method_get_return_type_t)(const MethodInfo* method);
-typedef Il2CppClass* (*il2cpp_class_from_type_t)(const Il2CppType* type);
-typedef const char* (*il2cpp_class_get_name_t)(Il2CppClass* klass);
-typedef const PropertyInfo* (*il2cpp_class_get_properties_t)(Il2CppClass* klass, void** iter);
-typedef bool (*il2cpp_class_is_enum_t)(const Il2CppClass* klass);
-typedef FieldInfo* (*il2cpp_class_get_fields_t)(Il2CppClass* klass, void** iter);
-typedef const char* (*il2cpp_method_get_name_t)(const MethodInfo* method);
-typedef uint32_t(*il2cpp_method_get_param_count_t)(const MethodInfo* method);
-typedef const char* (*il2cpp_method_get_param_name_t)(const MethodInfo* method, uint32_t index);
-typedef Il2CppClass* (*il2cpp_class_get_parent_t)(Il2CppClass* klass);
-typedef Il2CppClass* (*il2cpp_class_get_interfaces_t)(Il2CppClass* klass, void** iter);
-typedef const char* (*il2cpp_class_get_namespace_t)(Il2CppClass* klass);
-typedef void* (*il2cpp_class_get_image_t)(Il2CppClass* klass);
-typedef int (*il2cpp_class_get_flags_t)(const Il2CppClass* klass);
-typedef bool (*il2cpp_class_is_valuetype_t)(const Il2CppClass* klass);
-typedef uint32_t(*il2cpp_property_get_flags_t) (PropertyInfo* prop);
-typedef const MethodInfo* (*il2cpp_property_get_get_method_t) (const PropertyInfo* prop);
-typedef const MethodInfo* (*il2cpp_property_get_set_method_t) (const PropertyInfo* prop);
-typedef const char* (*il2cpp_property_get_name_t) (const PropertyInfo* prop);
-typedef Il2CppClass* (*il2cpp_property_get_parent_t) (const PropertyInfo* prop);
-typedef int (*il2cpp_field_get_flags_t)(FieldInfo* field);
-typedef const char* (*il2cpp_field_get_name_t)(FieldInfo* field);
-typedef Il2CppClass* (*il2cpp_field_get_parent_t)(FieldInfo* field);
-typedef size_t (*il2cpp_field_get_offset_t)(FieldInfo* field);
-typedef const PropertyInfo* (*il2cpp_class_get_property_from_name_t)(Il2CppClass* klass, const char* name);
-typedef void (*il2cpp_runtime_object_init_t)(Il2CppObject* obj);
-typedef Il2CppObject* (*il2cpp_value_box_t)(Il2CppClass* klass, void* data);
-typedef void* (*il2cpp_object_unbox_t)(Il2CppObject* obj);
- 
-char* il2cpp_array_addr_with_size(void* arr, int32_t size, uintptr_t idx);
-
-// array macro
-#define il2cpp_array_addr(array, type, index) ((type*)(void*) il2cpp_array_addr_with_size (array, sizeof (type), index))
-
-#define il2cpp_array_setref(array, index, value)  \
-    do {    \
-        void* *__p = (void* *) il2cpp_array_addr ((array), void*, (index)); \
-         *__p = (value);    \
-    } while (0)
-
-namespace il2cpp_symbols
-{
-	inline void* il2cpp_domain = nullptr;
-
-	void init(HMODULE game_module);
-	uintptr_t get_method_pointer(const char* assemblyName, const char* namespaze,
-		const char* klassName, const char* name, int argsCount,bool strict);
-
-	Il2CppClass* get_class(const char* assemblyName, const char* namespaze, const char* klassName);
-
-	MethodInfo* get_method(const char* assemblyName, const char* namespaze,
-		const char* klassName, const char* name, int argsCount);
-
-	Il2CppClass* find_class(const char* assemblyName, const char* namespaze, std::function<bool(Il2CppClass*)> predict);
-
-	uintptr_t find_method(const char* assemblyName, const char* namespaze,
-		const char* klassName, std::function<bool(const MethodInfo*)> predict);
-}
  
 // UnityEngine.Quaternion
 struct Quaternion_t
@@ -612,36 +522,81 @@ struct Il2CppReflectionType
 };
  
 
-// function types
-typedef Il2CppString* (*il2cpp_string_new_utf16_t)(const wchar_t* str, unsigned int len);
-typedef Il2CppString* (*il2cpp_string_new_t)(const char* str);
-typedef void* (*il2cpp_domain_get_t)();
-typedef void* (*il2cpp_domain_assembly_open_t)(void* domain, const char* name);
-typedef void* (*il2cpp_assembly_get_image_t)(void* assembly);
+inline void** (*il2cpp_domain_get_assemblies)(void* domain, std::size_t* size);
+inline Il2CppClass* (*il2cpp_class_from_name)(void* image, const char* namespaze, const char* name);
+inline MethodInfo* (*il2cpp_class_get_methods)(Il2CppClass* klass, void** iter);
+inline MethodInfo* (*il2cpp_class_get_method_from_name)(Il2CppClass* klass, const char* name, int argsCount);
+inline MethodInfo* (*il2cpp_method_get_from_reflection)(Il2CppObject* ref);
+inline const Il2CppType* (*il2cpp_method_get_param)(const MethodInfo* method, uint32_t index);
+inline Il2CppObject* (*il2cpp_object_new)(Il2CppClass* klass);
+inline void (*il2cpp_add_internal_call)(const char* name, uintptr_t pointer);
+inline Il2CppArraySize* (*il2cpp_array_new)(Il2CppClass* klass, uintptr_t count);
+inline const Il2CppType* (*il2cpp_class_get_type)(Il2CppClass* klass);
+inline uint32_t(*il2cpp_class_get_type_token)(Il2CppClass* klass);
+inline FieldInfo* (*il2cpp_class_get_field_from_name)(Il2CppClass* klass, const char* name);
+inline void (*il2cpp_field_get_value)(Il2CppObject* obj, FieldInfo* field, void* value);
+inline void (*il2cpp_field_set_value)(Il2CppObject* obj, FieldInfo* field, void* value);
+inline void (*il2cpp_field_static_get_value)(FieldInfo* field, void* value);
+inline void (*il2cpp_field_static_set_value)(FieldInfo* field, void* value);
+inline const Il2CppType* (*il2cpp_field_get_type)(FieldInfo* field);
+inline Il2CppObject* (*il2cpp_type_get_object)(const Il2CppType* type);
+inline const char* (*il2cpp_image_get_name)(void* image);
+inline size_t(*il2cpp_image_get_class_count)(void* image);
+inline const Il2CppClass* (*il2cpp_image_get_class)(void* image, size_t index);
+inline bool (*il2cpp_type_is_byref)(const Il2CppType* type);
+inline uint32_t(*il2cpp_method_get_flags)(const MethodInfo* mehod, uint32_t* iflags);
+inline const Il2CppType* (*il2cpp_method_get_return_type)(const MethodInfo* method);
+inline Il2CppClass* (*il2cpp_class_from_type)(const Il2CppType* type);
+inline const char* (*il2cpp_class_get_name)(Il2CppClass* klass);
+inline const PropertyInfo* (*il2cpp_class_get_properties)(Il2CppClass* klass, void** iter);
+inline bool (*il2cpp_class_is_enum)(const Il2CppClass* klass);
+inline FieldInfo* (*il2cpp_class_get_fields)(Il2CppClass* klass, void** iter);
+inline const char* (*il2cpp_method_get_name)(const MethodInfo* method);
+inline uint32_t(*il2cpp_method_get_param_count)(const MethodInfo* method);
+inline const char* (*il2cpp_method_get_param_name)(const MethodInfo* method, uint32_t index);
+inline Il2CppClass* (*il2cpp_class_get_parent)(Il2CppClass* klass);
+inline Il2CppClass* (*il2cpp_class_get_interfaces)(Il2CppClass* klass, void** iter);
+inline const char* (*il2cpp_class_get_namespace)(Il2CppClass* klass);
+inline void* (*il2cpp_class_get_image)(Il2CppClass* klass);
+inline int (*il2cpp_class_get_flags)(const Il2CppClass* klass);
+inline bool (*il2cpp_class_is_valuetype)(const Il2CppClass* klass);
+inline uint32_t(*il2cpp_property_get_flags) (PropertyInfo* prop);
+inline const MethodInfo* (*il2cpp_property_get_get_method) (const PropertyInfo* prop);
+inline const MethodInfo* (*il2cpp_property_get_set_method) (const PropertyInfo* prop);
+inline const char* (*il2cpp_property_get_name) (const PropertyInfo* prop);
+inline Il2CppClass* (*il2cpp_property_get_parent) (const PropertyInfo* prop);
+inline int (*il2cpp_field_get_flags)(FieldInfo* field);
+inline const char* (*il2cpp_field_get_name)(FieldInfo* field);
+inline Il2CppClass* (*il2cpp_field_get_parent)(FieldInfo* field);
+inline size_t (*il2cpp_field_get_offset)(FieldInfo* field);
+inline const PropertyInfo* (*il2cpp_class_get_property_from_name)(Il2CppClass* klass, const char* name);
+inline void (*il2cpp_runtime_object_init)(Il2CppObject* obj);
+inline Il2CppObject* (*il2cpp_value_box)(Il2CppClass* klass, void* data);
+inline void* (*il2cpp_object_unbox)(Il2CppObject* obj);
+inline Il2CppString* (*il2cpp_string_new_utf16)(const wchar_t* str, unsigned int len);
+inline Il2CppString* (*il2cpp_string_new)(const char* str);
+inline void* (*il2cpp_domain_get)();
+inline void* (*il2cpp_domain_assembly_open)(void* domain, const char* name);
+inline void* (*il2cpp_assembly_get_image)(void* assembly);
+inline void* (*il2cpp_resolve_icall)(const char* name);
+inline void* (*il2cpp_thread_attach)(void* domain);
+inline void (*il2cpp_thread_detach)(void* thread);
+inline bool (*il2cpp_class_is_assignable_from)(void* klass, void* oklass);
+inline void (*il2cpp_class_for_each)(void(*klassReportFunc)(Il2CppClass* klass, void* userData), void* userData);
+inline void* (*il2cpp_class_get_nested_types)(void* klass, void** iter);
+inline uint32_t(*il2cpp_gchandle_new)(void* obj, bool pinned);
+inline void (*il2cpp_gchandle_free)(uint32_t gchandle);
+inline void* (*il2cpp_gchandle_get_target)(uint32_t gchandle);
+inline void (*il2cpp_runtime_class_init)(void* klass);
+inline void* (*il2cpp_runtime_invoke)(MethodInfo* method, void* obj, void** params, Il2CppObject** exc);
+inline Il2CppChar* (*il2cpp_string_chars)(Il2CppString* str);
+inline int (*il2cpp_string_length)(Il2CppString* str);
 
 
-
-
-
-typedef void* (*il2cpp_resolve_icall_t)(const char* name);
-
-typedef void* (*il2cpp_thread_attach_t)(void* domain);
-typedef void (*il2cpp_thread_detach_t)(void* thread);
-
-typedef bool (*il2cpp_class_is_assignable_from_t)(void* klass, void* oklass);
-typedef void (*il2cpp_class_for_each_t)(void(*klassReportFunc)(Il2CppClass* klass, void* userData), void* userData);
-typedef void* (*il2cpp_class_get_nested_types_t)(void* klass, void** iter);
-
-
-typedef uint32_t(*il2cpp_gchandle_new_t)(void* obj, bool pinned);
-typedef void (*il2cpp_gchandle_free_t)(uint32_t gchandle);
-typedef void* (*il2cpp_gchandle_get_target_t)(uint32_t gchandle);
-
-typedef void (*il2cpp_runtime_class_init_t)(void* klass);
-typedef void* (*il2cpp_runtime_invoke_t)(MethodInfo* method, void* obj, void** params, Il2CppObject** exc);
- 
-char* il2cpp_array_addr_with_size(void* arr, int32_t size, uintptr_t idx);
-
-// array macro
-#define il2cpp_array_addr(array, type, index) ((type*)(void*) il2cpp_array_addr_with_size (array, sizeof (type), index))
- 
+namespace il2cppfunctions{
+    void init(HMODULE dll);
+    uintptr_t get_method_pointer(const char* assemblyName, const char* namespaze,
+								 const char* klassName, const char* name, int argsCount,bool strict);
+	std::optional<std::wstring_view> get_string(void*);
+	void* create_string(std::wstring_view ws);
+}
