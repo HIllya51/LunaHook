@@ -81,7 +81,6 @@ namespace { // unnamed
 	
 	//thread_local BYTE buffer[PIPE_BUFFER_SIZE];
 	//thread_local will crush on windowsxp
-	enum { TEXT_BUFFER_SIZE = PIPE_BUFFER_SIZE - sizeof(TextOutput_T) };
 } // unnamed namespace
 
 // - TextHook methods -

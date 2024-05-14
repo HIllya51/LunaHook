@@ -56,7 +56,7 @@ private:
 	ALIGNPTR(uint64_t __2,HANDLE readerEvent); 
 	bool err;
 	ALIGNPTR(BYTE __4[ 140],BYTE trampoline[x64 ? 140 : 40]); 
-	ALIGNPTR(uint64_t __3,BYTE* local_buffer); 
+	ALIGNPTR(uint64_t __3,BYTE* local_buffer);
 };
 
 enum { MAX_HOOK = 2500};

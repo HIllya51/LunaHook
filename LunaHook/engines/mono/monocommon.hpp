@@ -98,16 +98,16 @@ namespace monocommon{
         hp.argidx=hook.argidx;
         hp.text_fun =(decltype(hp.text_fun))hook.text_fun;
         if(hook.isstring){
-        hp.type = USING_STRING | CODEC_UTF16|FULL_STRING;
-        if(!hp.text_fun)hp.type|=SPECIAL_JIT_STRING;
+            hp.type = USING_STRING | CODEC_UTF16|FULL_STRING;
+            if(!hp.text_fun)hp.type|=SPECIAL_JIT_STRING;
+            if(hook.Embed)
+                hp.type|=EMBED_ABLE|EMBED_BEFORE_SIMPLE;
         }
         else{
         hp.type = USING_CHAR | CODEC_UTF16;
         }
         hp.jittype=JITTYPE::UNITY;
         strcpy(hp.unityfunctioninfo,hook.info().c_str());
-        if(hook.Embed)
-            hp.type|=EMBED_ABLE|EMBED_BEFORE_SIMPLE;
         auto succ=NewHook(hp,hook.hookname().c_str());
         #ifdef _WIN64
         if(!succ){
@@ -124,7 +124,7 @@ namespace monocommon{
         {"mscorlib","System","String","IndexOf",1,1},
         {"mscorlib","System","String","Substring",2,1},
         {"mscorlib","System","String","op_Inequality",2,1},
-        {"mscorlib","System","String","InternalSubString",2,99999,mscorlib_system_string_InternalSubString_hook_fun},
+        {"mscorlib","System","String","InternalSubString",2,1,mscorlib_system_string_InternalSubString_hook_fun},
         
         {"Unity.TextMeshPro","TMPro","TMP_Text","set_text",1,2,nullptr,true},
         {"Unity.TextMeshPro","TMPro","TextMeshPro","set_text",1,2,nullptr,true},

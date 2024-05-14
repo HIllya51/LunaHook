@@ -71,30 +71,28 @@ namespace il2cpp_symbols
 	Il2CppClass* get_il2cppclass1(const char* assemblyName, const char* namespaze,
 								 const char* klassName,bool strict)
 	{
-		if(!(il2cpp_assembly_get_image&&il2cpp_class_from_name))return NULL;
-		void* assembly=0;
-		if(il2cpp_domain_assembly_open){
-			do{
-				assembly = il2cpp_domain_assembly_open(il2cpp_domain, assemblyName);
-				if(!assembly)break; 
-				auto image = il2cpp_assembly_get_image(assembly);
-				if(!image)break;
-				auto klass = il2cpp_class_from_name(image, namespaze, klassName);
-				if(klass)return klass;
-			}while(0);
-		}
+		 
+		void* assembly=0; 
+		do{
+			assembly = (SafeFptr(il2cpp_domain_assembly_open))(il2cpp_domain, assemblyName);
+			if(!assembly)break; 
+			auto image = (SafeFptr(il2cpp_assembly_get_image))(assembly);
+			if(!image)break;
+			auto klass = (SafeFptr(il2cpp_class_from_name))(image, namespaze, klassName);
+			if(klass)return klass;
+		}while(0); 
 		if(strict)return NULL;
-		if(il2cpp_domain_get_assemblies&&il2cpp_assembly_get_image)
-		{
-			int _ = 0;
-			size_t sz = 0;
-			auto assemblies = il2cpp_domain_get_assemblies(il2cpp_domain, &sz);
-			for (auto i = 0; i < sz; i++, assemblies++) {
-				auto image = il2cpp_assembly_get_image(*assemblies);
-				auto cls = il2cpp_class_from_name(image, namespaze, klassName);
-				if(cls)return cls;
-			}
-		}
+		 
+		int _ = 0;
+		size_t sz = 0;
+		auto assemblies = (SafeFptr(il2cpp_domain_get_assemblies))(il2cpp_domain, &sz);
+		if(assemblies)
+		for (auto i = 0; i < sz; i++, assemblies++) {
+			auto image = (SafeFptr(il2cpp_assembly_get_image))(*assemblies);
+			if(!image)continue;
+			auto cls = (SafeFptr(il2cpp_class_from_name))(image, namespaze, klassName);
+			if(cls)return cls;
+		} 
 		return NULL;
 		 
 	}
@@ -106,20 +104,19 @@ namespace il2cpp_symbols
 	std::vector<Il2CppClass*> get_il2cppclass2(const char* namespaze,
 								 const char* klassName)
 	{
-		if(!(il2cpp_class_for_each&&il2cpp_class_get_name))return {};
 		std::vector<Il2CppClass*>maybes;
 		std::vector<Il2CppClass*>klasses;
-		il2cpp_class_for_each(foreach_func,&klasses);
+		(SafeFptr(il2cpp_class_for_each))(foreach_func,&klasses);
 		
 		for(auto klass:klasses){
-			auto classname = il2cpp_class_get_name(klass);
+			auto classname = (SafeFptr(il2cpp_class_get_name))(klass);
+			if(!classname)continue;
 			if(strcmp(classname,klassName)!=0)continue;
 			maybes.push_back(klass);
-			if(il2cpp_class_get_namespace){
-				auto namespacename=il2cpp_class_get_namespace(klass);
-				if(strlen(namespaze)&&(strcmp(namespacename,namespaze)==0)){
-					return {klass};
-				}
+			auto namespacename=(SafeFptr(il2cpp_class_get_namespace))(klass);
+			if(!namespacename)continue;
+			if(strlen(namespaze)&&(strcmp(namespacename,namespaze)==0)){
+				return {klass};
 			}
 		}
 		return maybes;
@@ -127,27 +124,26 @@ namespace il2cpp_symbols
 	struct AutoThread{
 		void*thread=NULL;
 		AutoThread(){
-			if(!(il2cpp_thread_attach&&il2cpp_domain_get))return;
-			auto il2cpp_domain=il2cpp_domain_get();
+			auto il2cpp_domain=(SafeFptr(il2cpp_domain_get))();
 			if (!il2cpp_domain) return;
-			thread= il2cpp_thread_attach(il2cpp_domain);
+			thread= (SafeFptr(il2cpp_thread_attach))(il2cpp_domain);
 		}
 		~AutoThread(){
 			if(!thread)return;
-			if(!il2cpp_thread_detach)return;
-			il2cpp_thread_detach(thread);
+			(SafeFptr(il2cpp_thread_detach))(thread);
 		}
 	};
 	void tryprintimage(Il2CppClass* klass){
-		if(!(il2cpp_class_get_namespace&&il2cpp_class_get_image&&il2cpp_image_get_name))return;
-		auto image=il2cpp_class_get_image(klass);
+		auto image=(SafeFptr(il2cpp_class_get_image))(klass);
 		if(!image)return;
-		ConsoleOutput("%s:%s",il2cpp_image_get_name(image),il2cpp_class_get_namespace(klass));
+		auto imagen=(SafeFptr(il2cpp_image_get_name))(image);
+		auto names=(SafeFptr(il2cpp_class_get_namespace))(klass);
+		if(imagen&&names)
+		ConsoleOutput("%s:%s",imagen,names);
 	}
 	uintptr_t getmethodofklass(Il2CppClass* klass,const char* name, int argsCount){
-		if(!(il2cpp_class_get_method_from_name))return NULL;
 		if(!klass)return NULL;
-		auto ret = il2cpp_class_get_method_from_name(klass, name, argsCount);
+		auto ret = (SafeFptr(il2cpp_class_get_method_from_name))(klass, name, argsCount);
 		if(!ret)return NULL;
 		tryprintimage(klass);
 		return ret->methodPointer;

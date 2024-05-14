@@ -92,3 +92,16 @@ inline std::optional<std::wstring> getModuleFilename(HMODULE module = NULL)
 	if (GetModuleFileNameW(module, buffer.data(), MAX_PATH)) return buffer.data();
 	return {};
 }
+
+template<typename T>
+struct SafeFptr {
+	T ptr;
+	uintptr_t errorvalue;
+	SafeFptr(T _ptr, uintptr_t v = {NULL}) : ptr(_ptr), errorvalue(v) {}
+
+	template<typename... Args>
+	std::invoke_result_t<T, Args...> operator()(Args... args) {
+		if (!ptr) return (std::invoke_result_t<T, Args...>)(errorvalue);
+		return ptr(std::forward<Args>(args)...);
+	}
+};

@@ -469,84 +469,82 @@ void load_mono_functions_from_dll(HMODULE dll)
 }
 namespace{
 void MonoCallBack(void* assembly, void* userData) {
-    auto Image=mono_assembly_get_image((MonoAssembly*)assembly);
+    auto Image=(SafeFptr(mono_assembly_get_image))((MonoAssembly*)assembly);
     if(!Image)return;
     auto st=reinterpret_cast<std::vector<MonoImage*>*>(userData);
     st->push_back(Image);
 }
 std::vector<MonoImage*>mono_loop_images(){
-    if(!(mono_assembly_get_image&&mono_assembly_foreach))return {};
     std::vector<MonoImage*>images;
-    mono_assembly_foreach(MonoCallBack,(void*)&images);
+    (SafeFptr(mono_assembly_foreach))(MonoCallBack,(void*)&images);
     return images;
 }
 MonoClass* mono_findklassby_ass_namespace(std::vector<MonoImage*>& images,const char *_dll, const char *_namespace,const char *_class,bool strict){
-    if(!(mono_class_from_name))return NULL;
     MonoClass* maybe=NULL;
 
     for(auto Image:images){
-        auto tmp=mono_class_from_name(Image, _namespace,_class);
-        if(tmp){
-            maybe=tmp;
-            if(mono_image_get_name){
-                auto name=mono_image_get_name(Image);
-                if(name&&(strcmp(_dll,name)==0))return tmp;
-            }
-        }
+        auto tmp=(SafeFptr(mono_class_from_name))(Image, _namespace,_class);
+        if(!tmp)continue;
+    
+        maybe=tmp;
+        auto name=(SafeFptr(mono_image_get_name))(Image);
+        if(!name)continue;
+        if(strcmp(_dll,name)==0)return tmp;
+            
     }
     if(strict)return NULL;
     return maybe;
 }
 std::vector<MonoClass*> mono_findklassby_class(std::vector<MonoImage*>& images,const char *_namespace,const char *_class){
-    if(!(mono_image_get_table_info&&mono_table_info_get_rows&&mono_class_get&&mono_class_get_name))return {};
     
     std::vector<MonoClass*>maybes;
     for(auto image:images){
-        auto _1=mono_image_get_table_info((void*)image,MONO_TABLE_TYPEDEF);
-        auto tdefcount=mono_table_info_get_rows(_1);
+        auto _1=(SafeFptr(mono_image_get_table_info))((void*)image,MONO_TABLE_TYPEDEF);
+        if(!_1)continue;
+        auto tdefcount=(SafeFptr(mono_table_info_get_rows))(_1);
+        if(!tdefcount)continue;
         for (int i = 0; i < tdefcount; i++)
         {		
-            auto klass = (MonoClass*)mono_class_get(image, MONO_TOKEN_TYPE_DEF | i+1);
-            
-            auto name=mono_class_get_name(klass);
+            auto klass = (MonoClass*)(SafeFptr(mono_class_get))(image, MONO_TOKEN_TYPE_DEF | i+1);
+            if(!klass)continue;
+            auto name=(SafeFptr(mono_class_get_name))(klass);
+            if(!name)continue;
             if(strcmp(name,_class)!=0)continue;
 			maybes.push_back(klass);
-			if(mono_class_get_namespace){
-				auto namespacename=mono_class_get_namespace(klass);
-				if(strlen(_namespace)&&(strcmp(namespacename,_namespace)==0)){
-					return {klass};
-				}
-			}
+            auto namespacename=(SafeFptr(mono_class_get_namespace))(klass);
+            if(!namespacename)continue;
+            if(strlen(_namespace)&&(strcmp(namespacename,_namespace)==0)){
+                return {klass};
+            }
         }
     }
     return maybes;
 }
 void tryprintimage(MonoClass* klass){
-    if(!(mono_class_get_image&&mono_image_get_name&&mono_class_get_namespace))return;
-    auto image=mono_class_get_image(klass);
+    auto image=(SafeFptr(mono_class_get_image))(klass);
     if(!image)return;
-    ConsoleOutput("%s:%s",mono_image_get_name(image),mono_class_get_namespace(klass));
+    auto imagen=(SafeFptr(mono_image_get_name))(image);
+    auto names=(SafeFptr(mono_class_get_namespace))(klass);
+    if(imagen&&names)
+    ConsoleOutput("%s:%s",imagen,names);
 }
 uintptr_t getmethodofklass(MonoClass* klass,const char* name, int argsCount){
-    if(!(mono_class_get_method_from_name&&mono_compile_method))return NULL;
     if(!klass)return NULL;
-    MonoMethod* MonoClassMethod = mono_class_get_method_from_name(klass, name, argsCount);
+    auto MonoClassMethod = (SafeFptr(mono_class_get_method_from_name))(klass, name, argsCount);
     if(!MonoClassMethod)return NULL;
     tryprintimage(klass);
-	return (uintptr_t)mono_compile_method((uintptr_t)MonoClassMethod);
+	return (uintptr_t)(SafeFptr(mono_compile_method))((uintptr_t)MonoClassMethod);
 }
 struct AutoThread{
     MonoThread *thread=NULL;
     AutoThread(){
-        if(!(mono_get_root_domain&&mono_thread_attach))return ;
-        auto _root=mono_get_root_domain();
+        auto _root=(SafeFptr(mono_get_root_domain))();
         if(!_root)return ;
-        thread= mono_thread_attach(_root);
+        thread= (SafeFptr(mono_thread_attach))(_root);
     }
     ~AutoThread(){
         if(!thread)return;
-        if(!mono_thread_detach)return;
-        mono_thread_detach(thread);
+        (SafeFptr(mono_thread_detach))(thread);
     }
 };
 }
