@@ -480,7 +480,7 @@ std::vector<MonoImage*>mono_loop_images(){
     mono_assembly_foreach(MonoCallBack,(void*)&images);
     return images;
 }
-MonoClass* mono_findklassby_ass_namespace(std::vector<MonoImage*>& images,const char *_dll, const char *_namespace,const char *_class){
+MonoClass* mono_findklassby_ass_namespace(std::vector<MonoImage*>& images,const char *_dll, const char *_namespace,const char *_class,bool strict){
     if(!(mono_class_from_name))return NULL;
     MonoClass* maybe=NULL;
 
@@ -494,6 +494,7 @@ MonoClass* mono_findklassby_ass_namespace(std::vector<MonoImage*>& images,const 
             }
         }
     }
+    if(strict)return NULL;
     return maybe;
 }
 std::vector<MonoClass*> mono_findklassby_class(std::vector<MonoImage*>& images,const char *_namespace,const char *_class){
@@ -549,15 +550,16 @@ struct AutoThread{
     }
 };
 }
-uintptr_t getmonofunctionptr(const char *_dll, const char *_namespace, const char *_class, const char *_method, int paramCount) {
+uintptr_t getmonofunctionptr(const char *_dll, const char *_namespace, const char *_class, const char *_method, int paramCount,bool strict) {
     auto thread=AutoThread();
 	if(!thread.thread)return NULL;
 
     auto images=mono_loop_images();
 
-    auto pClass=mono_findklassby_ass_namespace(images,_dll,_namespace,_class);//dll可以为空
+    auto pClass=mono_findklassby_ass_namespace(images,_dll,_namespace,_class,strict);//dll可以为空
     if(pClass)
 			return getmethodofklass(pClass,_method,paramCount);
+    if(strict)return NULL;
     auto klasses=mono_findklassby_class(images,_namespace,_class);//namespace可以为空
     for(auto klass:klasses){
         auto method= getmethodofklass(klass,_method,paramCount);

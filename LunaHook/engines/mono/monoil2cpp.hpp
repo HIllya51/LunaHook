@@ -23,20 +23,15 @@ inline void unity_ui_string_hook_after(uintptr_t *offset,void* data, size_t len)
     newstring->length=len/2;
     *offset=(uintptr_t)newstring;
 }
-namespace il2cpp_symbols
-{
-	void init(HMODULE game_module);
-	uintptr_t get_method_pointer(const char* assemblyName, const char* namespaze,
-								 const char* klassName, const char* name, int argsCount);
 
-}
+
 void load_mono_functions_from_dll(HMODULE dll);
 
-uintptr_t getmonofunctionptr(const char *_dll, const char *_namespace, const char *_class, const char *_method, int paramCount);
+uintptr_t getmonofunctionptr(const char *_dll, const char *_namespace, const char *_class, const char *_method, int paramCount,bool strict);
 
 
-inline uintptr_t tryfindmonoil2cpp(const char *_dll, const char *_namespace, const char *_class, const char *_method, int paramCoun){
-    auto addr=il2cpp_symbols::get_method_pointer(_dll,_namespace,_class,_method,paramCoun);
+inline uintptr_t tryfindmonoil2cpp(const char *_dll, const char *_namespace, const char *_class, const char *_method, int paramCoun,bool strict=false){
+    auto addr=il2cpp_symbols::get_method_pointer(_dll,_namespace,_class,_method,paramCoun,strict);
     if(addr)return addr;
-    return getmonofunctionptr(_dll,_namespace,_class,_method,paramCoun);
+    return getmonofunctionptr(_dll,_namespace,_class,_method,paramCoun,strict);
 }

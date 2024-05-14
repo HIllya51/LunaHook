@@ -69,20 +69,21 @@ namespace il2cpp_symbols
 		RESOLVE_IMPORT(il2cpp_domain_get_assemblies);
 	}
 	Il2CppClass* get_il2cppclass1(const char* assemblyName, const char* namespaze,
-								 const char* klassName)
+								 const char* klassName,bool strict)
 	{
 		if(!(il2cpp_assembly_get_image&&il2cpp_class_from_name))return NULL;
 		void* assembly=0;
 		if(il2cpp_domain_assembly_open){
-		do{
-			assembly = il2cpp_domain_assembly_open(il2cpp_domain, assemblyName);
-			if(!assembly)break; 
-			auto image = il2cpp_assembly_get_image(assembly);
-			if(!image)break;
-			auto klass = il2cpp_class_from_name(image, namespaze, klassName);
-			if(klass)return klass;
-		}while(0);
+			do{
+				assembly = il2cpp_domain_assembly_open(il2cpp_domain, assemblyName);
+				if(!assembly)break; 
+				auto image = il2cpp_assembly_get_image(assembly);
+				if(!image)break;
+				auto klass = il2cpp_class_from_name(image, namespaze, klassName);
+				if(klass)return klass;
+			}while(0);
 		}
+		if(strict)return NULL;
 		if(il2cpp_domain_get_assemblies&&il2cpp_assembly_get_image)
 		{
 			int _ = 0;
@@ -152,14 +153,15 @@ namespace il2cpp_symbols
 		return ret->methodPointer;
 	}
 	uintptr_t get_method_pointer(const char* assemblyName, const char* namespaze,
-								 const char* klassName, const char* name, int argsCount)
+								 const char* klassName, const char* name, int argsCount,bool strict)
 	{
 		auto thread=AutoThread();
 		if(!thread.thread)return NULL;
 
-		auto klass=get_il2cppclass1(assemblyName,namespaze,klassName);//正向查询，assemblyName可以为空
+		auto klass=get_il2cppclass1(assemblyName,namespaze,klassName,strict);//正向查询，assemblyName可以为空
 		if(klass)
 			return getmethodofklass(klass,name,argsCount);
+		if(strict)return NULL;
 		auto klasses=get_il2cppclass2(namespaze,klassName);//反向查询，namespace可以为空
 		for(auto klass:klasses){
 			auto method= getmethodofklass(klass,name,argsCount);

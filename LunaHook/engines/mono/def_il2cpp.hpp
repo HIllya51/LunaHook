@@ -561,7 +561,7 @@ namespace il2cpp_symbols
 
 	void init(HMODULE game_module);
 	uintptr_t get_method_pointer(const char* assemblyName, const char* namespaze,
-		const char* klassName, const char* name, int argsCount);
+		const char* klassName, const char* name, int argsCount,bool strict);
 
 	Il2CppClass* get_class(const char* assemblyName, const char* namespaze, const char* klassName);
 

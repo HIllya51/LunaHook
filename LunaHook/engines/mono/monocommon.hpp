@@ -122,12 +122,18 @@ namespace monocommon{
         {"mscorlib","System","String","InternalSubString",2,99999,mscorlib_system_string_InternalSubString_hook_fun,false},
         
         {"Unity.TextMeshPro","TMPro","TMP_Text","set_text",1,2,nullptr,true},
+        {"Unity.TextMeshPro","TMPro","TextMeshPro","set_text",1,2,nullptr,true},
         {"UnityEngine.UI","UnityEngine.UI","Text","set_text",1,2,nullptr,true},
         {"UnityEngine.UIElementsModule","UnityEngine.UIElements","TextElement","set_text",1,2,nullptr,true},
         {"UnityEngine.UIElementsModule","UnityEngine.UIElements","TextField","set_value",1,2,nullptr,true},
         {"UnityEngine.TextRenderingModule","UnityEngine","GUIText","set_text",1,2,nullptr,true},    
         {"UnityEngine.TextRenderingModule","UnityEngine","TextMesh","set_text",1,2,nullptr,true},    
         {"UGUI","","UILabel","set_text",1,2,nullptr,true},
+    };
+    std::vector<functioninfo>extrahooks{
+        //https://vndb.org/r37234 && https://vndb.org/r37235
+        //Higurashi When They Cry Hou - Ch.2 Watanagashi && Higurashi When They Cry Hou - Ch.3 Tatarigoroshi
+        {"Assembly-CSharp","Assets.Scripts.Core.TextWindow","TextController","SetText",4,3,nullptr,true},
     };
     bool hook_mono_il2cpp(){
         for (const wchar_t* monoName : { L"mono.dll", L"mono-2.0-bdwgc.dll",L"GameAssembly.dll" }) 
@@ -138,6 +144,11 @@ namespace monocommon{
                 bool succ=false;
                 for(auto hook:commonhooks){
                     auto addr=tryfindmonoil2cpp(hook.assemblyName,hook.namespaze,hook.klassName,hook.name,hook.argsCount);
+                    if(!addr)continue;
+                    succ|=NewHook_check(addr,hook);
+                }
+                for(auto hook:extrahooks){
+                    auto addr=tryfindmonoil2cpp(hook.assemblyName,hook.namespaze,hook.klassName,hook.name,hook.argsCount,true);
                     if(!addr)continue;
                     succ|=NewHook_check(addr,hook);
                 }
