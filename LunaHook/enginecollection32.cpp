@@ -14,6 +14,7 @@
 #include"engine32/FrontWing.h"
 #include"engine32/GSX.h"
 #include"engine32/pchooks.h"
+#include"engine32/VALKYRIA.h"
 #include"engine32/mirage.h"
 #include"engine32/Sprite.h"
 #include"engine32/PONScripter.h"
@@ -326,7 +327,8 @@ std::vector<ENGINE*> check_engines(){
         new FrontWing,
         new tamasoft,
         new CisLugI,
-        new mirage
+        new mirage,
+        new VALKYRIA
     };
      
 }
