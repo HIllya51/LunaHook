@@ -26,9 +26,10 @@ void commonsolvemonostring(uintptr_t offset,uintptr_t *data,  size_t*len){
     auto sw_v=sw.value();
     *data=(uintptr_t)sw_v.data();
     *len=sw_v.length()*sizeof(wchar_t);
-    //tostring|substring有时会会崩，非法指针或者长度爆炸
-    if(wcslen(sw_v.data())!=sw_v.size())
+    if(*len>TEXT_BUFFER_SIZE){
         *len=0;
+        return;
+    }
 }
 
 void unity_ui_string_hook_after(uintptr_t *offset,void* data, size_t len)

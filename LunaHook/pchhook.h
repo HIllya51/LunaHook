@@ -2,8 +2,8 @@
 
 enum { TEXT_BUFFER_SIZE = PIPE_BUFFER_SIZE - sizeof(TextOutput_T) };
 
-#define wcslen(XX) wcsnlen((XX), TEXT_BUFFER_SIZE*2)
-#define strlen(XX) strnlen((XX), TEXT_BUFFER_SIZE*2)
+//#define wcslen(XX) wcsnlen((XX), TEXT_BUFFER_SIZE*2)
+//#define strlen(XX) strnlen((XX), TEXT_BUFFER_SIZE*2)
 
 
 #include"main.h"
