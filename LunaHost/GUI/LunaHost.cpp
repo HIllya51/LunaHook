@@ -401,7 +401,8 @@ bool LunaHost::on_text_recv(TextThread& thread, std::wstring& output){
 }
 void LunaHost::on_thread_create(TextThread& thread){
     wchar_t buff[65535];
-    swprintf_s(buff,L"%s:%s:%I32X:%I64X:%I64X",
+    swprintf_s(buff,L"%I64X:%s:%s:%I32X:%I64X:%I64X",
+        thread.handle,
         thread.name.c_str(),
         thread.hp.hookcode,
         thread.tp.processId,
