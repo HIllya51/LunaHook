@@ -9,6 +9,7 @@
 #include"engine64/KiriKiri.h"
 #include"engine64/YOX.h"
 #include"engine64/Suika2.h"
+#include"engine64/livecaptions.h"
 #include"engine64/CMVS.h"
 #include"engine64/5pb.h"
 #include"engine64/lucasystem.h"
@@ -44,7 +45,8 @@ std::vector<ENGINE*> check_engines(){
         new PPSSPPengine,
         new vita3k,
         new rpcs3,
-        new Kincaid
+        new Kincaid,
+        new livecaptions
     };
      
 }
