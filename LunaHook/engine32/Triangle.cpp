@@ -39,6 +39,9 @@ bool Triangle::attach_function() {
       if((DWORD)addr!=(DWORD)TextOutA)return false;
       if(auto addr=MemDbg::findEnclosingAlignedFunction(stack->retaddr))
       {
+        if(*(BYTE*)(addr-2)==0xeb)//jmp xx, MONSTER PARK～化け物に魅入られし姫～，在函数中间中断
+          addr=MemDbg::findEnclosingAlignedFunction_strict(stack->retaddr);
+        if(!addr)return true;
         HookParam hp;
         hp.address=addr;
         hp.offset=get_stack(4);
