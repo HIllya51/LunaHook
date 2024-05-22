@@ -199,6 +199,19 @@ bool FULJM05603(LPVOID data, size_t* size, HookParam*)
 
     return true;
 }
+namespace NPJH50530{
+	std::string current;
+bool T(LPVOID data, size_t* size, HookParam*)
+{
+    current=std::string((char*)data,*size);
+    return true;
+}
+bool N(LPVOID data, size_t* size, HookParam*)
+{
+    auto current1=std::string((char*)data,*size);
+    return current!=current1;
+}
+}
 bool FULJM05889(LPVOID data, size_t* size, HookParam*)
 {
     auto text = reinterpret_cast<LPSTR>(data);
@@ -307,7 +320,10 @@ std::unordered_map<uintptr_t,emfuncinfo>emfunctionhooks= {
 	//Himawari_no_Kyoukai_to_Nagai_Natsuyasumi_Extra_Vacation_JPN_PSP-MOEMOE
 	{0x881c444,{FULL_STRING,0,0,0,0,"ULJM06321"}},//name+text,sjit,FULL_STRING to split name and text
 	//ましろ色シンフォニー *mutsu-no-hana
-	{0x8868AB8,{0,0,0,0,FULJM05889,"ULJM05889"}}
+	{0x8868AB8,{0,0,0,0,FULJM05889,"ULJM05889"}},
+	//シャイニング・ブレイド
+	{0x8AA3B70,{0,0xC,0,0,NPJH50530::T,"NPJH50530"}},//text only
+	{0x884DB44,{0,1,0,0,NPJH50530::N,"NPJH50530"}},//text+name
 };
     
 }
