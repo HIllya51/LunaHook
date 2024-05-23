@@ -154,11 +154,11 @@ int HookStrLen(HookParam* hp,BYTE* data){
 	if(data==0)return 0;
 
 	if(hp->type&CODEC_UTF16)
-		return wcslen((wchar_t*)data)*2;
+		return wcsnlen((wchar_t*)data,TEXT_BUFFER_SIZE)*2;
 	else if(hp->type&CODEC_UTF32)
 		return u32strlen((uint32_t*)data)*4;
 	else
-		return strlen((char*)data);
+		return strnlen((char*)data,TEXT_BUFFER_SIZE);
 
 }
 static std::mutex maplock;

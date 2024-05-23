@@ -413,14 +413,20 @@ void TextHook::Read()
 		}
 		else
 		{
-			while (WaitForSingleObject(readerEvent, 500) == WAIT_TIMEOUT) if (location&&(memcmp(pbData, location, dataLen) != 0)) if (int currentLen = HookStrlen((BYTE*)location))
+			while (WaitForSingleObject(readerEvent, 500) == WAIT_TIMEOUT)
 			{
-				dataLen = min(currentLen, TEXT_BUFFER_SIZE);
-				memcpy(pbData, location, dataLen);
-				if (hp.filter_fun && !hp.filter_fun(pbData, &dataLen, &hp) || dataLen <= 0) continue;
-				TextOutput({ GetCurrentProcessId(), address, 0, 0 },hp, buffer, dataLen);
-				memcpy(pbData, location, dataLen);
-			}
+				if(!location)continue;
+				int currentLen = HookStrlen((BYTE*)location);
+				bool changed=memcmp(pbData, location, dataLen) != 0;
+				if(changed ||(currentLen!=dataLen))
+				{
+					dataLen = min(currentLen, TEXT_BUFFER_SIZE);
+					memcpy(pbData, location, dataLen);
+					if (hp.filter_fun && !hp.filter_fun(pbData, &dataLen, &hp) || dataLen <= 0) continue;
+					TextOutput({ GetCurrentProcessId(), address, 0, 0 },hp, buffer, dataLen);
+					memcpy(pbData, location, dataLen);
+				}
+			} 
 		}
 		
 	}
