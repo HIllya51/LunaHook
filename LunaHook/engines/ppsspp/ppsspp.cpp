@@ -63,6 +63,49 @@ struct PPSSPPFunction
   const char *pattern;  // debug string used within the function
 }; 
 
+namespace{
+    uintptr_t findleapushaddr(uintptr_t addr)
+    {
+         #ifndef _WIN64
+        addr=MemDbg::findPushAddress(addr, processStartAddress, processStopAddress);
+        if(!addr)return NULL;
+        addr=SafeFindEnclosingAlignedFunction(addr, 0x200);
+        #else
+        addr=MemDbg::findleaaddr(addr, processStartAddress, processStopAddress);
+        
+        if(!addr)return NULL;
+         
+        BYTE sig1[]={
+            0xCC,
+            0x48,0x89,XX,0x24,XX,
+        };
+        
+        BYTE sig2[]={
+            0xC3,
+            0x48,0x89,XX,0x24,XX,
+        };
+        BYTE sig3[]={
+            0xCC,
+            0x89,XX,0x24,XX,
+        };
+        BYTE sig4[]={
+            0xC3,
+            0x89,XX,0x24,XX,
+        };
+        int idx=0;
+        uintptr_t maxaddr=0;
+        for(auto sig:{sig1,sig2,sig3,sig4})
+        {
+            idx+=1;
+            maxaddr=max(maxaddr,reverseFindBytes(sig,(idx>2)?5:6,addr-0x500,addr,1,true));
+        }
+        maxaddr=max(maxaddr,MemDbg::findEnclosingAlignedFunction_strict(addr,0x500));
+
+        addr=maxaddr;
+        #endif
+        return addr;
+    }
+}
 
 bool InsertPPSSPPHLEHooks()
 {
@@ -105,43 +148,7 @@ bool InsertPPSSPPHLEHooks()
     for (auto&& function :functions) {
         auto addr = MemDbg::findBytes(function.pattern, ::strlen(function.pattern), processStartAddress, processStopAddress);
         if(!addr)continue;
-        #ifndef _WIN64
-        addr=MemDbg::findPushAddress(addr, processStartAddress, processStopAddress);
-        if(!addr)continue;
-        addr=SafeFindEnclosingAlignedFunction(addr, 0x200);
-        #else
-        addr=MemDbg::findleaaddr(addr, processStartAddress, processStopAddress);
-        
-        if(!addr)continue;
-         
-        BYTE sig1[]={
-            0xCC,
-            0x48,0x89,XX,0x24,XX,
-        };
-        
-        BYTE sig2[]={
-            0xC3,
-            0x48,0x89,XX,0x24,XX,
-        };
-        BYTE sig3[]={
-            0xCC,
-            0x89,XX,0x24,XX,
-        };
-        BYTE sig4[]={
-            0xC3,
-            0x89,XX,0x24,XX,
-        };
-        int idx=0;
-        uintptr_t maxaddr=0;
-        for(auto sig:{sig1,sig2,sig3,sig4})
-        {
-            idx+=1;
-            maxaddr=max(maxaddr,reverseFindBytes(sig,(idx>2)?5:6,addr-0x500,addr,1,true));
-        }
-        maxaddr=max(maxaddr,MemDbg::findEnclosingAlignedFunction_strict(addr,0x500));
-
-        addr=maxaddr;
-        #endif
+        addr=findleapushaddr(addr);
         
         if(!addr)continue;
         HookParam hp;
@@ -456,10 +463,83 @@ bool hookPPSSPPDoJit(){
   return NewHook(hp,"PPSSPPDoJit");
 }
 }
+namespace{
+    //ULJS00035 ULJS00149 流行り神
+  void* findGetPointer(){
+    char GetPointer[]="Unknown GetPointer %08x PC %08x LR %08x";
+    auto addr=MemDbg::findBytes(GetPointer,sizeof(GetPointer),processStartAddress,processStopAddress);
+    if(!addr)return nullptr;
+    addr=findleapushaddr(addr);
+    return (void*)addr;
+  }
+  bool Replace_memcpy(){
+// static int Replace_memcpy() {
+// 	u32 destPtr = PARAM(0);
+// 	u32 srcPtr = PARAM(1);
+// 	u32 bytes = PARAM(2);
+    static auto GetPointer=(uintptr_t(*)(uintptr_t))findGetPointer();
+    if(!GetPointer)return false;
+    ConsoleOutput("GetPointer %p",GetPointer);
+    char ReplaceMemcpy_VideoDecodeRange[] ="ReplaceMemcpy/VideoDecodeRange";
+    auto addr=MemDbg::findBytes(ReplaceMemcpy_VideoDecodeRange,sizeof(ReplaceMemcpy_VideoDecodeRange),processStartAddress,processStopAddress);
+    if(!addr)return false;
+    ConsoleOutput("ReplaceMemcpy/VideoDecodeRange %p",addr);
+    #ifndef _WIN64
+    BYTE sig[]={0xb9,XX4};
+    *(uintptr_t*)(sig+1)=addr;
+    bool succ=false;
+    for(auto addr:Util::SearchMemory(sig,sizeof(sig),PAGE_EXECUTE,processStartAddress,processStopAddress)){
+      BYTE sig1[]={
+        0x55,0x8b,0xec,
+        0x81,0xec,XX4,
+        0x8b,0x0d,XX4,
+      };
+      addr=reverseFindBytes(sig1,sizeof(sig1),addr-0x200,addr);
+      if(!addr)continue;
+      DWORD off_106D180=*(DWORD*)(addr+sizeof(sig1)-4);
+      HookParam hp;
+      hp.user_value=*(DWORD*)off_106D180;
+    #else
+    bool succ=false;
+    for(auto addr:MemDbg::findleaaddr_all(addr,processStartAddress,processStopAddress)){
+      BYTE sig1[]={
+        0x48,0x89,XX,0x24,0x18,
+        0x48,0x89,XX,0x24,0x20,
+        0x57,
+        0x48,0x81,0xec,XX4,
+        0x48,0x8b,XX,XX4
+      };
+      addr=reverseFindBytes(sig1,sizeof(sig1),addr-0x200,addr);
+      if(!addr)continue;
+      DWORD off_140F4C810=*(DWORD*)(addr+sizeof(sig1)-4);
+      HookParam hp;
+      hp.user_value=*(uintptr_t*)(off_140F4C810+addr+sizeof(sig1));
+    #endif
+      hp.address=addr;
+      hp.text_fun=[](hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
+          
+          auto bytes = *((DWORD *)hp->user_value + 6);
+          auto srcPtr = GetPointer(*((DWORD *)hp->user_value + 5));
+          
+          if(!IsDBCSLeadByteEx(932,*(BYTE*)srcPtr))
+            return;
+          if(bytes!=2)
+            return;
+          if(bytes!=strnlen((char*)srcPtr,TEXT_BUFFER_SIZE))
+            return;
+          *data=(uintptr_t)srcPtr;
+          *len=bytes;
+      };
+      succ|=NewHook(hp,"Replace_memcpy");
+    }
+    return succ;
+  }
+}
 bool InsertPPSSPPcommonhooks()
 {
   
   auto succ=InsertPPSSPPHLEHooks();
   succ|=ppsspp::hookPPSSPPDoJit();
+  succ|=Replace_memcpy();
   return succ;
 }

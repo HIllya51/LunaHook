@@ -133,6 +133,7 @@ inline dword_t findPushAddress(dword_t value, dword_t lowerBound, dword_t upperB
 { return findPushDwordAddress(value, lowerBound, upperBound); }
 
 uint64_t findleaaddr(uint64_t addr,uint64_t start,uint64_t end);
+std::vector<uint64_t> findleaaddr_all(uint64_t addr,uint64_t start,uint64_t end);
 /**
  *  Return the enclosing function address outside the given address.
  *  The same as ITH FindEntryAligned().

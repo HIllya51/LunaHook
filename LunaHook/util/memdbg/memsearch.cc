@@ -484,6 +484,7 @@ uint64_t findleaaddr(uint64_t addr,uint64_t start,uint64_t end)
 {
     for(auto _addr=start;_addr<end;_addr+=1)
     {
+      if(IsBadReadPtr((void*)_addr,4))continue;
         auto lea=(*(WORD*)_addr);
         if(lea!=0x8d4c&&lea!=0x8d48)
             continue;
@@ -495,6 +496,25 @@ uint64_t findleaaddr(uint64_t addr,uint64_t start,uint64_t end)
     }
     
     return 0;
+}
+
+std::vector<uint64_t> findleaaddr_all(uint64_t addr,uint64_t start,uint64_t end)
+{
+  std::vector<uint64_t> addrs;
+    for(auto _addr=start;_addr<end;_addr+=1)
+    {
+      if(IsBadReadPtr((void*)_addr,4))continue;
+        auto lea=(*(WORD*)_addr);
+        if(lea!=0x8d4c&&lea!=0x8d48)
+            continue;
+        
+        auto offset=*(DWORD*)(_addr+3);
+        auto refaddr=(offset)+_addr+7;
+        if(refaddr==addr)
+            addrs.push_back(_addr);
+    }
+    
+    return addrs;
 }
 #endif
 
