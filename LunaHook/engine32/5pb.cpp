@@ -676,7 +676,7 @@ namespace{
     hp.address = addr;
     hp.offset=get_stack(1);
     hp.split=get_stack(2);
-    hp.type = USING_SPLIT|USING_STRING | CODEC_UTF16|EMBED_ABLE|EMBED_BEFORE_SIMPLE|EMBED_AFTER_NEW;//中文显示不出来
+    hp.type = USING_SPLIT|USING_STRING|FULL_STRING | CODEC_UTF16|EMBED_ABLE|EMBED_BEFORE_SIMPLE|EMBED_AFTER_NEW;//中文显示不出来
     hp.filter_fun = [](LPVOID data, size_t* size, HookParam*) {
       //そうして、[おひとよ,2]御一夜――\n眼下に広がるこの町も、僕を間違いなく救ってくれた。
       //「行政に関しての最大の変化は、市長です。\n現在の市長には[ひない,1]雛衣・ポーレットが就任しています」
