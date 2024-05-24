@@ -51,4 +51,4 @@ target_precompile_headers(LunaHook REUSE_FROM pchhook)
 
 set_target_properties(LunaHook PROPERTIES OUTPUT_NAME "LunaHook${bitappendix}")
 
-target_link_libraries(LunaHook pch minhook commonengine utils ${YY_Thunks_for_WinXP} ${Detours})
+target_link_libraries(LunaHook Shlwapi pch minhook commonengine utils ${YY_Thunks_for_WinXP} ${Detours})

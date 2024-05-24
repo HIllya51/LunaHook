@@ -1,7 +1,11 @@
 ﻿if(${CMAKE_SIZEOF_VOID_P} EQUAL 8)
   set(Detours ${CMAKE_CURRENT_LIST_DIR}/Detours-4.0.1/lib.X64/detours.lib)
 else()
+  if(NOT DEFINED WINXP)
+  set(YY_Thunks_for_WinXP)
+  else()
   set(YY_Thunks_for_WinXP ${CMAKE_CURRENT_LIST_DIR}/YY-Thunks-1.0.7-Binary/objs/X86/YY_Thunks_for_WinXP.obj)
+  endif()
   set(Detours ${CMAKE_CURRENT_LIST_DIR}/Detours-4.0.1/lib.X86/detours.lib)
 endif()
 
