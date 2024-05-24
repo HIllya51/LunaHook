@@ -17,4 +17,4 @@ if(${CMAKE_SIZEOF_VOID_P} EQUAL 4)
     set(SupportWinXP "true")
 endif()
 #https://github.com/Chuyu-Team/VC-LTL5
-include("${CMAKE_CURRENT_LIST_DIR}/VC-LTL helper for cmake.cmake")
+#include("${CMAKE_CURRENT_LIST_DIR}/VC-LTL helper for cmake.cmake")
