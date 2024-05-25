@@ -10,6 +10,7 @@
 #include"engine32/sakanagl.h"
 #include"engine32/LCScript.h"
 #include"engine32/ONScripterru.h"
+#include"engine32/CoffeeMaker.h"
 #include"engine32/splushwave.h"
 #include"engine32/FrontWing.h"
 #include"engine32/GSX.h"
@@ -328,7 +329,8 @@ std::vector<ENGINE*> check_engines(){
         new tamasoft,
         new CisLugI,
         new mirage,
-        new VALKYRIA
+        new VALKYRIA,
+        new CoffeeMaker
     };
      
 }
