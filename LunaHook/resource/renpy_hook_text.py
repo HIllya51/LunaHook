@@ -22,6 +22,7 @@ def callLunaHost(text, split):
         pass
     return text
 
+
 def callLunaIsUsingEmbed(split):
     try:
         import ctypes
@@ -34,12 +35,13 @@ def callLunaIsUsingEmbed(split):
             internal_renpy_call_is_embed_using = ctypes.CDLL(
                 "LunaHook32"
             ).internal_renpy_call_is_embed_using
-        internal_renpy_call_is_embed_using.argstype = ctypes.c_int,
+        internal_renpy_call_is_embed_using.argstype = ctypes.c_int, ctypes.c_bool
         internal_renpy_call_is_embed_using.restype = ctypes.c_bool
 
-        return internal_renpy_call_is_embed_using(split)
+        return internal_renpy_call_is_embed_using(split, True)
     except:
         return False
+
 
 try:
     # 6.1.0
@@ -48,18 +50,18 @@ try:
     def hook_initT0(original_init):
 
         def new_init(self, *args, **kwargs):
-            changed=False
+            changed = False
             if isinstance(args[0], list):
                 trs = []
                 for _ in args[0]:
-                    _n=callLunaHost(_, 1)
-                    if _n!=_:
-                        changed=True
+                    _n = callLunaHost(_, 1)
+                    if _n != _:
+                        changed = True
                     trs += [_n]
             else:
                 trs = callLunaHost(args[0], 1)
-                if args[0]!=trs:
-                    changed=True
+                if args[0] != trs:
+                    changed = True
 
             if changed and callLunaIsUsingEmbed(1):
                 args = (trs,) + args[1:]
@@ -78,25 +80,25 @@ try:
     def hook_init_renderT0(original):
         def new_init(self, *args, **kwargs):
             if not hasattr(self, "LunaHooked"):
-                changed=False
+                changed = False
                 if isinstance(self.text, list):
                     trs = []
                     for _ in self.text:
-                        _n=callLunaHost(_, 2)
-                        if _n!=_:
-                            changed=True
+                        _n = callLunaHost(_, 2)
+                        if _n != _:
+                            changed = True
                         trs += [_n]
                 else:
                     trs = callLunaHost(self.text, 2)
-                    if self.text!=trs:
-                        changed=True
+                    if self.text != trs:
+                        changed = True
                 if changed and callLunaIsUsingEmbed(2):
                     self.set_text(trs)
                     self.LunaHooked = True
             return original(self, *args, **kwargs)
 
         return new_init
-    
+
     if "original_hook_init_renderT0" not in globals():
         original_hook_init_renderT0 = renpy.text.text.Text.render
 
