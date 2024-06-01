@@ -19,6 +19,7 @@
 #include"engine32/mirage.h"
 #include"engine32/Sprite.h"
 #include"engine32/PONScripter.h"
+#include"engine32/Fizz.h"
 #include"engine32/Ruf.h"
 #include"engine32/SYSD.h"
 #include"engine32/Renpy.h"
@@ -330,7 +331,8 @@ std::vector<ENGINE*> check_engines(){
         new CisLugI,
         new mirage,
         new VALKYRIA,
-        new CoffeeMaker
+        new CoffeeMaker,
+        new Fizz
     };
      
 }
