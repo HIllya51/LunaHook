@@ -332,7 +332,8 @@ std::vector<ENGINE*> check_engines(){
         new mirage,
         new VALKYRIA,
         new CoffeeMaker,
-        new Fizz
+        new Fizz,
+        new CaramelBox2
     };
      
 }

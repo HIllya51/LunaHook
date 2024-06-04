@@ -34,3 +34,18 @@ class CaramelBoxMilkAji:public ENGINE{
     };
      bool attach_function();
 };
+
+class CaramelBox2:public ENGINE{
+    public:
+    CaramelBox2(){
+        
+        check_by=CHECK_BY::CUSTOM;
+        check_by_target=[](){
+            if(!Util::CheckFile(L"*.mpg"))return true;
+            char copyright[]="OTOBOKU-CaramelBox";//OTOBOKU-CaramelBox  //Software\Caramel-Box\OTOMEHABOKUNIKOISHITERU
+            return 0!=MemDbg::findBytes(copyright,sizeof(copyright),processStartAddress,min(processStopAddress,processStartAddress+0x200000));
+        };
+          
+    };
+     bool attach_function();
+};

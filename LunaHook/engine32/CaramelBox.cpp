@@ -121,3 +121,21 @@ bool CaramelBoxMilkAji::attach_function(){
   
   return NewHook(hp, "CaramelBox"); 
 }
+bool CaramelBox2::attach_function(){
+  //https://vndb.org/r19777
+  //Otoboku - Maidens Are Falling for Me! - Download Edition
+  trigger_fun=[](LPVOID addr1, hook_stack* stack){
+    if(addr1!=TextOutA&& addr1!=GetTextExtentPoint32A)return false;
+    auto addr=stack->retaddr;
+    addr = MemDbg::findEnclosingAlignedFunction(addr);
+    if (addr == 0)return false;
+    HookParam hp;
+    hp.address = addr; 
+    hp.type = USING_STRING|USING_SPLIT;  
+    hp.offset=get_stack(2);
+    hp.split=get_stack(2);
+    NewHook(hp, "CaramelBox");
+    return true;
+  };
+  return true; 
+}
