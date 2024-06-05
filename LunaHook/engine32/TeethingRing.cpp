@@ -59,8 +59,29 @@ bool TeethingRing_attach_function()
 
 bool TeethingRing_attach_function2()
 {
+  //https://vndb.org/v791
+  //きると
+
+  BYTE bytes[] = {
+    0x8b,0x4e,0x18,
+    0x83,0xf9,0x10,
+    0x53,
+    0x8d,0x5e,0x04,
+    0x72,0x04,
+    0x8b,0x13,
+    0xeb,0x02,
+    0x8b,0xd3,
+    0x83,0xf9,0x10,
+    0x72,0x04,
+    0x8b,0x0b,
+    0xeb,0x02,
+  };
+  auto addr=MemDbg::findBytes(bytes, sizeof(bytes), processStartAddress, processStopAddress);
+  if(addr==0)return false;
+  addr = MemDbg::findEnclosingAlignedFunction(addr);
+  if (addr == 0)return false;
   HookParam hp;
-  hp.address = 0x409A00;//0x84C70+(DWORD)GetModuleHandle(0);
+  hp.address = addr;
   hp.type=USING_STRING|NO_CONTEXT|FULL_STRING;
   hp.text_fun = [](hook_stack *stack, HookParam *hp, uintptr_t *data, uintptr_t *split, size_t *len)
   {
