@@ -41,7 +41,7 @@ class CaramelBox2:public ENGINE{
         
         check_by=CHECK_BY::CUSTOM;
         check_by_target=[](){
-            if(!Util::CheckFile(L"*.mpg"))return true;
+            if(!Util::CheckFile(L"*.mpg"))return false;
             char copyright[]="OTOBOKU-CaramelBox";//OTOBOKU-CaramelBox  //Software\Caramel-Box\OTOMEHABOKUNIKOISHITERU
             return 0!=MemDbg::findBytes(copyright,sizeof(copyright),processStartAddress,min(processStopAddress,processStartAddress+0x200000));
         };
