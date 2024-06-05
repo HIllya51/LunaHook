@@ -56,6 +56,7 @@
 #include"engine32/Circus2.h"
 #include"engine32/Cotopha.h"
 #include"engine32/Xbangbang.h"
+#include"engine32/TeethingRing.h"
 #include"engine32/Unknown.h"
 #include"engine32/Artemis.h"
 #include"engine32/CatSystem.h"
@@ -333,7 +334,8 @@ std::vector<ENGINE*> check_engines(){
         new VALKYRIA,
         new CoffeeMaker,
         new Fizz,
-        new CaramelBox2
+        new CaramelBox2,
+        new TeethingRing
     };
      
 }
