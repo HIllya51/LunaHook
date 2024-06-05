@@ -13,7 +13,7 @@ def installVCLTL():
         return  # already installed
     os.makedirs(rootDir + "\\temp", exist_ok=True)
     subprocess.run(f"curl -Lo temp\\{vcltlFileName} {vcltlFile}")
-    subprocess.run(f"7z x temp\\{vcltlFileName} -otemp\\VC-LTL5")
+    subprocess.run(f".\sripts\7z.exe x temp\\{vcltlFileName} -otemp\\VC-LTL5")
     subprocess.run("cmd /c temp\\VC-LTL5\\Install.cmd")
 
 

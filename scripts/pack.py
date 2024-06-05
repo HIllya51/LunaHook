@@ -27,4 +27,4 @@ for f in os.listdir("../builds"):
                 os.remove(path)
     targetdir = "../builds/" + f
     target = "../builds/" + f + ".zip"
-    os.system(rf'"C:\Program Files\7-Zip\7z.exe" a -m0=Deflate -mx9 {target} {targetdir}')
+    os.system(rf'".\7z.exe" a -m0=Deflate -mx9 {target} {targetdir}')
