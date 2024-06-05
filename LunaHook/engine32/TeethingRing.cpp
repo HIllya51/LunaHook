@@ -1,6 +1,6 @@
 #include "TeethingRing.h"
 
-bool TeethingRing::attach_function()
+bool TeethingRing_attach_function()
 {
   // https://vndb.org/v5635
   // キミとボクとエデンの林檎
@@ -54,4 +54,42 @@ bool TeethingRing::attach_function()
     return write_string_overwrite(data,len,str);
   };
   return NewHook(hp, "TeethingRing");
+}
+
+
+bool TeethingRing_attach_function2()
+{
+  HookParam hp;
+  hp.address = 0x409A00;//0x84C70+(DWORD)GetModuleHandle(0);
+  hp.type=USING_STRING|NO_CONTEXT|FULL_STRING;
+  hp.text_fun = [](hook_stack *stack, HookParam *hp, uintptr_t *data, uintptr_t *split, size_t *len)
+  {
+    auto _this=(DWORD*)stack->THISCALLTHIS;
+    auto v13 = _this[6];
+    auto v14 = _this + 1;
+    DWORD* v16;
+    if ( v13 < 0x10 )
+      v16 = _this + 1;
+    else
+      v16 = (DWORD *)*v14;
+    auto a2=stack->ARG1;
+    *data=(DWORD)v16+a2;
+    *len=strlen((char*)*data);
+    *split=(DWORD)_this;
+  };
+  hp.filter_fun=[](void* data, size_t* len, HookParam* hp){
+    if(all_ascii((char*)data,*len))return false;
+    auto str=std::string((char*)data,*len);
+    strReplace(str,"#F","");
+    //俺はこのアクシデントが、何か幸#<さい>先#<さき>のいいもののように思えて、鞄を抱え直してギルドへの階段を昇り始めた。
+    str = std::regex_replace(str, std::regex("#<(.*?)>"), "");
+    return write_string_overwrite(data,len,str);
+  };
+  return NewHook(hp, "TeethingRing");
+}
+
+
+bool TeethingRing::attach_function()
+{
+  return TeethingRing_attach_function()||TeethingRing_attach_function2();
 }
