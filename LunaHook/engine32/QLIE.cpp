@@ -249,8 +249,8 @@ namespace{
       //[f,0][rf,0][s,36,36][c,$FFFFFFFF][rc,$FFFFFFFF]一瞬が勝負だ。私は模造刀に手をかけ、立て膝の状態（いわゆる『[rb,座業,すわりわざ]』）で待機していた。
 
       auto s = std::wstring((wchar_t*)data,*len/2);
-      s = std::regex_replace(s, std::wregex(L"\\[rb,(.*),.*\\]"), L"$1");
-      s = std::regex_replace(s, std::wregex(L"\\[.*\\]"), L"");
+      s = std::regex_replace(s, std::wregex(L"\\[rb,(.*?),(.*?)\\]"), L"$1");
+      s = std::regex_replace(s, std::wregex(L"\\[(.*?)\\]"), L"");
       return write_string_overwrite(data,len,s);
     };
     return NewHook(hp, "qlie4");
