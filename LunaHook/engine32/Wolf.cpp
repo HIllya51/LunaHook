@@ -157,6 +157,32 @@ namespace{
     if(check1&&(check2||check3))return false;
     return true;
   }
+  bool hook5_1(DWORD addr_1){
+    //RJ338582
+    //妹！せいかつ　～ファンタジー～1.4.5
+    const BYTE bytes[] = {
+      0x6a,0x01,
+      0x68,XX4,
+      0x68,XX4,
+      0x6a,0x01,
+      0x6a,0x00,
+      0xFF,0x77,0x10,
+      0xFF,0x77,0x18,
+      0xE8 
+    };
+    auto addr = MemDbg::findBytes(bytes, sizeof(bytes), processStartAddress, processStopAddress);
+    if(addr==0)return false;
+    auto off=(*((DWORD*)(sizeof(bytes)+addr)));
+    auto _calladdr=addr+sizeof(bytes)+4+off;
+    if(addr_1!=_calladdr)return false;
+
+    HookParam hp;
+    hp.address = addr+sizeof(bytes)-1; 
+    hp.offset =get_stack(7);
+    hp.type =USING_STRING|CODEC_UTF8|EMBED_ABLE|EMBED_AFTER_OVERWRITE|EMBED_BEFORE_SIMPLE;
+    hp.filter_fun=commonfilter;
+    return NewHook(hp, "Wolf5_1"); 
+  }
   bool hook5(){
     //[220901][あせろら] 寝取られ新妻モニカ～ツンデレな奥さんのHなお仕事～
     const BYTE bytes[] = {
@@ -172,7 +198,7 @@ namespace{
     addr=MemDbg::findEnclosingAlignedFunction(addr);
     
     if(addr==0)return false;
-  
+    if(hook5_1(addr))return true;
     HookParam hp;
     hp.address = addr; 
     hp.offset =get_stack(8);
