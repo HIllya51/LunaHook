@@ -135,9 +135,9 @@ uintptr_t win64find0000(uintptr_t addr){
   }__except(EXCEPTION_EXECUTE_HANDLER) {}
   return r;
 }
+Synchronized<std::unordered_map<uintptr_t, uintptr_t>> retaddr2relative;//很奇怪，这个放到函数里用static在xp上会报错。
 uintptr_t queryrelativeret(HookParam&hp, uintptr_t retaddr){
 	//不需要区分是相对于哪个module的偏移，只需要得到偏移就可以了，用来确保重启程序后ret值恒定
-	static Synchronized<std::unordered_map<uintptr_t, uintptr_t>> retaddr2relative;
 	auto &re=retaddr2relative.Acquire().contents;
 	if(re.find(retaddr)!=re.end())return re.at(retaddr);
 	uintptr_t relative=retaddr;
