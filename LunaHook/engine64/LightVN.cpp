@@ -115,22 +115,26 @@ namespace{
     //包含太多短句，所以无法内嵌
     hp.text_fun=[](hook_stack* stack, HookParam*, uintptr_t* data, uintptr_t* split, size_t* len)
     {
-    //   v15 = a2[2];
-    // if ( a2[3] >= 8uLL )
-    //   a2 = (_QWORD *)*a2;
-        auto str=*(std::wstring*)stack->rdx;
-      
+        
+
+        *data=(uintptr_t)((TextUnionW*)stack->rdx)->getText();
+        *len=((TextUnionW*)stack->rdx)->size*2;
+        
+        std::wstring str=(wchar_t*)*data;
         if(startWith(str,L"\\n")&&endWith(str,L"\\n"))
         {
           *split=1;
         }
-    
-        strReplace(str,L"\\n",L"\n");
-        strReplace(str,L"\n",L"");
-        std::wregex pattern(L"-{2,}");
-        str = std::regex_replace(str, pattern, L"");
-        write_string_new(data,len,str);
+        
     };
+     hp.filter_fun=[](LPVOID data, size_t *size, HookParam *)
+    {
+      auto str=std::wstring((wchar_t*)data,*size/2);
+      std::wregex pattern(L"-{2,}");
+      str = std::regex_replace(str, pattern, L"");
+      return write_string_overwrite(data,size,str);
+    };
+    hp.newlineseperator=L"\\n";
     return NewHook(hp, "Light.VN.16");
   } 
 
@@ -160,8 +164,8 @@ namespace{
         hp.text_fun=[](hook_stack* stack, HookParam*, uintptr_t* data, uintptr_t* split, size_t* len)
         {
           //wstring=TextUnionW for msvc c++17
-            auto str=*(std::wstring*)stack->rdx;
-            write_string_new(data,len,str);
+          *data=(uintptr_t)((TextUnionW*)stack->rdx)->getText();
+          *len=((TextUnionW*)stack->rdx)->size*2;
         };
         succ|= NewHook(hp, "Light.VN.12");
       }
