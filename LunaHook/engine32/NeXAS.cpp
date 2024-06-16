@@ -296,7 +296,48 @@ namespace {
     return NewHook(hp, "NeXAS2");
   }
 }
+namespace
+{
+  bool _3(){
+    //真剣で私に恋しなさい！Ａ－５
+    char atv[] ="@v";
+    auto aV=MemDbg::findBytes(atv,sizeof(atv),processStartAddress,processStopAddress);
+    if(!aV)return false;
+    aV=MemDbg::findBytes(atv,sizeof(atv),aV+1,processStopAddress);//第一个是历史，第二个才是当前文本
+    if(!aV)return false;
+    auto addr=MemDbg::findPushAddress(aV,processStartAddress,processStopAddress);
+    if(addr==0)return 0;
+    addr=MemDbg::findEnclosingAlignedFunction(addr);
+    if(addr==0)return 0;
+    HookParam hp; 
+    hp.address = addr; 
+    hp.type=USING_STRING;
+    hp.text_fun=[](hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
+      auto a2=(TextUnionA*)stack->stack[1];//std::string*
+      *data=(DWORD)a2->getText();
+      *len=strlen(a2->getText());
+    };
+    hp.filter_fun=[](void* data, size_t* len, HookParam* hp){
+      auto s=std::string((char*)data,*len);
+      if(startWith(s,"@")){
+        if(startWith(s,"@v")){
+          //S001_L1_0001
+          s=std::regex_replace(s, std::regex("@v[a-zA-Z0-9]{4}_[a-zA-Z0-9]{2}_[a-zA-Z0-9]{4}"), "");
+          return write_string_overwrite(data,len,s);
+        }
+        else{
+          return false;
+        }
+      }
+
+      return true;
+    };
+    hp.newlineseperator=L"@n";
+    return NewHook(hp, "NeXAS3");
+  }
+}
+
 bool NeXAS::attach_function() {
-    auto _=_2();
+    auto _=_2()||_3();
     return InsertNeXASHook()||_;
 }  

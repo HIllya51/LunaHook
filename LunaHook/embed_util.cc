@@ -192,7 +192,7 @@ bool waitforevent(UINT32 timems,const ThreadParam& tp,const std::wstring &origin
 
 void TextHook::parsenewlineseperator(void*data ,size_t*len)
 {
-  if(!(hp.type&EMBED_ABLE && hp.newlineseperator))return;
+  if(!(hp.newlineseperator))return;
 
   if (hp.type & CODEC_UTF16)
   {
