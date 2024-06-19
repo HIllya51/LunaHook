@@ -47,6 +47,6 @@ add_custom_command(TARGET DevTools\ DeepL\ Translate
     POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E remove_directory "${CMAKE_CURRENT_BINARY_DIR}/windeployqt"
     COMMAND set PATH=%PATH%$<SEMICOLON>${qt5_install_prefix}/bin
-    COMMAND Qt5::windeployqt --dir ${disttarget} "${disttarget}/DevTools\ DeepL\ Translate.dll"
+    COMMAND Qt5::windeployqt --dir ${disttarget} "${disttarget}/DevTools\ DeepL\ Translate.dll"  --release
 )
 endif()
