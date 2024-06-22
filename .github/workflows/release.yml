@@ -16,6 +16,7 @@ jobs:
         include:
           - target: Release_English_winxp
           - target: Release_Chinese_winxp
+          - target: Release_Russian_winxp
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -98,10 +99,9 @@ jobs:
     strategy:
       matrix:
         include:
-          - lang: en
-            target: Release_English
-          - lang: zh
-            target: Release_Chinese
+          - target: Release_English
+          - target: Release_Chinese
+          - target: Release_Russian
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -115,7 +115,7 @@ jobs:
           python-version: '3.11'
           architecture: x64
       - name: Run build script
-        run: python build.py ${{ matrix.lang }}
+        run: python build.py ${{ matrix.target }}
 
       - name: Pack
         run: python build.py pack
