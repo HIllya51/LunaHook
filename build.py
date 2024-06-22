@@ -17,7 +17,6 @@ def installVCLTL():
     subprocess.run("cmd /c temp\\VC-LTL5\\Install.cmd")
 
 def build_langx(lang):
-    os.chdir('./scripts')
     os.system(rf'''
 cmake -DBUILD_PLUGIN=OFF -DLANGUAGE={lang} ../CMakeLists.txt -G "Visual Studio 17 2022" -A win32 -T host=x86 -B ../build/x86_{lang}
 cmake --build ../build/x86_{lang} --config Release --target ALL_BUILD -j 14
@@ -28,7 +27,6 @@ cmake --build ../build/x64_{lang} --config Release --target ALL_BUILD -j 14
 ''')
     
 def build_langx_xp(lang):
-    os.chdir('./scripts')
     os.system(rf'''
 
 cmake -DBUILD_PLUGIN=OFF -DWINXP=1 -DLANGUAGE={lang} ../CMakeLists.txt -G "Visual Studio 16 2019" -A win32 -T v141_xp -B ../build/x86_{lang}_xp
