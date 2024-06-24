@@ -6,8 +6,7 @@
     <a href="https://github.com/HIllya51/LunaHook/stargazers"><img src="https://img.shields.io/github/stars/HIllya51/LunaHook?color=ccf"></a>
 </p>
 
-## [English](README.md)  | 简体中文
-
+## 简体中文 | [English](README.md) | [English](README_ru.md) 
 
 [LunaTranslator](https://github.com/HIllya51/LunaTranslator)核心文本提取器模块
 
