@@ -6,7 +6,7 @@
     <a href="https://github.com/HIllya51/LunaHook/stargazers"><img src="https://img.shields.io/github/stars/HIllya51/LunaHook?color=ccf"></a>
 </p>
 
-## English |[Русский](README_ru.md) | [简体中文](README_zh.md) 
+## English | [Русский](README_ru.md) | [简体中文](README_zh.md) 
 
 LunaHook is the Core Text Hook Module For [LunaTranslator](https://github.com/HIllya51/LunaTranslator).
 
