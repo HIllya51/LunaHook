@@ -22,7 +22,6 @@
 #include"engine32/Fizz.h"
 #include"engine32/Ruf.h"
 #include"engine32/SYSD.h"
-#include"engine32/Renpy.h"
 #include"engine32/Diskdream.h"
 #include"engine32/RPGMakerRGSS3.h"
 #include"engine32/RUNE.h"
@@ -162,13 +161,14 @@
 #include"engine32/Overflow.h"
 #include"engine32/Ages3ResT.h"
 #include"engine32/AXL.h"
-#include"engine32/lua51.h"
 #include"engine32/UnisonShift.h"
-#include"NoEngine.h"
 #include"engine32/EntisGLS.h"
 #include"engine32/Ciel.h"
 #include"engine32/CisLugI.h"
 #include"engine32/ACTGS.h"
+#include"NoEngine.h"
+#include"engines/lua/lua51.h"
+#include"engines/python/Renpy.h"
 std::vector<ENGINE*> check_engines(){ 
     return  { 
         new LovaGame,
@@ -282,7 +282,6 @@ std::vector<ENGINE*> check_engines(){
         new System4x,
         new Ages3ResT,
         new AXL,
-        new lua51,
         new Ciel,
         new ACTGS,
         new Nijyuei,
@@ -335,7 +334,8 @@ std::vector<ENGINE*> check_engines(){
         new CoffeeMaker,
         new Fizz,
         new CaramelBox2,
-        new TeethingRing
+        new TeethingRing,
+        new lua51,
     };
      
 }

@@ -1,4 +1,5 @@
 
+#include"python/python.h" 
 
 class Renpy:public ENGINE{
     public:
@@ -11,5 +12,11 @@ class Renpy:public ENGINE{
         //     return Util::CheckFile(L"*.py")|| GetModuleHandleW(L"librenpython.dll");
         // };
     }; 
-    bool attach_function(); 
+    bool attach_function(){
+        #ifndef _WIN64
+        return InsertRenpyHook();
+        #else
+        return InsertRenpyHook()||InsertRenpy3Hook();
+        #endif
+    }
 };

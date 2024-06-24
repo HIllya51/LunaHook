@@ -1,7 +1,6 @@
 #include"engine64/PPSSPP.h"
 #include"engine64/Godot.h"
 #include"engine64/V8.h"
-#include"engine64/Renpy.h"
 #include"engine64/mono.h"
 #include"engine64/AGES7.h"
 #include"engine64/pchooks.h"
@@ -20,6 +19,8 @@
 #include"engine64/yuzusuyu.h"
 #include"engine64/vita3k.h"
 #include"engine64/rpcs3.h"
+#include"engines/lua/lua51.h"
+#include"engines/python/Renpy.h"
 std::vector<ENGINE*> ignore_engines(){ return{ }; }
 std::vector<ENGINE*> unsafe_check_atlast(){   return{ }; }
 
@@ -46,7 +47,8 @@ std::vector<ENGINE*> check_engines(){
         new vita3k,
         new rpcs3,
         new Kincaid,
-        new livecaptions
+        new livecaptions,
+        new lua51,
     };
      
 }
