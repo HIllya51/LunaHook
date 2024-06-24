@@ -8,6 +8,7 @@
 
 ## Русский | [English](README.md) | [简体中文](README_zh.md) 
 
+
 LunaHook - это модуль перехвата текста Core Text для [LunaTranslator](https://github.com/HIllya51/LunaTranslator).
 
 ## Скачивание
