@@ -257,6 +257,7 @@ DWORD Rva2Offset(DWORD rva, PIMAGE_SECTION_HEADER psh, PIMAGE_NT_HEADERS pnt)
         }
         pSeh++;
     }
+    if(pSeh->VirtualAddress==0||pSeh->PointerToRawData==0)return -1;
     return (rva - pSeh->VirtualAddress + pSeh->PointerToRawData);
 } 
 std::set<std::string> getimporttable(const std::wstring&pe){
@@ -299,7 +300,11 @@ std::set<std::string> getimporttable(const std::wstring&pe){
     while (pImportDescriptor->Name != NULL)
     {
         //Get the name of each DLL
-        ret.insert((PCHAR)((DWORD_PTR)virtualpointer + Rva2Offset(pImportDescriptor->Name, pSech, ntheaders)));
+        auto nameoffset=Rva2Offset(pImportDescriptor->Name, pSech, ntheaders);
+        if(nameoffset==(DWORD)-1)
+            //无导入
+            return {};
+        ret.insert((PCHAR)((DWORD_PTR)virtualpointer + nameoffset ));
         
         pImportDescriptor++; //advance to next IMAGE_IMPORT_DESCRIPTOR
     }
