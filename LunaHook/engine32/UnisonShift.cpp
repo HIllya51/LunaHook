@@ -71,9 +71,47 @@ bool InsertUnisonShift3Hook() {
 
   return succ;
 }
-		
+namespace
+{
+  //https://vndb.org/v7123
+  //凌辱人妻温泉
+
+  bool _056(){
+    BYTE bytes[] = {
+    0x83,0xc4,0x0c,
+    0x83,0xc1,0x1e,
+    0x80,0xfb,0x81,
+    0x89,XX,XX4,
+    0x0f,0x85,XX4,
+    0x8a,0x44,0x24,0x08,
+    0x3c,0x76,
+    0x74,0x08,
+    0x3c,0x78,
+    0x0f,0x85,XX4
+  };
+  auto addr1 = MemDbg::findBytes(bytes, sizeof(bytes), processStartAddress, processStopAddress);
+  if (addr1 == 0)return false;
+  BYTE start[] = { 0x83 ,0xEC ,0x08 };
+  addr1 =  MemDbg::findEnclosingAlignedFunction(addr1);
+  if (addr1 == 0)return false;
+  HookParam hp;
+  hp.address = addr1;
+  hp.offset=get_reg(regs::edx);
+  hp.type=USING_STRING;
+  hp.filter_fun=[](LPVOID data, size_t* size, HookParam*){
+    auto xx=std::string((char*)data,*size);
+    static std::string last;
+    if(xx==last)return false;
+    last=xx;
+    return true;
+  };
+  return NewHook(hp, "_056");
+  }
+}
+
 bool UnisonShift2::attach_function() {   
     bool b1=InsertUnisonShift2Hook();
 		bool b2=InsertUnisonShift3Hook();
-    return  b1||b2;
+    auto __=_056();
+    return  b1||b2||__;
 } 
