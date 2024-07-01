@@ -227,6 +227,10 @@ const BYTE bytes[] = {
   HookParam hp;
   hp.address = addr+sizeof(bytes)-1;
   hp.offset = get_stack(10);
+  hp.type=USING_CHAR|NO_CONTEXT;
+  //NO_CONTEXT:
+  //牝奴隷 ～犯された放課後～
+  //https://vndb.org/v4351会把每行单独分开。
   return NewHook(hp, "Atelier KAGUYA3");
 }
 
