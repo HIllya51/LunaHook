@@ -280,7 +280,7 @@ LunaHost::LunaHost(){
     settext(title);
      
     std::thread([&](){
-        //https://github.com/test123456654321/LunaHook/issues/14
+        //https://lunatranslator.xyz/Github/LunaHook/issues/14
         std::wstring sel;
         while(1)
         {
@@ -314,14 +314,14 @@ LunaHost::LunaHost(){
         std::thread([&](){
             if (HttpRequest httpRequest{
                 L"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
-                L"api.github.com",
+                L"lunatranslator.xyz",
                 L"GET",
-                L"/repos/test123456654321/LunaHook/releases/latest"
+                L"/version_lunahook"
             }){
                 
                 try{
                     auto resp=nlohmann::json::parse(WideStringToString(httpRequest.response));
-                    std::string ver=resp["tag_name"];
+                    std::string ver=resp["version"];
                     settext(text()+L" | "+VersionLatest+L" "+ StringToWideString(ver));
                 }
                 catch(std::exception&e){}

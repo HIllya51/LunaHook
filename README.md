@@ -2,17 +2,17 @@
 
 <p align="left">
     <a href="./LICENSE"><img src="https://img.shields.io/github/license/test123456654321/LunaHook"></a>
-    <a href="https://github.com/test123456654321/LunaHook/releases"><img src="https://img.shields.io/github/v/release/test123456654321/LunaHook?color=ffa"></a>
+    <a href="https://lunatranslator.xyz/Github/LunaHook/releases"><img src="https://img.shields.io/github/v/release/test123456654321/LunaHook?color=ffa"></a>
 </p>
 
 ## English | [简体中文](README_zh.md) | [Русский](README_ru.md) 
 
 
-LunaHook is the Core Text Hook Module For [LunaTranslator](https://github.com/test123456654321/LunaTranslator).
+LunaHook is the Core Text Hook Module For [LunaTranslator](https://lunatranslator.xyz/Github/LunaTranslator).
 
 ## Download
 
-Download it via github [release](https://github.com/test123456654321/LunaHook/releases).
+Download it via github [release](https://lunatranslator.xyz/Github/LunaHook/releases).
 
 For English user, download Release_English.zip. For Chinese user download Release_Chinese.zip.
 
@@ -20,7 +20,7 @@ If you use Windows XP for some old Visual Novel, download zip with _winxp suffix
 
 ## Plugins
 
-Download plugin32 or plugin64 in [release](https://github.com/test123456654321/LunaHook/releases).
+Download plugin32 or plugin64 in [release](https://lunatranslator.xyz/Github/LunaHook/releases).
 
 Compatible with Textractor plugins.
 
