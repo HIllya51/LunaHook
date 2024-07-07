@@ -1,19 +1,18 @@
 # LunaHook
 
 <p align="left">
-    <a href="./LICENSE"><img src="https://img.shields.io/github/license/HIllya51/LunaHook"></a>
-    <a href="https://github.com/HIllya51/LunaHook/releases"><img src="https://img.shields.io/github/v/release/HIllya51/LunaHook?color=ffa"></a>
-    <a href="https://github.com/HIllya51/LunaHook/stargazers"><img src="https://img.shields.io/github/stars/HIllya51/LunaHook?color=ccf"></a>
+    <a href="./LICENSE"><img src="https://img.shields.io/github/license/test123456654321/LunaHook"></a>
+    <a href="https://github.com/test123456654321/LunaHook/releases"><img src="https://img.shields.io/github/v/release/test123456654321/LunaHook?color=ffa"></a>
 </p>
 
 ## English | [简体中文](README_zh.md) | [Русский](README_ru.md) 
 
 
-LunaHook is the Core Text Hook Module For [LunaTranslator](https://github.com/HIllya51/LunaTranslator).
+LunaHook is the Core Text Hook Module For [LunaTranslator](https://github.com/test123456654321/LunaTranslator).
 
 ## Download
 
-Download it via github [release](https://github.com/HIllya51/LunaHook/releases).
+Download it via github [release](https://github.com/test123456654321/LunaHook/releases).
 
 For English user, download Release_English.zip. For Chinese user download Release_Chinese.zip.
 
@@ -21,7 +20,7 @@ If you use Windows XP for some old Visual Novel, download zip with _winxp suffix
 
 ## Plugins
 
-Download plugin32 or plugin64 in [release](https://github.com/HIllya51/LunaHook/releases).
+Download plugin32 or plugin64 in [release](https://github.com/test123456654321/LunaHook/releases).
 
 Compatible with Textractor plugins.
 

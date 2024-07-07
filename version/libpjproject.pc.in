@@ -7,7 +7,7 @@ includedir=${prefix}/pjlib/include;${prefix}/pjlib-util/include;${prefix}/pjmedi
 
 Name:         LunaHook
 Description:  Visual Novel Text Hook Engine
-URL:          https://github.com/HIllya51/LunaHook
+URL:          https://github.com/test123456654321/LunaHook
 Version:      @PJSIP_VERSION@
 Libs:         -L${libdir} -llibpjproject-$$(Platform)-$$(PlatformToolset)-$$(Configuration)-@PJSIP_CRT_LINKAGE@.lib
 Libs.private: -lWs2_32.lib

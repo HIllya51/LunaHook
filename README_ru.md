@@ -1,19 +1,18 @@
 # LunaHook
 
 <p align="left">
-    <a href="./LICENSE"><img src="https://img.shields.io/github/license/HIllya51/LunaHook"></a>
-    <a href="https://github.com/HIllya51/LunaHook/releases"><img src="https://img.shields.io/github/v/release/HIllya51/LunaHook?color=ffa"></a>
-    <a href="https://github.com/HIllya51/LunaHook/stargazers"><img src="https://img.shields.io/github/stars/HIllya51/LunaHook?color=ccf"></a>
+    <a href="./LICENSE"><img src="https://img.shields.io/github/license/test123456654321/LunaHook"></a>
+    <a href="https://github.com/test123456654321/LunaHook/releases"><img src="https://img.shields.io/github/v/release/test123456654321/LunaHook?color=ffa"></a>
 </p>
 
 ## [English](README.md) | [简体中文](README_zh.md) |  Русский
 
 
-LunaHook - это модуль перехвата текста Core Text для [LunaTranslator](https://github.com/HIllya51/LunaTranslator).
+LunaHook - это модуль перехвата текста Core Text для [LunaTranslator](https://github.com/test123456654321/LunaTranslator).
 
 ## Скачивание
 
-Скачайте его через релизы на github [release](https://github.com/HIllya51/LunaHook/releases).
+Скачайте его через релизы на github [release](https://github.com/test123456654321/LunaHook/releases).
 
 Для англязычных пользователей есть версия Release_English.zip. Для китайскоязычных пользователей есть версия Release_Chinese.zip. Для русскоязычных пользователей есть версия Release_Russian.zip.
 
@@ -21,7 +20,7 @@ LunaHook - это модуль перехвата текста Core Text для 
 
 ## Плагины
 
-Скачайте plugin32 или plugin64 в [релизах](https://github.com/HIllya51/LunaHook/releases).
+Скачайте plugin32 или plugin64 в [релизах](https://github.com/test123456654321/LunaHook/releases).
 
 Совместим с плагинами Textractor.
 

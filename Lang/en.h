@@ -92,7 +92,7 @@
 #define HS_SEARCH_FOR_TEXT L"Search for specific text"
 #define VersionLatest L"Latest version"
 #define VersionCurrent L"Current version"
-#define ProjectHomePage L"Project homepage: https://github.com/HIllya51/LunaHook"
+#define ProjectHomePage L"Project homepage: https://github.com/test123456654321/LunaHook"
 #define LIST_HOOK L"Hook"
 #define LIST_TEXT L"Text"
 #define PROC_CONN L"process connected %d"

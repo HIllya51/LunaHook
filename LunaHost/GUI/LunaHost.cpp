@@ -280,7 +280,7 @@ LunaHost::LunaHost(){
     settext(title);
      
     std::thread([&](){
-        //https://github.com/HIllya51/LunaHook/issues/14
+        //https://github.com/test123456654321/LunaHook/issues/14
         std::wstring sel;
         while(1)
         {
@@ -316,7 +316,7 @@ LunaHost::LunaHost(){
                 L"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
                 L"api.github.com",
                 L"GET",
-                L"/repos/HIllya51/LunaHook/releases/latest"
+                L"/repos/test123456654321/LunaHook/releases/latest"
             }){
                 
                 try{
