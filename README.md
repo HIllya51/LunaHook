@@ -14,7 +14,7 @@ LunaHook is the Core Text Hook Module For [LunaTranslator](https://lunatranslato
 
 Download it via github [release](https://lunatranslator.xyz/Github/LunaHook/releases).
 
-For English user, download Release_English.zip. For Chinese user download Release_Chinese.zip.
+For English user, download Release_English.zip. For Chinese user download Release_Chinese.zip. For Russian user download Release_Russian.zip.
 
 If you use Windows XP for some old Visual Novel, download zip with _winxp suffix.
 
