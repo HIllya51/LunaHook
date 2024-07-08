@@ -458,9 +458,37 @@ namespace{
     return NewHook(hp, "Silkys4");
   }
 }
+namespace{
+  //[240531][1274293][シルキーズSAKURA] 淫魔淫姦 ～触手と合体して思い通りにやり返す～ DL版
+  bool silkys5(){
+    BYTE sig[]={
+      0xff,0xd0,//call eax
+      //<-- eax
+      0x8b,0x0f,
+      0x8b,0xf0,//mov esi,eax
+      0x68,0x80,0,0,0,
+      0x68,0x80,0,0,0,
+      0x6a,0,
+      0x8b,0x11,
+      0x6a,0,
+    };
+    auto addr = MemDbg::findBytes(sig, sizeof(sig), processStartAddress, processStopAddress);
+    if (!addr)  return false; 
+    HookParam hp;
+    hp.address=addr +2;
+    hp.type=USING_CHAR|DATA_INDIRECT|CODEC_UTF16;
+    hp.offset=get_reg(regs::eax);
+    hp.filter_fun=[](LPVOID data, size_t *size, HookParam *)
+    {
+      static int idx=0;
+      return (bool)((idx++)%2);
+    };
+    return NewHook(hp, "silkys5");
+  }
+}
 bool Silkys::attach_function() {
     auto b1=InsertSilkys2Hook();
-    return InsertSilkysHook()||InsertSilkysHook2()||_s()||b1||saiminset()||silkys4();
+    return InsertSilkysHook()||InsertSilkysHook2()||_s()||b1||saiminset()||silkys4()||silkys5();
 }  
 
 
