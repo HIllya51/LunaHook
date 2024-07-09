@@ -93,6 +93,7 @@
 #include"engine32/Nijyuei.h"
 #include"engine32/MBLMED.h"
 #include"engine32/NNNConfig.h"
+#include"engine32/Erogos.h"
 #include"engine32/godot.h"
 #include"engine32/Yuris.h"
 #include"engine32/Nitroplus.h"
@@ -341,7 +342,8 @@ std::vector<ENGINE*> check_engines(){
         new lua51,
         new GuruGuruSMF4,
         new A98SYS,
-        new godot
+        new godot,
+        new Erogos
     };
      
 }
@@ -392,7 +394,7 @@ std::vector<ENGINE*> unsafe_check_atlast(){
         new ShinaRio,
         new Suika2,
         new KISS,
-        new EntisGLS,
+        new EntisGLS
     };
      
 }

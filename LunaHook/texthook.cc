@@ -185,6 +185,19 @@ bool checklengthembedable(const HookParam&hp,size_t size){
 		} 
 	return size>len;
 }
+bool commonfilter(void* data, size_t* len, HookParam* hp){
+
+	if(hp->type & CODEC_UTF16); 
+	else if(hp->type & CODEC_UTF32);
+	else if(hp->type & CODEC_UTF8);
+	else{
+		if(*len==2){
+			StringFilter((char*)data,len,"\x81\xa4",2);
+			StringFilter((char*)data,len,"\x81\xa5",2);
+		}
+	}
+	return true;
+}
 void TextHook::Send(uintptr_t lpDataBase)
 {
 	auto buffer =(TextOutput_T*) local_buffer;
@@ -294,6 +307,7 @@ void TextHook::Send(uintptr_t lpDataBase)
 				}
 			} 
 		}
+		if(!commonfilter(pbData, &lpCount, &hp) ||lpCount <= 0) __leave;
 		if (hp.filter_fun && !hp.filter_fun(pbData, &lpCount, &hp) || lpCount <= 0) __leave;
 
 		if (hp.type & (NO_CONTEXT | FIXING_SPLIT)) lpRetn = 0;
