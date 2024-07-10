@@ -25,7 +25,7 @@ struct TextUnion
   }
 
   const CharT *getText() const
-  { return size < ShortTextCapacity ? chars : text; }
+  { return capacity < ShortTextCapacity ? chars : text; }
 
   void setText(const CharT *_text, int _size)
   {

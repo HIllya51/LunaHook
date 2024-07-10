@@ -330,10 +330,66 @@ bool attach(ULONG startAddress, ULONG stopAddress)
 
 } // namespace ScenarioHook
 } // unnamed namespace
-
+namespace{ 
+ 
+  bool elf3(){
+    bool succ=false;
+    BYTE sig[]={
+      0x83,XX,0x14,0x10,
+      0x72,XX
+    };
+    for(auto addr:Util::SearchMemory(sig,sizeof(sig),PAGE_EXECUTE,processStartAddress,processStopAddress)){
+      auto check1=*(BYTE*)(addr+5);
+      if(check1!=0x02 && check1!=0x04)continue;
+      auto check=*(BYTE*)(addr+1);
+      HookParam hp;
+      hp.address=addr;
+      hp.user_value=check;
+      hp.type=USING_STRING|NO_CONTEXT;
+      hp.text_fun=[](hook_stack* stack,  HookParam *hp, uintptr_t *data, uintptr_t *split, size_t *len){
+        DWORD ptr;
+        switch (hp->user_value)
+        {
+        case 0x7a:
+          ptr=stack->edx;
+          break;
+        case 0x7b:
+          ptr=stack->ebx;
+          break;
+        case 0x79:
+          ptr=stack->ecx;
+          break;
+        case 0x78:
+          ptr=stack->eax;
+          break;
+        case 0x7e:
+          ptr=stack->esi;
+          break;
+        case 0x7f:
+          ptr=stack->edi;
+          break;
+        case 0x7d:
+          ptr=stack->ebp;
+          break;
+          //esp:
+          //83 7c 24 14 10 
+        default:
+          hp->type=HOOK_EMPTY;
+          break;
+        }
+        auto text=  (TextUnionA*)ptr;   
+        *data=(DWORD)text->getText();
+        *len=text->size; 
+      };  
+      hp.filter_fun=all_ascii_Filter;
+    succ|=NewHook(hp,"elf3");
+  }
+     return succ;
+  }
+}
 bool Elf::attach_function() {
     
-    auto _1= InsertElfHook()||__();
+    auto _1= InsertElfHook()||__()||elf3();
     return ScenarioHook::attach(processStartAddress,processStopAddress)||_1;
 }  
 
