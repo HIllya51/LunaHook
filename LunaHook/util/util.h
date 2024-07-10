@@ -33,6 +33,7 @@ DWORD FindCallAndEntryRel(DWORD fun, DWORD size, DWORD pt, DWORD sig);
 DWORD FindImportEntry(DWORD hModule, DWORD fun);
 #endif
 
+bool CheckFile_exits(LPCWSTR name, bool if_exits_also_ok);
 bool CheckFile(LPCWSTR name);
 
 bool SearchResourceString(LPCWSTR str);

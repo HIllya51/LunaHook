@@ -222,9 +222,13 @@ DWORD FindImportEntry(DWORD hModule, DWORD fun)
 
 bool CheckFile(LPCWSTR name)
 {
+  return CheckFile_exits(name,false);
+}
+bool CheckFile_exits(LPCWSTR name,bool if_exits_also_ok)
+{
 	WIN32_FIND_DATAW unused;
 	HANDLE file = FindFirstFileW(name, &unused);
-	if (file != INVALID_HANDLE_VALUE)
+	if ((file != INVALID_HANDLE_VALUE)||(if_exits_also_ok &&PathFileExists(name)))
 	{
 		FindClose(file);
 		return true;
@@ -234,7 +238,7 @@ bool CheckFile(LPCWSTR name)
 	while (*(--end) != L'\\');
 	wcscpy_s(end + 1, MAX_PATH, name);
 	file = FindFirstFileW(path, &unused);
-	if (file != INVALID_HANDLE_VALUE)
+	if ((file != INVALID_HANDLE_VALUE)||(if_exits_also_ok &&PathFileExists(path)))
 	{
 		FindClose(file);
 		return true;
