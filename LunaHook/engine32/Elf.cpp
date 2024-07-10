@@ -331,7 +331,9 @@ bool attach(ULONG startAddress, ULONG stopAddress)
 } // namespace ScenarioHook
 } // unnamed namespace
 namespace{ 
- 
+//flutter of birds～鳥達の羽ばたき～
+//https://vndb.org/v2379
+//需要注意的是，不能把文本跳到最快，不然2~4行无法显示。
   bool elf3(){
     bool succ=false;
     BYTE sig[]={
