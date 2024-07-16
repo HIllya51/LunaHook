@@ -1,9 +1,9 @@
 # LunaHook
 
-<p align="left">
-    <a href="./LICENSE"><img src="https://img.shields.io/github/license/HIllya51/LunaHook"></a>
-    <a href="https://lunatranslator.xyz/Github/LunaHook/releases"><img src="https://img.shields.io/github/v/release/HIllya51/LunaHook?color=ffa"></a>
-</p>
+    
+
+
+### [Discord](https://lunatranslator.xyz/Resource/DiscordGroup) <a href="./LICENSE"><img src="https://img.shields.io/github/license/HIllya51/LunaHook"></a> <a href="https://lunatranslator.xyz/Github/LunaHook/releases"><img src="https://img.shields.io/github/v/release/HIllya51/LunaHook?color=ffa"></a>
 
 ## [English](README.md) | [简体中文](README_zh.md) |  Русский
 

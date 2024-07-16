@@ -92,7 +92,7 @@
 #define HS_SEARCH_FOR_TEXT L"Искать определенный текст"
 #define VersionLatest L"Последняя версия"
 #define VersionCurrent L"Текущая версия"
-#define ProjectHomePage L"Страница проекта: https://lunatranslator.xyz/Github/LunaHook Перевод на русский: https://github.com/NekoIriyaRu"
+#define ProjectHomePage L"Страница проекта: https://lunatranslator.xyz/Github/LunaHook\nDiscord: https://lunatranslator.xyz/Resource/DiscordGroup\nПеревод на русский: https://github.com/NekoIriyaRu"
 #define LIST_HOOK L"Хук"
 #define LIST_TEXT L"Текст"
 #define PROC_CONN L"Процесс подключен %d"
