@@ -343,7 +343,8 @@ std::vector<ENGINE*> check_engines(){
         new GuruGuruSMF4,
         new A98SYS,
         new godot,
-        new Erogos
+        new Erogos,
+        new Silkysveryveryold
     };
      
 }

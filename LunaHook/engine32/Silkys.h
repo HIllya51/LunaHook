@@ -43,3 +43,14 @@ class Silkyssakura:public ENGINE{
     };
      bool attach_function();
 };
+
+class Silkysveryveryold:public ENGINE{
+    public:
+    Silkysveryveryold(){
+        //flutter of birds II 天使たちの翼
+        //https://vndb.org/v2380
+        check_by=CHECK_BY::FILE;
+        check_by_target=L"*SYS.ifl";
+    };
+     bool attach_function();
+};

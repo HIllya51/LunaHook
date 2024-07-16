@@ -610,3 +610,32 @@ bool Silkyssakura::attach_function(){
 
   return NewHook(hp,"Silkyssakura");
 }
+
+
+bool Silkysveryveryold::attach_function(){
+  //flutter of birds II 天使たちの翼
+  //https://vndb.org/v2380
+  const BYTE bytes[] = {
+    0x8b,XX,XX,
+    0x03,XX,XX,
+    0x33,XX,
+    0x8a,0x02,
+    0x83,XX,0x5c,
+    0x0f,0x85,XX4,
+    0x8b,XX,XX,
+    0x03,XX,XX,
+    0x33,XX,
+    0x8a,XX,0x01,
+    0x83,XX,0x6e
+  }; 
+  ULONG addr = MemDbg::findBytes(bytes, sizeof(bytes), processStartAddress, processStopAddress);
+  if (!addr)  return false;
+  addr=MemDbg::findEnclosingAlignedFunction(addr);
+  if (!addr)  return false;
+  HookParam hp;
+  hp.address = addr ;
+  hp.offset=get_stack(1);
+  hp.newlineseperator=L"\\n";
+  hp.type = USING_STRING; 
+  return NewHook(hp, "SilkysX");
+}
