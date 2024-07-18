@@ -92,7 +92,7 @@
 #define HS_SEARCH_FOR_TEXT L"搜索指定文本"
 #define VersionLatest L"最新版本"
 #define VersionCurrent L"当前版本"
-#define ProjectHomePage L"项目主页： https://lunatranslator.xyz/Github/LunaHook\nDiscord：https://lunatranslator.xyz/Resource/DiscordGroup"
+#define ProjectHomePage L"Github： https://github.com/HIllya51/LunaHook\n项目主页： https://lunatranslator.xyz\nDiscord：https://discord.gg/f8NSvaDU"
 #define LIST_HOOK L"Hook"
 #define LIST_TEXT L"文本"
 #define PROC_CONN L"进程已连接 %d"
