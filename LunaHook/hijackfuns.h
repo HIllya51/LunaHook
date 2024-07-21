@@ -1,11 +1,11 @@
 #pragma once
 
+namespace Hijack
+{
 
-namespace Hijack {
-
-#define DEF_FUN(_fun, _return, ...) \
-  typedef _return (WINAPI *_fun##_fun_t)(__VA_ARGS__); \
-  extern _fun##_fun_t old##_fun; \
+#define DEF_FUN(_fun, _return, ...)                   \
+  typedef _return(WINAPI *_fun##_fun_t)(__VA_ARGS__); \
+  extern _fun##_fun_t old##_fun;                      \
   _return WINAPI new##_fun(__VA_ARGS__);
 
   DEF_FUN(MultiByteToWideChar, int, UINT CodePage, DWORD dwFlags, LPCSTR lpMultiByteStr, int cbMultiByte, LPWSTR lpWideCharStr, int cchWideChar)
@@ -26,15 +26,14 @@ namespace Hijack {
   DEF_FUN(GetTextExtentExPointA, BOOL, HDC hdc, LPCSTR lpszStr, int cchString, int nMaxExtent, LPINT lpnFit, LPINT alpDx, LPSIZE lpSize)
   DEF_FUN(GetTextExtentExPointW, BOOL, HDC hdc, LPCWSTR lpszStr, int cchString, int nMaxExtent, LPINT lpnFit, LPINT alpDx, LPSIZE lpSize)
 
-  DEF_FUN(GetCharABCWidthsA, BOOL, HDC hdc, UINT uFirstChar, UINT uLastChar,  LPABC lpabc)
-  DEF_FUN(GetCharABCWidthsW, BOOL, HDC hdc, UINT uFirstChar, UINT uLastChar,  LPABC lpabc)
+  DEF_FUN(GetCharABCWidthsA, BOOL, HDC hdc, UINT uFirstChar, UINT uLastChar, LPABC lpabc)
+  DEF_FUN(GetCharABCWidthsW, BOOL, HDC hdc, UINT uFirstChar, UINT uLastChar, LPABC lpabc)
 
   DEF_FUN(TextOutA, BOOL, HDC hdc, int nXStart, int nYStart, LPCSTR lpString, int cchString)
   DEF_FUN(TextOutW, BOOL, HDC hdc, int nXStart, int nYStart, LPCWSTR lpString, int cchString)
 
   DEF_FUN(ExtTextOutA, BOOL, HDC hdc, int X, int Y, UINT fuOptions, const RECT *lprc, LPCSTR lpString, UINT cbCount, const INT *lpDx)
   DEF_FUN(ExtTextOutW, BOOL, HDC hdc, int X, int Y, UINT fuOptions, const RECT *lprc, LPCWSTR lpString, UINT cbCount, const INT *lpDx)
-
 
   DEF_FUN(DrawTextA, int, HDC hdc, LPCSTR lpString, int nCount, LPRECT lpRect, UINT uFormat)
   DEF_FUN(DrawTextW, int, HDC hdc, LPCWSTR lpString, int nCount, LPRECT lpRect, UINT uFormat)
@@ -43,14 +42,14 @@ namespace Hijack {
   DEF_FUN(DrawTextExW, int, HDC hdc, LPWSTR lpString, int nCount, LPRECT lpRect, UINT dwDTFormat, LPDRAWTEXTPARAMS lpDTParams)
 
   DEF_FUN(CharNextA, LPSTR, LPCSTR lpString)
-  //DEF_FUN(CharNextW, LPWSTR, LPCWSTR lpString)
-  //DEF_FUN(CharNextExA, LPSTR, WORD COdePage, LPCSTR lpString, DWORD dwFlags)
-  //DEF_FUN(CharNextExW, LPWSTR, WORD COdePage, LPCWSTR lpString, DWORD dwFlags)
+  // DEF_FUN(CharNextW, LPWSTR, LPCWSTR lpString)
+  // DEF_FUN(CharNextExA, LPSTR, WORD COdePage, LPCSTR lpString, DWORD dwFlags)
+  // DEF_FUN(CharNextExW, LPWSTR, WORD COdePage, LPCWSTR lpString, DWORD dwFlags)
   DEF_FUN(CharPrevA, LPSTR, LPCSTR lpStart, LPCSTR lpCurrent)
-  //DEF_FUN(CharNextW, LPWSTR, LPCWSTR lpStart, LPCWSTR lpCurrent)
+  // DEF_FUN(CharNextW, LPWSTR, LPCWSTR lpStart, LPCWSTR lpCurrent)
 #undef DEF_FUN
 
-// Global variables
+  // Global variables
 
 } // namespace Hijack
 

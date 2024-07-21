@@ -2,9 +2,10 @@
 #define __LUNA_EMBED_ENGINE_H
 
 extern EmbedSharedMem *embedsharedmem;
-extern DynamicShiftJISCodec *dynamiccodec ;
+extern DynamicShiftJISCodec *dynamiccodec;
 
-namespace WinKey {
+namespace WinKey
+{
     inline bool isKeyPressed(int vk) { return ::GetKeyState(vk) & 0xf0; }
     inline bool isKeyToggled(int vk) { return ::GetKeyState(vk) & 0x0f; }
 
@@ -12,14 +13,22 @@ namespace WinKey {
     inline bool isKeyControlPressed() { return isKeyPressed(VK_CONTROL); }
     inline bool isKeyShiftPressed() { return isKeyPressed(VK_SHIFT); }
     inline bool isKeyAltPressed() { return isKeyPressed(VK_MENU); }
- }
-namespace Engine{
-    enum TextRole { UnknownRole = 0, ScenarioRole,  NameRole, OtherRole,
-                ChoiceRole = OtherRole, HistoryRole = OtherRole,
-                RoleCount };
 }
-inline std::atomic<void(*)()> patch_fun = nullptr;
-void ReplaceFunction(PVOID* oldf,PVOID newf);
-bool check_embed_able(const ThreadParam& tp);
-bool checktranslatedok(void*data ,size_t len);
+namespace Engine
+{
+    enum TextRole
+    {
+        UnknownRole = 0,
+        ScenarioRole,
+        NameRole,
+        OtherRole,
+        ChoiceRole = OtherRole,
+        HistoryRole = OtherRole,
+        RoleCount
+    };
+}
+inline std::atomic<void (*)()> patch_fun = nullptr;
+void ReplaceFunction(PVOID *oldf, PVOID newf);
+bool check_embed_able(const ThreadParam &tp);
+bool checktranslatedok(void *data, size_t len);
 #endif
