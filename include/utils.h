@@ -6,16 +6,27 @@ constexpr bool x64 = true;
 constexpr bool x64 = false;
 #endif
 
-template <typename T, typename... Xs> struct ArrayImpl { using Type = std::tuple<T, Xs...>[]; };
-template <typename T> struct ArrayImpl<T> { using Type = T[]; };
-template <typename... Ts> using Array = typename ArrayImpl<Ts...>::Type;
+template <typename T, typename... Xs>
+struct ArrayImpl
+{
+	using Type = std::tuple<T, Xs...>[];
+};
+template <typename T>
+struct ArrayImpl<T>
+{
+	using Type = T[];
+};
+template <typename... Ts>
+using Array = typename ArrayImpl<Ts...>::Type;
 
-template <auto F> using Functor = std::integral_constant<std::remove_reference_t<decltype(F)>, F>; // shouldn't need remove_reference_t but MSVC is bugged
+template <auto F>
+using Functor = std::integral_constant<std::remove_reference_t<decltype(F)>, F>; // shouldn't need remove_reference_t but MSVC is bugged
 
 struct PermissivePointer
 {
-	template <typename T> operator T*() { return (T*)p; }
-	void* p;
+	template <typename T>
+	operator T *() { return (T *)p; }
+	void *p;
 };
 
 template <typename HandleCloser = Functor<CloseHandle>>
@@ -24,29 +35,41 @@ class AutoHandle
 public:
 	AutoHandle(HANDLE h) : h(h) {}
 	operator HANDLE() { return h.get(); }
-	PHANDLE operator&() { static_assert(sizeof(*this) == sizeof(HANDLE)); assert(!h); return (PHANDLE)this; }
+	PHANDLE operator&()
+	{
+		static_assert(sizeof(*this) == sizeof(HANDLE));
+		assert(!h);
+		return (PHANDLE)this;
+	}
 	operator bool() { return h.get() != NULL && h.get() != INVALID_HANDLE_VALUE; }
 
 private:
-	struct HandleCleaner { void operator()(void* h) { if (h != INVALID_HANDLE_VALUE) HandleCloser()(PermissivePointer{ h }); } };
+	struct HandleCleaner
+	{
+		void operator()(void *h)
+		{
+			if (h != INVALID_HANDLE_VALUE)
+				HandleCloser()(PermissivePointer{h});
+		}
+	};
 	std::unique_ptr<void, HandleCleaner> h;
 };
 
-template<typename T, typename M = std::mutex>
+template <typename T, typename M = std::mutex>
 class Synchronized
 {
 public:
 	template <typename... Args>
-	Synchronized(Args&&... args) : contents(std::forward<Args>(args)...) {}
+	Synchronized(Args &&...args) : contents(std::forward<Args>(args)...) {}
 
 	struct Locker
 	{
-		T* operator->() { return &contents; }
+		T *operator->() { return &contents; }
 		std::unique_lock<M> lock;
-		T& contents;
+		T &contents;
 	};
 
-	Locker Acquire() { return { std::unique_lock(m), contents }; }
+	Locker Acquire() { return {std::unique_lock(m), contents}; }
 	Locker operator->() { return Acquire(); }
 	T Copy() { return Acquire().contents; }
 
@@ -56,52 +79,66 @@ private:
 };
 
 template <typename F>
-void SpawnThread(const F& f) // works in DllMain unlike std thread
+void SpawnThread(const F &f) // works in DllMain unlike std thread
 {
-	F* copy = new F(f);
-	CloseHandle(CreateThread(nullptr, 0, [](void* copy)
-	{
+	F *copy = new F(f);
+	CloseHandle(CreateThread(nullptr, 0, [](void *copy)
+							 {
 		(*(F*)copy)();
 		delete (F*)copy;
-		return 0UL;
-	}, copy, 0, nullptr));
+		return 0UL; }, copy, 0, nullptr));
 }
 
 inline struct // should be inline but MSVC (linker) is bugged
 {
 	inline static BYTE DUMMY[100];
-	template <typename T> operator T*() { static_assert(sizeof(T) < sizeof(DUMMY)); return (T*)DUMMY; }
+	template <typename T>
+	operator T *()
+	{
+		static_assert(sizeof(T) < sizeof(DUMMY));
+		return (T *)DUMMY;
+	}
 } DUMMY;
 
-inline auto Swallow = [](auto&&...) {};
+inline auto Swallow = [](auto &&...) {};
 
-template <typename T> std::optional<std::remove_cv_t<T>> Copy(T* ptr) { if (ptr) return *ptr; return {}; }
-
+template <typename T>
+std::optional<std::remove_cv_t<T>> Copy(T *ptr)
+{
+	if (ptr)
+		return *ptr;
+	return {};
+}
 
 inline std::optional<std::wstring> getModuleFilename(DWORD processId, HMODULE module = NULL)
 {
 	std::vector<wchar_t> buffer(MAX_PATH);
 	if (AutoHandle<> process = OpenProcess(PROCESS_VM_READ | PROCESS_QUERY_INFORMATION, FALSE, processId))
-		if (GetModuleFileNameExW(process, module, buffer.data(), MAX_PATH)) return buffer.data();
+		if (GetModuleFileNameExW(process, module, buffer.data(), MAX_PATH))
+			return buffer.data();
 	return {};
 }
 
 inline std::optional<std::wstring> getModuleFilename(HMODULE module = NULL)
 {
 	std::vector<wchar_t> buffer(MAX_PATH);
-	if (GetModuleFileNameW(module, buffer.data(), MAX_PATH)) return buffer.data();
+	if (GetModuleFileNameW(module, buffer.data(), MAX_PATH))
+		return buffer.data();
 	return {};
 }
 
-template<typename T>
-struct SafeFptr {
+template <typename T>
+struct SafeFptr
+{
 	T ptr;
 	uintptr_t errorvalue;
 	SafeFptr(T _ptr, uintptr_t v = {NULL}) : ptr(_ptr), errorvalue(v) {}
 
-	template<typename... Args>
-	std::invoke_result_t<T, Args...> operator()(Args... args) {
-		if (!ptr) return (std::invoke_result_t<T, Args...>)(errorvalue);
+	template <typename... Args>
+	std::invoke_result_t<T, Args...> operator()(Args... args)
+	{
+		if (!ptr)
+			return (std::invoke_result_t<T, Args...>)(errorvalue);
 		return ptr(std::forward<Args>(args)...);
 	}
 };

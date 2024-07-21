@@ -33,11 +33,11 @@
 #include <shlobj.h>
 #include <Shlwapi.h>
 
-#include"stringutils.h"
-#include"utils.h"
-#include"defs.h"
-#include"const.h"
-#include"types.h"
-#include"hookcode.h"
-#include"texthook.h"
-#include"winevent.hpp"
+#include "stringutils.h"
+#include "utils.h"
+#include "defs.h"
+#include "const.h"
+#include "types.h"
+#include "hookcode.h"
+#include "texthook.h"
+#include "winevent.hpp"

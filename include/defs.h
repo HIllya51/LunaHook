@@ -18,13 +18,13 @@ constexpr auto ITH_HOOKMAN_MUTEX_ = L"LUNA_VNR_HOOKMAN_"; // ITH_HOOKMAN_%d
 constexpr auto CONNECTING_MUTEX = L"LUNA_CONNECTING_PIPES";
 
 // Events
-constexpr auto LUNA_EMBED_notify_event="LUNA_NOTIFY.%d.%llu";
+constexpr auto LUNA_EMBED_notify_event = "LUNA_NOTIFY.%d.%llu";
 
 constexpr auto PIPE_AVAILABLE_EVENT = L"LUNA_PIPE_AVAILABLE";
 
 // Files
-constexpr auto LUNA_HOOK_DLL_64=L"LunaHook64";
-constexpr auto LUNA_HOOK_DLL_32=L"LunaHook32";
+constexpr auto LUNA_HOOK_DLL_64 = L"LunaHook64";
+constexpr auto LUNA_HOOK_DLL_32 = L"LunaHook32";
 
 #ifdef _WIN64
 constexpr auto LUNA_HOOK_DLL = LUNA_HOOK_DLL_64; // .dll but LoadLibrary automatically adds that
