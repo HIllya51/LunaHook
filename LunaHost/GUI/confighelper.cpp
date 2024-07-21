@@ -1,9 +1,11 @@
-#include"confighelper.h"
-#include"stringutils.h"
-std::string readfile(const wchar_t* fname) {
-    FILE* f;
+#include "confighelper.h"
+#include "stringutils.h"
+std::string readfile(const wchar_t *fname)
+{
+    FILE *f;
     _wfopen_s(&f, fname, L"rb");
-    if (f == 0)return {};
+    if (f == 0)
+        return {};
     fseek(f, 0, SEEK_END);
     auto len = ftell(f);
     fseek(f, 0, SEEK_SET);
@@ -12,29 +14,34 @@ std::string readfile(const wchar_t* fname) {
     fread(buff.data(), 1, len, f);
     fclose(f);
     return buff;
-} 
-void writefile(const wchar_t* fname,const std::string& s){
-    FILE* f;
+}
+void writefile(const wchar_t *fname, const std::string &s)
+{
+    FILE *f;
     _wfopen_s(&f, fname, L"w");
-    fprintf(f,"%s",s.c_str());
+    fprintf(f, "%s", s.c_str());
     fclose(f);
 }
 
-confighelper::confighelper(){
-    configpath=std::filesystem::current_path()/(x64?"config64.json":"config32.json");
-    try{
-        configs=nlohmann::json::parse(readfile(configpath.c_str()));
+confighelper::confighelper()
+{
+    configpath = std::filesystem::current_path() / (x64 ? "config64.json" : "config32.json");
+    try
+    {
+        configs = nlohmann::json::parse(readfile(configpath.c_str()));
     }
-    catch(std::exception &){
-        configs={};
+    catch (std::exception &)
+    {
+        configs = {};
     }
 
-    if(configs.find("plugins")==configs.end()){
-        configs["plugins"]={};
+    if (configs.find("plugins") == configs.end())
+    {
+        configs["plugins"] = {};
     }
-    
 }
-confighelper::~confighelper(){
+confighelper::~confighelper()
+{
 
     writefile(configpath.c_str(), configs.dump(4));
 }

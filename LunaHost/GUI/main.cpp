@@ -1,5 +1,6 @@
-#include"LunaHost.h"
-int main(){
+#include "LunaHost.h"
+int main()
+{
     SetProcessDPIAware();
     LunaHost _lunahost;
     _lunahost.show();

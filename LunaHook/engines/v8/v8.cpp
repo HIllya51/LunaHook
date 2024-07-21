@@ -31,7 +31,7 @@ namespace{
 			GlobalUnlock(hClipboardData); 
 			s->ARG2=(uintptr_t)hClipboardData;
 		};
-		return NewHook(hp,"hookClipboard");
+		return NewHook(hp,"nwjs/electron");
 	}
 }
 namespace v8script{
