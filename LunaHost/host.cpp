@@ -208,7 +208,6 @@ namespace Host
 		OnConsole=[=](auto &&...args){std::lock_guard _(outputmutex);console(std::forward<decltype(args)>(args)...);};
 		HookInsert=[=](auto &&...args){std::lock_guard _(threadmutex);hookinsert(std::forward<decltype(args)>(args)...);};
 		embedcallback=[=](auto &&...args){std::lock_guard _(outputmutex);embed(std::forward<decltype(args)>(args)...);};
-		Host::AddConsoleOutput(ProjectHomePage);
 	}
 	constexpr auto  PROCESS_INJECT_ACCESS=(
 			PROCESS_CREATE_THREAD |
