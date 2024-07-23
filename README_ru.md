@@ -7,7 +7,7 @@
 
 ###  [Discord](https://discord.gg/f8NSvaDU)
 
-### [English](README.md) | [简体中文](README_zh.md) |  Русский
+### [English](README_en.md) | [简体中文](README.md) |  Русский
 
 
 LunaHook - это модуль перехвата текста Core Text для [LunaTranslator](https://lunatranslator.xyz/Github/LunaTranslator).

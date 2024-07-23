@@ -1,33 +1,32 @@
 # LunaHook
 
+
 ### <a href="./LICENSE"><img src="https://img.shields.io/github/license/HIllya51/LunaHook"></a> <a href="https://lunatranslator.xyz/Github/LunaHook/releases"><img src="https://img.shields.io/github/v/release/HIllya51/LunaHook?color=ffa"></a>
 
-### [Discord](https://discord.gg/f8NSvaDU)  
+### [Discord](https://discord.gg/f8NSvaDU) 
 
+### 简体中文 | [English](README_en.md) | [Русский](README_ru.md) 
 
-### English | [简体中文](README_zh.md) | [Русский](README_ru.md) 
+[LunaTranslator](https://lunatranslator.xyz/Github/LunaTranslator)核心文本提取器模块
 
+## 下载
 
-LunaHook is the Core Text Hook Module For [LunaTranslator](https://lunatranslator.xyz/Github/LunaTranslator).
+在github [release](https://lunatranslator.xyz/Github/LunaHook/releases)中下载
 
-## Download
+选择所使用的语言下载相应的zip
 
-Download it via github [release](https://lunatranslator.xyz/Github/LunaHook/releases).
+若通过windows xp玩古老的游戏，下载带有_winxp后缀的版本
 
-For English user, download Release_English.zip. For Chinese user download Release_Chinese.zip. For Russian user download Release_Russian.zip.
+## 插件
 
-If you use Windows XP for some old Visual Novel, download zip with _winxp suffix.
+在[release](https://lunatranslator.xyz/Github/LunaHook/releases)中下载plugin32或plugin64
 
-## Plugins
+兼容Textractor插件
 
-Download plugin32 or plugin64 in [release](https://lunatranslator.xyz/Github/LunaHook/releases).
+由于LunaHost32和LunaHost64都可以注入到32位和64位游戏，因此实际上你仅需使用LunaHost32和LunaHost64中的一个，且仅需下载plugin32和plugin64中的一个。
 
-Compatible with Textractor plugins.
+## 支持作者
 
-Since both LunaHost32 and LunaHost64 can inject the both 32-bit and 64-bit games, actually you only need to use one of LunaHost32 and LunaHost64, and only need to download one of plugin32 and plugin64.
-
-## Support
-
-If you feel that the software is helpful to you, welcome to become my [sponsor](https://patreon.com/HIllya51) <!--or buy me a [Coffee](https://ko-fi.com/HIllya51)-->. Thank you ~ 
+若觉得软件对你有帮助，欢迎成为我的[sponsor](https://patreon.com/HIllya51) <!--或请我一杯[咖啡](https://ko-fi.com/HIllya51)-->。感谢~
 
 <img src="https://p.inari.site/guest/24-04/21/6624ee26d3093.png" alt="屏幕截图 2024-03-29 212522.png" title="屏幕截图 2024-03-29 212522.png" />
