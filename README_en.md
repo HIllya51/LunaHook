@@ -5,7 +5,7 @@
 ### [Discord](https://discord.gg/f8NSvaDU)  
 
 
-### English | [简体中文](README.md) | [Русский](README_ru.md) 
+### [简体中文](README.md) | English | [Русский](README_ru.md) 
 
 
 LunaHook is the Core Text Hook Module For [LunaTranslator](https://lunatranslator.xyz/Github/LunaTranslator).
