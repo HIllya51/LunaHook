@@ -92,7 +92,7 @@
 #define HS_SEARCH_FOR_TEXT L"Искать определенный текст"
 #define VersionLatest L"Последняя версия"
 #define VersionCurrent L"Текущая версия"
-#define ProjectHomePage L"Гитхаб: /HIllya51/LunaHook\nСтраница проекта: lunatranslator.xyz\nПатреон: patreon.com/HIllya51\nДискорд: discord.gg/f8NSvaDU\nПеревод на русский: github.com/NekoIriyaRu\n\nЭта программа является основным подмодулем LunaTranslator и полностью встроена в Lunatranslator. Эта программа содержит только некоторые простые функции. Если вам нужны дополнительные функции, используйте LunaTranslator.\nЕсли вы обнаружите какие-либо неподдерживаемые игры, сообщите о проблеме используя эту ссылку.\nlunatranslator.xyz/Resource/game_support"
+#define ProjectHomePage L"Гитхаб: github.com/HIllya51/LunaHook\nСтраница проекта: lunatranslator.xyz\nПатреон: patreon.com/HIllya51\nДискорд: discord.gg/f8NSvaDU\nПеревод на русский: github.com/NekoIriyaRu\n\nЭта программа является основным подмодулем LunaTranslator и полностью встроена в Lunatranslator. Эта программа содержит только некоторые простые функции. Если вам нужны дополнительные функции, используйте LunaTranslator.\nЕсли вы обнаружите какие-либо неподдерживаемые игры, сообщите о проблеме используя эту ссылку.\nlunatranslator.xyz/Resource/game_support"
 #define LIST_HOOK L"Хук"
 #define LIST_TEXT L"Текст"
 #define PROC_CONN L"Процесс подключен %d"
