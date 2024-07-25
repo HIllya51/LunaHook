@@ -183,6 +183,20 @@ namespace
       hp.address = addr + 6;
       hp.type = USING_STRING | NO_CONTEXT;
       hp.offset = get_reg(regs::eax);
+      hp.filter_fun = [](LPVOID data, size_t *size, HookParam *)
+      {
+        auto text = reinterpret_cast<LPSTR>(data);
+        auto len = reinterpret_cast<size_t *>(size);
+        if (all_ascii(text, *len))
+          return false;
+
+        std::string str = std::string(text, *len);
+        std::regex reg1("\\{(.*?)/(.*?)\\}");
+        std::string result1 = std::regex_replace(str, reg1, "$1");
+
+        return write_string_overwrite(text, len, result1);
+        return true;
+      };
       succ |= NewHook(hp, "debonosu");
     }
     return succ;

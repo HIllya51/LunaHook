@@ -1178,9 +1178,7 @@ bool attach(const uint8_t pattern[],int patternSize,DWORD startAddress,DWORD sto
     hp.hook_font=F_GetGlyphOutlineA;
     hp.filter_fun=[](void* data, size_t* len, HookParam* hp){
               auto text = reinterpret_cast<LPSTR>(data);
-              std::string str = text;
-              str = str.substr(0,  *len); 
-
+              std::string str = std::string(text, *len);
               std::regex reg1("\\{(.*?)/(.*?)\\}");
               std::string result1 = std::regex_replace(str, reg1, "$1");
               
