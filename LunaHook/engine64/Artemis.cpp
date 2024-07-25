@@ -17,7 +17,7 @@ bool InsertArtemisHook() {
 		for (auto addr : Util::SearchMemory(bytes, sizeof(bytes), PAGE_EXECUTE, processStartAddress, processStopAddress)) {
 			HookParam hp;
 			hp.address = addr + 1;
-			hp.offset=get_reg(regs::rdi);
+			hp.offset=get_reg(regs::rdx);
 			hp.type = USING_STRING | CODEC_UTF8 | NO_CONTEXT;
 			ConsoleOutput("INSERT Artemis Hook ");
 			return NewHook(hp, "Artemis");
