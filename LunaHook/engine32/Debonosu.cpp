@@ -190,7 +190,7 @@ namespace
 }
 bool InsertDebonosuHook()
 {
-  bool ok = InsertDebonosuScenarioHook() || debox();
+  bool ok = InsertDebonosuScenarioHook();
   if (ok)
     InsertDebonosuNameHook();
   return ok;
@@ -204,5 +204,5 @@ bool Debonosu::attach_function()
     PcHooks::hookOtherPcFunctions();
     return true;
   }
-  return InsertDebonosuHook();
+  return InsertDebonosuHook() || debox();
 }
