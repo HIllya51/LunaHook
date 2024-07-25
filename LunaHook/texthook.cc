@@ -362,7 +362,6 @@ void TextHook::Send(uintptr_t lpDataBase)
 		parsenewlineseperator(pbData, &lpCount);
 
 		bool canembed;
-		;
 		if (hp.type & EMBED_ABLE)
 		{
 			if (!checklengthembedable(hp, lpCount))
