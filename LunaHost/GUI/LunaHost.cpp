@@ -864,8 +864,8 @@ void Hooksearchsetting::call(std::set<DWORD> pids, std::wstring reg)
         }
 
         wcscpy(sp.boundaryModule, editmodule->text().c_str());
-        sp.minAddress = std::stoll(editminaddr->text(), nullptr, 16);
-        sp.maxAddress = std::stoll(editmaxaddr->text(), nullptr, 16);
+        sp.minAddress = std::stoull(editminaddr->text(), nullptr, 16);
+        sp.maxAddress = std::stoull(editmaxaddr->text(), nullptr, 16);
         sp.padding = spinpadding->getcurr();
         realcallsearchhooks(pids, editregex->text(), sp);
     };
