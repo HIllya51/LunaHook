@@ -104,7 +104,16 @@ void ConsoleOutput(LPCSTR text, ...)
 
 void NotifyHookFound(HookParam hp, wchar_t *text)
 {
-	wcscpy_s(hp.hookcode, HOOKCODE_LEN, HookCode::Generate(hp, GetCurrentProcessId()).c_str());
+	if (hp.jittype == JITTYPE::PC)
+		if (!(hp.type & MODULE_OFFSET))
+			if (AutoHandle<> process = OpenProcess(PROCESS_VM_READ | PROCESS_QUERY_INFORMATION, FALSE, GetCurrentProcessId()))
+				if (MEMORY_BASIC_INFORMATION info = {}; VirtualQueryEx(process, (LPCVOID)hp.address, &info, sizeof(info)))
+				{
+
+					hp.type |= MODULE_OFFSET;
+					hp.address -= (uint64_t)info.AllocationBase;
+					wcsncpy_s(hp.module, processName, ARRAYSIZE(hp.module));
+				}
 	HookFoundNotif buffer(hp, text);
 	WriteFile(hookPipe, &buffer, sizeof(buffer), DUMMY, nullptr);
 }

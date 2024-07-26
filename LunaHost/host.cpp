@@ -102,7 +102,10 @@ namespace
 					auto info = *(HookFoundNotif*)buffer;
 					auto OnHookFound = processRecordsByIds->at(processId).OnHookFound; 
 					std::wstring wide = info.text;
-					if (wide.size() > STRING) OnHookFound(info.hp, std::move(info.text));
+					if (wide.size() > STRING) {
+						wcscpy_s(info.hp.hookcode,HOOKCODE_LEN, HookCode::Generate(info.hp, processId).c_str());
+						OnHookFound(info.hp, std::move(info.text));
+					}
 					info.hp.type &= ~CODEC_UTF16;
 					if (auto converted = StringToWideString((char*)info.text, info.hp.codepage))
 						if (converted->size() > STRING) 

@@ -394,7 +394,7 @@ namespace
 			if (hp.type & MODULE_OFFSET)
 				HCode += L':' + std::wstring(hp.module);
 			if (hp.type & FUNCTION_OFFSET)
-				HCode += L':' + StringToWideString(hp.function);
+				HCode += L':' + acastw(hp.function);
 		}
 		else
 		{

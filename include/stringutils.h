@@ -33,8 +33,8 @@ std::string WideStringToString(const std::wstring &text, UINT cp = CP_UTF8);
 std::wstring StringToWideString(const std::string &text);
 std::optional<std::wstring> StringToWideString(const std::string &text, UINT encoding);
 
-std::string wcasta(const std::wstring x);
-std::wstring acastw(const std::string x);
+std::string wcasta(const std::wstring& x);
+std::wstring acastw(const std::string& x);
 size_t u32strlen(uint32_t *data);
 inline bool disable_mbwc = false;
 inline bool disable_wcmb = false;

@@ -215,7 +215,7 @@ size_t u32strlen(uint32_t *data)
   return s;
 }
 
-std::string wcasta(const std::wstring x)
+std::string wcasta(const std::wstring& x)
 {
   std::string xx;
   for (auto c : x)
@@ -223,7 +223,7 @@ std::string wcasta(const std::wstring x)
   return xx;
 }
 
-std::wstring acastw(const std::string x)
+std::wstring acastw(const std::string& x)
 {
   std::wstring xx;
   for (auto c : x)
