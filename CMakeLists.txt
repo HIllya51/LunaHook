@@ -61,7 +61,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/version)
 include(generate_product_version)
 
 set(VERSION_MAJOR 3)
-set(VERSION_MINOR 7)
+set(VERSION_MINOR 8)
 set(VERSION_PATCH 0)
 set(VERSION_REVISION 0)
 
