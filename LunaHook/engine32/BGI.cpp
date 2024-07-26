@@ -1399,29 +1399,7 @@ bool BGI7Filter(LPVOID data, size_t *size, HookParam *)
 {
   auto text = reinterpret_cast<LPWSTR>(data);
   auto len = reinterpret_cast<size_t *>(size);
-  // BGI4 split不管用，所以只好手动过滤掉了
-  auto ws = std::wstring(text, *len / 2);
-  if (endWith(ws, L".bs5"))
-    return false;
-  if (endWith(ws, L".arc"))
-    return false;
-  if (endWith(ws, L".sud"))
-    return false;
-  if (all_ascii(ws.c_str()))
-  {
-    if ((ws.find(L"-") != ws.npos) && (ws.find(L"_") != ws.npos))
-      return false;
-    if (startWith(ws, L"#"))
-      return false;
-    if (startWith(ws, L"SG"))
-      return false;
-    if (startWith(ws, L"bs5"))
-      return false;
-  }
 
-  if (ws.find(L"[ 0 ]") != ws.npos)
-    return false; // 個別アニメーション [ 0 ] の透明度
-  //
   CharFilter(text, len, L'\x0001');
   CharFilter(text, len, L'\x0002');
   CharFilter(text, len, L'\x0003');
@@ -1615,13 +1593,13 @@ bool InsertBGI4Hook()
   {
     *data = stack->stack[2];
     *split = stack->stack[6]; // 不一定对
-    *len = 2 * wcslen((wchar_t *)*data);
-    // switch(*split){
-    //   case 0://name
-    //   case 1:
-    //     *len=2*wcslen((wchar_t*)*data);
-    //   break;
-    // }
+    auto sp = *split;
+    if ((sp == 0) || (sp == 1) || ((sp & 0xFFF) == 0x790))
+    {
+      // [240726][1282405][HOOKSOFT] シークレットラブ（仮）
+      // 这作case 1仅当快进时才有文本,其他的在XXXXX790上
+      *len = 2 * wcslen((wchar_t *)*data);
+    }
   };
   hp.type = CODEC_UTF16 | USING_STRING | NO_CONTEXT | EMBED_ABLE | EMBED_BEFORE_SIMPLE | EMBED_AFTER_OVERWRITE;
   hp.hook_font = F_TextOutW | F_GetTextExtentPoint32W;
