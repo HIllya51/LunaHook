@@ -1151,8 +1151,8 @@ bool InsertBGIDynamicHook(LPVOID addr, DWORD frame, DWORD stack)
         0x0f, 0xbe, 0xc0, // 011d4d35  |. 0fbec0         movsx eax,al
         0x83, 0xc0, 0xfe, // 011d4d38  |. 83c0 fe        add eax,-0x2               ;  switch (cases 2..8)
         0x83, 0xf8        //, 0x06  // 011d4d3b  |. 83f8 06        cmp eax,0x6
-        // The following code does not exist in newer BGI games after 蒼の彼方
-        // 0x77, 0x6a     // 011d4d3e  |. 77 6a          ja short sekachu.011d4daa
+                          // The following code does not exist in newer BGI games after 蒼の彼方
+                          // 0x77, 0x6a     // 011d4d3e  |. 77 6a          ja short sekachu.011d4daa
     };
 
     ULONG range = min(processStopAddress - processStartAddress, MAX_REL_ADDR);
@@ -1405,8 +1405,20 @@ bool BGI7Filter(LPVOID data, size_t *size, HookParam *)
     return false;
   if (endWith(ws, L".arc"))
     return false;
-  if (all_ascii(ws.c_str()) && (ws.find(L"-") != ws.npos) && (ws.find(L"_") != ws.npos))
+  if (endWith(ws, L".sud"))
     return false;
+  if (all_ascii(ws.c_str()))
+  {
+    if ((ws.find(L"-") != ws.npos) && (ws.find(L"_") != ws.npos))
+      return false;
+    if (startWith(ws, L"#"))
+      return false;
+    if (startWith(ws, L"SG"))
+      return false;
+    if (startWith(ws, L"bs5"))
+      return false;
+  }
+
   if (ws.find(L"[ 0 ]") != ws.npos)
     return false; // 個別アニメーション [ 0 ] の透明度
   //
