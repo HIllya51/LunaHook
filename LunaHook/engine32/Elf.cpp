@@ -1,5 +1,5 @@
-#include"Elf.h"
- 
+#include "Elf.h"
+
 /**
  *  jichi 6/1/2014:
  *  Observations from 愛姉妹4
@@ -8,31 +8,35 @@
  */
 static inline size_t _elf_strlen(LPCSTR p) // limit search address which might be bad
 {
-  //CC_ASSERT(p);
+  // CC_ASSERT(p);
   for (size_t i = 0; i < VNR_TEXT_CAPACITY; i++)
     if (!*p++)
       return i;
   return 0; // when len >= VNR_TEXT_CAPACITY
 }
 
-static void SpecialHookElf(hook_stack* stack,  HookParam *, uintptr_t *data, uintptr_t *split, size_t *len)
+static void SpecialHookElf(hook_stack *stack, HookParam *, uintptr_t *data, uintptr_t *split, size_t *len)
 {
-  //DWORD arg1 = *(DWORD *)(esp_base + 0x4);
+  // DWORD arg1 = *(DWORD *)(esp_base + 0x4);
   DWORD arg1 = stack->stack[1];
-  DWORD arg2_scene = arg1 + 4*5,
-        arg2_chara = arg1 + 4*10;
+  DWORD arg2_scene = arg1 + 4 * 5,
+        arg2_chara = arg1 + 4 * 10;
   DWORD text; //= 0; // This variable will be killed
-  if (*(DWORD *)arg2_scene == 0) {
-    text = *(DWORD *)(arg2_scene + 4*3);
+  if (*(DWORD *)arg2_scene == 0)
+  {
+    text = *(DWORD *)(arg2_scene + 4 * 3);
     if (!text || ::IsBadReadPtr((LPCVOID)text, 1)) // Text from scenario could be bad when open backlog while the character is speaking
       return;
     *split = 1;
-  } else if (*(DWORD *)arg2_chara == 0) {
-    text = arg2_chara + 4*3;
+  }
+  else if (*(DWORD *)arg2_chara == 0)
+  {
+    text = arg2_chara + 4 * 3;
     *split = 2;
-  } else
+  }
+  else
     return;
-  //if (text && text < MemDbg::UserMemoryStopAddress) {
+  // if (text && text < MemDbg::UserMemoryStopAddress) {
   *len = _elf_strlen((LPCSTR)text); // in case the text is bad but still readable
   //*len = ::strlen((LPCSTR)text);
   *data = text;
@@ -104,395 +108,435 @@ static void SpecialHookElf(hook_stack* stack,  HookParam *, uintptr_t *data, uin
 bool InsertElfHook()
 {
   const BYTE bytes[] = {
-      //0x55,                             // 0093f9b0  /$ 55             push ebp  ; jichi: hook here
-      //0x8b,0xec,                        // 0093f9b1  |. 8bec           mov ebp,esp
-      //0x83,0xec, 0x08,                  // 0093f9b3  |. 83ec 08        sub esp,0x8
-      //0x83,0x7d, 0x10, 0x00,            // 0093f9b6  |. 837d 10 00     cmp dword ptr ss:[ebp+0x10],0x0
-      //0x53,                             // 0093f9ba  |. 53             push ebx
-      //0x8b,0x5d, 0x0c,                  // 0093f9bb  |. 8b5d 0c        mov ebx,dword ptr ss:[ebp+0xc]
-      //0x56,                             // 0093f9be  |. 56             push esi
-      //0x57,                             // 0093f9bf  |. 57             push edi
-      0x75, 0x0f,                       // 0093f9c0  |. 75 0f          jnz short silkys.0093f9d1
-      0x8b,0x45, 0x08,                  // 0093f9c2  |. 8b45 08        mov eax,dword ptr ss:[ebp+0x8]
-      0x8b,0x48, 0x04,                  // 0093f9c5  |. 8b48 04        mov ecx,dword ptr ds:[eax+0x4]
-      0x8b,0x91, 0x90,0x00,0x00,0x00    // 0093f9c8  |. 8b91 90000000  mov edx,dword ptr ds:[ecx+0x90]
+      // 0x55,                             // 0093f9b0  /$ 55             push ebp  ; jichi: hook here
+      // 0x8b,0xec,                        // 0093f9b1  |. 8bec           mov ebp,esp
+      // 0x83,0xec, 0x08,                  // 0093f9b3  |. 83ec 08        sub esp,0x8
+      // 0x83,0x7d, 0x10, 0x00,            // 0093f9b6  |. 837d 10 00     cmp dword ptr ss:[ebp+0x10],0x0
+      // 0x53,                             // 0093f9ba  |. 53             push ebx
+      // 0x8b,0x5d, 0x0c,                  // 0093f9bb  |. 8b5d 0c        mov ebx,dword ptr ss:[ebp+0xc]
+      // 0x56,                             // 0093f9be  |. 56             push esi
+      // 0x57,                             // 0093f9bf  |. 57             push edi
+      0x75, 0x0f,                        // 0093f9c0  |. 75 0f          jnz short silkys.0093f9d1
+      0x8b, 0x45, 0x08,                  // 0093f9c2  |. 8b45 08        mov eax,dword ptr ss:[ebp+0x8]
+      0x8b, 0x48, 0x04,                  // 0093f9c5  |. 8b48 04        mov ecx,dword ptr ds:[eax+0x4]
+      0x8b, 0x91, 0x90, 0x00, 0x00, 0x00 // 0093f9c8  |. 8b91 90000000  mov edx,dword ptr ds:[ecx+0x90]
   };
-  //enum { addr_offset = 0xc };
+  // enum { addr_offset = 0xc };
   ULONG range = min(processStopAddress - processStartAddress, MAX_REL_ADDR);
   ULONG addr = MemDbg::findBytes(bytes, sizeof(bytes), processStartAddress, processStartAddress + range);
-  //GROWL_DWORD(addr);
-  //addr = 0x42f170; // 愛姉妹4 Trial
-  //reladdr = 0x2f9b0; // 愛姉妹4
-  //reladdr = 0x2f0f0; // SEXヂ�ーチャー剛史 trial
-  if (!addr) {
+  // GROWL_DWORD(addr);
+  // addr = 0x42f170; // 愛姉妹4 Trial
+  // reladdr = 0x2f9b0; // 愛姉妹4
+  // reladdr = 0x2f0f0; // SEXヂ�ーチャー剛史 trial
+  if (!addr)
+  {
     ConsoleOutput("Elf: pattern not found");
     return false;
   }
 
-  enum : BYTE { push_ebp = 0x55 };
+  enum : BYTE
+  {
+    push_ebp = 0x55
+  };
   for (int i = 0; i < 0x20; i++, addr--) // value of i is supposed to be 0xc or 0x10
-    if (*(BYTE *)addr == push_ebp) { // beginning of the function
+    if (*(BYTE *)addr == push_ebp)
+    { // beginning of the function
 
       HookParam hp;
       hp.address = addr;
       hp.text_fun = SpecialHookElf;
-      hp.type = USING_STRING|NO_CONTEXT; // = 9
+      hp.type = USING_STRING | NO_CONTEXT; // = 9
 
       ConsoleOutput("INSERT Elf");
-      
+
       return NewHook(hp, "Elf");
     }
   ConsoleOutput("Elf: function not found");
   return false;
 }
-namespace{
-  bool __(){
+namespace
+{
+  bool __()
+  {
     const BYTE bytes[] = {
-      //姫騎士オリヴィア ～へ、変態、この変態男!少しは恥を知りなさい!～ 
-      //女系家族III～秘密HIMITSU卑蜜～
-      //ベロちゅー！～コスプレメイドをエロメロしちゃう魔法の舌戯～
-        0x0F,0xB7,XX,XX4, //v11 == 30081 // movzx   edx, ds:word_4C285C //word_4C285C dw 7581h 
+        // 姫騎士オリヴィア ～へ、変態、この変態男!少しは恥を知りなさい!～
+        // 女系家族III～秘密HIMITSU卑蜜～
+        // ベロちゅー！～コスプレメイドをエロメロしちゃう魔法の舌戯～
+        0x0F, 0xB7, XX, XX4, // v11 == 30081 // movzx   edx, ds:word_4C285C //word_4C285C dw 7581h
     };
-    
-    for (auto addr : Util::SearchMemory(bytes, sizeof(bytes), PAGE_EXECUTE, processStartAddress, processStopAddress)) {
-      BYTE reg=*(BYTE*)(addr+2);
-      if((reg!=0x05)&&(reg!=0x0d)&&(reg!=0x1d)&&(reg!=0x15))continue;
-      int word_4C285C_addr=*(int*)(addr+3);
-      if(word_4C285C_addr<processStartAddress || word_4C285C_addr>processStopAddress)continue;
-      int word_4C285C=*(int*)word_4C285C_addr;
-      if((word_4C285C)!=0x7581)continue;
+
+    for (auto addr : Util::SearchMemory(bytes, sizeof(bytes), PAGE_EXECUTE, processStartAddress, processStopAddress))
+    {
+      BYTE reg = *(BYTE *)(addr + 2);
+      if ((reg != 0x05) && (reg != 0x0d) && (reg != 0x1d) && (reg != 0x15))
+        continue;
+      int word_4C285C_addr = *(int *)(addr + 3);
+      if (word_4C285C_addr < processStartAddress || word_4C285C_addr > processStopAddress)
+        continue;
+      int word_4C285C = *(int *)word_4C285C_addr;
+      if ((word_4C285C) != 0x7581)
+        continue;
       addr = findfuncstart(addr, 0x200);
-      if (addr == 0)continue;
+      if (addr == 0)
+        continue;
       HookParam hp;
       hp.address = addr;
-      hp.offset=get_stack(1);
+      hp.offset = get_stack(1);
       hp.type = USING_STRING;
-      
+
       return NewHook(hp, "aiwin6");
     }
-     
-    return  false;
+
+    return false;
   }
 }
-namespace { // unnamed
-namespace ScenarioHook {
-namespace Private {
-
-  struct TextArgument
+namespace
+{ // unnamed
+  namespace ScenarioHook
   {
-    DWORD _unknown1[5];
+    namespace Private
+    {
 
-    DWORD scenarioFlag;  // +4*5, 0 if it is scenario
-    DWORD _unknown2[2];
-    LPCSTR scenarioText; // +4*5+4*3, could be bad address though
-    DWORD _unknown3;
+      struct TextArgument
+      {
+        DWORD _unknown1[5];
 
-    DWORD nameFlag;      // +4*10, 0 if it is name
-    DWORD _unknown4[2];
-    char nameText[1];    // +4*10+4*3, could be bad address though
-  };
+        DWORD scenarioFlag; // +4*5, 0 if it is scenario
+        DWORD _unknown2[2];
+        LPCSTR scenarioText; // +4*5+4*3, could be bad address though
+        DWORD _unknown3;
 
-  std::string data_;
-  TextArgument *scenarioArg_,
-               *nameArg_;
-  LPCSTR scenarioText_;
+        DWORD nameFlag; // +4*10, 0 if it is name
+        DWORD _unknown4[2];
+        char nameText[1]; // +4*10+4*3, could be bad address though
+      };
 
-  enum { MaxNameSize = 100 };
-  char nameText_[MaxNameSize + 1];
+      std::string data_;
+      TextArgument *scenarioArg_,
+          *nameArg_;
+      LPCSTR scenarioText_;
 
-  bool hookBefore(hook_stack*s,void* data, size_t* len,uintptr_t*role)
-  {
-    auto arg = (TextArgument *)s->stack[0]; // arg1 on the top of the stack
-    
-    // Scenario
-    if (arg->scenarioFlag == 0) {
-      * role = Engine::ScenarioRole ;
-      // Text from scenario could be bad when open backlog while the character is speaking
-      auto text = arg->scenarioText;
-      if (!Engine::isAddressReadable(text))
+      enum
+      {
+        MaxNameSize = 100
+      };
+      char nameText_[MaxNameSize + 1];
+
+      bool hookBefore(hook_stack *s, void *data, size_t *len, uintptr_t *role)
+      {
+        auto arg = (TextArgument *)s->stack[0]; // arg1 on the top of the stack
+
+        // Scenario
+        if (arg->scenarioFlag == 0)
+        {
+          *role = Engine::ScenarioRole;
+          // Text from scenario could be bad when open backlog while the character is speaking
+          auto text = arg->scenarioText;
+          if (!Engine::isAddressReadable(text))
+            return 0;
+          return write_string_overwrite(data, len, text);
+          // data_ = q->dispatchTextASTD(text, role, sig);
+          // scenarioArg_ = arg;
+          // scenarioText_ = arg->scenarioText;
+          // arg->scenarioText = (LPCSTR)data_.c_str();
+        }
+        else if (arg->nameFlag == 0)
+        {
+          *role = Engine::NameRole;
+          auto text = arg->nameText;
+          return write_string_overwrite(data, len, text);
+          //  ::memcpy(text, newData.constData(), qMin(oldData.size(), newData.size()));
+          // int left = oldData.size() - newData.size();
+          // if (left > 0)
+          //  ::memset(text + oldData.size() - left, 0, left);
+        }
         return 0;
-      return write_string_overwrite(data,len,text);
-      // data_ = q->dispatchTextASTD(text, role, sig);
-      // scenarioArg_ = arg;
-      // scenarioText_ = arg->scenarioText;
-      // arg->scenarioText = (LPCSTR)data_.c_str();
-    } else if (arg->nameFlag == 0) {
-      * role = Engine::NameRole;
-      auto text = arg->nameText; 
-      return write_string_overwrite(data,len,text);
-      //  ::memcpy(text, newData.constData(), qMin(oldData.size(), newData.size()));
-      //int left = oldData.size() - newData.size();
-      //if (left > 0)
-      //  ::memset(text + oldData.size() - left, 0, left);
-    }
-    return 0;
-  }
-  void hookafter1(hook_stack*s,void* data1, size_t len){
-    auto newData=std::string((char*)data1,len);
-    auto arg = (TextArgument *)s->stack[0]; // arg1 on the top of the stack
-    
-    // Scenario
-    if (arg->scenarioFlag == 0) {
-      
-      auto text = arg->scenarioText;
-      if (!Engine::isAddressReadable(text))
-        return  ; 
-      data_ = newData;
-      scenarioArg_ = arg;
-      scenarioText_ = arg->scenarioText;
-      arg->scenarioText = (LPCSTR)data_.c_str();
-    } else if (arg->nameFlag == 0) {
-      
-      auto text = arg->nameText; 
-       std::string oldData=text;
-       ::memcpy(text, newData.c_str(), min(oldData.size(), newData.size()));
-      int left = oldData.size() - newData.size();
-      if (left > 0)
-       ::memset(text + oldData.size() - left, 0, left);
-    }
-  }
-  bool hookAfter(hook_stack*s,void* data, size_t* len,uintptr_t*role)
-  {
-    if (scenarioArg_) {
-      scenarioArg_->scenarioText = scenarioText_;
-      scenarioArg_ = nullptr;
-    }
-    if (nameArg_) {
-      ::strcpy(nameArg_->nameText, nameText_);
-      nameArg_ = nullptr;
-    }
-    return 0;
-  }
+      }
+      void hookafter1(hook_stack *s, void *data1, size_t len)
+      {
+        auto newData = std::string((char *)data1, len);
+        auto arg = (TextArgument *)s->stack[0]; // arg1 on the top of the stack
 
-} // namespace Private
+        // Scenario
+        if (arg->scenarioFlag == 0)
+        {
 
-/**
- *  jichi 5/31/2014: elf's
- *  Type1: SEXティーチャー剛史 trial, reladdr = 0x2f0f0, 2 parameters
- *  Type2: 愛姉妹4, reladdr = 0x2f9b0, 3 parameters
- *
- *  The hooked function is the caller of the caller of TextOutA.
- */
-bool attach(ULONG startAddress, ULONG stopAddress)
-{
-  const uint8_t bytes[] = {
-      //0x55,                             // 0093f9b0  /$ 55             push ebp  ; jichi: hook here
-      //0x8b,0xec,                        // 0093f9b1  |. 8bec           mov ebp,esp
-      //0x83,0xec, 0x08,                  // 0093f9b3  |. 83ec 08        sub esp,0x8
-      //0x83,0x7d, 0x10, 0x00,            // 0093f9b6  |. 837d 10 00     cmp dword ptr ss:[ebp+0x10],0x0
-      //0x53,                             // 0093f9ba  |. 53             push ebx
-      //0x8b,0x5d, 0x0c,                  // 0093f9bb  |. 8b5d 0c        mov ebx,dword ptr ss:[ebp+0xc]
-      //0x56,                             // 0093f9be  |. 56             push esi
-      //0x57,                             // 0093f9bf  |. 57             push edi
-      0x75, 0x0f,                       // 0093f9c0  |. 75 0f          jnz short silkys.0093f9d1
-      0x8b,0x45, 0x08,                  // 0093f9c2  |. 8b45 08        mov eax,dword ptr ss:[ebp+0x8]
-      0x8b,0x48, 0x04,                  // 0093f9c5  |. 8b48 04        mov ecx,dword ptr ds:[eax+0x4]
-      0x8b,0x91, 0x90,0x00,0x00,0x00    // 0093f9c8  |. 8b91 90000000  mov edx,dword ptr ds:[ecx+0x90]
-  };
-  ULONG addr = MemDbg::findBytes(bytes, sizeof(bytes), startAddress, stopAddress);
-  if (!addr)
-    return false;
-  addr = MemDbg::findEnclosingAlignedFunction(addr);
-  if (!addr)
-    return false;
-  int count = 0;
-  auto fun = [&count](ULONG addr) -> bool {
-    bool succ=false;
-    HookParam hp;
-    hp.address=addr;
-    hp.hook_before=Private::hookBefore;
-    hp.hook_after=Private::hookafter1;
-    hp.type=USING_STRING|EMBED_ABLE|EMBED_DYNA_SJIS; 
-    hp.hook_font=F_TextOutA;
-    succ|=NewHook(hp,"EmbedElf");
-    hp.address=addr+5;
-    hp.hook_before=Private::hookAfter;
-    succ|=NewHook(hp,"EmbedElf");
-    count+=1;
-    return succ; // replace all functions 
-  };
-  MemDbg::iterNearCallAddress(fun, addr, startAddress, stopAddress); 
-  return count;
+          auto text = arg->scenarioText;
+          if (!Engine::isAddressReadable(text))
+            return;
+          data_ = newData;
+          scenarioArg_ = arg;
+          scenarioText_ = arg->scenarioText;
+          arg->scenarioText = (LPCSTR)data_.c_str();
+        }
+        else if (arg->nameFlag == 0)
+        {
 
-  //lastCaller = MemDbg::findEnclosingAlignedFunction(lastCaller);
-  //Private::attached_ = false;
-  //return winhook::hook_before(lastCaller, [=](winhook::hook_stack *s) -> bool {
-  //  if (Private::attached_)
-  //    return true;
-  //  Private::attached_ = true;
-  //  if (ULONG addr = MemDbg::findEnclosingAlignedFunction(s->stack[0])) {
-  //    DOUT("dynamic pattern found");
-  //    Private::oldHookFun = (Private::hook_fun_t)winhook::replace_fun(addr, (ULONG)Private::newHookFun);
-  //  }
-  //  return true;
-  //});
-}
+          auto text = arg->nameText;
+          std::string oldData = text;
+          ::memcpy(text, newData.c_str(), min(oldData.size(), newData.size()));
+          int left = oldData.size() - newData.size();
+          if (left > 0)
+            ::memset(text + oldData.size() - left, 0, left);
+        }
+      }
+      bool hookAfter(hook_stack *s, void *data, size_t *len, uintptr_t *role)
+      {
+        if (scenarioArg_)
+        {
+          scenarioArg_->scenarioText = scenarioText_;
+          scenarioArg_ = nullptr;
+        }
+        if (nameArg_)
+        {
+          ::strcpy(nameArg_->nameText, nameText_);
+          nameArg_ = nullptr;
+        }
+        return 0;
+      }
 
-} // namespace ScenarioHook
+    } // namespace Private
+
+    /**
+     *  jichi 5/31/2014: elf's
+     *  Type1: SEXティーチャー剛史 trial, reladdr = 0x2f0f0, 2 parameters
+     *  Type2: 愛姉妹4, reladdr = 0x2f9b0, 3 parameters
+     *
+     *  The hooked function is the caller of the caller of TextOutA.
+     */
+    bool attach(ULONG startAddress, ULONG stopAddress)
+    {
+      const uint8_t bytes[] = {
+          // 0x55,                             // 0093f9b0  /$ 55             push ebp  ; jichi: hook here
+          // 0x8b,0xec,                        // 0093f9b1  |. 8bec           mov ebp,esp
+          // 0x83,0xec, 0x08,                  // 0093f9b3  |. 83ec 08        sub esp,0x8
+          // 0x83,0x7d, 0x10, 0x00,            // 0093f9b6  |. 837d 10 00     cmp dword ptr ss:[ebp+0x10],0x0
+          // 0x53,                             // 0093f9ba  |. 53             push ebx
+          // 0x8b,0x5d, 0x0c,                  // 0093f9bb  |. 8b5d 0c        mov ebx,dword ptr ss:[ebp+0xc]
+          // 0x56,                             // 0093f9be  |. 56             push esi
+          // 0x57,                             // 0093f9bf  |. 57             push edi
+          0x75, 0x0f,                        // 0093f9c0  |. 75 0f          jnz short silkys.0093f9d1
+          0x8b, 0x45, 0x08,                  // 0093f9c2  |. 8b45 08        mov eax,dword ptr ss:[ebp+0x8]
+          0x8b, 0x48, 0x04,                  // 0093f9c5  |. 8b48 04        mov ecx,dword ptr ds:[eax+0x4]
+          0x8b, 0x91, 0x90, 0x00, 0x00, 0x00 // 0093f9c8  |. 8b91 90000000  mov edx,dword ptr ds:[ecx+0x90]
+      };
+      ULONG addr = MemDbg::findBytes(bytes, sizeof(bytes), startAddress, stopAddress);
+      if (!addr)
+        return false;
+      addr = MemDbg::findEnclosingAlignedFunction(addr);
+      if (!addr)
+        return false;
+      int count = 0;
+      auto fun = [&count](ULONG addr) -> bool
+      {
+        bool succ = false;
+        HookParam hp;
+        hp.address = addr;
+        hp.hook_before = Private::hookBefore;
+        hp.hook_after = Private::hookafter1;
+        hp.type = USING_STRING | EMBED_ABLE | EMBED_DYNA_SJIS;
+        hp.hook_font = F_TextOutA;
+        succ |= NewHook(hp, "EmbedElf");
+        hp.address = addr + 5;
+        hp.hook_before = Private::hookAfter;
+        succ |= NewHook(hp, "EmbedElf");
+        count += 1;
+        return succ; // replace all functions
+      };
+      MemDbg::iterNearCallAddress(fun, addr, startAddress, stopAddress);
+      return count;
+
+      // lastCaller = MemDbg::findEnclosingAlignedFunction(lastCaller);
+      // Private::attached_ = false;
+      // return winhook::hook_before(lastCaller, [=](winhook::hook_stack *s) -> bool {
+      //   if (Private::attached_)
+      //     return true;
+      //   Private::attached_ = true;
+      //   if (ULONG addr = MemDbg::findEnclosingAlignedFunction(s->stack[0])) {
+      //     DOUT("dynamic pattern found");
+      //     Private::oldHookFun = (Private::hook_fun_t)winhook::replace_fun(addr, (ULONG)Private::newHookFun);
+      //   }
+      //   return true;
+      // });
+    }
+
+  } // namespace ScenarioHook
 } // unnamed namespace
-namespace{ 
-//flutter of birds～鳥達の羽ばたき～
-//https://vndb.org/v2379
-//需要注意的是，不能把文本跳到最快，不然2~4行无法显示。
-//这个有一大堆候选
-  bool elf3(){
-    bool succ=false;
-    BYTE sig[]={
-      0x83,XX,0x14,0x10,
-      0x72,XX
-    };
-    for(auto addr:Util::SearchMemory(sig,sizeof(sig),PAGE_EXECUTE,processStartAddress,processStopAddress)){
-      auto check1=*(BYTE*)(addr+5);
-      if(check1!=0x02 && check1!=0x04)continue;
-      auto check=*(BYTE*)(addr+1);
+namespace
+{
+  // flutter of birds～鳥達の羽ばたき～
+  // https://vndb.org/v2379
+  // 需要注意的是，不能把文本跳到最快，不然2~4行无法显示。
+  // 这个有一大堆候选
+  bool elf3()
+  {
+    bool succ = false;
+    BYTE sig[] = {
+        0x83, XX, 0x14, 0x10,
+        0x72, XX};
+    for (auto addr : Util::SearchMemory(sig, sizeof(sig), PAGE_EXECUTE, processStartAddress, processStopAddress))
+    {
+      auto check1 = *(BYTE *)(addr + 5);
+      if (check1 != 0x02 && check1 != 0x04)
+        continue;
+      auto check = *(BYTE *)(addr + 1);
       HookParam hp;
-      hp.address=addr;
-      hp.user_value=check;
-      hp.type=USING_STRING|NO_CONTEXT;
-      hp.text_fun=[](hook_stack* stack,  HookParam *hp, uintptr_t *data, uintptr_t *split, size_t *len){
+      hp.address = addr;
+      hp.user_value = check;
+      hp.type = USING_STRING | NO_CONTEXT;
+      hp.text_fun = [](hook_stack *stack, HookParam *hp, uintptr_t *data, uintptr_t *split, size_t *len)
+      {
         DWORD ptr;
         switch (hp->user_value)
         {
         case 0x7a:
-          ptr=stack->edx;
+          ptr = stack->edx;
           break;
         case 0x7b:
-          ptr=stack->ebx;
+          ptr = stack->ebx;
           break;
         case 0x79:
-          ptr=stack->ecx;
+          ptr = stack->ecx;
           break;
         case 0x78:
-          ptr=stack->eax;
+          ptr = stack->eax;
           break;
         case 0x7e:
-          ptr=stack->esi;
+          ptr = stack->esi;
           break;
         case 0x7f:
-          ptr=stack->edi;
+          ptr = stack->edi;
           break;
         case 0x7d:
-          ptr=stack->ebp;
+          ptr = stack->ebp;
           break;
-          //esp:
-          //83 7c 24 14 10 
+          // esp:
+          // 83 7c 24 14 10
         default:
-          hp->type=HOOK_EMPTY;
+          hp->type = HOOK_EMPTY;
           break;
         }
-        auto text=  (TextUnionA*)ptr;   
-        *data=(DWORD)text->getText();
-        *len=text->size; 
-      };  
-      hp.filter_fun=all_ascii_Filter;
-    succ|=NewHook(hp,"elf3");
-  }
-     return succ;
+        auto text = (TextUnionA *)ptr;
+        *data = (DWORD)text->getText();
+        *len = text->size;
+      };
+      hp.filter_fun = all_ascii_Filter;
+      succ |= NewHook(hp, "elf3");
+    }
+    return succ;
   }
 }
-bool Elf::attach_function() {
-    
-    auto _1= InsertElfHook()||__()||elf3();
-    return ScenarioHook::attach(processStartAddress,processStopAddress)||_1;
-}  
+bool Elf::attach_function()
+{
 
-bool isshiftjisX(WORD w){ 
-  return   (((BYTE)(w))<=0xfc)&& (((BYTE)(w))>=0x80);
+  auto _1 = InsertElfHook() || __() || elf3();
+  return ScenarioHook::attach(processStartAddress, processStopAddress) || _1;
 }
-void SpecialHookElf2(hook_stack* stack,  HookParam *, uintptr_t *data, uintptr_t *split, size_t *len)
+
+bool isshiftjisX(WORD w)
+{
+  return (((BYTE)(w)) <= 0xfc) && (((BYTE)(w)) >= 0x80);
+}
+void SpecialHookElf2(hook_stack *stack, HookParam *, uintptr_t *data, uintptr_t *split, size_t *len)
 {
   static DWORD lasttext;
   DWORD eax = stack->eax;
   DWORD edx = stack->edx;
-    
-  *data = *(WORD*)(eax+edx);
-  if(isshiftjisX(*data)==false){
-    *len=0;
+
+  *data = *(WORD *)(eax + edx);
+  if (isshiftjisX(*data) == false)
+  {
+    *len = 0;
     return;
   }
   *len = 2;
-  *split=stack->stack[1];
+  *split = stack->stack[1];
 }
-bool Elf2attach_function() {
-  //这个有好多乱码
+bool Elf2attach_function()
+{
+  // 这个有好多乱码
   //[エルフ]あしたの雪之丞 DVD Special Edition
   const uint8_t bytes[] = {
-       0x53,
-       0x8a,0x1c,0x02,
-       0x8b,0x54,0x24,0x08,
-       0x03,0xc2
-  };
+      0x53,
+      0x8a, 0x1c, 0x02,
+      0x8b, 0x54, 0x24, 0x08,
+      0x03, 0xc2};
   ULONG addr = MemDbg::findBytes(bytes, sizeof(bytes), processStartAddress, processStopAddress);
   if (!addr)
-  return false;
+    return false;
   HookParam hp;
-  hp.address=addr+1; 
+  hp.address = addr + 1;
   hp.text_fun = SpecialHookElf2;
-  hp.type=NO_CONTEXT;
-  
-  return NewHook(hp,"Elf");
-}  
-bool elf2(){
+  hp.type = NO_CONTEXT;
+
+  return NewHook(hp, "Elf");
+}
+bool elf2()
+{
   //[エルフ]あしたの雪之丞 DVD Special Edition
-  //勝　あしたの雪之丞２
+  // 勝　あしたの雪之丞２
   const uint8_t bytes[] = {
-    0x66,0x8b,0x8e,XX4,
-    0x66,0x8b,0x96,XX4,
-    0x66,0x01,0x8e,XX4,
-    0x66,0x89,0x96,XX4,
-    0x8b,0x06,
-    0x6a,0x00,
-    0x8b,0xce,
-    0xff,0x50,0x08,
-    0x84,0xc0
-  };
+      0x66, 0x8b, 0x8e, XX4,
+      0x66, 0x8b, 0x96, XX4,
+      0x66, 0x01, 0x8e, XX4,
+      0x66, 0x89, 0x96, XX4,
+      0x8b, 0x06,
+      0x6a, 0x00,
+      0x8b, 0xce,
+      0xff, 0x50, 0x08,
+      0x84, 0xc0};
   ULONG addr = MemDbg::findBytes(bytes, sizeof(bytes), processStartAddress, processStopAddress);
   if (!addr)
-  return false;
+    return false;
   HookParam hp;
-  hp.address=addr+sizeof(bytes);  
-  hp.type=NO_CONTEXT|USING_STRING;
-  hp.offset=get_reg(regs::ebx);
-  
-  return NewHook(hp,"Elf");
+  hp.address = addr + sizeof(bytes);
+  hp.type = NO_CONTEXT | USING_STRING;
+  hp.offset = get_reg(regs::ebx);
+
+  return NewHook(hp, "Elf");
 }
-namespace{
-  //リフレインブルー【Windows10対応】
-  bool _h1(){
-    //HAN-18*-4@42E12:AI5WIN.exe
-    BYTE sig[]={
-      0x33,0xff,
-      0x8b,0x06,
-      0x8b,0xce,
-      0x6a,0x01,
-      0x8b,0x40,0x08,
-      0xff,0xd0,
-      0x0f,0x0b6,0xc0,
-      0x8b,0xce,
-      0x66,0xc1,0xe0,0x08,
-      0x0f,0xb7,0xc0,
-      0x89,0x45,0xfc,
-      0x8b,0x06,
-      0x6a,0x01,
-      0x8b,0x40,0x08,
-      0xff,0xd0,
-      0x0f,0xb6,0xc0,
-      0x8b,0xce,
-      0x66,0x09,0x45,0xfc,
-      0xff,0x75,0xfc,
-      0xe8
-    };
+namespace
+{
+  // リフレインブルー【Windows10対応】
+  bool _h1()
+  {
+    // HAN-18*-4@42E12:AI5WIN.exe
+    BYTE sig[] = {
+        0x33, 0xff,
+        0x8b, 0x06,
+        0x8b, 0xce,
+        0x6a, 0x01,
+        0x8b, 0x40, 0x08,
+        0xff, 0xd0,
+        0x0f, 0x0b6, 0xc0,
+        0x8b, 0xce,
+        0x66, 0xc1, 0xe0, 0x08,
+        0x0f, 0xb7, 0xc0,
+        0x89, 0x45, 0xfc,
+        0x8b, 0x06,
+        0x6a, 0x01,
+        0x8b, 0x40, 0x08,
+        0xff, 0xd0,
+        0x0f, 0xb6, 0xc0,
+        0x8b, 0xce,
+        0x66, 0x09, 0x45, 0xfc,
+        0xff, 0x75, 0xfc,
+        0xe8};
     ULONG addr = MemDbg::findBytes(sig, sizeof(sig), processStartAddress, processStopAddress);
-    if (!addr)return false;
+    if (!addr)
+      return false;
     HookParam hp;
-    hp.address=addr+sizeof(sig)-1;  
-    hp.type=NO_CONTEXT|USING_CHAR|DATA_INDIRECT|CODEC_ANSI_BE;
-    hp.offset=get_reg(regs::ebp);
-    hp.index=-4;
-    return NewHook(hp,"Elf");
+    hp.address = addr + sizeof(sig) - 1;
+    hp.type = NO_CONTEXT | USING_CHAR | DATA_INDIRECT | CODEC_ANSI_BE;
+    hp.offset = get_reg(regs::ebp);
+    hp.index = -4;
+    return NewHook(hp, "Elf");
   }
-  bool _h2(){
-    //HAN4@49570:AI5WIN.exe
+  bool _h2()
+  {
+    // HAN4@49570:AI5WIN.exe
+
+    // clang-format off
     BYTE sig[]={
       0x33,0xc5,
       0x89,0x45,0xfc,
@@ -516,42 +560,79 @@ namespace{
       0x03,0x81,XX4,
       0xeb,XX,
     };
+    // clang-format on
     ULONG addr = MemDbg::findBytes(sig, sizeof(sig), processStartAddress, processStopAddress);
-    if (!addr)return false;
-    addr=MemDbg::findEnclosingAlignedFunction(addr);
-    if (!addr)return false;
+    if (!addr)
+      return false;
+    addr = MemDbg::findEnclosingAlignedFunction(addr);
+    if (!addr)
+      return false;
     HookParam hp;
-    hp.address=addr;  
-    hp.type=NO_CONTEXT|USING_CHAR|CODEC_ANSI_BE;
-    hp.offset=get_stack(1);
-    return NewHook(hp,"Elf");
+    hp.address = addr;
+    hp.type = NO_CONTEXT | USING_CHAR | CODEC_ANSI_BE;
+    hp.offset = get_stack(1);
+    return NewHook(hp, "Elf");
   }
-  bool all(){
-    return _h1()|_h2();
+  bool all()
+  {
+    return _h1() | _h2();
   }
 }
-bool Elf2::attach_function(){
-  return elf2()||Elf2attach_function()||all();
+namespace
+{
+  bool el()
+  {
+    // https://vndb.org/v2293
+    // 【el】【Windows10対応】
+    BYTE sig[] = {
+        // 0x66,0x8b,0x4d,0x0c
+        // 0x66,0x8b,0xc1
+        0x66, 0xc1, 0xe8, 0x08,
+        XX, // 0x57
+        0x3c, 0x81,
+        0x72, 0x04,
+        0x3c, 0x9f,
+        0x76, 0x08,
+        0x3c, 0xe0,
+        0x72, 0x10,
+        0x3c, 0xef,
+        0x77, 0x0c};
+    // clang-format on
+    ULONG addr = MemDbg::findBytes(sig, sizeof(sig), processStartAddress, processStopAddress);
+    if (!addr)
+      return false;
+    HookParam hp;
+    hp.address = addr;
+    hp.type = NO_CONTEXT | USING_CHAR | CODEC_ANSI_BE;
+    hp.offset = get_reg(regs::eax);
+    return NewHook(hp, "Elf");
+  }
+}
+bool Elf2::attach_function()
+{
+  return elf2() || Elf2attach_function() || all() || el();
 }
 
-
-bool ElfFunClubFinal::attach_function(){
-  //mov reg,ds:TextOutA
-  bool succ=false;
-  for(auto addr: findiatcallormov_all((DWORD)TextOutA,processStartAddress,processStartAddress,processStopAddress,PAGE_EXECUTE,XX)){
-    BYTE s[]={XX,0xCC,0xCC,0xCC};
-    addr=reverseFindBytes(s,4,addr-0x100,addr);
-    if(addr==0)continue;
+bool ElfFunClubFinal::attach_function()
+{
+  // mov reg,ds:TextOutA
+  bool succ = false;
+  for (auto addr : findiatcallormov_all((DWORD)TextOutA, processStartAddress, processStartAddress, processStopAddress, PAGE_EXECUTE, XX))
+  {
+    BYTE s[] = {XX, 0xCC, 0xCC, 0xCC};
+    addr = reverseFindBytes(s, 4, addr - 0x100, addr);
+    if (addr == 0)
+      continue;
     HookParam hp;
-    hp.address=addr+4;
-    hp.type=CODEC_ANSI_BE|USING_CHAR;
-    hp.text_fun=[](hook_stack* stack, HookParam *hp, uintptr_t* data, uintptr_t* split, size_t* len){
-      *data=(WORD)stack->stack[3];
-      *len=2;
-      *split=stack->stack[2]>8;
+    hp.address = addr + 4;
+    hp.type = CODEC_ANSI_BE | USING_CHAR;
+    hp.text_fun = [](hook_stack *stack, HookParam *hp, uintptr_t *data, uintptr_t *split, size_t *len)
+    {
+      *data = (WORD)stack->stack[3];
+      *len = 2;
+      *split = stack->stack[2] > 8;
     };
-    succ|= NewHook(hp,"ElfFunClubFinal");
+    succ |= NewHook(hp, "ElfFunClubFinal");
   }
   return succ;
-  
 }
