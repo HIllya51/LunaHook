@@ -1,5 +1,5 @@
-#include"Silkys.h"
- #include"util/textunion.h"
+#include "Silkys.h"
+#include "util/textunion.h"
 
 /** jichi: 6/17/2015
  *  Sample games
@@ -212,9 +212,9 @@
  *  00A1A197   CC               INT3
  *  00A1A198   CC               INT3
  */
-static void SpecialHookSilkys(hook_stack* stack,  HookParam *, uintptr_t *data, uintptr_t *split, size_t*len)
+static void SpecialHookSilkys(hook_stack *stack, HookParam *, uintptr_t *data, uintptr_t *split, size_t *len)
 {
-  //DWORD arg1 = *(DWORD *)(esp_base + 0x4);
+  // DWORD arg1 = *(DWORD *)(esp_base + 0x4);
   DWORD arg1 = stack->stack[1],
         arg2 = stack->stack[2];
 
@@ -222,16 +222,21 @@ static void SpecialHookSilkys(hook_stack* stack,  HookParam *, uintptr_t *data, 
   if (size <= 0)
     return;
 
-  enum { ShortTextCapacity = 0x10 };
+  enum
+  {
+    ShortTextCapacity = 0x10
+  };
 
   DWORD text = 0;
-  //if (arg2 == 0) {
-  if (size >= ShortTextCapacity) {
+  // if (arg2 == 0) {
+  if (size >= ShortTextCapacity)
+  {
     text = *(DWORD *)(arg1 + 4);
     if (text && ::IsBadReadPtr((LPCVOID)text, size)) // this might not be needed though
       text = 0;
   }
-  if (!text) { // short text
+  if (!text)
+  { // short text
     text = arg1 + 4;
     size = min(size, ShortTextCapacity);
   }
@@ -240,55 +245,59 @@ static void SpecialHookSilkys(hook_stack* stack,  HookParam *, uintptr_t *data, 
 
   *split = arg2 == 0 ? 1 : 2; // arg2 == 0 ? scenario : name
 }
-  bool hookBefore(hook_stack*s,void* data1, size_t* len,uintptr_t*role)
-  {
-    auto arg = (TextUnionA *)(s->stack[0] + sizeof(DWORD)); // arg1
-    if (!arg || !arg->isValid())
-      return 0;
-
-    // FIXME: I am not able to distinguish choice out
-    * role =
-      s->stack[1] ? Engine::NameRole : // arg2 != 0 for name
-      //s->ebx > 0x0fffffff ? Engine::ChoiceRole : // edx is a pointer for choice
-      Engine::ScenarioRole;
- 
-    std::string oldData(arg->getText(), arg->size);
-    return write_string_overwrite(data1,len,oldData);
-  }
-  TextUnionA *arg_,
-             argValue_;
-  void hookafter1(hook_stack*s,void* data1, size_t len){
-    auto newData=std::string((char*)data1,len);
-    auto arg = (TextUnionA *)(s->stack[0] + sizeof(DWORD)); // arg1
-    arg_ = arg;
-    argValue_ = *arg;
-    static std::string data_;
-    data_ = newData;
-    arg->setText(data_); 
-  }
-
-  bool hookAfter(hook_stack*s,void* data1, size_t* len,uintptr_t*role)
-  {
-    if (arg_)  {
-      *arg_ = argValue_;
-      arg_ = nullptr;
-    }
+bool hookBefore(hook_stack *s, void *data1, size_t *len, uintptr_t *role)
+{
+  auto arg = (TextUnionA *)(s->stack[0] + sizeof(DWORD)); // arg1
+  if (!arg || !arg->isValid())
     return 0;
+
+  // FIXME: I am not able to distinguish choice out
+  *role =
+      s->stack[1] ? Engine::NameRole : // arg2 != 0 for name
+          // s->ebx > 0x0fffffff ? Engine::ChoiceRole : // edx is a pointer for choice
+          Engine::ScenarioRole;
+
+  std::string oldData(arg->getText(), arg->size);
+  return write_string_overwrite(data1, len, oldData);
+}
+TextUnionA *arg_,
+    argValue_;
+void hookafter1(hook_stack *s, void *data1, size_t len)
+{
+  auto newData = std::string((char *)data1, len);
+  auto arg = (TextUnionA *)(s->stack[0] + sizeof(DWORD)); // arg1
+  arg_ = arg;
+  argValue_ = *arg;
+  static std::string data_;
+  data_ = newData;
+  arg->setText(data_);
+}
+
+bool hookAfter(hook_stack *s, void *data1, size_t *len, uintptr_t *role)
+{
+  if (arg_)
+  {
+    *arg_ = argValue_;
+    arg_ = nullptr;
   }
+  return 0;
+}
 bool InsertSilkysHook()
 {
   const BYTE bytes[] = {
-    0x66,0x89,0x45, 0xf9,   // 00a1a062   66:8945 f9       mov word ptr ss:[ebp-0x7],ax
-    0x39,0x47, 0x14         // 00a1a066   3947 14          cmp dword ptr ds:[edi+0x14],eax
+      0x66, 0x89, 0x45, 0xf9, // 00a1a062   66:8945 f9       mov word ptr ss:[ebp-0x7],ax
+      0x39, 0x47, 0x14        // 00a1a066   3947 14          cmp dword ptr ds:[edi+0x14],eax
   };
   ULONG addr = MemDbg::findBytes(bytes, sizeof(bytes), processStartAddress, processStopAddress);
-  if (!addr) {
+  if (!addr)
+  {
     ConsoleOutput("Silkys: pattern not found");
     return false;
   }
 
   addr = MemDbg::findEnclosingAlignedFunction(addr);
-  if (!addr) {
+  if (!addr)
+  {
     ConsoleOutput("Silkys: function not found");
     return false;
   }
@@ -296,171 +305,191 @@ bool InsertSilkysHook()
   HookParam hp;
   hp.address = addr;
   hp.text_fun = SpecialHookSilkys;
-  hp.type = USING_STRING|NO_CONTEXT; // = 9
+  hp.type = USING_STRING | NO_CONTEXT; // = 9
 
   ConsoleOutput("INSERT Silkys");
-  auto succ=NewHook(hp, "SilkysPlus");
-  auto fun = [](ULONG addr) -> bool {
-    auto succ_=false;
+  auto succ = NewHook(hp, "SilkysPlus");
+  auto fun = [](ULONG addr) -> bool
+  {
+    auto succ_ = false;
     {
       HookParam hp;
-      hp.address = addr; 
-      hp.type = USING_STRING|NO_CONTEXT|EMBED_ABLE|EMBED_DYNA_SJIS;
-      hp.hook_before=hookBefore;
-      hp.hook_after=hookafter1;
-      hp.hook_font=F_GetGlyphOutlineA;
-      succ_|=NewHook(hp,"EmbedSilkys");
+      hp.address = addr;
+      hp.type = USING_STRING | NO_CONTEXT | EMBED_ABLE | EMBED_DYNA_SJIS;
+      hp.hook_before = hookBefore;
+      hp.hook_after = hookafter1;
+      hp.hook_font = F_GetGlyphOutlineA;
+      succ_ |= NewHook(hp, "EmbedSilkys");
     }
     {
       HookParam hp;
-      hp.address = addr+5; 
-      hp.type = HOOK_EMPTY|EMBED_ABLE;
-      hp.hook_before=hookAfter; 
-      succ_|=NewHook(hp,"EmbedSilkys");
-    } 
+      hp.address = addr + 5;
+      hp.type = HOOK_EMPTY | EMBED_ABLE;
+      hp.hook_before = hookAfter;
+      succ_ |= NewHook(hp, "EmbedSilkys");
+    }
     return succ_; // replace all functions
   };
-  succ|=MemDbg::iterNearCallAddress(fun, addr, processStartAddress, processStopAddress);
+  succ |= MemDbg::iterNearCallAddress(fun, addr, processStartAddress, processStopAddress);
   return succ;
 }
 bool InsertSilkysHook2()
 {
-  //[230825] [コンフィチュールソフト] ギャル×オタ ～織川きららはお世話したい～ 
+  //[230825] [コンフィチュールソフト] ギャル×オタ ～織川きららはお世話したい～
   auto addr = MemDbg::findCallerAddressAfterInt3((DWORD)GetCharacterPlacementW, processStartAddress, processStopAddress);
-  if(addr==0)return false;
-  BYTE sig[]={
-    0x8b,0x80,XX4,
-    0xff,0xd0,
-    0x8b,0xf0
-  };
-  addr=MemDbg::findBytes(sig,sizeof(sig),addr,addr+0x100);
-  if(addr==0)return false;
+  if (addr == 0)
+    return false;
+  BYTE sig[] = {
+      0x8b, 0x80, XX4,
+      0xff, 0xd0,
+      0x8b, 0xf0};
+  addr = MemDbg::findBytes(sig, sizeof(sig), addr, addr + 0x100);
+  if (addr == 0)
+    return false;
   HookParam hp;
-  hp.address = addr+8; 
-  hp.type = CODEC_UTF16|USING_STRING;
-  hp.offset=get_reg(regs::eax);
-  hp.filter_fun=[](void* data, size_t* len, HookParam* hp){
-    static int idx=0;
-    idx+=1;
-    return (bool)(idx%2);
+  hp.address = addr + 8;
+  hp.type = CODEC_UTF16 | USING_STRING;
+  hp.offset = get_reg(regs::eax);
+  hp.filter_fun = [](void *data, size_t *len, HookParam *hp)
+  {
+    static int idx = 0;
+    idx += 1;
+    return (bool)(idx % 2);
   };
   return NewHook(hp, "SilkysPlus2");
 }
-namespace{
-  bool _s(){
-    ///https://vndb.org/r68491
-    //徒花異譚 / Adabana Odd Tales
-    BYTE sig[]={
-    0xBA,0x00,0x01,0x00,0x00,
-    0xC7,0x45,0x08,0x14,0x20,0x00,0x00,
-    0x8D,0x49,0x00
-    };
-    auto addr=MemDbg::findBytes(sig,sizeof(sig),processStartAddress, processStopAddress);
-    if(addr==0)return false;
+namespace
+{
+  bool _s()
+  {
+    /// https://vndb.org/r68491
+    // 徒花異譚 / Adabana Odd Tales
+    BYTE sig[] = {
+        0xBA, 0x00, 0x01, 0x00, 0x00,
+        0xC7, 0x45, 0x08, 0x14, 0x20, 0x00, 0x00,
+        0x8D, 0x49, 0x00};
+    auto addr = MemDbg::findBytes(sig, sizeof(sig), processStartAddress, processStopAddress);
+    if (addr == 0)
+      return false;
     addr = findfuncstart(addr);
-    if (!addr) return 0;
+    if (!addr)
+      return 0;
     HookParam hp;
-    hp.address = addr; 
-    hp.offset=get_stack(1);
-    hp.newlineseperator=L"\\n";
-    hp.type = USING_STRING|CODEC_UTF16|EMBED_ABLE|EMBED_BEFORE_SIMPLE|EMBED_AFTER_NEW; 
-    return NewHook(hp,"EmbedSilkysX");
+    hp.address = addr;
+    hp.offset = get_stack(1);
+    hp.newlineseperator = L"\\n";
+    hp.type = USING_STRING | CODEC_UTF16 | EMBED_ABLE | EMBED_BEFORE_SIMPLE | EMBED_AFTER_NEW;
+    return NewHook(hp, "EmbedSilkysX");
   }
 }
-namespace{
+namespace
+{
   bool Silkys2Filter(LPVOID data, size_t *size, HookParam *)
-{
-  auto text = reinterpret_cast<LPWSTR>(data);
-  auto len = reinterpret_cast<size_t *>(size);
+  {
+    auto text = reinterpret_cast<LPWSTR>(data);
+    auto len = reinterpret_cast<size_t *>(size);
 
-  StringCharReplacer(text, len, L"\\i", 2, L'\'');
+    StringCharReplacer(text, len, L"\\i", 2, L'\'');
 
-  return true;
-}
+    return true;
+  }
 
-bool InsertSilkys2Hook() 
-{
-  //https://vndb.org/r89173
-  //同级生Remake
-  const BYTE bytes[] = {
-    // (unsigned __int16)v13 < 0x100u || (_WORD)v13 == 8212 
-    0xC7,0x45,XX,0x00,0x01,0x00,0x00,
-    0xC7,0x45,XX,0x14,0x20,0x00,0x00
-  }; 
-  const BYTE bytes2[] = {
-    //v6 = (_WORD *)(*v8 + *(_DWORD *)(v7 + 4 * v27));
-    //hook v6
-    0x8b,0x4d,0xf4,
-    0x8b,0x3c,0x8f,
-    0x03,0x38
-  }; 
-  ULONG addr = MemDbg::findBytes(bytes, sizeof(bytes), processStartAddress, processStopAddress);
-  if (!addr)  return false; 
-  addr = reverseFindBytes(bytes2, sizeof(bytes2), addr-0x100, addr);
-  if (!addr)  return false; 
-  HookParam hp;
-  hp.address = addr + sizeof(bytes2);
-  hp.offset=get_reg(regs::edi);
-  hp.filter_fun = Silkys2Filter;
-  hp.type = CODEC_UTF16 | USING_STRING | NO_CONTEXT; 
-  return NewHook(hp, "Silkys2");
-}
-}
-namespace{
-  bool saiminset(){
-    //[230929][1237052][シルキーズSAKURA] 催眠奪女Set パッケージ版
-    auto addr1=finddllfunctioncall((DWORD)GetGlyphOutlineA,processStartAddress, processStopAddress); 
-    if(addr1==0)return false;
-    auto func1=MemDbg::findEnclosingAlignedFunction(addr1);
-    if(func1==0)return false;
-    BYTE check[]={
-      0x80,0xf9,0x81,XX2,//cmp     cl, 81h
-      0x80,0xf9,0x9f,XX2,// cmp     cl, 9Fh  
-    };
-    if(MemDbg::findBytes(check,sizeof(check),func1,addr1)==0)return false;
-    auto xrefs=findxref_reverse_checkcallop(func1,processStartAddress,processStopAddress,0xe8);
-    if(xrefs.size()==0)return false;
-    auto addr2=xrefs[0];
-    auto addr=MemDbg::findEnclosingAlignedFunction(addr2);
-    if(addr==0)return false;
+  bool InsertSilkys2Hook()
+  {
+    // https://vndb.org/r89173
+    // 同级生Remake
+    const BYTE bytes[] = {
+        // (unsigned __int16)v13 < 0x100u || (_WORD)v13 == 8212
+        0xC7, 0x45, XX, 0x00, 0x01, 0x00, 0x00,
+        0xC7, 0x45, XX, 0x14, 0x20, 0x00, 0x00};
+    const BYTE bytes2[] = {
+        // v6 = (_WORD *)(*v8 + *(_DWORD *)(v7 + 4 * v27));
+        // hook v6
+        0x8b, 0x4d, 0xf4,
+        0x8b, 0x3c, 0x8f,
+        0x03, 0x38};
+    ULONG addr = MemDbg::findBytes(bytes, sizeof(bytes), processStartAddress, processStopAddress);
+    if (!addr)
+      return false;
+    addr = reverseFindBytes(bytes2, sizeof(bytes2), addr - 0x100, addr);
+    if (!addr)
+      return false;
     HookParam hp;
-    hp.address = addr  ;
-    hp.offset=get_stack(1); 
-    hp.index=0;
-    hp.split=get_stack(6);
-    hp.type = USING_SPLIT|DATA_INDIRECT; 
+    hp.address = addr + sizeof(bytes2);
+    hp.offset = get_reg(regs::edi);
+    hp.filter_fun = Silkys2Filter;
+    hp.type = CODEC_UTF16 | USING_STRING | NO_CONTEXT;
+    return NewHook(hp, "Silkys2");
+  }
+}
+namespace
+{
+  bool saiminset()
+  {
+    //[230929][1237052][シルキーズSAKURA] 催眠奪女Set パッケージ版
+    auto addr1 = finddllfunctioncall((DWORD)GetGlyphOutlineA, processStartAddress, processStopAddress);
+    if (addr1 == 0)
+      return false;
+    auto func1 = MemDbg::findEnclosingAlignedFunction(addr1);
+    if (func1 == 0)
+      return false;
+    BYTE check[] = {
+        0x80, 0xf9, 0x81, XX2, // cmp     cl, 81h
+        0x80, 0xf9, 0x9f, XX2, // cmp     cl, 9Fh
+    };
+    if (MemDbg::findBytes(check, sizeof(check), func1, addr1) == 0)
+      return false;
+    auto xrefs = findxref_reverse_checkcallop(func1, processStartAddress, processStopAddress, 0xe8);
+    if (xrefs.size() == 0)
+      return false;
+    auto addr2 = xrefs[0];
+    auto addr = MemDbg::findEnclosingAlignedFunction(addr2);
+    if (addr == 0)
+      return false;
+    HookParam hp;
+    hp.address = addr;
+    hp.offset = get_stack(1);
+    hp.index = 0;
+    hp.split = get_stack(6);
+    hp.type = USING_SPLIT | DATA_INDIRECT;
     return NewHook(hp, "Silkys3");
   }
 }
-namespace{
-  //言の葉舞い散る夏の風鈴
-  //https://vndb.org/v23466
-  bool silkys4(){
-    BYTE check[]={
-      0x80,0xFA,0x81,
-      0x72,XX,
-      0x80,0xFA,0x9F,
-      0x76,XX
-    };
-    auto addr=MemDbg::findCallerAddress((ULONG)GetGlyphOutlineA, 0xec8b55,processStartAddress, processStopAddress); 
-    if(addr==0)return false;
-    if(MemDbg::findBytes(check,sizeof(check),addr,addr+0x100)==0)return false;
+namespace
+{
+  // 言の葉舞い散る夏の風鈴
+  // https://vndb.org/v23466
+  bool silkys4()
+  {
+    BYTE check[] = {
+        0x80, 0xFA, 0x81,
+        0x72, XX,
+        0x80, 0xFA, 0x9F,
+        0x76, XX};
+    auto addr = MemDbg::findCallerAddress((ULONG)GetGlyphOutlineA, 0xec8b55, processStartAddress, processStopAddress);
+    if (addr == 0)
+      return false;
+    if (MemDbg::findBytes(check, sizeof(check), addr, addr + 0x100) == 0)
+      return false;
     HookParam hp;
-    hp.address=addr;
-    hp.type=USING_CHAR|DATA_INDIRECT|USING_SPLIT;
-    hp.split=get_stack(1);
-    hp.offset=get_stack(1);//thiscall arg1
-    hp.filter_fun=[](LPVOID data, size_t *size, HookParam *)
+    hp.address = addr;
+    hp.type = USING_CHAR | DATA_INDIRECT | USING_SPLIT;
+    hp.split = get_stack(1);
+    hp.offset = get_stack(1); // thiscall arg1
+    hp.filter_fun = [](LPVOID data, size_t *size, HookParam *)
     {
-      static int idx=0;
-      return (bool)((idx++)%2);
+      static int idx = 0;
+      return (bool)((idx++) % 2);
     };
     return NewHook(hp, "Silkys4");
   }
 }
-namespace{
+namespace
+{
   //[240531][1274293][シルキーズSAKURA] 淫魔淫姦 ～触手と合体して思い通りにやり返す～ DL版
-  bool silkys5(){
+  bool silkys5()
+  {
+    // clang-format off
     BYTE sig[]={
       0xff,0xd0,//call eax
       //<-- eax
@@ -472,170 +501,237 @@ namespace{
       0x8b,0x11,
       0x6a,0,
     };
+    // clang-format on
     auto addr = MemDbg::findBytes(sig, sizeof(sig), processStartAddress, processStopAddress);
-    if (!addr)  return false; 
+    if (!addr)
+      return false;
     HookParam hp;
-    hp.address=addr +2;
-    hp.type=USING_CHAR|DATA_INDIRECT|CODEC_UTF16;
-    hp.offset=get_reg(regs::eax);
-    hp.filter_fun=[](LPVOID data, size_t *size, HookParam *)
+    hp.address = addr + 2;
+    hp.type = USING_CHAR | DATA_INDIRECT | CODEC_UTF16;
+    hp.offset = get_reg(regs::eax);
+    hp.filter_fun = [](LPVOID data, size_t *size, HookParam *)
     {
-      static int idx=0;
-      return (bool)((idx++)%2);
+      static int idx = 0;
+      return (bool)((idx++) % 2);
     };
     return NewHook(hp, "silkys5");
   }
 }
-bool Silkys::attach_function() {
-    auto b1=InsertSilkys2Hook();
-    return InsertSilkysHook()||InsertSilkysHook2()||_s()||b1||saiminset()||silkys4()||silkys5();
-}  
+bool Silkys::attach_function()
+{
+  auto b1 = InsertSilkys2Hook();
+  return InsertSilkysHook() || InsertSilkysHook2() || _s() || b1 || saiminset() || silkys4() || silkys5();
+}
 
-
-bool SilkysOld::attach_function(){
-  //愛姉妹・蕾…汚してください
-  auto addr=MemDbg::findCallerAddressAfterInt3((DWORD)TextOutA,processStartAddress,processStopAddress);
-  if(addr==0)return false;
+bool SilkysOld::attach_function()
+{
+  // 愛姉妹・蕾…汚してください
+  auto addr = MemDbg::findCallerAddressAfterInt3((DWORD)TextOutA, processStartAddress, processStopAddress);
+  if (addr == 0)
+    return false;
   HookParam hp;
-  hp.address = addr; 
-  hp.offset=get_stack(3);
-  hp.type=DATA_INDIRECT;
+  hp.address = addr;
+  hp.offset = get_stack(3);
+  hp.type = DATA_INDIRECT;
   return NewHook(hp, "SilkysOld");
 }
 
+bool Siglusold::attach_function()
+{
+  // 女系家族
+  // https://vndb.org/v5650
+  //   int __cdecl sub_410C20(char *a1, _DWORD *a2)
+  // {
+  //   unsigned __int16 v2; // dx
+  //   int v3; // edi
+  //   int result; // eax
+  //   int v5; // eax
 
-bool Siglusold::attach_function(){
-  //女系家族
-  //https://vndb.org/v5650
-//   int __cdecl sub_410C20(char *a1, _DWORD *a2)
-// {
-//   unsigned __int16 v2; // dx
-//   int v3; // edi
-//   int result; // eax
-//   int v5; // eax
-
-//   HIBYTE(v2) = *a1;
-//   LOBYTE(v2) = a1[1];
-//   v3 = *a1;
-//   *a2 = 24 * (v2 & 0xF);
-//   if ( v2 < 0x8140u || v2 > 0x84FFu )
-//   {
-//     if ( v2 < 0x8740u || v2 > 0x879Fu )
-//     {
-//       if ( v2 < 0x8890u || v2 > 0x88FFu )
-//       {
-//         if ( v2 < 0x8940u || v2 > 0x9FFFu )
-//         {
-//           if ( v2 < 0xE040u || v2 > 0xEAA4u )
-//           {
-//             if ( v2 < 0xFA40u || v2 > 0xFAFCu )
-//             {
-//               if ( v2 < 0xFB40u || v2 > 0xFBFCu )
-//               {
-//                 if ( v2 < 0xFC40u || v2 > 0xFC4Bu )
-//                 {
-  BYTE bytes[]={
-    0x66,XX,0x40,0x87,
-    XX2,
-    0x66,XX,0x9f,0x87,
+  //   HIBYTE(v2) = *a1;
+  //   LOBYTE(v2) = a1[1];
+  //   v3 = *a1;
+  //   *a2 = 24 * (v2 & 0xF);
+  //   if ( v2 < 0x8140u || v2 > 0x84FFu )
+  //   {
+  //     if ( v2 < 0x8740u || v2 > 0x879Fu )
+  //     {
+  //       if ( v2 < 0x8890u || v2 > 0x88FFu )
+  //       {
+  //         if ( v2 < 0x8940u || v2 > 0x9FFFu )
+  //         {
+  //           if ( v2 < 0xE040u || v2 > 0xEAA4u )
+  //           {
+  //             if ( v2 < 0xFA40u || v2 > 0xFAFCu )
+  //             {
+  //               if ( v2 < 0xFB40u || v2 > 0xFBFCu )
+  //               {
+  //                 if ( v2 < 0xFC40u || v2 > 0xFC4Bu )
+  //                 {
+  BYTE bytes[] = {
+      0x66,
+      XX,
+      0x40,
+      0x87,
+      XX2,
+      0x66,
+      XX,
+      0x9f,
+      0x87,
   };
   auto addr = MemDbg::findBytes(bytes, sizeof(bytes), processStartAddress, processStopAddress);
-  if(addr==0)return false;
-  addr=MemDbg::findEnclosingAlignedFunction_strict(addr);
-  if(addr==0)return false;
+  if (addr == 0)
+    return false;
+  addr = MemDbg::findEnclosingAlignedFunction_strict(addr);
+  if (addr == 0)
+    return false;
   HookParam hp;
-  hp.address = addr; 
-  hp.type=USING_CHAR|DATA_INDIRECT;
-  hp.offset=get_stack(1);
-  auto succ= NewHook(hp, "Siglusold_slow");//文本速度是慢速时这个有用，调成快速以后有无法过滤的重复
-  auto addrs=findxref_reverse_checkcallop(addr,addr-0x1000,addr+0x1000,0xe8);
-  for(auto addr:addrs){
-    //寻找调用者，速度为快速时调用者有正确的文本
-    addr=MemDbg::findEnclosingAlignedFunction_strict(addr);
-    if(addr==0)continue;
+  hp.address = addr;
+  hp.type = USING_CHAR | DATA_INDIRECT;
+  hp.offset = get_stack(1);
+  auto succ = NewHook(hp, "Siglusold_slow"); // 文本速度是慢速时这个有用，调成快速以后有无法过滤的重复
+  auto addrs = findxref_reverse_checkcallop(addr, addr - 0x1000, addr + 0x1000, 0xe8);
+  for (auto addr : addrs)
+  {
+    // 寻找调用者，速度为快速时调用者有正确的文本
+    addr = MemDbg::findEnclosingAlignedFunction_strict(addr);
+    if (addr == 0)
+      continue;
     HookParam hpref;
-    hpref.address=addr;
-    hpref.text_fun=[](hook_stack* stack,  HookParam *hp, uintptr_t *data, uintptr_t *split, size_t*len){
-      auto a2=(DWORD*)stack->stack[2];
-     
-      auto len1=stack->stack[3];//慢速时是1
-      auto len2=a2[7]-a2[6];
-      if(len1==0||len2==0)return;
-      
-      if(len1==1){//慢速
-        hp->type=USING_CHAR;
-        *data=a2[5]+a2[6];
-        *data=*(WORD*)*data;
-        auto check=(BYTE)*data;//换行符
-        *len=1+IsDBCSLeadByteEx(932,check);
+    hpref.address = addr;
+    hpref.text_fun = [](hook_stack *stack, HookParam *hp, uintptr_t *data, uintptr_t *split, size_t *len)
+    {
+      auto a2 = (DWORD *)stack->stack[2];
+
+      auto len1 = stack->stack[3]; // 慢速时是1
+      auto len2 = a2[7] - a2[6];
+      if (len1 == 0 || len2 == 0)
+        return;
+
+      if (len1 == 1)
+      { // 慢速
+        hp->type = USING_CHAR;
+        *data = a2[5] + a2[6];
+        *data = *(WORD *)*data;
+        auto check = (BYTE)*data; // 换行符
+        *len = 1 + IsDBCSLeadByteEx(932, check);
       }
-      else{//快速&&慢速下立即显示
-        *data=a2[5];
-        *len=len1;
+      else
+      { // 快速&&慢速下立即显示
+        *data = a2[5];
+        *len = len1;
       }
     };
-    hpref.type=USING_STRING;
-    succ|= NewHook(hpref, "Siglusold_fast");
+    hpref.type = USING_STRING;
+    succ |= NewHook(hpref, "Siglusold_fast");
   }
   return succ;
 }
 
-bool Silkyssakura::attach_function(){
-  auto addr=MemDbg::findCallerAddressAfterInt3((DWORD)GetGlyphOutlineW,processStartAddress,processStopAddress);
-  if(addr==0)return false;
+bool Silkyssakura::attach_function()
+{
+  auto addr = MemDbg::findCallerAddressAfterInt3((DWORD)GetGlyphOutlineW, processStartAddress, processStopAddress);
+  if (addr == 0)
+    return false;
   HookParam hp;
-  hp.address=addr;
-  hp.offset=get_stack(3);
-  hp.split=get_stack(5);
-  hp.type=DATA_INDIRECT|USING_CHAR|USING_SPLIT|CODEC_UTF16;
+  hp.address = addr;
+  hp.offset = get_stack(3);
+  hp.split = get_stack(5);
+  hp.type = DATA_INDIRECT | USING_CHAR | USING_SPLIT | CODEC_UTF16;
 
-  auto xrefs=findxref_reverse_checkcallop(addr,processStartAddress,processStopAddress,0xe8);
-  if(xrefs.size()==1){
-    addr=MemDbg::findEnclosingAlignedFunction(xrefs[0]);
-    if(addr){
-      xrefs=findxref_reverse_checkcallop(addr,processStartAddress,processStopAddress,0xe8);
-      if(xrefs.size()==1){
-        addr=MemDbg::findEnclosingAlignedFunction(xrefs[0]);
-        if(addr){
+  auto xrefs = findxref_reverse_checkcallop(addr, processStartAddress, processStopAddress, 0xe8);
+  if (xrefs.size() == 1)
+  {
+    addr = MemDbg::findEnclosingAlignedFunction(xrefs[0]);
+    if (addr)
+    {
+      xrefs = findxref_reverse_checkcallop(addr, processStartAddress, processStopAddress, 0xe8);
+      if (xrefs.size() == 1)
+      {
+        addr = MemDbg::findEnclosingAlignedFunction(xrefs[0]);
+        if (addr)
+        {
           HookParam hp_embed;
-          hp_embed.address=addr;
-          hp_embed.offset=get_stack(2);
-          hp_embed.type=USING_STRING|EMBED_ABLE|EMBED_AFTER_NEW|EMBED_BEFORE_SIMPLE|CODEC_UTF16;
-          hp_embed.hook_font=F_GetGlyphOutlineW;
-          return NewHook(hp_embed,"embedSilkyssakura");//这个是分两层分别绘制文字和阴影，需要两个都内嵌。
+          hp_embed.address = addr;
+          hp_embed.offset = get_stack(2);
+          hp_embed.type = USING_STRING | EMBED_ABLE | EMBED_AFTER_NEW | EMBED_BEFORE_SIMPLE | CODEC_UTF16;
+          hp_embed.hook_font = F_GetGlyphOutlineW;
+          return NewHook(hp_embed, "embedSilkyssakura"); // 这个是分两层分别绘制文字和阴影，需要两个都内嵌。
         }
       }
     }
   }
 
-  return NewHook(hp,"Silkyssakura");
+  return NewHook(hp, "Silkyssakura");
 }
 
-
-bool Silkysveryveryold::attach_function(){
-  //flutter of birds II 天使たちの翼
-  //https://vndb.org/v2380
+namespace
+{
+  // flutter of birds II 天使たちの翼  DMM版
+  // EDSNHS932#-8@42650:Angel.exe √
+  // HS932#-8@44D90:Angel.exe
+  bool fob2()
+  {
+    // clang-format off
   const BYTE bytes[] = {
-    0x8b,XX,XX,
-    0x03,XX,XX,
-    0x33,XX,
-    0x8a,0x02,
-    0x83,XX,0x5c,
-    0x0f,0x85,XX4,
-    0x8b,XX,XX,
-    0x03,XX,XX,
-    0x33,XX,
-    0x8a,XX,0x01,
-    0x83,XX,0x6e
-  }; 
+    0x53,
+    0x56,
+    0x8b,0xf1,
+    0x8b,0xde,
+    0x8d,0x4b,0x01,
+    0x8d,0xa4,0x24,0x00,0x00,0x00,0x00,
+    0x8a,0x03,
+    0x43,
+    0x84,0xc0,
+    0x75,XX,
+    0x2b,0xd9,
+    0xb8,0xa8,0x00,0x00,0x00,
+    0x3b,0xd8,
+    0x68,0xac,0x00,0x00,0x00,
+  };
+    // clang-format on
+    ULONG addr = MemDbg::findBytes(bytes, sizeof(bytes), processStartAddress, processStopAddress);
+    if (!addr)
+      return false;
+    HookParam hp;
+    hp.address = addr;
+    hp.offset = get_reg(regs::ecx);
+    hp.newlineseperator = L"\\n";
+    hp.type = USING_STRING | EMBED_ABLE | EMBED_BEFORE_SIMPLE | EMBED_AFTER_NEW | EMBED_DYNA_SJIS;
+    return NewHook(hp, "SilkysX");
+  }
+}
+
+bool Silkysveryveryold_attach_function()
+{
+  // flutter of birds II 天使たちの翼
+  // https://vndb.org/v2380
+  const BYTE bytes[] = {
+      0x8b, XX, XX,
+      0x03, XX, XX,
+      0x33, XX,
+      0x8a, 0x02,
+      0x83, XX, 0x5c,
+      0x0f, 0x85, XX4,
+      0x8b, XX, XX,
+      0x03, XX, XX,
+      0x33, XX,
+      0x8a, XX, 0x01,
+      0x83, XX, 0x6e};
   ULONG addr = MemDbg::findBytes(bytes, sizeof(bytes), processStartAddress, processStopAddress);
-  if (!addr)  return false;
-  addr=MemDbg::findEnclosingAlignedFunction(addr);
-  if (!addr)  return false;
+  if (!addr)
+    return false;
+  addr = MemDbg::findEnclosingAlignedFunction(addr);
+  if (!addr)
+    return false;
   HookParam hp;
-  hp.address = addr ;
-  hp.offset=get_stack(1);
-  hp.newlineseperator=L"\\n";
-  hp.type = USING_STRING; 
+  hp.address = addr;
+  hp.offset = get_stack(1);
+  hp.newlineseperator = L"\\n";
+  hp.type = USING_STRING;
   return NewHook(hp, "SilkysX");
+}
+
+bool Silkysveryveryold::attach_function()
+{
+  return Silkysveryveryold_attach_function() || fob2();
 }
