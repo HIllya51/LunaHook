@@ -5,7 +5,7 @@
 
 ### [Discord](https://discord.gg/ucAcF8hG) 
 
-### 简体中文 | [English](README_en.md) | [Русский](README_ru.md) 
+### 简体中文 | [English](README_en.md) | [Русский](README_ru.md) | [繁體中文](README_cht.md) 
 
 [LunaTranslator](https://lunatranslator.xyz/Github/LunaTranslator)核心文本提取器模块
 
