@@ -11,17 +11,17 @@
 
 ## 下載
 
-在 GitHub [Release](https://lunatranslator.xyz/Github/LunaHook/releases) 中下載
+在 GitHub [Release](https://lunatranslator.xyz/Github/LunaHook/releases) 中下載。
 
-根據所使用的語言下載相應的 zip
+根據所使用的語言下載對應的 zip。
 
-若透過 Windows XP 玩古老的遊戲，下載帶有「_winxp」後綴的版本
+若欲透過 Windows XP 玩古老的遊戲，請下載帶有「_winxp」後綴的版本。
 
 ## 外掛程式
 
-在 [Release](https://lunatranslator.xyz/Github/LunaHook/releases) 中下載 plugin32 或 plugin64
+在 [Release](https://lunatranslator.xyz/Github/LunaHook/releases) 中下載 plugin32 或 plugin64。
 
-相容 Textractor 外掛程式
+相容 Textractor 外掛程式。
 
 由於 LunaHost32 和 LunaHost64 都可以注入到 32 位元和 64 位元遊戲，因此實際上你僅需使用 LunaHost32 和 LunaHost64 中的一個，且僅需下載 plugin32 和 plugin64 中的一個。
 
