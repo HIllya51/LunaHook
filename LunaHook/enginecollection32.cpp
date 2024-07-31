@@ -345,7 +345,9 @@ std::vector<ENGINE *> check_engines()
         new A98SYS,
         new godot,
         new Erogos,
-        new Silkysveryveryold};
+        new Silkysveryveryold,
+        new gazelle,
+        };
 }
 
 std::vector<ENGINE *> ignore_engines()
