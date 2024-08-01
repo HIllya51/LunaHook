@@ -50,7 +50,7 @@
 #define BtnInsertUserHook L"Insert UserHook" 
 #define BtnSearchHook L"Search for hooks" 
 #define BtnPlugin L"Plugins" 
-#define LblFlushDelay L"Flush delay" 
+#define LblFlushDelay L"Refresh delay" 
 #define LblFilterRepeat L"Filter repetition" 
 #define LblCodePage L"Default codepage" 
 #define LblMaxBuff L"Max buffer size"
