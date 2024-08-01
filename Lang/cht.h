@@ -50,7 +50,7 @@
 #define BtnInsertUserHook L"插入特殊碼" 
 #define BtnSearchHook L"搜尋勾點" 
 #define BtnPlugin L"外掛程式" 
-#define LblFlushDelay L"排清延遲" 
+#define LblFlushDelay L"重新整理延遲" 
 #define LblFilterRepeat L"過濾重複文字" 
 #define LblCodePage L"預設字碼頁" 
 #define LblMaxBuff L"最大緩衝區長度"
