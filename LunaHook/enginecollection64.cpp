@@ -21,9 +21,6 @@
 #include "engine64/rpcs3.h"
 #include "engines/lua/lua51.h"
 #include "engines/python/Renpy.h"
-std::vector<ENGINE *> ignore_engines() { return {}; }
-std::vector<ENGINE *> unsafe_check_atlast() { return {}; }
-
 std::vector<ENGINE *> check_engines()
 {
     return {

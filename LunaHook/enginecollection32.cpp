@@ -347,25 +347,14 @@ std::vector<ENGINE *> check_engines()
         new Erogos,
         new Silkysveryveryold,
         new gazelle,
-        };
-}
-
-std::vector<ENGINE *> ignore_engines()
-{
-    return {
-
+        // ignore engines
         new oldSystem40ini,
         new AdvPlayerHD,
         new DPM,
         new Escude_ignore,
         new Chartreux,
-    };
-}
-std::vector<ENGINE *> unsafe_check_atlast()
-{
-    // Put the patterns that might break other games at last
-
-    return {
+        //
+        // Put the patterns that might break other games at last
         new UnisonShift,
         new Interheart,
         new Abalone,
@@ -398,5 +387,7 @@ std::vector<ENGINE *> unsafe_check_atlast()
         new ShinaRio,
         new Suika2,
         new KISS,
-        new EntisGLS};
+        new EntisGLS,
+        //
+    };
 }

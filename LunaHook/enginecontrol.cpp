@@ -5,8 +5,6 @@ WCHAR processName_lower[MAX_PATH];
 uintptr_t processStartAddress, processStopAddress;
 
 std::vector<ENGINE *> check_engines();
-std::vector<ENGINE *> ignore_engines();
-std::vector<ENGINE *> unsafe_check_atlast();
 
 bool ENGINE::check_function()
 {
@@ -76,46 +74,38 @@ bool checkengine()
 {
 
     auto engines = check_engines();
-    auto engineatlast = unsafe_check_atlast();
-    auto engineignore = ignore_engines();
     std::vector<const char *> infomations = {
         "match failed",
         "attach failed",
         "attach success"};
-    auto allengines = {engines, engineignore, engineatlast};
-    int total = [allengines]()
-    {int _=0;for(auto eng:allengines)_+=eng.size();return _; }();
     int current = 0;
-    for (auto eng : allengines)
+    for (auto m : engines)
     {
-        for (auto m : eng)
+        current += 1;
+
+        bool matched = safematch(m);
+        bool attached = matched && safeattach(m);
+
+        // ConsoleOutput("Progress %d/%d, checked engine %s, %s",current,total,m->getenginename(),infomations[matched+attached]);
+        // ConsoleOutput("Progress %d/%d, %s",current,total,infomations[matched+attached]);
+        if (matched == false)
+            continue;
+        ConsoleOutput(MatchedEngine, m->getenginename());
+        if (m->dontstop)
         {
-            current += 1;
+            continue;
+        }
 
-            bool matched = safematch(m);
-            bool attached = matched && safeattach(m);
+        if (m->is_engine_certain)
+        {
+            ConsoleOutput(ConfirmStop, m->getenginename());
+            return attached;
+        }
 
-            // ConsoleOutput("Progress %d/%d, checked engine %s, %s",current,total,m->getenginename(),infomations[matched+attached]);
-            // ConsoleOutput("Progress %d/%d, %s",current,total,infomations[matched+attached]);
-            if (matched == false)
-                continue;
-            ConsoleOutput(MatchedEngine, m->getenginename());
-            if (m->dontstop)
-            {
-                continue;
-            }
-
-            if (m->is_engine_certain)
-            {
-                ConsoleOutput(ConfirmStop, m->getenginename());
-                return attached;
-            }
-
-            if (attached)
-            {
-                ConsoleOutput(Attach_Stop, m->getenginename());
-                return true;
-            }
+        if (attached)
+        {
+            ConsoleOutput(Attach_Stop, m->getenginename());
+            return true;
         }
     }
 
