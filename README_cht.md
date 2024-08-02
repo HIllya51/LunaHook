@@ -3,7 +3,7 @@
 
 ### <a href="./LICENSE"><img src="https://img.shields.io/github/license/HIllya51/LunaHook"></a> <a href="https://lunatranslator.xyz/Github/LunaHook/releases"><img src="https://img.shields.io/github/v/release/HIllya51/LunaHook?color=ffa"></a>
 
-### [Discord](https://discord.gg/ucAcF8hG) 
+### [Discord](https://discord.com/invite/ErtDwVeAbB) 
 
 ### [简体中文](README.md) | [English](README_en.md) | [Русский](README_ru.md) | 繁體中文 
 
