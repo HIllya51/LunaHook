@@ -77,6 +77,7 @@
 #include "engine32/Rejet.h"
 #include "engine32/tamasoft.h"
 #include "engine32/AdobeAir.h"
+#include "engine32/DISCOVERY.h"
 #include "engine32/Retouch.h"
 #include "engine32/Malie.h"
 #include "engine32/Live.h"
@@ -389,5 +390,7 @@ std::vector<ENGINE *> check_engines()
         new KISS,
         new EntisGLS,
         //
+        //
+        new DISCOVERY,
     };
 }
