@@ -1,17 +1,17 @@
 # LunaHook
 
 
-### <a href="./LICENSE"><img src="https://img.shields.io/github/license/HIllya51/LunaHook"></a> <a href="https://lunatranslator.xyz/Github/LunaHook/releases"><img src="https://img.shields.io/github/v/release/HIllya51/LunaHook?color=ffa"></a>
+### <a href="./LICENSE"><img src="https://img.shields.io/github/license/HIllya51/LunaHook"></a> <a href="https://github.com/HIllya51/LunaHook/releases"><img src="https://img.shields.io/github/v/release/HIllya51/LunaHook?color=ffa"></a>
 
 ### [Discord](https://discord.com/invite/ErtDwVeAbB) 
 
 ### [简体中文](README.md) | [English](README_en.md) | [Русский](README_ru.md) | 繁體中文 
 
-[LunaTranslator](https://lunatranslator.xyz/Github/LunaTranslator) 核心文字提取器模組
+[LunaTranslator](https://github.com/HIllya51/LunaTranslator) 核心文字提取器模組
 
 ## 下載
 
-在 GitHub [Release](https://lunatranslator.xyz/Github/LunaHook/releases) 中下載。
+在 GitHub [Release](https://github.com/HIllya51/LunaHook/releases) 中下載。
 
 根據所使用的語言下載對應的 zip。
 
@@ -19,7 +19,7 @@
 
 ## 外掛程式
 
-在 [Release](https://lunatranslator.xyz/Github/LunaHook/releases) 中下載 plugin32 或 plugin64。
+在 [Release](https://github.com/HIllya51/LunaHook/releases) 中下載 plugin32 或 plugin64。
 
 相容 Textractor 外掛程式。
 

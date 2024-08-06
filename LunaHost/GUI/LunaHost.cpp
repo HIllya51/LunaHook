@@ -320,7 +320,6 @@ LunaHost::LunaHost()
 
     std::thread([&]()
                 {
-        //https://lunatranslator.xyz/Github/LunaHook/issues/14
         std::wstring sel;
         while(1)
         {
