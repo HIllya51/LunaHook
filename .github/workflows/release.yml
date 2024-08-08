@@ -17,6 +17,10 @@ jobs:
           - target: Release_English_winxp
           - target: Release_Chinese_winxp
           - target: Release_Russian_winxp
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -68,6 +72,10 @@ jobs:
           - cmd: plg64
             qtarch: win64_msvc2019_64
             target: plugin64
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -120,6 +128,10 @@ jobs:
           - target: Release_English
           - target: Release_Chinese
           - target: Release_Russian
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
