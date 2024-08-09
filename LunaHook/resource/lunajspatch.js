@@ -1,7 +1,7 @@
 var fontface = '';
 var magicsend = '\x01LUNAFROMJS\x01'
 var magicrecv = '\x01LUNAFROMHOST\x01'
-var is_packed = %d 
+var is_packed = %d
 function splitfonttext(transwithfont) {
     if (transwithfont.substr(0, magicsend.length) == magicsend) //not trans
     {
@@ -20,9 +20,9 @@ function splitfonttext(transwithfont) {
         return transwithfont;
     }
 }
-function clipboardsender(s, lpsplit) {
+function clipboardsender(name, s, lpsplit) {
     //magic split \x02 text
-    s = magicsend + lpsplit.toString() + '\x02' + s;
+    s = magicsend + name + '\x03' + lpsplit.toString() + '\x02' + s;
     try {
         const _clipboard = require('nw.gui').Clipboard.get();
         _clipboard.set(s, 'text');
@@ -42,9 +42,9 @@ function clipboardsender(s, lpsplit) {
     return splitfonttext(transwithfont)
 }
 
-function clipboardsender_only_send(s, lpsplit) {
+function clipboardsender_only_send(name, s, lpsplit) {
     //magic split \x02 text
-    s = magicsend + lpsplit.toString() + '\x02' + s;
+    s = magicsend + name + '\x03' + lpsplit.toString() + '\x02' + s;
     try {
         const _clipboard = require('nw.gui').Clipboard.get();
         _clipboard.set(s, 'text');
@@ -76,30 +76,30 @@ function rpgmakerhook() {
         return (this.fontItalic ? 'Italic ' : '') +
             this.fontSize + 'px ' + fontface;
     }
-    if(!is_packed)
+    if (!is_packed)
         Bitmap.prototype.drawText = function (text, x, y, maxWidth, lineHeight, align) {
             //y>100的有重复；慢速是单字符，快速是多字符
             if (text && (y < 100)) {
                 extra = 5 + ((text.length == 1) ? 0 : 1);
                 if (y != Bitmap.prototype.last_y)
-                    clipboardsender_only_send('\n', extra)
-                clipboardsender_only_send(text, extra)
+                    clipboardsender_only_send('rpgmakermv', '\n', extra)
+                clipboardsender_only_send('rpgmakermv', text, extra)
                 Bitmap.prototype.last_y = y;
             }
             return this.drawText_ori(text, x, y, maxWidth, lineHeight, align);
         }
     Window_Message.prototype.startMessage = function () {
         gametext = $gameMessage.allText();
-        resp = clipboardsender(gametext, 0);
+        resp = clipboardsender('rpgmakermv', gametext, 0);
         $gameMessage._texts = [resp]
         this.originstartMessage();
     };
     Window_Base.prototype.drawText = function (text, x, y, maxWidth, align) {
-        text = clipboardsender(text, 1)
+        text = clipboardsender('rpgmakermv', text, 1)
         return this.drawText_origin(text, x, y, maxWidth, align)
     }
     Window_Base.prototype.drawTextEx = function (text, x, y) {
-        text = clipboardsender(text, 2)
+        text = clipboardsender('rpgmakermv', text, 2)
         return this.drawTextEx_origin(text, x, y)
     }
 }
@@ -111,7 +111,7 @@ function tyranohook() {
     tyrano.plugin.kag.tag.chara_ptext.startorigin = tyrano.plugin.kag.tag.chara_ptext.start;
     tyrano.plugin.kag.tag.text.start = function (pm) {
         if (1 != this.kag.stat.is_script && 1 != this.kag.stat.is_html) {
-            pm.val = clipboardsender(pm.val, 0);
+            pm.val = clipboardsender('tyranoscript', pm.val, 0);
             if (fontface != '') {
                 this.kag.stat.font.face = fontface
             }
@@ -119,7 +119,7 @@ function tyranohook() {
         return this.originstart(pm)
     }
     tyrano.plugin.kag.tag.chara_ptext.start = function (pm) {
-        pm.name = clipboardsender(pm.name, 1)
+        pm.name = clipboardsender('tyranoscript', pm.name, 1)
         return this.startorigin(pm)
     }
 }
