@@ -265,7 +265,7 @@ LunaHost::LunaHost()
             Host::DetachProcess(tt->tp.processId);
             userdetachedpids.insert(tt->tp.processId); });
         menu.add_sep();
-        menu.add(MenuRemeberSelect, [&, tt]()
+        menu.add(MenuRememberSelect, [&, tt]()
                  {
             if(auto pexe=getModuleFilename(tt->tp.processId))
                 savedhookcontext[WideStringToString(pexe.value())]={

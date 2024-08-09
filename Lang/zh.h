@@ -60,7 +60,7 @@
 #define MenuCopyHookCode L"复制特殊码" 
 #define MenuRemoveHook L"移除钩子" 
 #define MenuDetachProcess L"离开进程" 
-#define MenuRemeberSelect L"记住选择的钩子" 
+#define MenuRememberSelect L"记住选择的钩子" 
 #define MenuForgetSelect L"忘掉选择的钩子" 
 #define MenuAddPlugin L"添加插件" 
 #define MenuRemovePlugin L"移除插件" 

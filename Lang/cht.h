@@ -60,7 +60,7 @@
 #define MenuCopyHookCode L"複製特殊碼" 
 #define MenuRemoveHook L"移除勾點" 
 #define MenuDetachProcess L"離開處理程序" 
-#define MenuRemeberSelect L"記住選擇的勾點" 
+#define MenuRememberSelect L"記住選擇的勾點" 
 #define MenuForgetSelect L"忘掉選擇的勾點" 
 #define MenuAddPlugin L"新增外掛程式" 
 #define MenuRemovePlugin L"移除外掛程式" 

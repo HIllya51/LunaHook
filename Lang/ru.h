@@ -60,7 +60,7 @@
 #define MenuCopyHookCode L"Скопировать код хука" 
 #define MenuRemoveHook L"Удалить хук" 
 #define MenuDetachProcess L"Отключиться от процесса" 
-#define MenuRemeberSelect L"Запомнить выбранный хук" 
+#define MenuRememberSelect L"Запомнить выбранный хук" 
 #define MenuForgetSelect L"Забыть выбранный хук" 
 #define MenuAddPlugin L"Добавить плагин" 
 #define MenuRemovePlugin L"Удалить плагин" 
