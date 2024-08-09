@@ -12,22 +12,22 @@ LunaHook is the Core Text Hook Module For [LunaTranslator](https://github.com/HI
 
 ## Download
 
-Download it via github [release](https://github.com/HIllya51/LunaHook/releases).
+Download it via the GitHub [release](https://github.com/HIllya51/LunaHook/releases).
 
-For English user, download Release_English.zip. For Chinese user download Release_Chinese.zip. For Russian user download Release_Russian.zip.
+For English users, download `Release_English.zip`. For Chinese users, download `Release_Chinese.zip`. For Russian users, download `Release_Russian.zip`.
 
-If you use Windows XP for some old Visual Novel, download zip with _winxp suffix.
+If you use Windows XP (e.g. to run older visual novels), download the zip file with the `_winxp` suffix.
 
 ## Plugins
 
-Download plugin32 or plugin64 in [release](https://github.com/HIllya51/LunaHook/releases).
+Download plugin32 or plugin64 from [releases](https://github.com/HIllya51/LunaHook/releases).
 
-Compatible with Textractor plugins.
+The application is compatible with Textractor plugins.
 
-Since both LunaHost32 and LunaHost64 can inject the both 32-bit and 64-bit games, actually you only need to use one of LunaHost32 and LunaHost64, and only need to download one of plugin32 and plugin64.
+Since both LunaHost32 and LunaHost64 can inject both 32-bit and 64-bit games, you only need to use either of `LunaHost32` and `LunaHost64`, and therefore only need to download either of `plugin32` and `plugin64`.
 
 ## Support
 
-If you feel that the software is helpful to you, welcome to become my [sponsor](https://patreon.com/HIllya51) <!--or buy me a [Coffee](https://ko-fi.com/HIllya51)-->. Thank you ~ 
+If you feel that the software is helpful to you, you are welcome to become my [sponsor](https://patreon.com/HIllya51)<!--or buy me a [Coffee](https://ko-fi.com/HIllya51)-->. Thank you ~ 
 
 <img src="https://p.inari.site/guest/24-04/21/6624ee26d3093.png" alt="屏幕截图 2024-03-29 212522.png" title="屏幕截图 2024-03-29 212522.png" />
