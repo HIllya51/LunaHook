@@ -145,7 +145,9 @@ namespace monocommon
     std::vector<functioninfo> commonhooks{
         {"mscorlib", "System", "String", "ToCharArray", 0, 1},
         {"mscorlib", "System", "String", "Replace", 2, 1},
-        //{"mscorlib","System","String","ToString",0,1}, //删除。虽然可能会误伤，但这个乱码太多了，而且不知道原因。
+        //{"mscorlib","System","String","ToString",0,1}, 
+        //虽然可能会有少量误伤，但这个乱码太多了，而且不知道原因，为了大多数更好，还是删了吧。
+        //一定要用的话，用特殊码：HMF1@mscorlib:System:String:ToString:0:JIT:UNITY
         {"mscorlib", "System", "String", "IndexOf", 1, 1},
         {"mscorlib", "System", "String", "Substring", 2, 1},
         {"mscorlib", "System", "String", "op_Inequality", 2, 1},
