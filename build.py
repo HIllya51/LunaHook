@@ -69,9 +69,13 @@ else:
         build_langx("Chinese")
     elif sys.argv[1] == "Release_Russian":
         build_langx("Russian")
+    elif sys.argv[1] == "Release_TradChinese":
+        build_langx("TradChinese")
     elif sys.argv[1] == "Release_English_winxp":
         build_langx_xp("English")
     elif sys.argv[1] == "Release_Chinese_winxp":
         build_langx_xp("Chinese")
     elif sys.argv[1] == "Release_Russian_winxp":
         build_langx_xp("Russian")
+    elif sys.argv[1] == "Release_TradChinese_winxp":
+        build_langx_xp("TradChinese")
