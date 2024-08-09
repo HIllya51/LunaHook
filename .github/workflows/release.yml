@@ -20,6 +20,7 @@ jobs:
     permissions:
       id-token: write
       attestations: write
+      contents: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -70,6 +71,7 @@ jobs:
     permissions:
       id-token: write
       attestations: write
+      contents: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -120,6 +122,7 @@ jobs:
     permissions:
       id-token: write
       attestations: write
+      contents: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
