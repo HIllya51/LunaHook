@@ -12,6 +12,7 @@ jobs:
           - target: Release_English_winxp
           - target: Release_Chinese_winxp
           - target: Release_Russian_winxp
+          - target: Release_TradChinese_winxp
     permissions:
       id-token: write
       attestations: write
@@ -120,6 +121,7 @@ jobs:
           - target: Release_English
           - target: Release_Chinese
           - target: Release_Russian
+          - target: Release_TradChinese
     permissions:
       id-token: write
       attestations: write
