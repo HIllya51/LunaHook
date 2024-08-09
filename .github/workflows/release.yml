@@ -1,12 +1,7 @@
 name: Release
 
 on:
-  workflow_dispatch: # allows manual triggering
-    inputs:
-      create_release:
-        description: 'Create new release'
-        required: true
-        type: string
+  workflow_dispatch:
 
 jobs:
   build_xp:
@@ -49,10 +44,13 @@ jobs:
         with:
           name: ${{ matrix.target }}
           path: builds/${{ matrix.target }}.zip
+      - name: loadversion
+        id: loadversion
+        run: python build.py loadversion | Out-File -FilePath $Env:GITHUB_OUTPUT -Encoding utf8 -Append
       - name: Release LunaHook
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.event.inputs.create_release }}
+          tag_name: ${{ steps.loadversion.outputs.version }}
           files: builds/${{ matrix.target }}.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -104,10 +102,13 @@ jobs:
         with:
           name: ${{ matrix.target }}
           path: builds/${{ matrix.target }}.zip
+      - name: loadversion
+        id: loadversion
+        run: python build.py loadversion | Out-File -FilePath $Env:GITHUB_OUTPUT -Encoding utf8 -Append
       - name: Release LunaHook
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.event.inputs.create_release }}
+          tag_name: ${{ steps.loadversion.outputs.version }}
           files: builds/${{ matrix.target }}.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -150,10 +151,13 @@ jobs:
         with:
           name: ${{ matrix.target }}
           path: builds/${{ matrix.target }}.zip
+      - name: loadversion
+        id: loadversion
+        run: python build.py loadversion | Out-File -FilePath $Env:GITHUB_OUTPUT -Encoding utf8 -Append
       - name: Release LunaHook
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.event.inputs.create_release }}
+          tag_name: ${{ steps.loadversion.outputs.version }}
           files: builds/${{ matrix.target }}.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

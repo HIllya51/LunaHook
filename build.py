@@ -1,9 +1,16 @@
-import os, sys
+import os, sys, re
 import subprocess
 
 rootDir = os.path.dirname(__file__)
-
-
+if len(sys.argv) and sys.argv[1] == "loadversion":
+    os.chdir(rootDir)
+    with open("CMakeLists.txt", "r", encoding="utf8") as ff:
+        pattern = r"set\(VERSION_MAJOR\s*(\d+)\s*\)\nset\(VERSION_MINOR\s*(\d+)\s*\)\nset\(VERSION_PATCH\s*(\d+)\s*\)"
+        match = re.findall(pattern, ff.read())[0]
+        version_major, version_minor, version_patch = match
+        versionstring = f"v{version_major}.{version_minor}.{version_patch}"
+        print("version=" + versionstring)
+        exit()
 vcltlFile = "https://github.com/Chuyu-Team/VC-LTL5/releases/download/v5.0.9/VC-LTL-5.0.9-Binary.7z"
 vcltlFileName = "VC-LTL-5.0.9-Binary.7z"
 
