@@ -1,5 +1,4 @@
-#include"Reallive.h"
-
+#include "Reallive.h"
 
 /********************************************************************************************
 Reallive hook:
@@ -57,32 +56,34 @@ Reallive hook:
  *  012da884   83c4 08          add esp,0x8
  *  012da887   85f6             test esi,esi
  */
-static bool InsertRealliveDynamicHook(LPVOID addr, hook_stack* stack)
+static bool InsertRealliveDynamicHook(LPVOID addr, hook_stack *stack)
 {
   if (addr != ::GetGlyphOutlineA)
     return false;
   // jichi 5/13/2015: Find the enclosing caller of GetGlyphOutlineA
-  if (DWORD i = stack->ebp) {
+  if (DWORD i = stack->ebp)
+  {
     i = *(DWORD *)(i + 4);
     for (DWORD j = i; j > i - 0x100; j--)
-      if (*(WORD *)j == 0xec83) { // jichi 7/26/2014: function starts
+      if (*(WORD *)j == 0xec83)
+      { // jichi 7/26/2014: function starts
         // 012da80f   cc               int3
         // 012da810   55               push ebp    ; jichi: change to hook here
         // 012da811   8bec             mov ebp,esp
         // 012da813   83ec 10          sub esp,0x10 ; jichi: hook here by default
-        if (*(DWORD *)(j-3) == 0x83ec8b55)
+        if (*(DWORD *)(j - 3) == 0x83ec8b55)
           j -= 3;
 
         HookParam hp;
         hp.address = j;
-        hp.offset=get_stack(5);
+        hp.offset = get_stack(5);
         hp.split = get_reg(regs::esp);
-        hp.type = CODEC_ANSI_BE|USING_SPLIT;
-        //GROWL_DWORD(hp.address);
-        
-        //RegisterEngineType(ENGINE_REALLIVE);
+        hp.type = CODEC_ANSI_BE | USING_SPLIT;
+        // GROWL_DWORD(hp.address);
+
+        // RegisterEngineType(ENGINE_REALLIVE);
         ConsoleOutput("RealLive: disable GDI hooks");
-        
+
         return NewHook(hp, "RealLive");
       }
   }
@@ -90,7 +91,7 @@ static bool InsertRealliveDynamicHook(LPVOID addr, hook_stack* stack)
 }
 void InsertRealliveHook()
 {
-  //ConsoleOutput("Probably Reallive. Wait for text.");
+  // ConsoleOutput("Probably Reallive. Wait for text.");
   ConsoleOutput("TRIGGER Reallive");
   trigger_fun = InsertRealliveDynamicHook;
 }
@@ -100,81 +101,111 @@ bool RlBabelFilter(LPVOID data, size_t *size, HookParam *)
   auto text = reinterpret_cast<LPSTR>(data);
   auto len = reinterpret_cast<size_t *>(size);
 
-  if (text[0] == '\x01') {
+  if (text[0] == '\x01')
+  {
     StringFilterBetween(text, len, "\x01", 1, "\x02", 1); // remove names
   }
 
   CharReplacer(text, len, '\x08', '"');
   CharReplacer(text, len, '\x09', '\'');
   CharReplacer(text, len, '\x0A', '\'');
-  CharFilter(text, len, '\x1F'); // remove color
-  StringReplacer(text, len, "\x89\x85", 2, "\x81\x63", 2);  // "\x89\x85"-> shift-JIS"…"
+  CharFilter(text, len, '\x1F');                           // remove color
+  StringReplacer(text, len, "\x89\x85", 2, "\x81\x63", 2); // "\x89\x85"-> shift-JIS"…"
   StringReplacer(text, len, "\x89\x97", 2, "--", 2);
 
   return true;
 }
 
-bool InsertRlBabelHook() {
-	
-	/*
-	* Sample games:
-	* https://vndb.org/r78318
-	*/
-	const BYTE bytes[] = {
-		0xCC,                          // int 3 
-		0x55,                          // push ebp        <- hook here
-		0x8B, 0xEC,                    // mov ebp,esp
-		0x83, 0xEC, 0x20,              // sub esp,20
-		0xC7, 0x45, 0xFC, XX4          // mov [ebp-04],rlBabel.DLL+16804
-	};
+bool InsertRlBabelHook()
+{
 
-	HMODULE module = GetModuleHandleW(L"rlBabel.dll");
-	if (!module)
-		return false;
-	auto [minAddress, maxAddress] = Util::QueryModuleLimits(module);
-	ULONG addr = MemDbg::findBytes(bytes, sizeof(bytes), minAddress, maxAddress);
-	if (!addr)
-		return false;
+  /*
+   * Sample games:
+   * https://vndb.org/r78318
+   */
+  const BYTE bytes[] = {
+      0xCC,                 // int 3
+      0x55,                 // push ebp        <- hook here
+      0x8B, 0xEC,           // mov ebp,esp
+      0x83, 0xEC, 0x20,     // sub esp,20
+      0xC7, 0x45, 0xFC, XX4 // mov [ebp-04],rlBabel.DLL+16804
+  };
 
-	HookParam hp;
-	hp.address = addr + 1;
-	hp.offset=get_reg(regs::eax);
-	hp.type = USING_STRING;
-	hp.filter_fun = RlBabelFilter;
-	ConsoleOutput("INSERT RealLive Babel");
-	return NewHook(hp, "RealLive Babel");
+  HMODULE module = GetModuleHandleW(L"rlBabel.dll");
+  if (!module)
+    return false;
+  auto [minAddress, maxAddress] = Util::QueryModuleLimits(module);
+  ULONG addr = MemDbg::findBytes(bytes, sizeof(bytes), minAddress, maxAddress);
+  if (!addr)
+    return false;
+
+  HookParam hp;
+  hp.address = addr + 1;
+  hp.offset = get_reg(regs::eax);
+  hp.type = USING_STRING;
+  hp.filter_fun = RlBabelFilter;
+  ConsoleOutput("INSERT RealLive Babel");
+  return NewHook(hp, "RealLive Babel");
 }
-bool Reallive::attach_function() {  
-    InsertRealliveHook();
-    InsertRlBabelHook();
-    return true; 
-} 
+namespace
+{
+  bool clannad_en_steam()
+  {
+    // if ( v12 == 33116 || v12 == 33951 || v12 == 33962 )
+    BYTE sig[] = {
+        0x81, 0xFE, 0x5C, 0x81, 0x00, 0x00,
+        0x74, 0x10,
+        0x81, 0xFE, 0x9F, 0x84, 0x00, 0x00,
+        0x74, 0x08,
+        0x81, 0xFE, 0xAA, 0x84, 0x00, 0x00,
+        0x75, XX};
+    ULONG addr = MemDbg::findBytes(sig, sizeof(sig), processStartAddress, processStopAddress);
+    if (!addr)
+      return false;
 
+    HookParam hp;
+    hp.address = addr;
+    hp.offset = get_reg(regs::esi);
+    hp.type = USING_CHAR | CODEC_ANSI_LE;
+    return NewHook(hp, "RealLiveX");
+  }
+}
+bool Reallive::attach_function()
+{
+  InsertRealliveHook();
+  InsertRlBabelHook() || clannad_en_steam();
+  return true;
+}
 
-bool avg3216d::attach_function(){
-  BYTE pattern1[]={
-    0x3c,0x81,XX2,
-    0x3c,0x9f,XX2,
-    0x3c,0xe0,XX2,
-    0x3c,0xfc,XX2,
+bool avg3216d::attach_function()
+{
+  BYTE pattern1[] = {
+      //clang-format off
+      0x3c, 0x81, XX2,
+      0x3c, 0x9f, XX2,
+      0x3c, 0xe0, XX2,
+      0x3c, 0xfc, XX2,
+      //clang-format on
   };
-  BYTE pattern2[]={
-    0x8b,0x75,0x08,
-    0x8a,0x06,
-    0x3c,0x81,
-    0x75,XX,
-    0x80,0x7e,0x01,0x7a
-  };
-  auto addr=MemDbg::findBytes(pattern2,sizeof(pattern2),processStartAddress,processStopAddress);
-  if(addr==0)return false;
-  addr=MemDbg::findEnclosingAlignedFunction(addr);
-  if(addr==0)return false;
-  auto check=MemDbg::findBytes(pattern1,sizeof(pattern1),addr,addr+0x200);
-  if(check==0)return false;
+  BYTE pattern2[] = {
+      0x8b, 0x75, 0x08,
+      0x8a, 0x06,
+      0x3c, 0x81,
+      0x75, XX,
+      0x80, 0x7e, 0x01, 0x7a};
+  auto addr = MemDbg::findBytes(pattern2, sizeof(pattern2), processStartAddress, processStopAddress);
+  if (addr == 0)
+    return false;
+  addr = MemDbg::findEnclosingAlignedFunction(addr);
+  if (addr == 0)
+    return false;
+  auto check = MemDbg::findBytes(pattern1, sizeof(pattern1), addr, addr + 0x200);
+  if (check == 0)
+    return false;
   HookParam hp;
   hp.address = addr;
-  hp.offset=get_stack(1);
-  hp.type = NO_CONTEXT|DATA_INDIRECT;
-  //GROWL_DWORD(hp.address);
+  hp.offset = get_stack(1);
+  hp.type = NO_CONTEXT | DATA_INDIRECT;
+  // GROWL_DWORD(hp.address);
   return NewHook(hp, "avg3216d");
 }
