@@ -392,5 +392,6 @@ std::vector<ENGINE *> check_engines()
         //
         //
         new DISCOVERY,
+        new RPGMakerRGSS300,
     };
 }
