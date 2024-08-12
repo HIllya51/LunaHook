@@ -76,18 +76,30 @@ function rpgmakerhook() {
         return (this.fontItalic ? 'Italic ' : '') +
             this.fontSize + 'px ' + fontface;
     }
-    if (!is_packed)
+    Bitmap.prototype.collectstring = { 2: '', 5: '', 6: '' };
+    setInterval(function () {
+        for(lpsplit in Bitmap.prototype.collectstring){
+            if (Bitmap.prototype.collectstring[lpsplit].length) {
+                clipboardsender_only_send('rpgmakermv', Bitmap.prototype.collectstring[lpsplit], lpsplit)
+                Bitmap.prototype.collectstring[lpsplit] = ''
+            }
+        }
+    }, 100);
+    if (!is_packed) {
+
         Bitmap.prototype.drawText = function (text, x, y, maxWidth, lineHeight, align) {
             //y>100的有重复；慢速是单字符，快速是多字符
             if (text && (y < 100)) {
                 extra = 5 + ((text.length == 1) ? 0 : 1);
-                if (y != Bitmap.prototype.last_y)
-                    clipboardsender_only_send('rpgmakermv', '\n', extra)
-                clipboardsender_only_send('rpgmakermv', text, extra)
+                if (y != Bitmap.prototype.last_y) {
+                    Bitmap.prototype.collectstring[extra] += '\n'
+                }
+                Bitmap.prototype.collectstring[extra] += text;
                 Bitmap.prototype.last_y = y;
             }
             return this.drawText_ori(text, x, y, maxWidth, lineHeight, align);
         }
+    }
     Window_Message.prototype.startMessage = function () {
         gametext = $gameMessage.allText();
         resp = clipboardsender('rpgmakermv', gametext, 0);
@@ -98,8 +110,16 @@ function rpgmakerhook() {
         text = clipboardsender('rpgmakermv', text, 1)
         return this.drawText_origin(text, x, y, maxWidth, align)
     }
+    Window_Base.prototype.lastcalltime = 0
     Window_Base.prototype.drawTextEx = function (text, x, y) {
-        text = clipboardsender('rpgmakermv', text, 2)
+        __last = Window_Base.prototype.lastcalltime
+        __now = new Date().getTime()
+        Window_Base.prototype.lastcalltime = __now
+        if (__now - __last > 100)
+            text = clipboardsender('rpgmakermv', text, 2)
+        else {
+            Bitmap.prototype.collectstring[2] += text;
+        }
         return this.drawTextEx_origin(text, x, y)
     }
 }
