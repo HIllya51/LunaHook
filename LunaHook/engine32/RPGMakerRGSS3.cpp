@@ -531,7 +531,7 @@ namespace
           bool isValid() const
           {
             return Engine::isAddressReadable(type) && *type && size && size < 1500 && Engine::isAddressWritable(text, size + 1) && *text && text[size] == 0 && ::strlen(text) == size // validate size
-                   //&& !::strchr(text, '/')
+                                                                                                                                                                                      //&& !::strchr(text, '/')
                    && !all_ascii(text);
           }
 
@@ -1452,7 +1452,6 @@ bool RPGMakerRGSS3::attach_function()
 
   return true;
 }
-
 bool RPGMakerRGSS300::attach_function()
 {
   trigger_fun = [](LPVOID addr1, hook_stack *stack)
@@ -1467,8 +1466,8 @@ bool RPGMakerRGSS300::attach_function()
     hp.address = addr;
     hp.type = USING_STRING | CODEC_UTF16;
     hp.offset = get_stack(1);
-    NewHook(hp, "RGSS300.dll");
+    NewHook(hp, "RGSS30x.dll");
     return true;
   };
-  return GetModuleHandle(L"RGSS300.dll");
+  return GetModuleHandle(L"RGSS300.dll") || GetModuleHandle(L"RGSS301.dll");
 }
