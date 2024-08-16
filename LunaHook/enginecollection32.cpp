@@ -102,6 +102,7 @@
 #include "engine32/XUSE.h"
 #include "engine32/EME.h"
 #include "engine32/RRE.h"
+#include "engine32/Sceplay.h"
 #include "engine32/Candy.h"
 #include "engine32/AIL2.h"
 #include "engine32/ApricoT.h"
@@ -393,5 +394,6 @@ std::vector<ENGINE *> check_engines()
         //
         new DISCOVERY,
         new RPGMakerRGSS300,
+        new Sceplay
     };
 }
