@@ -44,7 +44,8 @@ bool InsertCodeXHook()
   hp.address = addr;
   hp.offset = get_reg(regs::eax);
   hp.index = 0;
-  hp.type = USING_STRING;
+  hp.type = USING_STRING | EMBED_ABLE | EMBED_AFTER_OVERWRITE | EMBED_BEFORE_SIMPLE; // 无法解决中文乱码
+  hp.hook_font = F_GetGlyphOutlineA;
   hp.filter_fun = CodeXFilter;
   ConsoleOutput("INSERT CodeX");
 
