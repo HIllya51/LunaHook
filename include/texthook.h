@@ -28,7 +28,6 @@ struct EmbedSharedMem
 	wchar_t fontFamily[100];
 	UINT codepage;
 	bool fastskipignore;
-	UINT32 line_text_length_limit;
 };
 class TextHook
 {

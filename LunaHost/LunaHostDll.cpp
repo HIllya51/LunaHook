@@ -21,10 +21,11 @@ typedef bool (*OutputCallback)(wchar_t *, char *, ThreadParam, const wchar_t *);
 typedef void (*ConsoleHandler)(const wchar_t *);
 typedef void (*HookInsertHandler)(uint64_t, const wchar_t *);
 typedef void (*EmbedCallback)(const wchar_t *, ThreadParam);
-#define XXXX char name[HOOK_NAME_SIZE];\
-wchar_t hookcode[HOOKCODE_LEN];\
-wcscpy_s(hookcode, HOOKCODE_LEN, thread.hp.hookcode);\
-strcpy_s(name, HOOK_NAME_SIZE, thread.hp.name);
+#define XXXX                                              \
+    char name[HOOK_NAME_SIZE];                            \
+    wchar_t hookcode[HOOKCODE_LEN];                       \
+    wcscpy_s(hookcode, HOOKCODE_LEN, thread.hp.hookcode); \
+    strcpy_s(name, HOOK_NAME_SIZE, thread.hp.name);
 C_LUNA_API void Luna_Start(ProcessEvent Connect, ProcessEvent Disconnect, ThreadEvent Create, ThreadEvent Destroy, OutputCallback Output, ConsoleHandler console, HookInsertHandler hookinsert, EmbedCallback embed)
 {
     Host::StartEx(
@@ -33,17 +34,16 @@ C_LUNA_API void Luna_Start(ProcessEvent Connect, ProcessEvent Disconnect, Thread
         [=](const TextThread &thread)
         {
             XXXX
-            Create(hookcode, name, thread.tp);
+                Create(hookcode, name, thread.tp);
         },
         [=](const TextThread &thread)
         {
             XXXX
-            Destroy(hookcode, name, thread.tp);
+                Destroy(hookcode, name, thread.tp);
         },
         [=](const TextThread &thread, std::wstring &output)
         {
-            XXXX
-            return Output(hookcode, name, thread.tp, output.c_str());
+            XXXX return Output(hookcode, name, thread.tp, output.c_str());
         },
         [=](const std::wstring &output)
         {
@@ -77,7 +77,7 @@ C_LUNA_API void Luna_Settings(int flushDelay, bool filterRepetition, int default
     TextThread::filterRepetition = filterRepetition;
     Host::defaultCodepage = defaultCodepage;
     TextThread::maxBufferSize = maxBufferSize;
-    TextThread::maxHistorySize=maxHistorySize;
+    TextThread::maxHistorySize = maxHistorySize;
 }
 
 C_LUNA_API bool Luna_InsertHookCode(DWORD pid, LPCWSTR hookcode)
@@ -87,13 +87,15 @@ C_LUNA_API bool Luna_InsertHookCode(DWORD pid, LPCWSTR hookcode)
         Host::InsertHook(pid, hp.value());
     return hp.has_value();
 }
-C_LUNA_API wchar_t* Luna_QueryThreadHistory(ThreadParam tp){
-    auto s=Host::GetThread(tp).storage.Acquire();
-    auto str=(wchar_t*)malloc(sizeof(wchar_t)*(s->size()+1));
-    wcscpy(str,s->c_str());
+C_LUNA_API wchar_t *Luna_QueryThreadHistory(ThreadParam tp)
+{
+    auto s = Host::GetThread(tp).storage.Acquire();
+    auto str = (wchar_t *)malloc(sizeof(wchar_t) * (s->size() + 1));
+    wcscpy(str, s->c_str());
     return str;
 }
-C_LUNA_API void Luna_FreePtr(void* ptr){
+C_LUNA_API void Luna_FreePtr(void *ptr)
+{
     free(ptr);
 }
 C_LUNA_API void Luna_RemoveHook(DWORD pid, uint64_t addr)
@@ -104,7 +106,7 @@ struct simplehooks
 {
     wchar_t hookcode[HOOKCODE_LEN];
     wchar_t *text;
-    simplehooks() : text(0){};
+    simplehooks() : text(0) {};
 };
 typedef void (*findhookcallback_t)(wchar_t *hookcode, const wchar_t *text);
 C_LUNA_API void Luna_FindHooks(DWORD pid, SearchParam sp, findhookcallback_t findhookcallback)
@@ -115,7 +117,7 @@ C_LUNA_API void Luna_FindHooks(DWORD pid, SearchParam sp, findhookcallback_t fin
                             wcscpy_s(hookcode,HOOKCODE_LEN, hp.hookcode);
                             findhookcallback(hookcode,text.c_str()); });
 }
-C_LUNA_API void Luna_EmbedSettings(DWORD pid, UINT32 waittime, UINT8 fontCharSet, bool fontCharSetEnabled, wchar_t *fontFamily, UINT32 spaceadjustpolicy, UINT32 keeprawtext, bool fastskipignore, UINT32 line_text_length_limit)
+C_LUNA_API void Luna_EmbedSettings(DWORD pid, UINT32 waittime, UINT8 fontCharSet, bool fontCharSetEnabled, wchar_t *fontFamily, UINT32 spaceadjustpolicy, UINT32 keeprawtext, bool fastskipignore)
 {
     auto sm = Host::GetEmbedSharedMem(pid);
     if (!sm)
@@ -127,7 +129,6 @@ C_LUNA_API void Luna_EmbedSettings(DWORD pid, UINT32 waittime, UINT8 fontCharSet
     sm->spaceadjustpolicy = spaceadjustpolicy;
     sm->keeprawtext = keeprawtext;
     sm->fastskipignore = fastskipignore;
-    sm->line_text_length_limit=line_text_length_limit;
 }
 C_LUNA_API bool Luna_checkisusingembed(DWORD pid, uint64_t address, uint64_t ctx1, uint64_t ctx2)
 {

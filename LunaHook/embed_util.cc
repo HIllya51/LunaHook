@@ -171,30 +171,6 @@ std::wstring adjustSpacesSTD(const std::wstring &text, HookParam hp)
     return text;
   }
 }
-std::wstring limitTextWidth(const std::wstring &text, int size)
-{
-  auto lines = strSplit(text, L"\n");
-  std::for_each(lines.begin(), lines.end(), [=](auto &line)
-                {
-    if(line.size()<=size)
-      return;
-    std::wstring ret;
-    for(int i=0;i<line.size();i++){
-      ret+=line[i];
-      if((i<line.size()-1) &&( ((1+i)%size)==0)){
-        ret+=L'\n';
-      }
-    }
-    line=ret; });
-  std::wstring ret;
-  for (int i = 0; i < lines.size(); i++)
-  {
-    ret += lines[i];
-    if (i < lines.size() - 1)
-      ret += L'\n';
-  }
-  return ret;
-}
 bool isPauseKeyPressed()
 {
   return WinKey::isKeyControlPressed() || WinKey::isKeyShiftPressed() && !WinKey::isKeyReturnPressed();
@@ -299,8 +275,6 @@ bool TextHook::waitfornotify(TextOutput_T *buffer, void *data, size_t *len, Thre
       return false;
     translatecache.insert(std::make_pair(hash, translate));
   }
-  if (embedsharedmem->line_text_length_limit)
-    translate = limitTextWidth(translate, embedsharedmem->line_text_length_limit);
   if (hp.newlineseperator)
     strReplace(translate, L"\n", hp.newlineseperator);
   translate = adjustSpacesSTD(translate, hp);
