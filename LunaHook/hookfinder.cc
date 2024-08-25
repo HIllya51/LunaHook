@@ -358,23 +358,50 @@ void SearchForHooks(SearchParam spUser)
 				for (auto& addr : addresses1 = Util::SearchMemory(sp.pattern, sp.length, PAGE_EXECUTE, sp.minAddress, sp.maxAddress)) 
 					addr += sp.offset;
 			}
-			else if(sp.search_method==1){  
-				for(uintptr_t addr=sp.minAddress;addr<sp.maxAddress;addr++){
-					if(IsBadReadPtr((void*)addr,0x1000)){
-						addr+=0x1000-1;
+			else if(sp.search_method==1){ 
+				auto checklength=3;
+				auto checker=[checklength](DWORD k){
+					if (k == 0xcccccccc
+					|| k == 0x90909090
+					|| k == 0xccccccc3
+					|| k == 0x909090c3
+					)
+					return true;
+					DWORD t = k & 0xff0000ff;
+					if (t == 0xcc0000c2 || t == 0x900000c2)
+					return true;
+					if(checklength==4)return false;
+					k >>= 8;
+					if (k == 0xccccc3 || k == 0x9090c3)
+					return true;
+					if(checklength==3)return false;
+					// t = k & 0xff;
+					// if (t == 0xc2)
+					// return true;
+					k >>= 8;
+					if (k == 0xccc3 || k == 0x90c3)
+					return true;
+					if(checklength==2)return false;
+					k >>= 8;
+					if (k == 0xc3)
+					return true;
+					return false;
+				};
+				for(uintptr_t addr=sp.minAddress& ~0xf;addr<sp.maxAddress;addr+=0x10){
+					if(IsBadReadPtr((void*)(addr-0x10),0x110)){
+						addr+=0x100-0x10;
 						continue;
 					}
-					if(((*(DWORD*)addr)==0xCCCCCCCC)||((*(DWORD*)addr)==0x90909090)){
-						if(((*(BYTE*)(addr+4))!=0xCC)&&(*(BYTE*)(addr+4))!=0x90){
-							addresses1.push_back(addr+4);
-						}
-					}
-				}  
+					auto need=checker(*(DWORD *)(addr-4));
+					if (need)
+					addresses1.push_back(addr);
+					 
+			}
 			}
 			else if(sp.search_method==2){  
 				for(uintptr_t addr=sp.minAddress;addr<sp.maxAddress;addr++){
-					if(IsBadReadPtr((void*)addr,0x1000)){
-						addr+=0x1000-1;
+					if(IsBadReadPtr((void*)addr,0x100)){
+						addr+=0x100-1;
 						continue;
 					}
 					if(((*(BYTE*)addr)==0xe8)){
