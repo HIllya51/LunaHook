@@ -1,5 +1,5 @@
-#include"Eushully.h"
-   
+#include "Eushully.h"
+
 /** jichi 6/1/2014 Eushully
  *  Insert to the last GetTextExtentPoint32A
  *
@@ -454,9 +454,10 @@ bool InsertEushullyHook()
     return false;
   }
   */
- ULONG lastCaller = 0,
+  ULONG lastCaller = 0,
         lastCall = 0;
-  auto fun = [&lastCaller, &lastCall](ULONG caller, ULONG call) -> bool {
+  auto fun = [&lastCaller, &lastCall](ULONG caller, ULONG call) -> bool
+  {
     lastCaller = caller;
     lastCall = call;
     return true; // find last caller && call
@@ -464,13 +465,15 @@ bool InsertEushullyHook()
   MemDbg::iterCallerAddressAfterInt3(fun, (ULONG)::GetTextExtentPoint32A, processStartAddress, processStopAddress);
   if (!lastCaller)
     return false;
-  
-  //OtherHook
+
+  // OtherHook
   ULONG thisCaller = 0,
         thisCall = 0,
         prevCall = 0;
-  auto fun2 = [&thisCaller, &thisCall, &prevCall](ULONG caller, ULONG call) -> bool {
-    if (call - prevCall == 133) { // 0x0046e1f8 - 0x0046e173 = 133
+  auto fun2 = [&thisCaller, &thisCall, &prevCall](ULONG caller, ULONG call) -> bool
+  {
+    if (call - prevCall == 133)
+    { // 0x0046e1f8 - 0x0046e173 = 133
       thisCaller = caller;
       thisCall = call;
       return false; // stop iteration
@@ -485,73 +488,122 @@ bool InsertEushullyHook()
   //   _In_   int c,
   //   _Out_  LPSIZE lpSize
   // );
-  enum stack { // current stack
-    //retaddr = 0 // esp[0] is the return address since this is the beginning of the function
+  enum stack
+  { // current stack
+    // retaddr = 0 // esp[0] is the return address since this is the beginning of the function
     arg1_hdc = 4 * 1 // 0x4
-    , arg2_lpString = 4 * 2 // 0x8
-    , arg3_lc = 4 * 3 // 0xc
-    , arg4_lpSize = 4 * 4 // 0x10
+    ,
+    arg2_lpString = 4 * 2 // 0x8
+    ,
+    arg3_lc = 4 * 3 // 0xc
+    ,
+    arg4_lpSize = 4 * 4 // 0x10
   };
   {
-    enum : DWORD { sig = 0x550010c2 };
-    enum { fun_offset = 3 };
+    enum : DWORD
+    {
+      sig = 0x550010c2
+    };
+    enum
+    {
+      fun_offset = 3
+    };
     for (auto addr = lastCaller; addr < lastCall; addr++)
-      if (*(DWORD *)addr == sig) {
-        lastCaller = addr + fun_offset; 
+      if (*(DWORD *)addr == sig)
+      {
+        lastCaller = addr + fun_offset;
         break;
       }
   }
   HookParam hp;
   hp.address = lastCaller;
-  hp.type = USING_STRING|FIXING_SPLIT|EMBED_ABLE|EMBED_BEFORE_SIMPLE|EMBED_AFTER_NEW|EMBED_DYNA_SJIS; // merging all threads
-  hp.offset = arg2_lpString; // arg2 = 0x4 * 2
-  hp.hook_font=F_MultiByteToWideChar|F_GetTextExtentPoint32A|F_GetGlyphOutlineA|F_CreateFontA;
+  hp.type = USING_STRING | FIXING_SPLIT | EMBED_ABLE | EMBED_BEFORE_SIMPLE | EMBED_AFTER_NEW | EMBED_DYNA_SJIS; // merging all threads
+  hp.offset = arg2_lpString;                                                                                    // arg2 = 0x4 * 2
+  hp.hook_font = F_MultiByteToWideChar | F_GetTextExtentPoint32A | F_GetGlyphOutlineA | F_CreateFontA;
   ConsoleOutput("INSERT Eushully");
-  bool succ=NewHook(hp, "ARCGameEngine");
-  if(thisCaller){
+  bool succ = NewHook(hp, "ARCGameEngine");
+  if (thisCaller)
+  {
     hp.address = thisCall;
-    hp.offset=get_stack(6);
-    succ|=NewHook(hp, "ARCGameEngine_other");
+    hp.offset = get_stack(6);
+    succ |= NewHook(hp, "ARCGameEngine_other");
   }
   return succ;
 }
-namespace{
+namespace
+{
   //(18禁ゲーム)[200529][エウシュリー] 天冥のコンキスタ DL版
-  bool TENMEI(){
-    BYTE sig[]={
-      0xc7,0x45,XX,0x00,0x00,0x00,0x00,
-      0xc7,0x45,XX,0x00,0x00,0x00,0x00,
-      0xc7,0x45,XX,0x00,0x00,0x00,0x00,
-      0xc7,0x45,XX,0x00,0x00,0x00,0x00,
-      0xc7,0x45,XX,0x0f,0x00,0x00,0x00,
-      0xc6,0x45,XX,0x00,
-      0xc6,0x45,XX,0x01,
-      0xc7,0x45,XX,0x00,0x00,0x00,0x00,
-      0xc7,0x45,XX,0x00,0x00,0x00,0x00,
-      0xc7,0x45,XX,0x00,0x00,0x00,0x00,
-      0xc7,0x45,XX,0x0f,0x00,0x00,0x00,
-      0xc6,0x45,XX,0x00,
-      0xc6,0x45,XX,0x03,
-
+  bool TENMEI()
+  {
+    BYTE sig[] = {
+        //clang-format off
+        0xc7, 0x45, XX, 0x00, 0x00, 0x00, 0x00,
+        0xc7, 0x45, XX, 0x00, 0x00, 0x00, 0x00,
+        0xc7, 0x45, XX, 0x00, 0x00, 0x00, 0x00,
+        0xc7, 0x45, XX, 0x00, 0x00, 0x00, 0x00,
+        0xc7, 0x45, XX, 0x0f, 0x00, 0x00, 0x00,
+        0xc6, 0x45, XX, 0x00,
+        0xc6, 0x45, XX, 0x01,
+        0xc7, 0x45, XX, 0x00, 0x00, 0x00, 0x00,
+        0xc7, 0x45, XX, 0x00, 0x00, 0x00, 0x00,
+        0xc7, 0x45, XX, 0x00, 0x00, 0x00, 0x00,
+        0xc7, 0x45, XX, 0x0f, 0x00, 0x00, 0x00,
+        0xc6, 0x45, XX, 0x00,
+        0xc6, 0x45, XX, 0x03,
+        //clang-format on
     };
-    auto addr=MemDbg::findBytes(sig,sizeof(sig),processStartAddress,processStopAddress);
-    if(addr==0)return false;
-    addr=MemDbg::findEnclosingAlignedFunction(addr);
-    if(addr==0)return false;
+    auto addr = MemDbg::findBytes(sig, sizeof(sig), processStartAddress, processStopAddress);
+    if (addr == 0)
+      return false;
+    addr = MemDbg::findEnclosingAlignedFunction(addr);
+    if (addr == 0)
+      return false;
     HookParam hp;
     hp.address = addr;
-    hp.type = USING_STRING|USING_SPLIT|NO_CONTEXT;//必须NO_CONTEXT否则被注音的字会被分开
+    hp.type = USING_STRING | USING_SPLIT | NO_CONTEXT; // 必须NO_CONTEXT否则被注音的字会被分开
     hp.offset = get_stack(5);
-    hp.split= get_stack(1); //name 80000000 各种所有text 0
-    hp.filter_fun=[](void* data, size_t* len, HookParam* hp){
-      StringFilter((char*)data,len,"\xf0\x40",2);
-      NewLineCharFilterA((char*)data,len,hp);
+    hp.split = get_stack(1); // name 80000000 各种所有text 0
+    hp.filter_fun = [](void *data, size_t *len, HookParam *hp)
+    {
+      StringFilter((char *)data, len, "\xf0\x40", 2);
+      NewLineCharFilterA((char *)data, len, hp);
       return true;
     };
     return NewHook(hp, "TENMEI");
   }
 }
-bool Eushully::attach_function() {
-    
-    return InsertEushullyHook()||TENMEI();
-}  
+namespace
+{
+  bool pchooks()
+  {
+    HookParam hp;
+    hp.address = (DWORD)GetStringTypeExW;
+    hp.offset = get_stack(3);
+    hp.type = USING_STRING | CODEC_UTF16;
+    hp.filter_fun = [](void *data, size_t *len, HookParam *hp)
+    {
+      // 破折号和省略号会变成乱码
+      for (auto i = 0; i < *len / 2; i++)
+      {
+        auto wc = (wchar_t *)data;
+        if (wc[i] == 0xe001)
+          wc[i] = 0x2014;
+        else if (wc[i] == 0xe003)
+          wc[i] = 0x2014;
+        else if (wc[i] == 0xe000)
+          wc[i] = 0x2026;
+        return true;
+      }
+    };
+    auto succ = NewHook(hp, "eushully");
+    hp.address = (DWORD)GetTextExtentPoint32W;
+    hp.offset = get_stack(2);
+    succ |= NewHook(hp, "eushully");
+    return succ;
+  }
+}
+bool Eushully::attach_function()
+{
+
+  return InsertEushullyHook() || TENMEI() || pchooks();
+}
