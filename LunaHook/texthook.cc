@@ -201,7 +201,7 @@ bool checklengthembedable(const HookParam &hp, size_t size)
 		len = 4;
 	else
 	{
-		len = 1;
+		len = 2;
 	}
 	return size > len;
 }
