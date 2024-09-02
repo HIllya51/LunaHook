@@ -3,30 +3,7 @@
 namespace
 {
   // Monster Girl Quest Remastered
-  bool hook()
-  {
-    auto SDL_PushEvent = GetProcAddress(GetModuleHandle(0), "SDL_PushEvent");
-    if (!SDL_PushEvent)
-      return false;
-    BYTE bytes[] = {
-        0x8D, 0x45, 0xE8,
-        0x50,
-        0xC6, 0x45, 0xE8, 0x1D,
-        0xE8, XX4};
-    for (auto addr : Util::SearchMemory(bytes, sizeof(bytes), PAGE_EXECUTE, processStartAddress, processStopAddress))
-    {
-      addr += sizeof(bytes) - 5;
-      auto check = *(DWORD *)(addr + 1) + addr + 5;
-      if (check != (DWORD)SDL_PushEvent)
-        continue;
-      HookParam hp;
-      hp.address = addr;
-      hp.offset = get_reg(regs::ebx);
-      hp.type = USING_CHAR | DATA_INDIRECT | NO_CONTEXT; // 快的和慢的分别一支。慢的快进会被截断
-      return NewHook(hp, "onscripter");
-    }
-    return false;
-  }
+
   bool hook2()
   {
     BYTE bytes[] = {
@@ -65,5 +42,5 @@ namespace
 }
 bool Onscripter::attach_function()
 {
-  return hook2() || hook();
+  return hook2();
 }
