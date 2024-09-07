@@ -489,6 +489,7 @@ void TextHook::Read()
 					if (hp.filter_fun && !hp.filter_fun(pbData, &dataLen, &hp) || dataLen <= 0)
 						continue;
 					TextOutput({GetCurrentProcessId(), address, 0, 0}, hp, buffer, dataLen);
+					dataLen = min(currentLen, TEXT_BUFFER_SIZE);
 					memcpy(pbData, location, dataLen);
 				}
 			}
