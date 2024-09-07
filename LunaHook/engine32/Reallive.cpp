@@ -177,7 +177,7 @@ bool Reallive::attach_function()
   return true;
 }
 
-bool avg3216d::attach_function()
+bool avg3216dattach_function()
 {
   BYTE pattern1[] = {
       //clang-format off
@@ -208,4 +208,38 @@ bool avg3216d::attach_function()
   hp.type = NO_CONTEXT | DATA_INDIRECT;
   // GROWL_DWORD(hp.address);
   return NewHook(hp, "avg3216d");
+}
+
+bool avg3216dattach_function2()
+{
+  // https://vndb.org/v12860
+  // effect～悪魔の仔～
+  BYTE pattern2[] = {
+      //clang-format off
+      0x80, 0xf9, 0x81,
+      0x72, 0x05,
+      0x80, 0xf9, 0x9f,
+      0x76, XX, // 76 17
+      0x80, 0xf9, 0xe0,
+      0x72, 0x05,
+      0x80, 0xf9, 0xfc,
+      0x76, 0x0d,
+      //clang-format on
+  };
+  auto addr = MemDbg::findBytes(pattern2, sizeof(pattern2), processStartAddress, processStopAddress);
+  if (addr == 0)
+    return false;
+  addr = findfuncstart(addr, 0x200);
+  if (addr == 0)
+    return false;
+  HookParam hp;
+  hp.address = addr;
+  hp.offset = get_stack(1);
+  hp.type = USING_STRING;
+  // GROWL_DWORD(hp.address);
+  return NewHook(hp, "avg3217d");
+}
+bool avg3216d::attach_function()
+{
+  return avg3216dattach_function() || avg3216dattach_function2();
 }

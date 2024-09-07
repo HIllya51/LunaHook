@@ -428,12 +428,15 @@ uintptr_t finddllfunctioncall(uintptr_t funcptr,uintptr_t start, uintptr_t end,W
   else
     return MemDbg::findBytes(bytes,sizeof(bytes),start,end);
 }
-uintptr_t findfuncstart(uintptr_t addr,uintptr_t range){
+uintptr_t findfuncstart(uintptr_t start,uintptr_t range){
   const BYTE funcstart[] = {
     0x55,0x8b,0xec
   };
-  addr = reverseFindBytes(funcstart, sizeof(funcstart), addr-range, addr);
-  return addr;
+  start &= ~0xf;
+  for (uintptr_t i = start, j = start - range; i >= j; i-=0x10) {
+    if(memcmp((void*)i,funcstart,3)==0)return i;
+  }
+  return 0;
 }
 #define buildbytes(ret) auto entry=Util::FindImportEntry(hmodule,addr); \
   if(entry==0)return ret;\
