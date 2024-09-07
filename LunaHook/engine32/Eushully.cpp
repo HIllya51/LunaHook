@@ -592,8 +592,8 @@ namespace
           wc[i] = 0x2014;
         else if (wc[i] == 0xe000)
           wc[i] = 0x2026;
-        return true;
       }
+      return true;
     };
     auto succ = NewHook(hp, "eushully");
     hp.address = (DWORD)GetTextExtentPoint32W;
