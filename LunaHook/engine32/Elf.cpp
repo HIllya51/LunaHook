@@ -426,10 +426,45 @@ namespace
     return succ;
   }
 }
+namespace
+{
+  bool elf4()
+  {
+    // WORDS WORTH【Windows10対応】
+    // elf3只能拿到人名，跳过
+    uint8_t bytes[] = {
+        //clang-format off
+        0x72, 0x02,
+        0x8b, 0x36,
+        0x8a, 0x0e,
+        0x84, 0xc9,
+        0x0f, 0x84, XX4,
+        0x8d, 0x57, XX,
+        0x8d, 0x5f, XX,
+        0x8b, 0xff,
+        0x80, 0xf9, 0x81,
+        0x72, 0x05,
+        0x80, 0xf9, 0x9f,
+        0x76, 0x07,
+        0x8d, 0x41, 0x20,
+        0x3c, 0x0f,
+        0x77, XX,
+        //clang-format on
+    };
+    ULONG addr = MemDbg::findBytes(bytes, sizeof(bytes), processStartAddress, processStopAddress);
+    if (!addr)
+      return false;
+    HookParam hp;
+    hp.address = addr + 4;
+    hp.type = USING_STRING;
+    hp.offset = get_reg(regs::esi);
+    return NewHook(hp, "Elf4");
+  }
+}
 bool Elf::attach_function()
 {
 
-  auto _1 = InsertElfHook() || __() || elf3();
+  auto _1 = InsertElfHook() || __() || elf4() || elf3();
   return ScenarioHook::attach(processStartAddress, processStopAddress) || _1;
 }
 
