@@ -399,5 +399,6 @@ std::vector<ENGINE *> check_engines()
         new Sceplay,
         new Onscripter,
         new TACTICS,
+        new RealliveX,
     };
 }

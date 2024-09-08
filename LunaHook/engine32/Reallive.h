@@ -38,3 +38,14 @@ public:
     };
     bool attach_function();
 };
+
+class RealliveX : public Reallive
+{
+public:
+    RealliveX()
+    {
+        // 部分远古版本
+        check_by = CHECK_BY::RESOURCE_STR;
+        check_by_target = L"RealLive";
+    };
+};
