@@ -229,7 +229,7 @@ bool avg3216dattach_function2()
   auto addr = MemDbg::findBytes(pattern2, sizeof(pattern2), processStartAddress, processStopAddress);
   if (addr == 0)
     return false;
-  addr = findfuncstart(addr, 0x200);
+  addr = findfuncstart(addr, 0x200,true);
   if (addr == 0)
     return false;
   HookParam hp;

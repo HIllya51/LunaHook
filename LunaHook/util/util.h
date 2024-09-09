@@ -56,7 +56,7 @@ ULONG SafeMatchBytesInGCMemory(LPCVOID pattern, DWORD patternSize);
 std::vector<DWORD> findrelativecall(const BYTE* pattern ,int length,DWORD calladdress,DWORD start, DWORD end);
 std::vector<DWORD> findxref_reverse_checkcallop(DWORD addr, DWORD from, DWORD to,BYTE op) ;
 uintptr_t finddllfunctioncall(uintptr_t funcptr,uintptr_t start, uintptr_t end,WORD sig=0x15ff,bool reverse=false);
-uintptr_t findfuncstart(uintptr_t addr,uintptr_t range=0x100);
+uintptr_t findfuncstart(uintptr_t addr,uintptr_t range=0x100, bool checkalign=false);
 uintptr_t findiatcallormov(uintptr_t addr, DWORD hmodule,uintptr_t start, uintptr_t end,bool reverse=false,BYTE movreg=0);
 std::vector<uintptr_t> findiatcallormov_all(uintptr_t addr, DWORD hmodule,uintptr_t start, uintptr_t end,DWORD protect,BYTE movreg=0);
 

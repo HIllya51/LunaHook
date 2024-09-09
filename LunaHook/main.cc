@@ -101,7 +101,23 @@ void ConsoleOutput(LPCSTR text, ...)
 	vsnprintf(buffer.message, MESSAGE_SIZE, text, args);
 	WriteFile(hookPipe, &buffer, sizeof(buffer), DUMMY, nullptr);
 }
-
+Synchronized<std::unordered_map<uintptr_t, std::wstring>> modulecache;
+std::wstring &querymodule(uintptr_t addr)
+{
+	auto &re = modulecache.Acquire().contents;
+	if (re.find(addr) != re.end())
+		return re.at(addr);
+	WCHAR fn[MAX_PATH];
+	if (GetModuleFileNameW((HMODULE)addr, fn, MAX_PATH))
+	{
+		re[addr] = wcsrchr(fn, L'\\') + 1;
+	}
+	else
+	{
+		re[addr] = L"";
+	}
+	return re[addr];
+}
 void NotifyHookFound(HookParam hp, wchar_t *text)
 {
 	if (hp.jittype == JITTYPE::PC)
@@ -109,10 +125,13 @@ void NotifyHookFound(HookParam hp, wchar_t *text)
 			if (AutoHandle<> process = OpenProcess(PROCESS_VM_READ | PROCESS_QUERY_INFORMATION, FALSE, GetCurrentProcessId()))
 				if (MEMORY_BASIC_INFORMATION info = {}; VirtualQueryEx(process, (LPCVOID)hp.address, &info, sizeof(info)))
 				{
-
-					hp.type |= MODULE_OFFSET;
-					hp.address -= (uint64_t)info.AllocationBase;
-					wcsncpy_s(hp.module, processName, ARRAYSIZE(hp.module));
+					auto mm = querymodule((uintptr_t)info.AllocationBase);
+					if (mm.size())
+					{
+						hp.type |= MODULE_OFFSET;
+						hp.address -= (uint64_t)info.AllocationBase;
+						wcsncpy_s(hp.module, mm.c_str(), MAX_MODULE_SIZE - 1);
+					}
 				}
 	HookFoundNotif buffer(hp, text);
 	WriteFile(hookPipe, &buffer, sizeof(buffer), DUMMY, nullptr);
