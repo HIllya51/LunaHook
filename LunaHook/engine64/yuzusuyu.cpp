@@ -857,6 +857,13 @@ bool F01009B50139A8000(void* data, size_t* len, HookParam* hp){
     last=s;
 	return write_string_overwrite(data,len,s);
 }
+bool F0100943010310000(void* data, size_t* len, HookParam* hp){
+    auto s = std::string((char*)data,*len);
+    strReplace(s,u8"❞","\"");
+    strReplace(s,u8"❝","\"");
+    s = std::regex_replace(s, std::regex("@(.*?)@"), "$1\n");
+	return write_string_overwrite(data,len,s);
+}
 bool F010027401A2A2000(void* data, size_t* len, HookParam* hp){
     auto s = std::wstring((wchar_t*)data,*len/2);
     std::wregex dicRegex(L"\\[dic.*?text=");
@@ -2221,6 +2228,8 @@ auto _=[](){
         {0x80020bd4,{CODEC_UTF8,0,0,0,0,"01003F5017760000","1.0.0"}},
         {0x800375a0,{CODEC_UTF8,2,0,0,0,"01003F5017760000","1.0.0"}},//tutorial
         {0x800781dc,{CODEC_UTF8,0,0,0,0,"01003F5017760000","1.0.0"}},
+        //Little Busters! Converted Edition
+        {0x800A97C8,{CODEC_UTF8,9,0,0,F0100943010310000,"0100943010310000","1.0.0"}},
     };
     return 1;
 }();
