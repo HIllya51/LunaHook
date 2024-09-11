@@ -163,7 +163,55 @@ bool TACTICSattach_function2()
   };
   return NewHook(hp, "TACTICS_H");
 }
+
+namespace
+{
+  // https://vndb.org/v2274
+  //[010119][Tactics] Cheerio! ～ちぇりお～ (bin+cue)
+  bool h3()
+  {
+    /*
+    if ( a5 != 33088 )
+  {
+    v6 = a5 - 33088;
+    if ( a5 - 33088 < 0 || v6 > 597 )
+    {
+      v6 = 598;
+      sub_417F5C(a1, a5, 598);
+    }
+    */
+    BYTE sig[] = {
+        // clang-format off
+      0x3d,0x40,0x81,0x00,0x00,
+      0x0f,0x84,XX4,
+      0x8b,0xf0,
+      0x81,0xee,0x40,0x81,0x00,0x00,
+      0x85,0xf6,
+      0x7c,0x08,
+      0x81,0xfe,0x55,0x02,0x00,0x00,
+      0x7e,XX,
+      0xbe,0x56,0x02,0x00,0x00
+        // clang-format on
+    };
+    auto addr = MemDbg::findBytes(sig, sizeof(sig), processStartAddress, processStopAddress);
+    if (!addr)
+      return false;
+    addr = findfuncstart(addr, 0x20); // v1.0不对齐
+    if (!addr)
+      return false;
+    HookParam hp;
+    hp.address = addr;
+    hp.type = USING_CHAR | CODEC_ANSI_BE | NO_CONTEXT;
+    hp.offset = get_stack(5);
+    hp.filter_fun = [](void *data, size_t *len, HookParam *hp)
+    {
+      static int idx = 0;
+      return 0 == ((idx++) % 2);
+    };
+    return NewHook(hp, "TACTICS_2");
+  }
+}
 bool TACTICS::attach_function()
 {
-  return TACTICSattach_function1() | TACTICSattach_function2();
+  return (TACTICSattach_function1() | TACTICSattach_function2()) || h3();
 }
