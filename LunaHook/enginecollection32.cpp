@@ -20,6 +20,7 @@
 #include "engine32/mirage.h"
 #include "engine32/Sprite.h"
 #include "engine32/PONScripter.h"
+#include "engine32/Stronger.h"
 #include "engine32/Fizz.h"
 #include "engine32/Ruf.h"
 #include "engine32/SYSD.h"
@@ -401,5 +402,6 @@ std::vector<ENGINE *> check_engines()
         new TACTICS,
         new RealliveX,
         new TextXtra_x32,
+        new Stronger
     };
 }
