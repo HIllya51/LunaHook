@@ -260,7 +260,16 @@ bool NewHook(HookParam hp, LPCSTR name)
 			ConsoleOutput("invalid");
 			return false;
 		}
-		hp.address = tryfindmonoil2cpp(spls[0].c_str(), spls[1].c_str(), spls[2].c_str(), spls[3].c_str(), std::stoi(spls[4]));
+		int argcount;
+		try
+		{
+			argcount = std::stoi(spls[4]);
+		}
+		catch (...)
+		{
+			argcount = -1;
+		}
+		hp.address = tryfindmonoil2cpp(spls[0].c_str(), spls[1].c_str(), spls[2].c_str(), spls[3].c_str(), argcount);
 
 		if (!hp.address)
 		{
