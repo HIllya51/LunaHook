@@ -102,6 +102,7 @@
 #include "engine32/Nitroplus.h"
 #include "engine32/Bruns.h"
 #include "engine32/XUSE.h"
+#include "engine32/RPGMaker.h"
 #include "engine32/EME.h"
 #include "engine32/RRE.h"
 #include "engine32/Sceplay.h"
@@ -402,6 +403,7 @@ std::vector<ENGINE *> check_engines()
         new TACTICS,
         new RealliveX,
         new TextXtra_x32,
-        new Stronger
+        new Stronger,
+        new RPGMaker
     };
 }
