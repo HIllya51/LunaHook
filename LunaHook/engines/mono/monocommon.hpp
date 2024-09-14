@@ -145,9 +145,9 @@ namespace monocommon
     std::vector<functioninfo> commonhooks{
         {"mscorlib", "System", "String", "ToCharArray", 0, 1},
         {"mscorlib", "System", "String", "Replace", 2, 1},
-        //{"mscorlib","System","String","ToString",0,1}, 
-        //虽然可能会有少量误伤，但这个乱码太多了，而且不知道原因，为了大多数更好，还是删了吧。
-        //一定要用的话，用特殊码：HMF1@mscorlib:System:String:ToString:0:JIT:UNITY
+        //{"mscorlib","System","String","ToString",0,1},
+        // 虽然可能会有少量误伤，但这个乱码太多了，而且不知道原因，为了大多数更好，还是删了吧。
+        // 一定要用的话，用特殊码：HMF1@mscorlib:System:String:ToString:0:JIT:UNITY
         {"mscorlib", "System", "String", "IndexOf", 1, 1},
         {"mscorlib", "System", "String", "Substring", 2, 1},
         {"mscorlib", "System", "String", "op_Inequality", 2, 1},
@@ -155,6 +155,7 @@ namespace monocommon
 
         {"Unity.TextMeshPro", "TMPro", "TMP_Text", "set_text", 1, 2, nullptr, true},
         {"Unity.TextMeshPro", "TMPro", "TextMeshPro", "set_text", 1, 2, nullptr, true},
+        {"Unity.TextMeshPro", "TMPro", "TextMeshProUGUI", "SetText", 2, 2, nullptr, true},
         {"UnityEngine.UI", "UnityEngine.UI", "Text", "set_text", 1, 2, nullptr, true},
         {"UnityEngine.UIElementsModule", "UnityEngine.UIElements", "TextElement", "set_text", 1, 2, nullptr, true},
         {"UnityEngine.UIElementsModule", "UnityEngine.UIElements", "TextField", "set_value", 1, 2, nullptr, true},
