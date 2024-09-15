@@ -1,4 +1,4 @@
-#include"YukaSystem2.h"
+#include "YukaSystem2.h"
 /** jichi 7/6/2014 YukaSystem2
  *  Sample game: セミラミスの天秤
  *
@@ -67,26 +67,27 @@
 // Though the input string is UTF-8, it should be ASCII compatible.
 static bool _yk2garbage(const char *p)
 {
-  //Q_ASSERT(p);
-  while (char ch = *p++) {
+  // Q_ASSERT(p);
+  while (char ch = *p++)
+  {
     if (!(
-        ch >= '0' && ch <= '9' ||
-        ch >= 'A' && ch <= 'z' || // also ignore ASCII 91-96: [ \ ] ^ _ `
-        ch == '"' || ch == '.' || ch == '-' || ch == '#'
-      ))
-    return false;
+            ch >= '0' && ch <= '9' ||
+            ch >= 'A' && ch <= 'z' || // also ignore ASCII 91-96: [ \ ] ^ _ `
+            ch == '"' || ch == '.' || ch == '-' || ch == '#'))
+      return false;
   }
   return true;
 }
 
 // Get text from arg2
-static void SpecialHookYukaSystem2(hook_stack* stack,  HookParam *hp, uintptr_t *data, uintptr_t *split, size_t*len)
+static void SpecialHookYukaSystem2(hook_stack *stack, HookParam *hp, uintptr_t *data, uintptr_t *split, size_t *len)
 {
   DWORD arg2 = stack->stack[2], // [esp+0x8]
-        arg3 = stack->stack[3]; // [esp+0xc]
-        //arg4 = argof(4, esp_base); // there is no arg4. arg4 is properlly a function pointer
+      arg3 = stack->stack[3];   // [esp+0xc]
+                                // arg4 = argof(4, esp_base); // there is no arg4. arg4 is properlly a function pointer
   LPCSTR text = (LPCSTR)arg2;
-  if (*text && !_yk2garbage(text)) { // I am sure this could be null
+  if (*text && !_yk2garbage(text))
+  { // I am sure this could be null
     *data = (DWORD)text;
     *len = ::strlen(text); // UTF-8 is null-terminated
     if (arg3)
@@ -94,143 +95,206 @@ static void SpecialHookYukaSystem2(hook_stack* stack,  HookParam *hp, uintptr_t 
   }
 }
 
-
 bool InsertYukaSystem2Hook()
 {
   const BYTE bytes[] = {
-    0x55,            // 004010e0  /$ 55             push ebp ; jichi; hook here
-    0x8b,0xec,       // 004010e1  |. 8bec           mov ebp,esp
-    0x8b,0x45, 0x08, // 004010e3  |. 8b45 08        mov eax,dword ptr ss:[ebp+0x8] ; jichi: ebp+0x8 = arg2
-    0x8b,0x4d, 0x0c, // 004010e6  |. 8b4d 0c        mov ecx,dword ptr ss:[ebp+0xc]
-    0x8a,0x11,       // 004010e9  |. 8a11           mov dl,byte ptr ds:[ecx]
-    0x88,0x10,       // 004010eb  |. 8810           mov byte ptr ds:[eax],dl    ; jichi: eax is the address to text
-    0x5d,            // 004010ed  |. 5d             pop ebp
-    0xc3             // 004010ee  \. c3             retn
+      0x55,             // 004010e0  /$ 55             push ebp ; jichi; hook here
+      0x8b, 0xec,       // 004010e1  |. 8bec           mov ebp,esp
+      0x8b, 0x45, 0x08, // 004010e3  |. 8b45 08        mov eax,dword ptr ss:[ebp+0x8] ; jichi: ebp+0x8 = arg2
+      0x8b, 0x4d, 0x0c, // 004010e6  |. 8b4d 0c        mov ecx,dword ptr ss:[ebp+0xc]
+      0x8a, 0x11,       // 004010e9  |. 8a11           mov dl,byte ptr ds:[ecx]
+      0x88, 0x10,       // 004010eb  |. 8810           mov byte ptr ds:[eax],dl    ; jichi: eax is the address to text
+      0x5d,             // 004010ed  |. 5d             pop ebp
+      0xc3              // 004010ee  \. c3             retn
   };
-  //enum { addr_offset = 0 };
+  // enum { addr_offset = 0 };
   ULONG range = min(processStopAddress - processStartAddress, MAX_REL_ADDR);
   ULONG addr = MemDbg::findBytes(bytes, sizeof(bytes), processStartAddress, processStartAddress + range);
-  //GROWL_DWORD(addr); // supposed to be 0x4010e0
-  if (!addr) {
-    ConsoleOutput("YukaSystem2: pattern not found");
+  // GROWL_DWORD(addr); // supposed to be 0x4010e0
+  if (!addr)
     return false;
-  }
 
   HookParam hp;
   hp.address = addr;
-  hp.offset=get_stack(1);
-  hp.split=get_stack(2);
-  hp.type =USING_SPLIT| USING_STRING|CODEC_UTF8; // UTF-8, though
-  hp.filter_fun=[](void* data, size_t* len, HookParam* hp){
-    //セミラミスの天秤
-    //セミラミスの天秤 Fated Dolls
-    if(data==0)return false;
-     
-    if(all_ascii(reinterpret_cast<char*>(data),*len))return false;
-    auto str=std::string(reinterpret_cast<char*>(data),*len);
- 
+  hp.offset = get_stack(1);
+  hp.split = get_stack(2);
+  hp.type = USING_SPLIT | USING_STRING | CODEC_UTF8; // UTF-8, though
+  hp.filter_fun = [](void *data, size_t *len, HookParam *hp)
+  {
+    // セミラミスの天秤
+    // セミラミスの天秤 Fated Dolls
+    if (data == 0)
+      return false;
+
+    if (all_ascii(reinterpret_cast<char *>(data), *len))
+      return false;
+    auto str = std::string(reinterpret_cast<char *>(data), *len);
+
     str = std::regex_replace(str, std::regex(R"(@r\((.*?),(.*?)\))"), "$1");
-  
-    auto wstr=StringToWideString(str);
 
-    if(wstr.size()==1)return false; 
+    auto wstr = StringToWideString(str);
 
-    for(auto wc:wstr){
-      if((wc>='A' && wc<='z')||
-        (wc>='0' && wc<='9')||
-        (wc=='"')||(wc=='.')||(wc=='-')||(wc=='#')||
-        (wc==65533)||(wc==2))return false;
+    if (wstr.size() == 1)
+      return false;
+
+    for (auto wc : wstr)
+    {
+      if ((wc >= 'A' && wc <= 'z') ||
+          (wc >= '0' && wc <= '9') ||
+          (wc == '"') || (wc == '.') || (wc == '-') || (wc == '#') ||
+          (wc == 65533) || (wc == 2))
+        return false;
     }
 
-    return write_string_overwrite(data,len,str);
+    return write_string_overwrite(data, len, str);
   };
-  //hp.text_fun = SpecialHookYukaSystem2;
+  // hp.text_fun = SpecialHookYukaSystem2;
   ConsoleOutput("INSERT YukaSystem2");
   return NewHook(hp, "YukaSystem2");
 }
-namespace{
-  bool hook2(){
-    //君を仰ぎ乙女は姫に
-    //ずっとつくしてあげるの!
+namespace
+{
+  bool hook2()
+  {
+    // 君を仰ぎ乙女は姫に
+    // ずっとつくしてあげるの!
     const BYTE bytes[] = {
-      0x0F,0xB6,0x07,
-      0x83,0xE8,0x40,
-      0x75,XX,
-      0x0F,0xB6,0x47,0x01,
-      0x83,0xE8,0x67,
-      0x8D,0x4F,0x01,
-      0x75,XX,
-      0x0F,0xB6,0x41,0x01,
-      0x83,0xC1,0x01,
-      0x83,0xE8,0x66,
-      0x74,XX
-    };
-    //enum { addr_offset = 0 };
+        0x0F, 0xB6, 0x07,
+        0x83, 0xE8, 0x40,
+        0x75, XX,
+        0x0F, 0xB6, 0x47, 0x01,
+        0x83, 0xE8, 0x67,
+        0x8D, 0x4F, 0x01,
+        0x75, XX,
+        0x0F, 0xB6, 0x41, 0x01,
+        0x83, 0xC1, 0x01,
+        0x83, 0xE8, 0x66,
+        0x74, XX};
+    // enum { addr_offset = 0 };
     ULONG range = min(processStopAddress - processStartAddress, MAX_REL_ADDR);
     ULONG addr = MemDbg::findBytes(bytes, sizeof(bytes), processStartAddress, processStartAddress + range);
-    //GROWL_DWORD(addr); // supposed to be 0x4010e0
-    if (!addr)  return false; 
+    // GROWL_DWORD(addr); // supposed to be 0x4010e0
+    if (!addr)
+      return false;
     addr = MemDbg::findEnclosingAlignedFunction(addr);
-    if (!addr)  return false; 
+    if (!addr)
+      return false;
     HookParam hp;
     hp.address = addr;
-    hp.offset=get_stack(2); 
-    hp.type = USING_SPLIT|DATA_INDIRECT;
-    hp. index=0;
-    hp.split=get_stack(1);
-    return NewHook(hp, "YukaSystem2"); 
+    hp.offset = get_stack(2);
+    hp.type = USING_SPLIT | DATA_INDIRECT;
+    hp.index = 0;
+    hp.split = get_stack(1);
+    return NewHook(hp, "YukaSystem2");
   }
 }
-namespace __{ 
-bool YukaSystem1Filter(LPVOID data, size_t *size, HookParam *)
+namespace __
 {
-  auto text = reinterpret_cast<LPSTR>(data);
-  auto len = reinterpret_cast<size_t *>(size);
+  bool YukaSystem1Filter(LPVOID data, size_t *size, HookParam *)
+  {
+    auto text = reinterpret_cast<LPSTR>(data);
+    auto len = reinterpret_cast<size_t *>(size);
 
-  if (*len == 0) return false;
+    if (*len == 0)
+      return false;
 
-  // if acii add a space at the end of the sentence overwriting null terminator
-  if (*len >=2 && text[*len-2]>0)
-    text[(*len)++] = ' ';
+    // if acii add a space at the end of the sentence overwriting null terminator
+    if (*len >= 2 && text[*len - 2] > 0)
+      text[(*len)++] = ' ';
 
-  if (cpp_strnstr(text, "@r(", *len)) {
-    StringFilterBetween(text, len, "@r(", 3, ")", 1); // @r(2,はと)
+    if (cpp_strnstr(text, "@r(", *len))
+    {
+      StringFilterBetween(text, len, "@r(", 3, ")", 1); // @r(2,はと)
+    }
+
+    return true;
   }
 
-  return true;
-}
+  bool InsertYukaSystem1Hook()
+  {
+    /*
+     * Sample games:
+     * https://vndb.org/r71601
+     * https://vndb.org/v7507
+     */
+    const BYTE bytes[] = {
+        0x80, 0x3D, XX4, 0x01, // cmp byte ptr [kimihime.exe+16809C],01     << hook here
+        0x75, 0x11,            // jne kimihime.exe+42D74
+        0xB9, XX4,             // mov ecx,kimihime.exe+C7F8C
+        0xC6, 0x05, XX4, 0x00  // mov byte ptr [kimihime.exe+1516C5],00
+    };
+    ULONG range = min(processStopAddress - processStartAddress, MAX_REL_ADDR);
+    ULONG addr = MemDbg::findBytes(bytes, sizeof(bytes), processStartAddress, processStartAddress + range);
+    if (!addr)
+    {
+      ConsoleOutput("YukaSystem1: pattern not found");
+      return false;
+    }
 
-bool InsertYukaSystem1Hook()
+    HookParam hp;
+    hp.address = addr;
+    hp.offset = get_reg(regs::eax);
+    hp.type = USING_STRING | KNOWN_UNSTABLE;
+    hp.filter_fun = YukaSystem1Filter;
+    ConsoleOutput("INSERT YukaSystem1");
+    return NewHook(hp, "YukaSystem1");
+  }
+}
+namespace
 {
-  /*
-  * Sample games:
-  * https://vndb.org/r71601
-  * https://vndb.org/v7507
-  */
-  const BYTE bytes[] = {
-    0x80, 0x3D, XX4, 0x01,      // cmp byte ptr [kimihime.exe+16809C],01     << hook here
-    0x75, 0x11,                 // jne kimihime.exe+42D74
-    0xB9, XX4,                  // mov ecx,kimihime.exe+C7F8C
-    0xC6, 0x05, XX4, 0x00       // mov byte ptr [kimihime.exe+1516C5],00
-  };
-  ULONG range = min(processStopAddress - processStartAddress, MAX_REL_ADDR);
-  ULONG addr = MemDbg::findBytes(bytes, sizeof(bytes), processStartAddress, processStartAddress + range);
-  if (!addr) {
-    ConsoleOutput("YukaSystem1: pattern not found");
-    return false;
-  }
+  bool h1()
+  {
+    // https://vndb.org/v540
+    // シャマナシャマナ～月とこころと太陽の魔法～
+    auto addr = Util::FindImportEntry(processStartAddress, (DWORD)IsDBCSLeadByteEx);
+    if (!addr)
+      return false;
+    const BYTE bytes[] = {
+        0xff, 0x15, XX4,
+        0x83, 0xf8, 0x01,
+        0x0f, 0x85, XX4,
+        0x33, 0xd2,
+        0xb9, 0x02, 0x00, 0x00, 0x00,
+        0xbf, XX4,
+        0x8b, 0xf3,
+        0x33, 0xc0,
+        0xf3, 0xa6,
+        0x74, XX,
+        0xb8, XX4,
+        0x8a, 0x48, 0x02,
+        0x83, 0xc0, 0x02,
+        0x83, 0xc2, 0x02,
+        0x84, 0xc9,
+        0x74, XX,
+        0xb9, 0x02, 0x00, 0x00, 0x00,
+        0x8b, 0xf8,
+        0x8b, 0xf3,
+        0x33, 0xed,
+        0xf3, 0xa6};
+    memcpy((void *)(bytes + 2), &addr, 4);
+    addr = MemDbg::findBytes(bytes, sizeof(bytes), processStartAddress, processStopAddress);
+    if (!addr)
+      return false;
+    addr = MemDbg::findEnclosingAlignedFunction(addr, 0x100);
+    if (!addr)
+      return false;
+    HookParam hp;
+    hp.address = addr;
+    hp.offset = get_stack(2);
+    hp.type = USING_CHAR | DATA_INDIRECT;
+    hp.filter_fun = [](LPVOID data, size_t *size, HookParam *)
+    {
+      auto text = reinterpret_cast<LPSTR>(data);
+      auto len = reinterpret_cast<size_t *>(size);
+      CharFilter(text, len, '@');
 
-  HookParam hp;
-  hp.address = addr;
-  hp.offset=get_reg(regs::eax);
-  hp.type = USING_STRING | KNOWN_UNSTABLE;
-  hp.filter_fun = YukaSystem1Filter;
-  ConsoleOutput("INSERT YukaSystem1");
-  return NewHook(hp, "YukaSystem1");
+      return true;
+    };
+    return NewHook(hp, "caramelbox");
+  }
 }
+bool YukaSystem2::attach_function()
+{
+  bool _1 = h1() || __::InsertYukaSystem1Hook();
+  return InsertYukaSystem2Hook() || hook2() || _1;
 }
-  
-bool YukaSystem2::attach_function() {  
-    bool _1=__::InsertYukaSystem1Hook();
-    return InsertYukaSystem2Hook()||hook2()||_1;
-} 
