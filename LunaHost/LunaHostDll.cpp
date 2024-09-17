@@ -87,16 +87,10 @@ C_LUNA_API bool Luna_InsertHookCode(DWORD pid, LPCWSTR hookcode)
         Host::InsertHook(pid, hp.value());
     return hp.has_value();
 }
-C_LUNA_API wchar_t *Luna_QueryThreadHistory(ThreadParam tp)
+C_LUNA_API void Luna_QueryThreadHistory(ThreadParam tp, void (*callback)(const wchar_t *))
 {
     auto s = Host::GetThread(tp).storage.Acquire();
-    auto str = (wchar_t *)malloc(sizeof(wchar_t) * (s->size() + 1));
-    wcscpy(str, s->c_str());
-    return str;
-}
-C_LUNA_API void Luna_FreePtr(void *ptr)
-{
-    free(ptr);
+    callback(s->c_str());
 }
 C_LUNA_API void Luna_RemoveHook(DWORD pid, uint64_t addr)
 {
