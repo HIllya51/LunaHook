@@ -17,6 +17,7 @@
 #include "engine64/Kincaid.h"
 #include "engine64/LightVN.h"
 #include "engine64/yuzusuyu.h"
+#include "engine64/Ryujinx.h"
 #include "engine64/vita3k.h"
 #include "engine64/rpcs3.h"
 #include "engines/lua/lua51.h"
@@ -47,5 +48,6 @@ std::vector<ENGINE *> check_engines()
         new Kincaid,
         new livecaptions,
         new lua51,
+        new Ryujinx
     };
 }
