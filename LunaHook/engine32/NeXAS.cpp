@@ -1,4 +1,4 @@
-#include"NeXAS.h"
+#include "NeXAS.h"
 
 /** jichi 7/6/2014 NeXAS
  *  Sample game: BALDRSKYZERO EXTREME
@@ -238,11 +238,61 @@ bool InsertNeXASHook()
 {
   // There are two GetGlyphOutlineA, both of which seem to have the same texts
   ULONG addr = MemDbg::findCallAddress((ULONG)::GetGlyphOutlineA, processStartAddress, processStopAddress);
-  if (!addr) {
-    ConsoleOutput("NexAS: failed");
+  if (!addr)
     return false;
+  BYTE sig[] = {
+      /*
+      .text:00467841                 cmp     dword ptr [esi+18h], 10h
+  .text:00467845                 jb      short loc_46784C
+  .text:00467847                 mov     esi, [esi+4]
+  .text:0046784A                 jmp     short loc_46784F
+  .text:0046784C ; ---------------------------------------------------------------------------
+  .text:0046784C
+  .text:0046784C loc_46784C:                             ; CODE XREF: sub_467540+305↑j
+  .text:0046784C                 add     esi, 4
+  .text:0046784F
+  .text:0046784F loc_46784F:                             ; CODE XREF: sub_467540+30A↑j
+  .text:0046784F                 push    esi             ; String
+  .text:00467850                 call    __mbsnextc
+      */
+      /*
+      if ( *(_DWORD *)(v1 + 288) < 0x10u )
+         v9 = (const unsigned __int8 *)(v1 + 268);
+       else
+         v9 = *(const unsigned __int8 **)(v1 + 268);
+       uChara = _mbsnextc(v9);
+       GlyphOutlineA = GetGlyphOutlineA(DC, uChara, 6u, &gm, 0, 0, &mat2);
+      */
+      0x83, 0x7E, 0x18, 0x10,
+      0x72, 0x05,
+      0x8B, 0x76, 0x04,
+      0xEB, 0x03,
+      0x83, 0xC6, 0x04,
+      0x56,
+      0xE8, XX4};
+  auto addr2 = reverseFindBytes(sig, sizeof(sig), addr - 0x40, addr);
+  if (addr2)
+  {
+    addr2 = MemDbg::findEnclosingAlignedFunction(addr2);
+    if (addr2)
+    {
+      HookParam hp;
+      hp.address = addr2;
+      hp.text_fun = [](hook_stack *stack, HookParam *hp, uintptr_t *data, uintptr_t *split, size_t *len)
+      {
+        auto v1 = stack->ecx;
+        const unsigned __int8 *v9;
+        if (*(DWORD *)(v1 + 288) < 0x10u)
+          v9 = (const unsigned __int8 *)(v1 + 268);
+        else
+          v9 = *(const unsigned __int8 **)(v1 + 268);
+        *data = (DWORD)v9;
+        *len = strlen((char*)v9);
+      };
+      if (NewHook(hp, "NeXAS_1"))
+        return true;
+    }
   }
-
   // DWORD GetGlyphOutline(
   //   _In_   HDC hdc,
   //   _In_   UINT uChar,
@@ -252,92 +302,106 @@ bool InsertNeXASHook()
   //   _Out_  LPVOID lpvBuffer,
   //   _In_   const MAT2 *lpmat2
   // );
-   
+
   HookParam hp;
-  //hp.address = (DWORD)::GetGlyphOutlineA;
+  // hp.address = (DWORD)::GetGlyphOutlineA;
   hp.address = addr;
-  //hp.type = USING_STRING|USING_SPLIT;
-  hp.type = CODEC_ANSI_BE|NO_CONTEXT|USING_SPLIT;
+  // hp.type = USING_STRING|USING_SPLIT;
+  hp.type = CODEC_ANSI_BE | NO_CONTEXT | USING_SPLIT;
   hp.offset = get_stack(1);
 
   // Either lpgm or lpmat2 are good choices
   hp.split = get_stack(3);
-  //hp.split = arg7_lpmat2; // = 0x18, arg7
+  // hp.split = arg7_lpmat2; // = 0x18, arg7
 
   ConsoleOutput("INSERT NeXAS");
   return NewHook(hp, "NeXAS");
 }
-namespace {
-  bool _2(){
-    //飛ぶ山羊はさかさまの木の夢を見るか
-    BYTE bs[]={
-      0x8B,0x56,0x68,
-      0x8a,0x04,0x3a,
-      0x8d,0x0c,0x3a,
-      0x33,0xdb,
-      0x3c,0x40
-    };
-    auto addr=MemDbg::findBytes(bs,sizeof(bs),processStartAddress,processStopAddress);
-    if(addr==0)return 0;
-    HookParam hp; 
-    hp.address = addr+9; 
+namespace
+{
+  bool _2()
+  {
+    // 飛ぶ山羊はさかさまの木の夢を見るか
+    BYTE bs[] = {
+        0x8B, 0x56, 0x68,
+        0x8a, 0x04, 0x3a,
+        0x8d, 0x0c, 0x3a,
+        0x33, 0xdb,
+        0x3c, 0x40};
+    auto addr = MemDbg::findBytes(bs, sizeof(bs), processStartAddress, processStopAddress);
+    if (addr == 0)
+      return 0;
+    HookParam hp;
+    hp.address = addr + 9;
     hp.type = DATA_INDIRECT;
-    hp.index=0;
-    hp.offset=get_reg(regs::ecx);
-    hp.filter_fun=[](LPVOID data, size_t *size, HookParam *)
+    hp.index = 0;
+    hp.offset = get_reg(regs::ecx);
+    hp.filter_fun = [](LPVOID data, size_t *size, HookParam *)
     {
-      auto text = reinterpret_cast<LPSTR>(data); 
-      if (text[0] == '@') {
+      auto text = reinterpret_cast<LPSTR>(data);
+      if (text[0] == '@')
+      {
         return false;
       }
       return true;
     };
-   
+
     return NewHook(hp, "NeXAS2");
   }
 }
 namespace
 {
-  bool _3(){
-    //真剣で私に恋しなさい！Ａ－５
-    char atv[] ="@v";
-    auto aV=MemDbg::findBytes(atv,sizeof(atv),processStartAddress,processStopAddress);
-    if(!aV)return false;
-    aV=MemDbg::findBytes(atv,sizeof(atv),aV+1,processStopAddress);//第一个是历史，第二个才是当前文本
-    if(!aV)return false;
-    auto addr=MemDbg::findPushAddress(aV,processStartAddress,processStopAddress);
-    if(addr==0)return 0;
-    addr=MemDbg::findEnclosingAlignedFunction(addr);
-    if(addr==0)return 0;
-    HookParam hp; 
-    hp.address = addr; 
-    hp.type=USING_STRING;
-    hp.text_fun=[](hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
-      auto a2=(TextUnionA*)stack->stack[1];//std::string*
-      *data=(DWORD)a2->getText();
-      *len=strlen(a2->getText());
+  bool _3()
+  {
+    // 真剣で私に恋しなさい！Ａ－５
+    char atv[] = "@v";
+    auto aV = MemDbg::findBytes(atv, sizeof(atv), processStartAddress, processStopAddress);
+    if (!aV)
+      return false;
+    aV = MemDbg::findBytes(atv, sizeof(atv), aV + 1, processStopAddress); // 第一个是历史，第二个才是当前文本
+    if (!aV)
+      return false;
+    auto addr = MemDbg::findPushAddress(aV, processStartAddress, processStopAddress);
+    if (addr == 0)
+      return 0;
+    addr = MemDbg::findEnclosingAlignedFunction(addr);
+    if (addr == 0)
+      return 0;
+    HookParam hp;
+    hp.address = addr;
+    hp.type = USING_STRING;
+    hp.text_fun = [](hook_stack *stack, HookParam *hp, uintptr_t *data, uintptr_t *split, size_t *len)
+    {
+      auto a2 = (TextUnionA *)stack->stack[1]; // std::string*
+      *data = (DWORD)a2->getText();
+      *len = strlen(a2->getText());
     };
-    hp.filter_fun=[](void* data, size_t* len, HookParam* hp){
-      auto s=std::string((char*)data,*len);
-      if(startWith(s,"@")){
-        if(startWith(s,"@v")){
-          //S001_L1_0001
-          s=std::regex_replace(s, std::regex("@v[a-zA-Z0-9]{4}_[a-zA-Z0-9]{2}_[a-zA-Z0-9]{4}"), "");
-          return write_string_overwrite(data,len,s);
+    hp.filter_fun = [](void *data, size_t *len, HookParam *hp)
+    {
+      auto s = std::string((char *)data, *len);
+      if (startWith(s, "@"))
+      {
+        if (startWith(s, "@v"))
+        {
+          // S001_L1_0001
+          s = std::regex_replace(s, std::regex("@v[a-zA-Z0-9]{4}_[a-zA-Z0-9]{2}_[a-zA-Z0-9]{4}"), "");
+          return write_string_overwrite(data, len, s);
         }
-        else{
+        else
+        {
           return false;
         }
       }
 
       return true;
     };
-    hp.newlineseperator=L"@n";
+    hp.newlineseperator = L"@n";
     return NewHook(hp, "NeXAS3");
   }
 }
 
-bool NeXAS::attach_function() {
-    auto _=_2()||_3();
-    return InsertNeXASHook()||_;
-}  
+bool NeXAS::attach_function()
+{
+  auto _ = _2() || _3();
+  return InsertNeXASHook() || _;
+}
