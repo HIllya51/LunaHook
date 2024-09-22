@@ -170,10 +170,40 @@ namespace
     return NewHook(hp, "RealLiveX");
   }
 }
+namespace
+{
+  // https://vndb.org/r1944
+  bool veryold()
+  {
+    HookParam hp;
+    hp.address = (DWORD)GetProcAddress(GetModuleHandleA("gdi32.dll"), "GetGlyphOutline");
+    hp.type = HOOK_RETURN;
+    hp.text_fun = [](hook_stack *stack, HookParam *hps, uintptr_t *data, uintptr_t *split, size_t *len)
+    {
+      hps->type = HOOK_EMPTY;
+      auto addr = findfuncstart(hps->address);
+      if (!addr)
+        return;
+      auto addrs = findxref_reverse_checkcallop(addr, processStartAddress, processStopAddress, 0xe8);
+      if (addrs.size() != 1)
+        return;
+      addr = addrs[0];
+      addr = MemDbg::findEnclosingAlignedFunction(addr);
+      if (!addr)
+        return;
+      HookParam hp;
+      hp.address = addr;
+      hp.offset = get_stack(5);
+      hp.type = USING_CHAR | CODEC_ANSI_BE;
+      NewHook(hp, "RealLiveOld");
+    };
+    return NewHook(hp, "GetGlyphOutline");
+  }
+}
 bool Reallive::attach_function()
 {
   InsertRealliveHook();
-  InsertRlBabelHook() || clannad_en_steam();
+  InsertRlBabelHook() || clannad_en_steam() || veryold();
   return true;
 }
 
@@ -229,7 +259,7 @@ bool avg3216dattach_function2()
   auto addr = MemDbg::findBytes(pattern2, sizeof(pattern2), processStartAddress, processStopAddress);
   if (addr == 0)
     return false;
-  addr = findfuncstart(addr, 0x200,true);
+  addr = findfuncstart(addr, 0x200, true);
   if (addr == 0)
     return false;
   HookParam hp;
