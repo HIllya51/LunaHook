@@ -461,10 +461,44 @@ namespace
     return NewHook(hp, "Elf4");
   }
 }
+namespace
+{
+  bool nvxijiazu()
+  {
+    // https://vndb.org/v3327
+    // 女系家族～淫謀～
+    BYTE sig[] = {
+        //clang-format off
+        0X55,
+        0x8b, 0xec, // mov ebp,esp
+        0x51, 0x53, 0x56,
+        0x8b, 0xf1,
+        0x66, 0xc7, 0x45, 0xfd, 0x00, 0x00,
+        0x66, 0x8b, 0x4d, 0x10, // mov ecx,[ebp+10]
+        0x66, 0x8b, 0xd1,
+        0x66, 0xc1, 0xea, 0x08,
+        0x80, 0xfa, 0x81, // cmp dl,0x81
+        0x72, 0x05,
+        0x80, 0xfa, 0x9f, // cmp dl,0x9f
+        0x76, XX,
+        //clang-format on
+    };
+    // clang-format on
+    ULONG addr = MemDbg::findBytes(sig, sizeof(sig), processStartAddress, processStopAddress);
+    if (!addr)
+      return false;
+    HookParam hp;
+    hp.address = addr;
+    hp.type = USING_CHAR | CODEC_ANSI_BE | DATA_INDIRECT; // 不可以NO_CONTEXT，因为有彩色可点击文字，会在另一个context有很多垃圾文本
+    hp.offset = get_reg(regs::esp);
+    hp.index = 0x10;
+    return NewHook(hp, "Elf4");
+  }
+}
 bool Elf::attach_function()
 {
 
-  auto _1 = InsertElfHook() || __() || elf4() || elf3();
+  auto _1 = InsertElfHook() || __() || elf4() || nvxijiazu() || elf3();
   return ScenarioHook::attach(processStartAddress, processStopAddress) || _1;
 }
 
