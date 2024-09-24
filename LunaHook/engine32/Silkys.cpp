@@ -254,7 +254,7 @@ bool hookBefore(hook_stack *s, void *data1, size_t *len, uintptr_t *role)
   // FIXME: I am not able to distinguish choice out
   *role =
       s->stack[1] ? Engine::NameRole : // arg2 != 0 for name
-          // s->ebx > 0x0fffffff ? Engine::ChoiceRole : // edx is a pointer for choice
+                                       // s->ebx > 0x0fffffff ? Engine::ChoiceRole : // edx is a pointer for choice
           Engine::ScenarioRole;
 
   std::string oldData(arg->getText(), arg->size);
@@ -734,4 +734,41 @@ bool Silkysveryveryold_attach_function()
 bool Silkysveryveryold::attach_function()
 {
   return Silkysveryveryold_attach_function() || fob2();
+}
+
+bool Aisystem6::attach_function()
+{
+  // 肢体を洗う
+  const BYTE bytes[] = {
+      // if ( *(_WORD *)lpString == 0x9381 && v9 == 2 )
+      0x66, 0x8B, 0x01, 0xF7, // mov     ax, [ecx]
+      0xDD, 0x1B,
+      0xED, 0x83, 0xC5, 0x02,
+      0xD1, 0xEB,
+      0x0F, 0xAF, 0xDD,
+      0x66, 0x3D, 0x81, 0x93, // cmp     ax, 9381h
+  };
+  ULONG addr = MemDbg::findBytes(bytes, sizeof(bytes), processStartAddress, processStopAddress);
+  if (!addr)
+    return false;
+  addr = MemDbg::findEnclosingAlignedFunction(addr);
+  if (!addr)
+    return false;
+  // 有三个这个同型的函数，分别显示不同的内容，各自只调用一次，在xref里面分发。
+  auto addrs = findxref_reverse_checkcallop(addr, addr - 0x1000, addr + 0x1000, 0xe8);
+  if (addrs.size() != 1)
+    return false;
+  addr = MemDbg::findEnclosingAlignedFunction(addrs[0]);
+  if (!addr)
+    return false;
+  HookParam hp;
+  hp.address = addr;
+  hp.offset = get_stack(1);
+  hp.type = USING_STRING | NO_CONTEXT; // 男主自定义人名会被分开
+  hp.filter_fun = [](void *data, size_t *len, HookParam *hp)
+  {
+    StringCharReplacer((char *)data, len, "\x81\x93", 2, '\n');
+    return true;
+  };
+  return NewHook(hp, "Aisystem6");
 }

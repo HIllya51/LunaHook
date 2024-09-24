@@ -63,3 +63,22 @@ public:
     };
     bool attach_function();
 };
+
+class Aisystem6 : public ENGINE
+{
+public:
+    Aisystem6()
+    {
+        // 肢体を洗う
+        check_by = CHECK_BY::CUSTOM;
+        check_by_target = []()
+        {
+            auto check1 = Util::CheckFile(L"script.arc") && Util::CheckFile(L"sequence.arc") && Util::CheckFile(L"mask.arc") && Util::CheckFile(L"bitmap.arc") && Util::CheckFile(L"flag0000");
+            if (!check1)
+                return false;
+            char AISYSTEM_6[] = "AISYSTEM_6";
+            return 0 != MemDbg::findBytes(AISYSTEM_6, sizeof(AISYSTEM_6), processStartAddress, min(processStopAddress, processStartAddress + 0x100000));
+        };
+    };
+    bool attach_function();
+};

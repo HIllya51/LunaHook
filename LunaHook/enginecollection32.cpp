@@ -404,6 +404,7 @@ std::vector<ENGINE *> check_engines()
         new RealliveX,
         new TextXtra_x32,
         new Stronger,
-        new RPGMaker
+        new RPGMaker,
+        new Aisystem6
     };
 }
