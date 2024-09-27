@@ -221,7 +221,7 @@ void TextHook::parsenewlineseperator(void *data, size_t *len)
 
   if (hp.type & CODEC_UTF16)
   {
-    StringReplacer((wchar_t *)data, len, hp.newlineseperator, wcslen(hp.newlineseperator), L"\n", 1);
+    StringCharReplacer((wchar_t *)data, len, hp.newlineseperator, wcslen(hp.newlineseperator), L'\n');
   }
   else if (hp.type & CODEC_UTF32)
     return;
@@ -231,7 +231,7 @@ void TextHook::parsenewlineseperator(void *data, size_t *len)
     std::string newlineseperatorA;
     for (int i = 0; i < wcslen(hp.newlineseperator); i++)
       newlineseperatorA += (char)hp.newlineseperator[i];
-    StringReplacer((char *)data, len, newlineseperatorA.c_str(), newlineseperatorA.size(), "\n", 1);
+    StringCharReplacer((char *)data, len, newlineseperatorA.c_str(), newlineseperatorA.size(), '\n');
   }
 }
 UINT64 texthash(void *data, size_t len)

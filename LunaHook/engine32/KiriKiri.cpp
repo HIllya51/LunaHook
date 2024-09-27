@@ -1390,12 +1390,14 @@ namespace Private {
   
   std::wstring ConvertToFullWidth(const std::wstring& str) {
     std::wstring fullWidthStr;
+    wchar_t last=0;
     for (wchar_t c : str) {
-        if (c >= 32 && c <= 126) {
+        if (c >= 32 && c <= 126 && c!=L'\\' && last!=L'\\') {
             fullWidthStr += static_cast<wchar_t>(c + 65248);
         } else {
             fullWidthStr += c;
         }
+        last=c;
     }
     return fullWidthStr;
 }
@@ -1532,6 +1534,7 @@ bool attach(ULONG startAddress, ULONG stopAddress)
     hp.type = EMBED_ABLE|CODEC_UTF8;
     hp.hook_before=hookBeforez;
     hp.hook_after=after;
+    hp.newlineseperator=L"\\n";
     succ|=NewHook(hp, "EmbedKrkrZ"); 
     // return true;
     }
