@@ -44,7 +44,7 @@ bool InsertCodeXHook()
   hp.address = addr;
   hp.offset = get_reg(regs::eax);
   hp.index = 0;
-  hp.type = USING_STRING | EMBED_ABLE | EMBED_AFTER_OVERWRITE | EMBED_BEFORE_SIMPLE; // 无法解决中文乱码
+  hp.type = USING_STRING | EMBED_ABLE | EMBED_AFTER_OVERWRITE | EMBED_BEFORE_SIMPLE | NO_CONTEXT; // 无法解决中文乱码
   hp.hook_font = F_GetGlyphOutlineA;
   hp.filter_fun = CodeXFilter;
   ConsoleOutput("INSERT CodeX");
@@ -110,7 +110,41 @@ namespace
     return NewHook(hp, "CodeX");
   }
 }
+namespace
+{
+  bool hook3()
+  {
+    BYTE _[] = {
+        // clang-format off
+      // if ( *(_WORD *)v38 == 8511 || (_WORD)v5 == 16161 || (_WORD)v5 == 8481 )
+        0xB9,0x3F,0x21,0x00,0x00,//mov     ecx, 213Fh
+        0x0F,0xB7,0x02,//movzx   eax, word ptr [edx]
+        0x66,0x3B,0xC1,// cmp     ax, cx
+        0x0F,0x84,XX4,//jz      loc_458294
+        0xb9,0x21,0x3f,0x00,0x00,// mov     ecx, 3F21h
+        0x66,0x3B,0xC1,
+        0x0F,0x84,XX4,
+        0xb9,0x21,0x21,0x00,0x00,// mov     ecx, 2121h
+        0x66,0x3B,0xC1,
+        0x0F,0x84,XX4,
+        // clang-format on
+    };
+    ULONG addr = MemDbg::findBytes(_, sizeof(_), processStartAddress, processStopAddress);
+    if (addr == 0)
+      return false;
+    addr = MemDbg::findEnclosingAlignedFunction(addr);
+    if (addr == 0)
+      return false;
+    HookParam hp;
+    hp.address = addr;
+    hp.offset = get_stack(1);
+    hp.type = USING_STRING | FULL_STRING | NO_CONTEXT;
+    // 这个可以提取到人名，但是会把一堆字体名给hook进去，所以不要内嵌
+    hp.filter_fun = CodeXFilter;
+    return NewHook(hp, "CodeX2");
+  }
+}
 bool CodeX::attach_function()
 {
-  return InsertCodeXHook() || hook() || hook2();
+  return (hook3() | InsertCodeXHook()) || hook() || hook2();
 }
