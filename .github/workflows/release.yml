@@ -36,10 +36,10 @@ jobs:
       - name: Pack
         run: python build.py pack
 
-      - name: Generate attestation for artifact
-        uses: actions/attest-build-provenance@v1
-        with:
-          subject-path: builds/${{ matrix.target }}.zip
+      # - name: Generate attestation for artifact
+      #   uses: actions/attest-build-provenance@v1
+      #   with:
+      #     subject-path: builds/${{ matrix.target }}.zip
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
@@ -94,10 +94,10 @@ jobs:
       - name: Pack
         run: python build.py pack
 
-      - name: Generate attestation for artifact
-        uses: actions/attest-build-provenance@v1
-        with:
-          subject-path: builds/${{ matrix.target }}.zip
+      # - name: Generate attestation for artifact
+      #   uses: actions/attest-build-provenance@v1
+      #   with:
+      #     subject-path: builds/${{ matrix.target }}.zip
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
@@ -144,10 +144,10 @@ jobs:
       - name: Pack
         run: python build.py pack
 
-      - name: Generate attestation for artifact
-        uses: actions/attest-build-provenance@v1
-        with:
-          subject-path: builds/${{ matrix.target }}.zip
+      # - name: Generate attestation for artifact
+      #   uses: actions/attest-build-provenance@v1
+      #   with:
+      #     subject-path: builds/${{ matrix.target }}.zip
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
