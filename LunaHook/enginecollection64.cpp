@@ -20,6 +20,7 @@
 #include "engine64/Ryujinx.h"
 #include "engine64/vita3k.h"
 #include "engine64/rpcs3.h"
+#include "engine64/MKXPZ.h"
 #include "engines/lua/lua51.h"
 #include "engines/python/Renpy.h"
 std::vector<ENGINE *> check_engines()
@@ -48,6 +49,7 @@ std::vector<ENGINE *> check_engines()
         new Kincaid,
         new livecaptions,
         new lua51,
-        new Ryujinx
+        new Ryujinx,
+        new MKXPZ
     };
 }
