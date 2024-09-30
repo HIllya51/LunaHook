@@ -88,6 +88,7 @@
 #include "engine32/Lucifen.h"
 #include "engine32/Waffle.h"
 #include "engine32/AksysGames.h"
+#include "engine32/AGE_System.h"
 #include "engine32/Sakuradog.h"
 #include "engine32/TinkerBell.h"
 #include "engine32/Jisatu101.h"
@@ -407,6 +408,7 @@ std::vector<ENGINE *> check_engines()
         new Stronger,
         new RPGMaker,
         new Aisystem6,
-        new AksysGames
+        new AksysGames,
+        new AGE_System,
     };
 }
