@@ -101,6 +101,15 @@ void ConsoleOutput(LPCSTR text, ...)
 	vsnprintf(buffer.message, MESSAGE_SIZE, text, args);
 	WriteFile(hookPipe, &buffer, sizeof(buffer), DUMMY, nullptr);
 }
+
+void WarningOutput(LPCSTR text, ...)
+{
+	WarningNotif buffer;
+	va_list args;
+	va_start(args, text);
+	vsnprintf(buffer.message, MESSAGE_SIZE, text, args);
+	WriteFile(hookPipe, &buffer, sizeof(buffer), DUMMY, nullptr);
+}
 Synchronized<std::unordered_map<uintptr_t, std::wstring>> modulecache;
 std::wstring &querymodule(uintptr_t addr)
 {

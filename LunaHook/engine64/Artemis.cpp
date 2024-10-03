@@ -54,8 +54,8 @@ bool Artemis64()
 
 bool Artemis64x()
 {
-	//https://vndb.org/v50832
-	//きら☆かの 体验版
+	// https://vndb.org/v50832
+	// きら☆かの 体验版
 
 	/*
 	__int64 __fastcall sub_1401B13F0(__int64 a1, unsigned __int64 a2, char **a3)

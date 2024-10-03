@@ -16,7 +16,7 @@
 #include "engine64/TYPEMOON.h"
 #include "engine64/Kincaid.h"
 #include "engine64/LightVN.h"
-#include "engine64/yuzusuyu.h"
+#include "engine64/yuzu.h"
 #include "engine64/Ryujinx.h"
 #include "engine64/vita3k.h"
 #include "engine64/rpcs3.h"
@@ -42,7 +42,7 @@ std::vector<ENGINE *> check_engines()
         new _5pb,
         new TYPEMOON,
         new ENTERGRAM,
-        new yuzusuyu,
+        new yuzu,
         new PPSSPPengine,
         new vita3k,
         new rpcs3,

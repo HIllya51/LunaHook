@@ -183,6 +183,12 @@ struct ConsoleOutputNotif // From dll
 	HostNotificationType command = HOST_NOTIFICATION_TEXT;
 	char message[MESSAGE_SIZE] = {};
 };
+struct WarningNotif // From dll
+{
+	WarningNotif(std::string message = "") { strncpy_s(this->message, message.c_str(), MESSAGE_SIZE - 1); }
+	HostNotificationType command = HOST_NOTIFICATION_WARNING;
+	char message[MESSAGE_SIZE] = {};
+};
 
 struct HookFoundNotif // From dll
 {

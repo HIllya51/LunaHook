@@ -464,7 +464,7 @@ std::array<InfoForExtension, 20> Pluginmanager::GetSentenceInfo(TextThread &thre
     static DWORD SelectedProcessId;
     auto currthread = (TextThread *)host->currentselect;
     SelectedProcessId = (currthread != 0) ? currthread->tp.processId : 0;
-    DWORD (*GetSelectedProcessId)
+    DWORD(*GetSelectedProcessId)
     () = []
     { return SelectedProcessId; };
 

@@ -26,15 +26,17 @@
 //   }
 // }
 
-class Kincaid:public ENGINE{
-    public:
-    Kincaid(){
-        
-        check_by=CHECK_BY::CUSTOM;
-        check_by_target=[](){
-            return Util::SearchResourceString(L"Cookiedraggy")|| Util::SearchResourceString(L"The Adventures of Kincaid");
-        };
+class Kincaid : public ENGINE
+{
+public:
+    Kincaid()
+    {
 
+        check_by = CHECK_BY::CUSTOM;
+        check_by_target = []()
+        {
+            return Util::SearchResourceString(L"Cookiedraggy") || Util::SearchResourceString(L"The Adventures of Kincaid");
+        };
     };
     bool attach_function();
 };

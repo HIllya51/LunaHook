@@ -26,7 +26,7 @@ typedef void (*EmbedCallback)(const wchar_t *, ThreadParam);
     wchar_t hookcode[HOOKCODE_LEN];                       \
     wcscpy_s(hookcode, HOOKCODE_LEN, thread.hp.hookcode); \
     strcpy_s(name, HOOK_NAME_SIZE, thread.hp.name);
-C_LUNA_API void Luna_Start(ProcessEvent Connect, ProcessEvent Disconnect, ThreadEvent Create, ThreadEvent Destroy, OutputCallback Output, ConsoleHandler console, HookInsertHandler hookinsert, EmbedCallback embed)
+C_LUNA_API void Luna_Start(ProcessEvent Connect, ProcessEvent Disconnect, ThreadEvent Create, ThreadEvent Destroy, OutputCallback Output, ConsoleHandler console, HookInsertHandler hookinsert, EmbedCallback embed, ConsoleHandler Warning)
 {
     Host::StartEx(
         Connect,
@@ -56,6 +56,10 @@ C_LUNA_API void Luna_Start(ProcessEvent Connect, ProcessEvent Disconnect, Thread
         [=](const std::wstring &output, const ThreadParam &tp)
         {
             embed(output.c_str(), tp);
+        },
+        [=](const std::wstring &output)
+        {
+            Warning(output.c_str());
         });
 }
 C_LUNA_API void Luna_Inject(DWORD pid, LPCWSTR basepath)

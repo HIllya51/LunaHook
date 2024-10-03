@@ -1,5 +1,5 @@
-#include"V8.h"
-#include"v8/v8.h"
+#include "V8.h"
+#include "v8/v8.h"
 #if 0
 // Artikash 6/23/2019: V8 (JavaScript runtime) has rcx = string** at v8::String::Write
 // sample game https://www.freem.ne.jp/dl/win/18963
@@ -113,7 +113,7 @@ namespace{
 		}
 		return save;
 	}
-	#if 0
+#if 0
 	std::vector<HookParam> v8hook1(HMODULE module) {
 		
 		const BYTE BYTES[] = {
@@ -155,7 +155,7 @@ namespace{
 		}
 		return save;
 	}
-	#endif
+#endif
 	bool innerHTML(HMODULE module) {
 		//花葬
 		//result = sub_142DF3CA0(a2, v5, 1u, (__int64)"innerHTML", a3);
@@ -208,8 +208,8 @@ namespace{
 }
 
 #endif
-bool V8::attach_function_() {
-	
-	return tryhookv8();
-} 
+bool V8::attach_function_()
+{
 
+	return tryhookv8();
+}

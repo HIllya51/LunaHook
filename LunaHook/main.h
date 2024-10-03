@@ -6,6 +6,7 @@
 
 void TextOutput(const ThreadParam &tp, const HookParam &hp, TextOutput_T(*buffer), int len);
 void ConsoleOutput(LPCSTR text, ...);
+void WarningOutput(LPCSTR text, ...);
 void NotifyHookFound(HookParam hp, wchar_t *text);
 void NotifyHookRemove(uint64_t addr, LPCSTR name);
 bool NewHook(HookParam hp, LPCSTR name);
@@ -27,6 +28,6 @@ void context_set(hook_stack *, PCONTEXT);
 inline std::map<uintptr_t, std::pair<std::string, HookParam>> delayinserthook;
 void delayinsertadd(HookParam, std::string);
 void delayinsertNewHook(uintptr_t);
-
+inline bool safeautoleaveveh = false;
 inline bool dont_detach = false;
 inline bool host_connected = false;

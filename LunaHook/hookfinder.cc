@@ -222,7 +222,6 @@ void SafeSendJitVeh(hook_stack *stack, uintptr_t address, uintptr_t em_addr, JIT
 	}
 }
 std::unordered_map<uintptr_t, uint64_t> addresscalledtime;
-bool safeautoleaveveh = false;
 bool SendJitVeh(PCONTEXT context, uintptr_t address, uintptr_t em_addr, JITTYPE jittype)
 {
 	if (safeautoleaveveh)
@@ -295,7 +294,7 @@ void SearchForHooks_Return()
 			if (!records[i].em_addr)
 				continue;
 			hp.emu_addr = records[i].em_addr;
-			hp.type = CODEC_UTF16 | USING_STRING | BREAK_POINT;
+			hp.type = CODEC_UTF16 | USING_STRING | BREAK_POINT | NO_CONTEXT;
 			hp.argidx = records[i].argidx;
 		}
 		NotifyHookFound(hp, (wchar_t *)records[i].text);

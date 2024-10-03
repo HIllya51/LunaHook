@@ -35,7 +35,7 @@ struct plugindata
     VisSetting_t VisSetting;
     HMODULE hmodule;
     void clear();
-    plugindata(){};
+    plugindata() {};
     plugindata(const std::wstring &, Pluginmanager *, bool, HMODULE);
     bool valid();
     void initstatus(const pluginitem &);

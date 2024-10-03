@@ -1,6 +1,6 @@
 include_directories(. util engines)
 if(${CMAKE_SIZEOF_VOID_P} EQUAL 8) 
-	set(enginessrc MKXPZ Ryujinx livecaptions Kincaid vita3k rpcs3 yuzusuyu TYPEMOON ENTERGRAM AGES7 mono Godot 5pb lucasystem LightVN V8 pchooks Artemis KiriKiri YOX PPSSPP CMVS Suika2 )
+	set(enginessrc MKXPZ Ryujinx livecaptions Kincaid vita3k rpcs3 yuzu TYPEMOON ENTERGRAM AGES7 mono Godot 5pb lucasystem LightVN V8 pchooks Artemis KiriKiri YOX PPSSPP CMVS Suika2 )
 	set(enginepath "engine64")
 	set(collector "enginecollection64.cpp")
 else()

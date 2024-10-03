@@ -44,6 +44,8 @@ namespace
 }
 bool Ryujinx::attach_function()
 {
+  WarningOutput("not support ryuujinx, please use yuzu/sudachi instead.");
+  return true;
   auto invokeCompileMethodHelper = processStartAddress + 0x84CC0;
   getMethodNameFromMetadata = (decltype(getMethodNameFromMetadata))(processStartAddress + 0x7AED0);
   HookParam hp;

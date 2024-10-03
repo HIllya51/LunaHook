@@ -127,7 +127,13 @@ bool TextHook::Insert(HookParam hp)
 	if (hp.type & DIRECT_READ)
 		return InsertReadCode();
 	if (hp.type & BREAK_POINT)
-		return InsertBreakPoint();
+	{
+		if (InsertBreakPoint())
+			return true;
+		if (safeautoleaveveh)
+			return InsertBreakPoint(); // 搜索特殊码后，不会释放，导致virtualprotect查询失败，重试。
+		return false;
+	}
 	return InsertHookCode();
 }
 uintptr_t win64find0000(uintptr_t addr)

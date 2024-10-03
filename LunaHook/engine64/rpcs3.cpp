@@ -1,6 +1,7 @@
-#include"rpcs3.h"
-namespace{
-    #if 0 //only support0.0.20-0.0.27
+﻿#include "rpcs3.h"
+namespace
+{
+#if 0 // only support0.0.20-0.0.27
     int emoffset;
     int jitoffset;
     uintptr_t getDoJitAddress_() {
@@ -113,10 +114,11 @@ namespace{
         
         return DoJitPtr+6;
     }
-    #endif
-    
-    uintptr_t getDoJitAddress() {
-        //rpcs3/Emu/Cell/PPUThread.cpp
+#endif
+
+    uintptr_t getDoJitAddress()
+    {
+        // rpcs3/Emu/Cell/PPUThread.cpp
         /*
         extern void ppu_register_function_at(u32 addr, u32 size, ppu_intrp_func_t ptr = nullptr)
         {
@@ -138,130 +140,147 @@ namespace{
             }
         ……
         */
-        char log[]="ppu_register_function_at(0x%x): empty range";
-        auto logstrptr=MemDbg::findBytes(log,sizeof(log),processStartAddress,processStopAddress);
-        ConsoleOutput("%p",logstrptr);
-        if(logstrptr==0)return 0;
-        auto addr=MemDbg::findleaaddr(logstrptr, processStartAddress, processStopAddress);
-        ConsoleOutput("%p",addr);
-        if(addr==0)return 0;
-        //ff cc cc cc,find不到。。
-        BYTE start[]={XX,0xCC,0xCC,0xCC};
-        addr=reverseFindBytes(start,sizeof(start),addr-0x200,addr,4,true);
-        ConsoleOutput("%p",addr);
+        char log[] = "ppu_register_function_at(0x%x): empty range";
+        auto logstrptr = MemDbg::findBytes(log, sizeof(log), processStartAddress, processStopAddress);
+        ConsoleOutput("%p", logstrptr);
+        if (logstrptr == 0)
+            return 0;
+        auto addr = MemDbg::findleaaddr(logstrptr, processStartAddress, processStopAddress);
+        ConsoleOutput("%p", addr);
+        if (addr == 0)
+            return 0;
+        // ff cc cc cc,find不到。。
+        BYTE start[] = {XX, 0xCC, 0xCC, 0xCC};
+        addr = reverseFindBytes(start, sizeof(start), addr - 0x200, addr, 4, true);
+        ConsoleOutput("%p", addr);
         return addr;
-
     }
-struct emfuncinfo{
-      uint64_t type;
-      int argidx;int padding;
-      void* hookfunc;
-      void* filterfun;
-      const char* _id;
-  }; 
-std::unordered_map<uintptr_t,emfuncinfo>emfunctionhooks;
-
-bool checkiscurrentgame(const emfuncinfo& em){
-    auto wininfos=get_proc_windows();
-    for(auto&& info:wininfos){
-        if(info.title.find(acastw(em._id))!=info.title.npos)return true;
-    }
-    return false;
-}
-
-static std::set<std::pair<uintptr_t,uintptr_t>> timeoutbreaks;
-
-void dohookemaddr(uintptr_t em_address,uintptr_t ret){
-    jitaddraddr(em_address,ret,JITTYPE::RPCS3);
-    if(emfunctionhooks.find(em_address)==emfunctionhooks.end())return;
-    if(!(checkiscurrentgame(emfunctionhooks.at(em_address))))return;
-    timeoutbreaks.insert(std::make_pair(em_address,ret));
-    auto op=emfunctionhooks.at(em_address); 
-    HookParam hpinternal;
-    hpinternal.address=ret;
-    hpinternal.emu_addr=em_address;//用于生成hcode
-    hpinternal.type=USING_STRING|NO_CONTEXT|BREAK_POINT|op.type;
-    hpinternal.text_fun=(decltype(hpinternal.text_fun))op.hookfunc;
-    hpinternal.filter_fun=(decltype(hpinternal.filter_fun))op.filterfun;
-    hpinternal.argidx=op.argidx;
-    hpinternal.padding=op.padding;
-    hpinternal.jittype=JITTYPE::RPCS3;
-    NewHook(hpinternal,op._id);
-}
-      
-bool unsafeinithooks(){
-    //rpcs0.0.30，不知道为什么ppu_register_function_at不全。不过看代码得到映射表了，直接弄吧。
-    //rpcs3/Emu/Cell/PPUThread.cpp
-    // Get pointer to executable cache
-    /*
-    static inline u8* ppu_ptr(u32 addr)
+    struct emfuncinfo
     {
-        return vm::g_exec_addr + u64{addr} * 2;
-    }
-    */
-   HookParam hp;
-   hp.type=DIRECT_READ;
-   hp.address=0x500000000;
-   hp.text_fun=[](hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len)
-   {
-        for(auto [addr,info]:emfunctionhooks){
-            auto table=addr*2+0x500000000;
-            if(IsBadReadPtr((void*)table,sizeof(uintptr_t)))continue;
-            auto funcaddr=*(uintptr_t*)table;
-            funcaddr&=0x0000ffffffffffff;
-            if(!funcaddr)continue;
-            auto p=std::make_pair(addr,funcaddr);
-            if(timeoutbreaks.find(p)!=timeoutbreaks.end())continue;
-            dohookemaddr(addr,funcaddr);
-            delayinsertNewHook(addr);
+        uint64_t type;
+        int argidx;
+        int padding;
+        void *hookfunc;
+        void *filterfun;
+        const char *_id;
+    };
+    std::unordered_map<uintptr_t, emfuncinfo> emfunctionhooks;
+
+    bool checkiscurrentgame(const emfuncinfo &em)
+    {
+        auto wininfos = get_proc_windows();
+        for (auto &&info : wininfos)
+        {
+            if (info.title.find(acastw(em._id)) != info.title.npos)
+                return true;
         }
-   };
-   return NewHook(hp,"g_exec_addr");
-    
-}  
+        return false;
+    }
+
+    static std::set<std::pair<uintptr_t, uintptr_t>> timeoutbreaks;
+
+    void dohookemaddr(uintptr_t em_address, uintptr_t ret)
+    {
+        jitaddraddr(em_address, ret, JITTYPE::RPCS3);
+        if (emfunctionhooks.find(em_address) == emfunctionhooks.end())
+            return;
+        if (!(checkiscurrentgame(emfunctionhooks.at(em_address))))
+            return;
+        timeoutbreaks.insert(std::make_pair(em_address, ret));
+        auto op = emfunctionhooks.at(em_address);
+        HookParam hpinternal;
+        hpinternal.address = ret;
+        hpinternal.emu_addr = em_address; // 用于生成hcode
+        hpinternal.type = USING_STRING | NO_CONTEXT | BREAK_POINT | op.type;
+        hpinternal.text_fun = (decltype(hpinternal.text_fun))op.hookfunc;
+        hpinternal.filter_fun = (decltype(hpinternal.filter_fun))op.filterfun;
+        hpinternal.argidx = op.argidx;
+        hpinternal.padding = op.padding;
+        hpinternal.jittype = JITTYPE::RPCS3;
+        NewHook(hpinternal, op._id);
+    }
+
+    bool unsafeinithooks()
+    {
+        // rpcs0.0.30，不知道为什么ppu_register_function_at不全。不过看代码得到映射表了，直接弄吧。
+        // rpcs3/Emu/Cell/PPUThread.cpp
+        //  Get pointer to executable cache
+        /*
+        static inline u8* ppu_ptr(u32 addr)
+        {
+            return vm::g_exec_addr + u64{addr} * 2;
+        }
+        */
+        HookParam hp;
+        hp.type = DIRECT_READ;
+        hp.address = 0x500000000;
+        hp.text_fun = [](hook_stack *stack, HookParam *hp, uintptr_t *data, uintptr_t *split, size_t *len)
+        {
+            for (auto [addr, info] : emfunctionhooks)
+            {
+                auto table = addr * 2 + 0x500000000;
+                if (IsBadReadPtr((void *)table, sizeof(uintptr_t)))
+                    continue;
+                auto funcaddr = *(uintptr_t *)table;
+                funcaddr &= 0x0000ffffffffffff;
+                if (!funcaddr)
+                    continue;
+                auto p = std::make_pair(addr, funcaddr);
+                if (timeoutbreaks.find(p) != timeoutbreaks.end())
+                    continue;
+                dohookemaddr(addr, funcaddr);
+                delayinsertNewHook(addr);
+            }
+        };
+        return NewHook(hp, "g_exec_addr");
+    }
 }
 bool rpcs3::attach_function()
 {
-	ConsoleOutput("[Compatibility] RPCS3");
-    auto DoJitPtr=getDoJitAddress();
-    if(DoJitPtr==0)return false;
+    ConsoleOutput("[Compatibility] RPCS3");
+    auto DoJitPtr = getDoJitAddress();
+    if (DoJitPtr == 0)
+        return false;
     unsafeinithooks();
-    spDefault.jittype=JITTYPE::RPCS3;
+    spDefault.jittype = JITTYPE::RPCS3;
     spDefault.minAddress = 0;
     spDefault.maxAddress = -1;
     HookParam hp;
-    hp.address=DoJitPtr;
-    hp.text_fun=[](hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
-        
-        auto em_address =stack->rcx;// *(uint32_t*)*(uintptr_t*)(stack->base+emoffset);
-        auto entrypoint=stack->r8;//*(uintptr_t*)*(uintptr_t*)(stack->base+jitoffset)-0x0008000000000000;
-        if(!em_address||!entrypoint)return;
-        dohookemaddr(em_address,entrypoint);
+    hp.address = DoJitPtr;
+    hp.text_fun = [](hook_stack *stack, HookParam *hp, uintptr_t *data, uintptr_t *split, size_t *len)
+    {
+        auto em_address = stack->rcx; // *(uint32_t*)*(uintptr_t*)(stack->base+emoffset);
+        auto entrypoint = stack->r8;  //*(uintptr_t*)*(uintptr_t*)(stack->base+jitoffset)-0x0008000000000000;
+        if (!em_address || !entrypoint)
+            return;
+        dohookemaddr(em_address, entrypoint);
         delayinsertNewHook(em_address);
     };
-    return NewHook(hp,"vita3kjit");
+    return NewHook(hp, "vita3kjit");
 }
 
+namespace
+{
 
-namespace{ 
+    bool FBLJM61131(void *data, size_t *len, HookParam *hp)
+    {
+        auto s = std::string((char *)data, *len);
+        std::regex pattern("\\[[^\\]]+.");
+        s = std::regex_replace(s, pattern, "");
+        s = std::regex_replace(s, std::regex("\\\\k|\\\\x|%C|%B"), "");
+        s = std::regex_replace(s, std::regex("\\%\\d+\\#[0-9a-fA-F]*\\;"), "");
+        s = std::regex_replace(s, std::regex("\\n+"), " ");
+        return write_string_overwrite(data, len, s);
+    }
+    auto _ = []()
+    {
+        emfunctionhooks = {
+            //'&' -Sora no Mukou de Sakimasu you ni-
+            {0x46328, {CODEC_UTF8, 1, 0, 0, FBLJM61131, "BLJM61131"}},
+            // Dunamis15
+            {0x42c90, {CODEC_UTF8, 1, 0, 0, FBLJM61131, "BLJM60347"}},
 
-bool FBLJM61131(void* data, size_t* len, HookParam* hp){
-    auto s = std::string((char*)data,*len);
-    std::regex pattern("\\[[^\\]]+.");
-    s = std::regex_replace(s, pattern, "");
-    s = std::regex_replace(s, std::regex("\\\\k|\\\\x|%C|%B"), "");
-    s = std::regex_replace(s, std::regex("\\%\\d+\\#[0-9a-fA-F]*\\;"), "");
-    s = std::regex_replace(s, std::regex("\\n+"), " ");
-	return write_string_overwrite(data,len,s);
-}
-auto _=[](){
-    emfunctionhooks={
-        //'&' -Sora no Mukou de Sakimasu you ni-
-        {0x46328,{CODEC_UTF8,1,0,0,FBLJM61131,"BLJM61131"}},
-        //Dunamis15
-        {0x42c90,{CODEC_UTF8,1,0,0,FBLJM61131,"BLJM60347"}},
-
-    };
-    return 1;
-}();
+        };
+        return 1;
+    }();
 }
