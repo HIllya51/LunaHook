@@ -10,7 +10,7 @@ namespace Host
 	using HookInsertHandler = std::function<void(uint64_t, const std::wstring &)>;
 	using EmbedCallback = std::function<void(const std::wstring &, const ThreadParam &)>;
 	void Start(ProcessEventHandler Connect, ProcessEventHandler Disconnect, ThreadEventHandler Create, ThreadEventHandler Destroy, TextThread::OutputCallback Output, bool createconsole = true);
-	void StartEx(ProcessEventHandler Connect, ProcessEventHandler Disconnect, ThreadEventHandler Create, ThreadEventHandler Destroy, TextThread::OutputCallback Output, std::optional<ConsoleHandler> console, std::optional<HookInsertHandler> hookinsert, std::optional<EmbedCallback> embed, std::optional<ConsoleHandler> warning);
+	void StartEx(std::optional<ProcessEventHandler> Connect, std::optional<ProcessEventHandler> Disconnect, std::optional<ThreadEventHandler> Create, std::optional<ThreadEventHandler> Destroy, std::optional<TextThread::OutputCallback> Output, std::optional<ConsoleHandler> console, std::optional<HookInsertHandler> hookinsert, std::optional<EmbedCallback> embed, std::optional<ConsoleHandler> warning);
 	void InjectProcess(DWORD processId, const std::wstring locationX = L"");
 	bool CreatePipeAndCheck(DWORD processId);
 

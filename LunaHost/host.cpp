@@ -217,18 +217,20 @@ namespace Host
 
 		// CreatePipe();
 	}
-	void StartEx(ProcessEventHandler Connect, ProcessEventHandler Disconnect, ThreadEventHandler Create, ThreadEventHandler Destroy, TextThread::OutputCallback Output, std::optional<ConsoleHandler> console, std::optional<HookInsertHandler> hookinsert, std::optional<EmbedCallback> embed, std::optional<ConsoleHandler> warning)
+	void StartEx(std::optional<ProcessEventHandler> Connect, std::optional<ProcessEventHandler> Disconnect, std::optional<ThreadEventHandler> Create, std::optional<ThreadEventHandler> Destroy, std::optional<TextThread::OutputCallback> Output, std::optional<ConsoleHandler> console, std::optional<HookInsertHandler> hookinsert, std::optional<EmbedCallback> embed, std::optional<ConsoleHandler> warning)
 	{
-		Start(Connect, Disconnect, Create, Destroy, Output, !console.has_value());
-		if (warning.has_value())
+		Start(Connect.value_or([](auto) {}), Disconnect.value_or([](auto) {}), Create.value_or([](auto &) {}), Destroy.value_or([](auto &) {}), Output.value_or([](auto &, auto &)
+																																								{ return false; }),
+			  !console);
+		if (warning)
 			OnWarning = warning.value();
-		if (console.has_value())
+		if (console)
 			OnConsole = [=](auto &&...args)
 			{std::lock_guard _(outputmutex);console.value()(std::forward<decltype(args)>(args)...); };
-		if (hookinsert.has_value())
+		if (hookinsert)
 			HookInsert = [=](auto &&...args)
 			{std::lock_guard _(threadmutex);hookinsert.value()(std::forward<decltype(args)>(args)...); };
-		if (embed.has_value())
+		if (embed)
 			embedcallback = [=](auto &&...args)
 			{std::lock_guard _(outputmutex);embed.value()(std::forward<decltype(args)>(args)...); };
 	}

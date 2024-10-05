@@ -16,51 +16,37 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 }
 
 typedef void (*ProcessEvent)(DWORD);
-typedef void (*ThreadEvent)(wchar_t *, char *, ThreadParam);
-typedef bool (*OutputCallback)(wchar_t *, char *, ThreadParam, const wchar_t *);
+typedef void (*ThreadEvent)(const wchar_t *, const char *, ThreadParam);
+typedef bool (*OutputCallback)(const wchar_t *, const char *, ThreadParam, const wchar_t *);
 typedef void (*ConsoleHandler)(const wchar_t *);
 typedef void (*HookInsertHandler)(uint64_t, const wchar_t *);
 typedef void (*EmbedCallback)(const wchar_t *, ThreadParam);
-#define XXXX                                              \
-    char name[HOOK_NAME_SIZE];                            \
-    wchar_t hookcode[HOOKCODE_LEN];                       \
-    wcscpy_s(hookcode, HOOKCODE_LEN, thread.hp.hookcode); \
-    strcpy_s(name, HOOK_NAME_SIZE, thread.hp.name);
+template <typename T>
+std::optional<T> checkoption(bool check, T &&t)
+{
+    if (check)
+        return std::move(t);
+    return {};
+}
 C_LUNA_API void Luna_Start(ProcessEvent Connect, ProcessEvent Disconnect, ThreadEvent Create, ThreadEvent Destroy, OutputCallback Output, ConsoleHandler console, HookInsertHandler hookinsert, EmbedCallback embed, ConsoleHandler Warning)
 {
     Host::StartEx(
-        Connect,
-        Disconnect,
-        [=](const TextThread &thread)
-        {
-            XXXX
-                Create(hookcode, name, thread.tp);
-        },
-        [=](const TextThread &thread)
-        {
-            XXXX
-                Destroy(hookcode, name, thread.tp);
-        },
-        [=](const TextThread &thread, std::wstring &output)
-        {
-            XXXX return Output(hookcode, name, thread.tp, output.c_str());
-        },
-        [=](const std::wstring &output)
-        {
-            console(output.c_str());
-        },
-        [=](uint64_t addr, const std::wstring &output)
-        {
-            hookinsert(addr, output.c_str());
-        },
-        [=](const std::wstring &output, const ThreadParam &tp)
-        {
-            embed(output.c_str(), tp);
-        },
-        [=](const std::wstring &output)
-        {
-            Warning(output.c_str());
-        });
+        checkoption(Connect, std::function<void(DWORD)>(Connect)),
+        checkoption(Disconnect, std::function<void(DWORD)>(Disconnect)),
+        checkoption(Create, [=](const TextThread &thread)
+                    { Create(thread.hp.hookcode, thread.hp.name, thread.tp); }),
+        checkoption(Destroy, [=](const TextThread &thread)
+                    { Destroy(thread.hp.hookcode, thread.hp.name, thread.tp); }),
+        checkoption(Output, [=](const TextThread &thread, std::wstring &output)
+                    { return Output(thread.hp.hookcode, thread.hp.name, thread.tp, output.c_str()); }),
+        checkoption(console, [=](const std::wstring &output)
+                    { console(output.c_str()); }),
+        checkoption(hookinsert, [=](uint64_t addr, const std::wstring &output)
+                    { hookinsert(addr, output.c_str()); }),
+        checkoption(embed, [=](const std::wstring &output, const ThreadParam &tp)
+                    { embed(output.c_str(), tp); }),
+        checkoption(Warning, [=](const std::wstring &output)
+                    { Warning(output.c_str()); }));
 }
 C_LUNA_API void Luna_Inject(DWORD pid, LPCWSTR basepath)
 {
