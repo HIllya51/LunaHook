@@ -234,7 +234,7 @@
  *  0050395c  |. 3bda           cmp ebx,edx
  *  0050395e  |. 74 1a          je short bszex.0050397a
  */
-bool InsertNeXASHook()
+bool InsertNeXASHookA()
 {
   // There are two GetGlyphOutlineA, both of which seem to have the same texts
   ULONG addr = MemDbg::findCallAddress((ULONG)::GetGlyphOutlineA, processStartAddress, processStopAddress);
@@ -287,7 +287,7 @@ bool InsertNeXASHook()
         else
           v9 = *(const unsigned __int8 **)(v1 + 268);
         *data = (DWORD)v9;
-        *len = strlen((char*)v9);
+        *len = strlen((char *)v9);
       };
       if (NewHook(hp, "NeXAS_1"))
         return true;
@@ -316,6 +316,67 @@ bool InsertNeXASHook()
 
   ConsoleOutput("INSERT NeXAS");
   return NewHook(hp, "NeXAS");
+}
+struct nexassomeinfo
+{
+  DWORD off1, off2;
+  DWORD split;
+};
+bool InsertNeXASHookW()
+{
+  // char sig[] = "Gaiji%s%02d%02d.fil";或者也可以找所有的push这个的地址
+  auto addrs = findiatcallormov_all((DWORD)GetGlyphOutlineW, processStartAddress, processStartAddress, processStopAddress, PAGE_EXECUTE);
+  bool succ = false;
+  for (auto addr1 : addrs)
+  {
+    auto addr = MemDbg::findEnclosingAlignedFunction(addr1);
+    if (!addr)
+      continue;
+    BYTE check[] = {
+        //clang-format off
+        0x83, XX, XX4, 0x10, // cmp     dword ptr [edi+0BCh], 10h; XX4:0xbc, 0x00, 0x00, 0x00
+        0x8d, XX, XX4,       // lea     edx, [edi+0A8h], XX4:0xa8, 0x00, 0x00, 0x00
+        0x89, XX, XX,
+        0x72, 0x06,
+        0x8b, XX, XX4, // mov     edx, [edi+0A8h], XX4:0xa8, 0x00, 0x00, 0x00
+                       //clang-format on
+    };
+    auto addrx = MemDbg::findBytes(check, sizeof(check), addr, addr1);
+    if (!addrx)
+      continue;
+    HookParam hp;
+    hp.address = addr;
+    hp.type = USING_STRING | CODEC_UTF8; // utf8编码的单字符
+    hp.user_value = (DWORD) new nexassomeinfo{*(DWORD *)(addrx + 2), *(DWORD *)(addrx + 9), 0};
+    hp.text_fun = [](hook_stack *stack, HookParam *hp, uintptr_t *data, uintptr_t *split, size_t *len)
+    {
+      /*
+       v17 = *(_DWORD *)(this + 188) < 0x10u;
+    v18 = (const CHAR *)(this + 168);
+    h = v16;
+    if ( !v17 )
+      v18 = *(const CHAR **)(this + 168);
+    sub_42A120(v34, v18, *(_DWORD *)(this + 184));//utf8转utf16
+      */
+      auto v1 = stack->ecx;
+      const unsigned __int8 *v9;
+      auto off1 = ((nexassomeinfo *)hp->user_value)->off1; // 188,0xbc
+      auto off2 = ((nexassomeinfo *)hp->user_value)->off2; // 168,0xa8
+      if (*(DWORD *)(v1 + off1) < 0x10u)
+        v9 = (const unsigned __int8 *)(v1 + off2);
+      else
+        v9 = *(const unsigned __int8 **)(v1 + off2);
+      *data = (DWORD)v9;
+      *len = strlen((char *)v9);
+      if (((nexassomeinfo *)hp->user_value)->split == 0)
+        ((nexassomeinfo *)hp->user_value)->split = stack->stack[1];
+      *split = std::abs((long long)((nexassomeinfo *)hp->user_value)->split - (long long)stack->stack[1]) < 0x10;
+      // 文本会被分成两个线程，原因未知。人名线程是比文本小很多的，两个文本线程离得很近
+      // 不能不分，不分会导致沾到一起。
+    };
+    succ |= NewHook(hp, "NeXASW");
+  }
+  return succ;
 }
 namespace
 {
@@ -403,5 +464,5 @@ namespace
 bool NeXAS::attach_function()
 {
   auto _ = _2() || _3();
-  return InsertNeXASHook() || _;
+  return InsertNeXASHookA() || InsertNeXASHookW() || _;
 }
