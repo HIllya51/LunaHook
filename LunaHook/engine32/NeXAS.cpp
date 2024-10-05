@@ -324,6 +324,7 @@ struct nexassomeinfo
 };
 bool InsertNeXASHookW()
 {
+  //[240926][1287246][エンターグラム] 制服カノジョ まよいごエンゲージ DL版 (files)
   // char sig[] = "Gaiji%s%02d%02d.fil";或者也可以找所有的push这个的地址
   auto addrs = findiatcallormov_all((DWORD)GetGlyphOutlineW, processStartAddress, processStartAddress, processStopAddress, PAGE_EXECUTE);
   bool succ = false;
