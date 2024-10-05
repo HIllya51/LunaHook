@@ -12,7 +12,7 @@
 #include "engine64/CMVS.h"
 #include "engine64/5pb.h"
 #include "engine64/lucasystem.h"
-#include "engine64/ENTERGRAM.h"
+#include "engine64/UnrealEngine.h"
 #include "engine64/TYPEMOON.h"
 #include "engine64/Kincaid.h"
 #include "engine64/LightVN.h"
@@ -41,7 +41,7 @@ std::vector<ENGINE *> check_engines()
         new AGES7,
         new _5pb,
         new TYPEMOON,
-        new ENTERGRAM,
+        new UnrealEngine,
         new yuzu,
         new PPSSPPengine,
         new vita3k,

@@ -1,4 +1,4 @@
-#include "ENTERGRAM.h"
+#include "UnrealEngine.h"
 
 bool ENTERGRAMfilter(void *data, size_t *size, HookParam *hp)
 {
@@ -37,9 +37,9 @@ bool InsertENTERGRAM()
   hp.filter_fun = ENTERGRAMfilter;
   hp.offset = get_reg(regs::rsi);
   hp.newlineseperator = L"\\n";
-  return NewHook(hp, "ENTERGRAM");
+  return NewHook(hp, "UnrealEngine");
 }
-bool ENTERGRAM::attach_function()
+bool UnrealEngine::attach_function()
 {
   return InsertENTERGRAM();
 }
