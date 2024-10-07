@@ -58,10 +58,7 @@ namespace
   }
   bool _2()
   {
-    // https://vndb.org/r86006
-    // ファーストキス（体験版）
-    // https://vndb.org/r85992
-    // フサの大正女中ぐらし
+    // 有太多乱的输出了，而且基本不需要它，所以先放到后面。
 
     BYTE sig[] = {
         //clang-format off
@@ -97,14 +94,21 @@ namespace
         if (str.find(_) != str.npos)
           return false;
       str = std::regex_replace(str, std::wregex(L"\\[(.*?)\\]<(.*?)>"), L"$1");
-      write_string_overwrite(data, len, str);
-      return true;
+      return write_string_overwrite(data, len, str);
     };
     return NewHook(hp, "LightVN2");
   }
 }
 namespace
 {
+  bool commonfilter(LPVOID data, size_t *size, HookParam *)
+  {
+    auto str = std::wstring((wchar_t *)data, *size / 2);
+    std::wregex pattern(L"-{2,}");
+    str = std::regex_replace(str, pattern, L"");
+    str = std::regex_replace(str, std::wregex(L"\\[(.*?)\\]<(.*?)>"), L"$1");
+    return write_string_overwrite(data, size, str);
+  }
   bool lightvnparsestring()
   {
     BYTE sig[] = {
@@ -136,13 +140,7 @@ namespace
         *split = 1;
       }
     };
-    hp.filter_fun = [](LPVOID data, size_t *size, HookParam *)
-    {
-      auto str = std::wstring((wchar_t *)data, *size / 2);
-      std::wregex pattern(L"-{2,}");
-      str = std::regex_replace(str, pattern, L"");
-      return write_string_overwrite(data, size, str);
-    };
+    hp.filter_fun = commonfilter;
     hp.newlineseperator = L"\\n";
     return NewHook(hp, "Light.VN.16");
   }
@@ -153,7 +151,7 @@ namespace
     // ver12 找不到上面的函数
     auto checkstrings = {
         L"backlog voice already exists at line: {}",
-        L"attempting to log to backlog when backlog showing. likely you faded it out."};
+        L"attempting to log to backlog when backlog showing"}; //. likely you faded it out."};
     auto succ = false;
     for (auto str : checkstrings)
     {
@@ -181,6 +179,7 @@ namespace
           *data = (uintptr_t)((TextUnionW *)stack->rdx)->getText();
           *len = ((TextUnionW *)stack->rdx)->size * 2;
         };
+        hp.filter_fun = commonfilter;
         succ |= NewHook(hp, "Light.VN.12");
       }
     }
@@ -190,8 +189,7 @@ namespace
 bool LightVN::attach_function()
 {
   bool ok = _1();
-  ok = _2() || ok;
   ok |= lightvnparsestring();
   ok |= xreflightvnparsestring();
-  return ok;
+  return ok || _2();
 }
