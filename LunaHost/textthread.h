@@ -8,7 +8,7 @@ public:
 
 	inline static bool filterRepetition = false;
 	inline static int flushDelay = 100;
-	inline static int maxBufferSize = 10000;
+	inline static int maxBufferSize = 3000;
 	inline static int maxHistorySize = 10'000'000;
 
 	TextThread(ThreadParam tp, HookParam hp, std::optional<std::wstring> name = {});
