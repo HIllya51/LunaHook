@@ -250,6 +250,13 @@ namespace ppsspp
 		s = std::regex_replace(s, std::wregex(LR"(<(.*?)\|(.*?)>)"), L"$1");
 		return write_string_overwrite(data, size, s);
 	}
+	bool FNPJH50459(void *data, size_t *len, HookParam *hp)
+	{
+		auto s = std::string((char *)data, *len);
+		s = std::regex_replace(s, std::regex(R"(#SCL\((.*?)\)(.*?)#ECL)"), "$2");
+		strReplace(s, "\n\r\n", "\n");
+		return write_string_overwrite(data, len, s);
+	}
 	bool FULJM05690(void *data, size_t *len, HookParam *hp)
 	{
 		auto s = std::string((char *)data, *len);
@@ -387,6 +394,10 @@ namespace ppsspp
 		{0x882A650, {0, 1, 0, 0, 0, "ULJM06023"}},
 		// 0時の鐘とシンデレラ～Halloween Wedding～ (instance: 2)
 		{0x8855CA0, {0, 1, 0, 0, 0, "ULJM06272"}},
+		// セブンスドラゴン２０２０
+		{0x88847A0, {CODEC_UTF8, 1, 0, 0, FNPJH50459, "NPJH50459"}},
+		// セブンスドラゴン２０２０-Ⅱ
+		{0x8889CCC, {CODEC_UTF8, 1, 0, 0, FNPJH50459, "NPJH50716"}}, // 会有两三条后续文本都被一次性提取到。
 	};
 
 }
