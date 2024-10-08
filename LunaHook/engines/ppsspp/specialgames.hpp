@@ -250,6 +250,13 @@ namespace ppsspp
 		s = std::regex_replace(s, std::wregex(LR"(<(.*?)\|(.*?)>)"), L"$1");
 		return write_string_overwrite(data, size, s);
 	}
+	bool FULJM05690(void *data, size_t *len, HookParam *hp)
+	{
+		auto s = std::string((char *)data, *len);
+		s = std::regex_replace(s, std::regex("#Kana[(.*?),(.*?)]"), "");
+		strReplace(s, "#n", "\n");
+		return write_string_overwrite(data, len, s);
+	}
 	bool FULJM05889(LPVOID data, size_t *size, HookParam *)
 	{
 		auto text = reinterpret_cast<LPSTR>(data);
@@ -372,6 +379,14 @@ namespace ppsspp
 		{0x890A4BC, {CODEC_UTF16, 1, 0, 0, FNPJH50243, "NPJH50243"}},
 		// 薔薇ノ木ニ薔薇ノ花咲ク
 		{0x881E560, {0, 1, 0, 0, 0, "ULJM05802"}},
+		// D.C. Girl's Symphony Pocket ～ダ・カーポ～ ガールズシンフォニーポケット
+		{0x883C77C, {0, 0, 0, 0, FULJM05690, "ULJM05690"}},
+		// Ever17 -the out of infinity- Premium Edition
+		{0x881AD64, {0, 0xd, 0, 0, 0, "ULJM05437"}},
+		// １２時の鐘とシンデレラ～Halloween Wedding～
+		{0x882A650, {0, 1, 0, 0, 0, "ULJM06023"}},
+		// 0時の鐘とシンデレラ～Halloween Wedding～ (instance: 2)
+		{0x8855CA0, {0, 1, 0, 0, 0, "ULJM06272"}},
 	};
 
 }
