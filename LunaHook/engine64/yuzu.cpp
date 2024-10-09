@@ -1858,6 +1858,24 @@ namespace
         s += L"\n";
         return write_string_overwrite(data, len, s);
     }
+    bool wF0100A9B01D4AE000(void *data, size_t *len, HookParam *hp)
+    {
+        auto s = std::wstring((wchar_t *)data, *len / 2);
+        s = std::regex_replace(s, std::wregex(LR"(@(.*?)@)"), L"$1\n");
+        return write_string_overwrite(data, len, s);
+    }
+    bool aF0100A9B01D4AE000(void *data, size_t *len, HookParam *hp)
+    {
+        auto s = std::string((char *)data, *len);
+        strReplace(s, u8"❛", "'");
+        strReplace(s, u8"❜", "'");
+        strReplace(s, u8"❝", "\"");
+        strReplace(s, u8"❞", "\"");
+        s = std::regex_replace(s, std::regex(R"(@(.*?)@)"), "$1\n");
+        s = std::regex_replace(s, std::regex(R"(\$s\(i?\))"), "");
+        s = std::regex_replace(s, std::regex(R"(\$[<>]\d+)"), "");
+        return write_string_overwrite(data, len, s);
+    }
     bool F0100FB301E70A000(void *data, size_t *len, HookParam *hp)
     {
         auto s = std::wstring((wchar_t *)data, *len / 2);
@@ -2939,6 +2957,9 @@ namespace
             // WORLDEND SYNDROME
             {0x805F5F04, {CODEC_UTF16, 2, 0, 0, 0, "01008A30083E2000", "1.0.0"}},
             {0x800FBA84, {CODEC_UTF16, 2, 0, 0, 0, "01008A30083E2000", "1.0.1"}},
+            // Hatsumira -From the Future Undying-
+            {0x8017BE0C, {CODEC_UTF8, 8, 0, 0, aF0100A9B01D4AE000, "0100A9B01D4AE000", "1.0.0"}},  // 英文
+            {0x8017C0B4, {CODEC_UTF16, 8, 0, 0, wF0100A9B01D4AE000, "0100A9B01D4AE000", "1.0.0"}}, // 日文
         };
         return 1;
     }();
