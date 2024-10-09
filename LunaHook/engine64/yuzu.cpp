@@ -1852,6 +1852,33 @@ namespace
         s = std::regex_replace(s, std::regex(R"(#\w+(\[.+?\])?)"), "");
         return write_string_overwrite(data, len, s);
     }
+    bool F010031C01F410000(void *data, size_t *len, HookParam *hp)
+    {
+        auto s = std::wstring((wchar_t *)data, *len / 2);
+        s += L"\n";
+        return write_string_overwrite(data, len, s);
+    }
+    bool F0100FB301E70A000(void *data, size_t *len, HookParam *hp)
+    {
+        auto s = std::wstring((wchar_t *)data, *len / 2);
+        return s != L"\uc5d0\u4bad\u0012";
+    }
+    bool F0100F0A01F112000(void *data, size_t *len, HookParam *hp)
+    {
+        auto s = std::wstring((wchar_t *)data, *len / 2);
+        static std::wstring last;
+        if (last == s)
+            return false;
+        last = s;
+        s = std::regex_replace(s, std::wregex(LR"(\$\[(.*?)\$/(.*?)\$\])"), L"$1");
+        return write_string_overwrite(data, len, s);
+    }
+    bool F0100C9001E10C000(void *data, size_t *len, HookParam *hp)
+    {
+        auto s = std::wstring((wchar_t *)data, *len / 2);
+        s = std::regex_replace(s, std::wregex(LR"(<(.*?)>)"), L""); //<indent=3.5%>
+        return write_string_overwrite(data, len, s);
+    }
     bool F01001BA01EBFC000(void *data, size_t *len, HookParam *hp)
     {
         auto s = std::wstring((wchar_t *)data, *len / 2);
@@ -2026,10 +2053,13 @@ namespace
             {0x81e75940, {CODEC_UTF16, 0, 0, ReadTextAndLenDW<1>, F0100982015606000, "0100982015606000", "1.0.0"}}, // Hamekai.TalkPresenter$$AddMessageBacklog
             {0x81c9ae60, {CODEC_UTF16, 0, 0, ReadTextAndLenDW<1>, F0100982015606000, "0100982015606000", "1.0.0"}}, // Hamekai.ChoicesText$$SetText
             {0x81eb7dc0, {CODEC_UTF16, 0, 0, ReadTextAndLenDW<1>, F0100982015606000, "0100982015606000", "1.0.0"}}, // Hamekai.ShortStoryTextView$$AddText
-            // Death end re;Quest 2
-            {0x80225C3C, {CODEC_UTF8, 8, 0, 0, F010001D015260000, "010001D015260000", "1.0.0"}},
             // Death end re;Quest
             {0x80241088, {CODEC_UTF8, 8, 0, 0, F0100AEC013DDA000, "0100AEC013DDA000", "1.0.0"}}, // english ver
+            // Death end re;Quest 2
+            {0x80225C3C, {CODEC_UTF8, 8, 0, 0, F010001D015260000, "010001D015260000", "1.0.0"}},
+            // Death end re;Quest Code Z
+            {0x82349188, {CODEC_UTF16, 1, 0, 0, 0, "010054B01BE90000", "1.0.0"}},
+            {0x823DC128, {CODEC_UTF16, 1, 0, 0, 0, "010054B01BE90000", "1.0.2"}},
             // Meta Meet Cute!!!+
             {0x81DD6010, {CODEC_UTF16, 1, -32, 0, 0, "01009A401C1B0000", "1.02"}}, // english ver, only long string, short string can't find.
             // Of the Red, the Light, and the Ayakashi Tsuzuri
@@ -2897,7 +2927,18 @@ namespace
             // Moeyo! Otome Doushi ~Kayuu Koigatari~ (燃えよ！ 乙女道士 ～華遊恋語～)
             {0x8005c698, {CODEC_UTF16, 1, 0x20, 0, F01001BA01EBFC000, "01001BA01EBFC000", "1.0.0"}},
             {0x80051cd0, {CODEC_UTF16, 1, 0, 0, F01001BA01EBFC000, "01001BA01EBFC000", "1.0.0"}},
-
+            // planetarian: Snow Globe
+            {0x800F32A0, {CODEC_UTF16 | FULL_STRING, 1, 0, 0, 0, "010031C01F410000", "1.0.0"}}, // 各种语言一起都提取出来了
+            // planetarian: The Reverie of a Little Planet & Snow Globe 英文版
+            {0x801253EC, {CODEC_UTF16, 0xA, 0, 0, 0, "0100F0A01F112000", nullptr}},               // 1.0.0 && 1.0.1 // 中文
+            {0x8012441C, {CODEC_UTF16, 8, 0, 0, F0100F0A01F112000, "0100F0A01F112000", nullptr}}, // 1.0.0 && 1.0.1 // 日文
+            // The Town of Nie
+            {0x818B6078, {CODEC_UTF16, 1, 0, 0, F0100C9001E10C000, "0100C9001E10C000", "1.0.0"}},
+            // Honey Vibes
+            {0x81845F80, {CODEC_UTF16 | FULL_STRING, 1, 0, 0, F0100FB301E70A000, "0100FB301E70A000", "1.0.0"}},
+            // WORLDEND SYNDROME
+            {0x805F5F04, {CODEC_UTF16, 2, 0, 0, 0, "01008A30083E2000", "1.0.0"}},
+            {0x800FBA84, {CODEC_UTF16, 2, 0, 0, 0, "01008A30083E2000", "1.0.1"}},
         };
         return 1;
     }();
