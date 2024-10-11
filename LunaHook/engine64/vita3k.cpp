@@ -389,6 +389,13 @@ namespace
         s = std::regex_replace(s, std::regex(R"(#\w+(\[.+?\])?)"), "");
         return write_string_overwrite(data, len, s);
     }
+    bool FPCSG00815(void *data, size_t *len, HookParam *hp)
+    {
+        auto s = std::string((char *)data, *len);
+        s = std::regex_replace(s, std::regex(R"(\s*(#n)*\s*)"), "");
+        s = std::regex_replace(s, std::regex(R"(#\w+(\[.+?\])?)"), "");
+        return write_string_overwrite(data, len, s);
+    }
     bool FPCSG00855(void *data, size_t *len, HookParam *hp)
     {
         auto s = std::string((char *)data, *len);
@@ -559,6 +566,9 @@ namespace
             {0x801a2ba8, {CODEC_UTF8, 0, 0, 0, FPCSG00855_2<1>, "PCSG00855"}},
             {0x801a2d9e, {CODEC_UTF8, 0, 0, 0, FPCSG00855_2<2>, "PCSG00855"}},
             {0x801a2e68, {CODEC_UTF8, 0, 0, 0, FPCSG00855_2<3>, "PCSG00855"}},
+            // PsychicEmotion6 (サイキックエモーション ムー)
+            {0x80035948, {CODEC_UTF8, 9, 0, 0, FPCSG00815, "PCSG00815"}},
+            {0x80034580, {CODEC_UTF8, 6, 0, 0, FPCSG00815, "PCSG00815"}},
         };
         return 1;
     }();

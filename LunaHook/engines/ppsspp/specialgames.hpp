@@ -257,6 +257,11 @@ namespace ppsspp
 		strReplace(s, "\n\r\n", "\n");
 		return write_string_overwrite(data, len, s);
 	}
+	bool FNPJH50127(void *data, size_t *len, HookParam *hp)
+	{
+		StringCharReplacer((char *)data, len, "\\n", 2, '\n');
+		return true;
+	}
 	bool FULJM05690(void *data, size_t *len, HookParam *hp)
 	{
 		auto s = std::string((char *)data, *len);
@@ -400,6 +405,9 @@ namespace ppsspp
 		{0x8889CCC, {CODEC_UTF8, 1, 0, 0, FNPJH50459, "NPJH50716"}}, // 会有两三条后续文本都被一次性提取到。
 		// マイナスエイト
 		{0x88DC218, {0, 0, 0, 0, FULJM05690, "ULJM06341"}},
+		// Tokimeki Memorial 4
+		{0x899a510, {0, 2, 0, 0, FNPJH50127, "NPJH50127"}},
+		{0x88719dc, {0, 1, 0, 0, FNPJH50127, "NPJH50127"}},
 	};
 
 }

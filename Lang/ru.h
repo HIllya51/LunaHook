@@ -35,7 +35,7 @@
 #define ProcessRange u8"Перехват процесса в диапазоне адресов с 0x%p по 0x%p" 
 #define WarningDummy u8"ПРЕДУПРЕЖДЕНИЕ: внедренный процесс очень мал, возможно, это пустышка!" 
 #define WndSelectProcess L"Выбор процесса" 
-#define WndLunaHostGui L"LunaHost - Gui" 
+#define WndLunaHostGui L"LunaHost - GUI" 
 #define WndSetting L"Настройки" 
 #define WndPlugins L"Плагины" 
 #define NotifyInvalidHookCode L"Неверный код хука" 

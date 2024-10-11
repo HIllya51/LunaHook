@@ -35,7 +35,7 @@
 #define ProcessRange "hijacking process located from 0x%p to 0x%p" 
 #define WarningDummy "WARNING injected process is very small, possibly a dummy!" 
 #define WndSelectProcess L"SelectProcess" 
-#define WndLunaHostGui L"LunaHost Gui" 
+#define WndLunaHostGui L"LunaHost GUI" 
 #define WndSetting L"Setting" 
 #define WndPlugins L"Plugins" 
 #define NotifyInvalidHookCode L"Invalid HookCode" 

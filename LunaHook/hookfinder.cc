@@ -199,7 +199,7 @@ void SafeSendJitVeh(hook_stack *stack, uintptr_t address, uintptr_t em_addr, JIT
 			{
 #ifdef _WIN64
 			case JITTYPE::YUZU:
-				str = (char *)YUZU::emu_arg(stack)[i];
+				str = (char *)YUZU::emu_arg(stack, em_addr)[i];
 				break;
 			case JITTYPE::VITA3K:
 				str = (char *)VITA3K::emu_arg(stack)[i];

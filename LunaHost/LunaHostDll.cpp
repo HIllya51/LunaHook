@@ -178,7 +178,7 @@ C_LUNA_API void Luna_embedcallback(DWORD pid, LPCWSTR text, LPCWSTR trans)
     auto sm = Host::GetEmbedSharedMem(pid);
     if (!sm)
         return;
-    wcscpy_s(sm->text, 1000, trans);
+    wcsncpy(sm->text, trans, ARRAYSIZE(sm->text));
     char eventname[1000];
     sprintf(eventname, LUNA_EMBED_notify_event, pid, djb2_n2((const unsigned char *)(text), wcslen(text) * 2));
     win_event event1(eventname);

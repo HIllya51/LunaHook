@@ -35,7 +35,7 @@
 #define ProcessRange u8"获取到进程内存地址范围 0x%p 到 0x%p" 
 #define WarningDummy u8"警告，注入的进程内存很小，可能是无用进程!" 
 #define WndSelectProcess L"选择进程" 
-#define WndLunaHostGui L"LunaHost Gui" 
+#define WndLunaHostGui L"LunaHost GUI" 
 #define WndSetting L"设置" 
 #define WndPlugins L"插件" 
 #define NotifyInvalidHookCode L"特殊码无效" 

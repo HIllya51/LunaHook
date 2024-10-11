@@ -190,7 +190,7 @@ uintptr_t jitgetaddr(hook_stack *stack, HookParam *hp)
 	case JITTYPE::VITA3K:
 		return VITA3K::emu_arg(stack)[hp->argidx];
 	case JITTYPE::YUZU:
-		return YUZU::emu_arg(stack)[hp->argidx];
+		return YUZU::emu_arg(stack, hp->emu_addr)[hp->argidx];
 #endif
 	case JITTYPE::PPSSPP:
 		return PPSSPP::emu_arg(stack)[hp->argidx];
