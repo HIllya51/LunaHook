@@ -1731,7 +1731,9 @@ namespace
     bool F0100FC2019346000(void *data, size_t *len, HookParam *hp)
     {
         StringFilter((char *)data, len, "#n", 2);
-        return true;
+        auto s = std::string((char *)data, *len);
+        s = std::regex_replace(s, std::regex(R"((#[A-Za-z]+\[(\d*[.])?\d+\])+)"), "");
+        return write_string_overwrite(data, len, s);
     }
 
     bool F0100FDB00AA80000(void *data, size_t *len, HookParam *hp)
@@ -3026,7 +3028,8 @@ namespace
             // 新宿羅生門 ―Rashomon of Shinjuku―
             {0x80062158, {CODEC_UTF8, 0, 0, 0, F01005A401D766000, "01005A401D766000", "1.0.0"}},
             // 夏空のモノローグ ～Another Memory～
-            {0x8005D8D0, {0, 1, 0, 0, F0100FC2019346000, "01000E701DAE8000", "1.0.0"}},
+            {0x8006007c, {0, 0, 0, 0, F0100FC2019346000, "01000E701DAE8000", "1.0.0"}},
+            {0x800578c4, {0, 2, 0, 0, F0100FC2019346000, "01000E701DAE8000", "1.0.0"}},
             // 真紅の焔 真田忍法帳 for Nintendo Switch
             {0x80021E10, {CODEC_UTF8, 2, 0, 0, 0, "01008A001C79A000", "1.0.0"}},
             // 神さまと恋ゴコロ
