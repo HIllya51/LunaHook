@@ -293,7 +293,8 @@ int GetRandomAvailablePort()
 
 int makehttpgetserverinternal()
 {
-    while (1)
+    // 尝试1000次
+    for (int i = 0; i < 1000; i++)
     {
         auto port = GetRandomAvailablePort();
         auto [succ, hReqQueue, ssID, urlGroupId] = makeserveronce(port);
@@ -310,6 +311,7 @@ int makehttpgetserverinternal()
             .detach();
         return port;
     }
+    return 0;
 }
 // int main()
 // {

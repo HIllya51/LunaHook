@@ -25,76 +25,57 @@ function splitfonttext(transwithfont) {
 function syncquery(s) {
     if (internal_http_port == 0) { throw new Error('') }
     var xhr = new XMLHttpRequest();
-    xhr.open('GET', 'http://127.0.0.1:' + internal_http_port + '/fuck?' + s, false);
+    var url = 'http://127.0.0.1:' + internal_http_port + '/fuck?' + s
+    xhr.open('GET', url, false);
     xhr.send();
     if (xhr.status === 200) {
-        return xhr.responseText;
+        return xhr.responseText;//解析这个会导致v8::String::Length的v8StringUtf8Length出现错误，但不影响。
     } else {
         throw new Error('')
     }
 
 }
-function isEmptyString(str) {
-    return str === null || str === undefined || str.length == 0;
+function makecomplexs(name, s_raw, lpsplit) {
+    return magicsend + name + '\x03' + lpsplit.toString() + '\x02' + s_raw;
 }
-function clipboardsender(name, s_raw, lpsplit) {
-    //magic split \x02 text
-    if (isEmptyString(s_raw))
-        return s_raw
-    s = magicsend + name + '\x03' + lpsplit.toString() + '\x02' + s_raw;
+function cppjsio(s) {
     try {
-        if (!is_useclipboard) { throw new Error('') }
-        const _clipboard = require('nw.gui').Clipboard.get();
-        _clipboard.set(s, 'text');
-        transwithfont = _clipboard.get('text');
+        return syncquery(s)
     }
     catch (err) {
         try {
             if (!is_useclipboard) { throw new Error('') }
-            const clipboard = require('electron').clipboard;
-            clipboard.writeText(s);
-            transwithfont = clipboard.readText();
+            const _clipboard = require('nw.gui').Clipboard.get();
+            _clipboard.set(s, 'text');
+            return _clipboard.get('text');
         }
         catch (err2) {
-
             try {
-
-                transwithfont = syncquery(s)
+                if (!is_useclipboard) { throw new Error('') }
+                const clipboard = require('electron').clipboard;
+                clipboard.writeText(s);
+                return clipboard.readText();
             }
             catch (err3) {
                 return s_raw;
             }
         }
     }
+}
+function clipboardsender(name, s_raw, lpsplit) {
+    //magic split \x02 text
+    if (!s_raw)
+        return s_raw
+    transwithfont = cppjsio(makecomplexs(name, s_raw, lpsplit))
     if (transwithfont.length == 0) return s_raw;
     return splitfonttext(transwithfont)
 }
 
 function clipboardsender_only_send(name, s_raw, lpsplit) {
     //magic split \x02 text
-    if (isEmptyString(s_raw))
+    if (!s_raw)
         return s_raw
-    s = magicsend + name + '\x03' + lpsplit.toString() + '\x02' + s_raw;
-    try {
-        if (!is_useclipboard) { throw new Error('') }
-        const _clipboard = require('nw.gui').Clipboard.get();
-        _clipboard.set(s, 'text');
-    }
-    catch (err) {
-        try {
-            if (!is_useclipboard) { throw new Error('') }
-            const clipboard = require('electron').clipboard;
-            clipboard.writeText(s);
-        }
-        catch (err2) {
-            try {
-                syncquery(s)
-            }
-            catch (err3) {
-
-            }
-        }
-    }
+    cppjsio(makecomplexs(name, s_raw, lpsplit))
 }
 function rpgmakerhook() {
 
@@ -110,7 +91,7 @@ function rpgmakerhook() {
         Bitmap.prototype.origin_makeFontNameText = Bitmap.prototype._makeFontNameText;
     }
     Bitmap.prototype._makeFontNameText = function () {
-        if (fontface == '') return this.origin_makeFontNameText();
+        if (!fontface) return this.origin_makeFontNameText();
         return (this.fontItalic ? 'Italic ' : '') +
             this.fontSize + 'px ' + fontface;
     }
@@ -170,7 +151,7 @@ function tyranohook() {
     tyrano.plugin.kag.tag.text.start = function (pm) {
         if (1 != this.kag.stat.is_script && 1 != this.kag.stat.is_html) {
             pm.val = clipboardsender('tyranoscript', pm.val, 0);
-            if (fontface != '') {
+            if (fontface) {
                 this.kag.stat.font.face = fontface
             }
         }

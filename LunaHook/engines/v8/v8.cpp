@@ -323,6 +323,10 @@ namespace
 		};
 		hp.filter_fun = [](void *data, size_t *len, HookParam *hp)
 		{
+			if (strstr((char *)data, R"(http://)") != 0)
+				return false;
+			if (strstr((char *)data, R"(https://)") != 0)
+				return false;
 			if (strstr((char *)data, R"(\\?\)") != 0)
 				return false; // 过滤路径
 			return true;
