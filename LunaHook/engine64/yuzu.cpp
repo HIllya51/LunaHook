@@ -1735,6 +1735,33 @@ namespace
         s = std::regex_replace(s, std::regex(R"((#[A-Za-z]+\[(\d*[.])?\d+\])+)"), "");
         return write_string_overwrite(data, len, s);
     }
+    template <bool choice>
+    bool F0100E5200D1A2000(void *data, size_t *len, HookParam *hp)
+    {
+        auto s = std::string((char *)data, *len);
+        auto ws = StringToWideString(s, 932).value();
+        ws = std::regex_replace(ws, std::wregex(LR"((\\n)+)"), L" ");
+        ws = std::regex_replace(ws, std::wregex(LR"(\\d$|^\@[a-z]+|#.*?#|\$)"), L"");
+        ws = std::regex_replace(ws, std::wregex(LR"(\u3000+)"), L"");
+        if (choice)
+            ws = std::regex_replace(ws, std::wregex(LR"(, ?\w+)"), L"");
+        s = WideStringToString(ws, 932);
+        return write_string_overwrite(data, len, s);
+    }
+    template <bool choice>
+    bool F0100EFE0159C6000(void *data, size_t *len, HookParam *hp)
+    {
+        auto s = std::string((char *)data, *len);
+        auto ws = StringToWideString(s, 932).value();
+        ws = std::regex_replace(ws, std::wregex(LR"((\\n)+)"), L" ");
+        ws = std::regex_replace(ws, std::wregex(LR"(\\d$|^\@[a-z]+|#.*?#|\$)"), L"");
+        ws = std::regex_replace(ws, std::wregex(LR"(\u3000+)"), L"");
+        ws = std::regex_replace(ws, std::wregex(LR"(@w|\\c)"), L"");
+        if (choice)
+            ws = std::regex_replace(ws, std::wregex(LR"(, ?\w+)"), L"");
+        s = WideStringToString(ws, 932);
+        return write_string_overwrite(data, len, s);
+    }
 
     bool F0100FDB00AA80000(void *data, size_t *len, HookParam *hp)
     {
@@ -3050,6 +3077,14 @@ namespace
             {0x80887ABC, {CODEC_UTF8, 8, 0, 0, 0, "0100A0001B9F0000", "1.1.0"}},               // 提取不到短字符串
             // アイ★チュウ
             {0x824865C4, {CODEC_UTF16, 3, 0, 0, F01006CC015ECA000, "01006CC015ECA000", "1.14"}},
+            // Kaeru Batake DE Tsukamaete☆ (カエル畑DEつかまえて☆彡)
+            {0x2206bc, {0, 0, 0, 0, F0100E5200D1A2000<false>, "0100E5200D1A2000", "1.0.0"}},
+            {0x220cfc, {0, 0, 0, 0, F0100E5200D1A2000<true>, "0100E5200D1A2000", "1.0.0"}},
+            {0x2372b0, {0, 1, 0, 0, F0100E5200D1A2000<false>, "0100E5200D1A2000", "1.0.0"}},
+            // Kaeru Batake DE Tsukamaete: Natsu Chigira Sansen! (カエル畑DEつかまえて・夏 千木良参戦!)
+            {0x2210d0, {0, 0, 0, 0, F0100EFE0159C6000<false>, "0100EFE0159C6000", "1.0.0"}},
+            {0x221768, {0, 0, 0, 0, F0100EFE0159C6000<false>, "0100EFE0159C6000", "1.0.0"}},
+
         };
         return 1;
     }();
