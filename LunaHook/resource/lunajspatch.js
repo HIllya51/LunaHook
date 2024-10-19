@@ -20,9 +20,9 @@ function splitfonttext(transwithfont) {
         return transwithfont;
     }
 }
-function clipboardsender(name, s, lpsplit) {
+function clipboardsender(name, s_raw, lpsplit) {
     //magic split \x02 text
-    s = magicsend + name + '\x03' + lpsplit.toString() + '\x02' + s;
+    s = magicsend + name + '\x03' + lpsplit.toString() + '\x02' + s_raw;
     try {
         const _clipboard = require('nw.gui').Clipboard.get();
         _clipboard.set(s, 'text');
@@ -35,10 +35,10 @@ function clipboardsender(name, s, lpsplit) {
             transwithfont = clipboard.readText();
         }
         catch (err2) {
-            return s;
+            return s_raw;
         }
     }
-    if (transwithfont.length == 0) return s;
+    if (transwithfont.length == 0) return s_raw;
     return splitfonttext(transwithfont)
 }
 
@@ -78,7 +78,7 @@ function rpgmakerhook() {
     }
     Bitmap.prototype.collectstring = { 2: '', 5: '', 6: '' };
     setInterval(function () {
-        for(lpsplit in Bitmap.prototype.collectstring){
+        for (lpsplit in Bitmap.prototype.collectstring) {
             if (Bitmap.prototype.collectstring[lpsplit].length) {
                 clipboardsender_only_send('rpgmakermv', Bitmap.prototype.collectstring[lpsplit], lpsplit)
                 Bitmap.prototype.collectstring[lpsplit] = ''
