@@ -1,8 +1,41 @@
 #include "v8.h"
+
+int makehttpgetserverinternal();
+const wchar_t *LUNA_CONTENTBYPASS(const wchar_t *_);
 namespace
 {
 	constexpr auto magicsend = L"\x01LUNAFROMJS\x01";
 	constexpr auto magicrecv = L"\x01LUNAFROMHOST\x01";
+}
+namespace
+{
+
+	void parsebefore(wchar_t *text, HookParam *hp, uintptr_t *data, uintptr_t *split, size_t *len)
+	{
+		if (startWith(text, magicsend))
+		{
+			text += wcslen(magicsend);
+			auto spl = wcschr(text, L'\x03');
+			strcpy(hp->name, wcasta(std::wstring(text, spl - text)).c_str());
+			text = spl + 1;
+			spl = wcschr(text, L'\x02');
+			*split = std::stoi(std::wstring(text, spl - text));
+			text = spl + 1;
+			*data = (uintptr_t)text;
+			*len = wcslen(text) * 2;
+		}
+	}
+	std::wstring parseafter(void *data, size_t len)
+	{
+		std::wstring transwithfont = magicrecv;
+		transwithfont += embedsharedmem->fontFamily;
+		transwithfont += L'\x02';
+		transwithfont += std::wstring((wchar_t *)data, len / 2);
+		return transwithfont;
+	}
+}
+namespace
+{
 	bool hookClipboard()
 	{
 		HookParam hp;
@@ -11,33 +44,38 @@ namespace
 		hp.text_fun = [](hook_stack *stack, HookParam *hp, uintptr_t *data, uintptr_t *split, size_t *len)
 		{
 			HGLOBAL hClipboardData = (HGLOBAL)stack->ARG2;
-			auto text = (wchar_t *)GlobalLock(hClipboardData);
-			if (startWith(text, magicsend))
-			{
-				text += wcslen(magicsend);
-				auto spl = wcschr(text, L'\x03');
-				strcpy(hp->name, wcasta(std::wstring(text, spl - text)).c_str());
-				text = spl + 1;
-				spl = wcschr(text, L'\x02');
-				*split = std::stoi(std::wstring(text, spl - text));
-				text = spl + 1;
-				*data = (uintptr_t)text;
-				*len = wcslen(text) * 2;
-			}
-
+			parsebefore((wchar_t *)GlobalLock(hClipboardData), hp, data, split, len);
 			GlobalUnlock(hClipboardData);
 		};
 		hp.hook_after = [](hook_stack *s, void *data, size_t len)
 		{
-			std::wstring transwithfont = magicrecv;
-			transwithfont += embedsharedmem->fontFamily;
-			transwithfont += L'\x02';
-			transwithfont += std::wstring((wchar_t *)data, len / 2);
+			std::wstring transwithfont = parseafter(data, len);
 			HGLOBAL hClipboardData = GlobalAlloc(GMEM_MOVEABLE, transwithfont.size() * 2 + 2);
 			auto pchData = (wchar_t *)GlobalLock(hClipboardData);
 			wcscpy(pchData, (wchar_t *)transwithfont.c_str());
 			GlobalUnlock(hClipboardData);
 			s->ARG2 = (uintptr_t)hClipboardData;
+		};
+		return NewHook(hp, "nwjs/electron rpgmakermv/tyranoscript");
+	}
+}
+namespace
+{
+	bool hook_LUNA_CONTENTBYPASS()
+	{
+		HookParam hp;
+		hp.address = (uintptr_t)LUNA_CONTENTBYPASS;
+		hp.type = USING_STRING | NO_CONTEXT | CODEC_UTF16 | EMBED_ABLE | EMBED_BEFORE_SIMPLE;
+		hp.text_fun = [](hook_stack *stack, HookParam *hp, uintptr_t *data, uintptr_t *split, size_t *len)
+		{
+			parsebefore((wchar_t *)stack->ARG1, hp, data, split, len);
+		};
+		hp.hook_after = [](hook_stack *s, void *data, size_t len)
+		{
+			std::wstring transwithfont = parseafter(data, len);
+			auto news = new wchar_t[transwithfont.size() + 1];
+			wcscpy(news, transwithfont.c_str());
+			s->ARG1 = (uintptr_t)news;
 		};
 		return NewHook(hp, "nwjs/electron rpgmakermv/tyranoscript");
 	}
@@ -112,7 +150,26 @@ namespace v8script
 				}
 			}
 		}
-		NewFromUtf8(&v8string, isolate, FormatString(LoadResData(L"lunajspatch", L"JSSOURCE").c_str(), is_packed).c_str(), 1, -1);
+		auto port = 0;
+
+		auto useclipboard = !std::filesystem::exists(std::filesystem::path(getModuleFilename().value()).replace_filename("disable.clipboard"));
+		auto usehttp = !std::filesystem::exists(std::filesystem::path(getModuleFilename().value()).replace_filename("disable.http"));
+		if (usehttp)
+		{
+			port = makehttpgetserverinternal();
+			ConsoleOutput("%d %d", GetCurrentProcessId(), port);
+			hook_LUNA_CONTENTBYPASS();
+			dont_detach = true;
+		}
+		if (useclipboard)
+		{
+			hookClipboard();
+		}
+		auto lunajspatch = LoadResData(L"lunajspatch", L"JSSOURCE");
+		strReplace(lunajspatch, "IS_PACKED", std::to_string(is_packed));
+		strReplace(lunajspatch, "IS_USECLIPBOARD", std::to_string(useclipboard));
+		strReplace(lunajspatch, "INTERNAL_HTTP_PORT", std::to_string(port));
+		NewFromUtf8(&v8string, isolate, lunajspatch.c_str(), 1, -1);
 		ConsoleOutput("v8string %p", v8string);
 		if (v8string == 0)
 			return;
@@ -168,7 +225,8 @@ namespace v8script
 
 		if (RequestInterrupt == 0)
 			return false;
-		RequestInterrupt(isolate, _interrupt_function, 0);
+
+		RequestInterrupt(isolate, _interrupt_function, nullptr);
 
 		return true;
 	}
@@ -294,14 +352,6 @@ namespace
 		return succ;
 	}
 }
-bool tryhookv8_internal(HMODULE hm)
-{
-	auto succ = hookstring(hm);
-	if (!std::filesystem::exists(std::filesystem::path(getModuleFilename().value()).replace_filename("disable.clipboard")))
-		if (v8script::v8runscript(hm))
-			succ |= hookClipboard();
-	return succ;
-}
 bool tryhookv8()
 {
 	for (const wchar_t *moduleName : {(const wchar_t *)NULL, L"node.dll", L"nw.dll"})
@@ -309,7 +359,8 @@ bool tryhookv8()
 		auto hm = GetModuleHandleW(moduleName);
 		if (hm == 0)
 			continue;
-		bool ok = tryhookv8_internal(hm);
+		auto ok = hookstring(hm);
+		ok |= v8script::v8runscript(hm);
 		if (ok)
 			return true;
 	}

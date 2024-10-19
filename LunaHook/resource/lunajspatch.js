@@ -1,7 +1,9 @@
 var fontface = '';
 var magicsend = '\x01LUNAFROMJS\x01'
 var magicrecv = '\x01LUNAFROMHOST\x01'
-var is_packed = %d
+var is_packed = IS_PACKED
+var is_useclipboard = IS_USECLIPBOARD
+var internal_http_port = INTERNAL_HTTP_PORT
 function splitfonttext(transwithfont) {
     if (transwithfont.substr(0, magicsend.length) == magicsend) //not trans
     {
@@ -20,41 +22,77 @@ function splitfonttext(transwithfont) {
         return transwithfont;
     }
 }
+function syncquery(s) {
+    if (internal_http_port == 0) { throw new Error('') }
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', 'http://127.0.0.1:' + internal_http_port + '/fuck?' + s, false);
+    xhr.send();
+    if (xhr.status === 200) {
+        return xhr.responseText;
+    } else {
+        throw new Error('')
+    }
+
+}
+function isEmptyString(str) {
+    return str === null || str === undefined || str.length == 0;
+}
 function clipboardsender(name, s_raw, lpsplit) {
     //magic split \x02 text
+    if (isEmptyString(s_raw))
+        return s_raw
     s = magicsend + name + '\x03' + lpsplit.toString() + '\x02' + s_raw;
     try {
+        if (!is_useclipboard) { throw new Error('') }
         const _clipboard = require('nw.gui').Clipboard.get();
         _clipboard.set(s, 'text');
         transwithfont = _clipboard.get('text');
     }
     catch (err) {
         try {
+            if (!is_useclipboard) { throw new Error('') }
             const clipboard = require('electron').clipboard;
             clipboard.writeText(s);
             transwithfont = clipboard.readText();
         }
         catch (err2) {
-            return s_raw;
+
+            try {
+
+                transwithfont = syncquery(s)
+            }
+            catch (err3) {
+                return s_raw;
+            }
         }
     }
     if (transwithfont.length == 0) return s_raw;
     return splitfonttext(transwithfont)
 }
 
-function clipboardsender_only_send(name, s, lpsplit) {
+function clipboardsender_only_send(name, s_raw, lpsplit) {
     //magic split \x02 text
-    s = magicsend + name + '\x03' + lpsplit.toString() + '\x02' + s;
+    if (isEmptyString(s_raw))
+        return s_raw
+    s = magicsend + name + '\x03' + lpsplit.toString() + '\x02' + s_raw;
     try {
+        if (!is_useclipboard) { throw new Error('') }
         const _clipboard = require('nw.gui').Clipboard.get();
         _clipboard.set(s, 'text');
     }
     catch (err) {
         try {
+            if (!is_useclipboard) { throw new Error('') }
             const clipboard = require('electron').clipboard;
             clipboard.writeText(s);
         }
         catch (err2) {
+            try {
+                syncquery(s)
+            }
+            catch (err3) {
+
+            }
         }
     }
 }
