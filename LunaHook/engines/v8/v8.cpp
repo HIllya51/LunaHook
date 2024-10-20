@@ -9,6 +9,12 @@ namespace
 }
 namespace
 {
+	bool useclipboard = true;
+	bool usehttp = true;
+	int usehttp_port = 0;
+}
+namespace
+{
 
 	void parsebefore(wchar_t *text, HookParam *hp, uintptr_t *data, uintptr_t *split, size_t *len)
 	{
@@ -150,25 +156,11 @@ namespace v8script
 				}
 			}
 		}
-		auto port = 0;
 
-		auto useclipboard = !std::filesystem::exists(std::filesystem::path(getModuleFilename().value()).replace_filename("disable.clipboard"));
-		auto usehttp = !std::filesystem::exists(std::filesystem::path(getModuleFilename().value()).replace_filename("disable.http"));
-		if (usehttp)
-		{
-			port = makehttpgetserverinternal();
-			ConsoleOutput("%d %d", GetCurrentProcessId(), port);
-			hook_LUNA_CONTENTBYPASS();
-			dont_detach = true;
-		}
-		if (useclipboard)
-		{
-			hookClipboard();
-		}
 		auto lunajspatch = LoadResData(L"lunajspatch", L"JSSOURCE");
 		strReplace(lunajspatch, "IS_PACKED", std::to_string(is_packed));
 		strReplace(lunajspatch, "IS_USECLIPBOARD", std::to_string(useclipboard));
-		strReplace(lunajspatch, "INTERNAL_HTTP_PORT", std::to_string(port));
+		strReplace(lunajspatch, "INTERNAL_HTTP_PORT", std::to_string(usehttp_port));
 		NewFromUtf8(&v8string, isolate, lunajspatch.c_str(), 1, -1);
 		ConsoleOutput("v8string %p", v8string);
 		if (v8string == 0)
@@ -363,10 +355,24 @@ bool tryhookv8()
 		auto hm = GetModuleHandleW(moduleName);
 		if (hm == 0)
 			continue;
-		auto ok = hookstring(hm);
-		ok |= v8script::v8runscript(hm);
-		if (ok)
-			return true;
+		if (hookstring(hm))
+		{
+			useclipboard = !std::filesystem::exists(std::filesystem::path(getModuleFilename().value()).replace_filename("disable.clipboard"));
+			usehttp = !std::filesystem::exists(std::filesystem::path(getModuleFilename().value()).replace_filename("disable.http"));
+			if (usehttp)
+			{
+				usehttp_port = makehttpgetserverinternal();
+				ConsoleOutput("%d %d", GetCurrentProcessId(), usehttp_port);
+				hook_LUNA_CONTENTBYPASS();
+				dont_detach = true;
+			}
+			if (useclipboard)
+			{
+				hookClipboard();
+			}
+
+			return v8script::v8runscript(hm);
+		}
 	}
 	return false;
 }

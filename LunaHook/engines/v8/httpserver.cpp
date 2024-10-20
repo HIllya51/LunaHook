@@ -471,29 +471,6 @@ Return Value:
 
 --***************************************************************************/
 
-std::string urlDecode(const std::string &encoded)
-{
-    std::string decoded;
-    for (size_t i = 0; i < encoded.size(); i++)
-    {
-        if (encoded[i] == '%')
-        {
-            char ch = std::stoi(encoded.substr(i + 1, 2), 0, 16);
-            decoded += ch;
-            i = i + 2;
-        }
-        else if (encoded[i] == '+')
-        {
-            decoded += ' ';
-        }
-        else
-        {
-            decoded += encoded[i];
-        }
-    }
-    return decoded;
-}
-
 #pragma optimize("", off)
 const wchar_t *LUNA_CONTENTBYPASS(const wchar_t *_)
 {
@@ -507,57 +484,114 @@ SendHttpResponse(
     IN PHTTP_REQUEST pRequest)
 {
     HTTP_RESPONSE response;
-    HTTP_DATA_CHUNK dataChunk;
     DWORD result;
     DWORD bytesSent;
-    USHORT StatusCode = 200;
-    PSTR pReason = "OK";
-
+    ULONG BytesRead;
+    HTTP_DATA_CHUNK dataChunk;
+    std::string recv;
+    std::string buff;
+    buff.resize(2048);
+    bool recving = true;
     //
     // Initialize the HTTP response structure.
     //
-    INITIALIZE_HTTP_RESPONSE(&response, StatusCode, pReason);
+    INITIALIZE_HTTP_RESPONSE(&response, 200, "OK");
 
     //
-    // Add a known header.
+    // For POST, we'll echo back the entity that we got from the client.
     //
-    ADD_KNOWN_HEADER(response, HttpHeaderContentType, "text/html");
-    std::string url(pRequest->pRawUrl, pRequest->RawUrlLength);
-    auto fnd = url.find('?');
-
-    if (fnd != url.npos)
+    // NOTE: If we had passed the HTTP_RECEIVE_REQUEST_FLAG_COPY_BODY
+    //       flag with HttpReceiveHttpRequest(), the entity would have
+    //       been a part of HTTP_REQUEST (using the pEntityChunks field).
+    //       Since we have not passed that flag, we can be assured that
+    //       there are no entity bodies in HTTP_REQUEST.
+    //
+    if (pRequest->Flags & HTTP_REQUEST_FLAG_MORE_ENTITY_BODY_EXISTS)
     {
-        url = url.substr(fnd + 1);
-        url = urlDecode(url);
-        url = WideStringToString(LUNA_CONTENTBYPASS(StringToWideString(url).c_str()));
+        // The entity body is send over multiple calls. Let's collect all
+        // of these in a file & send it back. We'll create a temp file
         //
-        // Add an entity chunk
-        //
-        dataChunk.DataChunkType = HttpDataChunkFromMemory;
-        dataChunk.FromMemory.pBuffer = (PVOID)url.c_str();
-        dataChunk.FromMemory.BufferLength = (ULONG)url.size();
 
-        response.EntityChunkCount = 1;
-        response.pEntityChunks = &dataChunk;
+        do
+        {
+            //
+            // Read the entity chunk from the request.
+            //
+            BytesRead = 0;
+            result = HttpReceiveRequestEntityBody(
+                hReqQueue,
+                pRequest->RequestId,
+                0,
+                buff.data(),
+                buff.capacity(),
+                &BytesRead,
+                NULL);
+            switch (result)
+            {
+            case NO_ERROR:
+            case ERROR_HANDLE_EOF:
+
+                if (BytesRead != 0)
+                {
+                    recv += buff.substr(0, BytesRead);
+                }
+                if (result == ERROR_HANDLE_EOF)
+                    recving = false;
+                break;
+
+            default:
+                recving = false;
+            }
+
+        } while (recving);
     }
+    if (recv.size())
+        recv = WideStringToString(LUNA_CONTENTBYPASS(StringToWideString(recv).c_str()));
+    if (recv.size())
+    {
+        ADD_KNOWN_HEADER(
+            response,
+            HttpHeaderContentLength,
+            std::to_string(recv.size()).c_str());
+    }
+    result =
+        HttpSendHttpResponse(
+            hReqQueue,           // ReqQueueHandle
+            pRequest->RequestId, // Request ID
+            recv.size() ? HTTP_SEND_RESPONSE_FLAG_MORE_DATA : 0,
+            &response,  // HTTP response
+            NULL,       // pReserved1
+            &bytesSent, // bytes sent (optional)
+            NULL,       // pReserved2
+            0,          // Reserved3
+            NULL,       // LPOVERLAPPED
+            NULL        // pReserved4
+        );
 
+    if (result != NO_ERROR)
+    {
+        return result;
+    }
+    if (!recv.size())
+        return result;
     //
-    // Since we are sending all the entity body in one call, we don't have
-    // to specify the Content-Length.
+    // Send entity body from a file handle.
     //
+    dataChunk.DataChunkType = HttpDataChunkFromMemory;
+    dataChunk.FromMemory.pBuffer = (PVOID)recv.c_str();
+    dataChunk.FromMemory.BufferLength = (ULONG)recv.size();
 
-    result = HttpSendHttpResponse(
-        hReqQueue,           // ReqQueueHandle
-        pRequest->RequestId, // Request ID
-        0,                   // Flags
-        &response,           // HTTP response
-        NULL,                // pReserved1
-        &bytesSent,          // bytes sent   (OPTIONAL)
-        NULL,                // pReserved2   (must be NULL)
-        0,                   // Reserved3    (must be 0)
-        NULL,                // LPOVERLAPPED (OPTIONAL)
-        NULL                 // pReserved4   (must be NULL)
-    );
+    result = HttpSendResponseEntityBody(
+        hReqQueue,
+        pRequest->RequestId,
+        0, // This is the last send.
+        1, // Entity Chunk Count.
+        &dataChunk,
+        NULL,
+        NULL,
+        0,
+        NULL,
+        NULL);
 
     return result;
 }

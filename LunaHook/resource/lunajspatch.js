@@ -12,7 +12,6 @@ function splitfonttext(transwithfont) {
     }
     else if (transwithfont.substr(0, magicrecv.length) == magicrecv) {
         transwithfont = transwithfont.substr(magicrecv.length)
-        //magic font \x02 text
         split = transwithfont.search('\x02')
         fontface = transwithfont.substr(0, split)
         text = transwithfont.substr(split + 1)
@@ -22,61 +21,40 @@ function splitfonttext(transwithfont) {
         return transwithfont;
     }
 }
-function syncquery(s) {
-    if (internal_http_port == 0) { throw new Error('') }
-    var xhr = new XMLHttpRequest();
-    var url = 'http://127.0.0.1:' + internal_http_port + '/fuck?' + s
-    xhr.open('GET', url, false);
-    xhr.send();
-    if (xhr.status === 200) {
-        return xhr.responseText;//解析这个会导致v8::String::Length的v8StringUtf8Length出现错误，但不影响。
-    } else {
-        throw new Error('')
-    }
-
-}
-function makecomplexs(name, s_raw, lpsplit) {
-    return magicsend + name + '\x03' + lpsplit.toString() + '\x02' + s_raw;
-}
-function cppjsio(s) {
-    try {
-        return syncquery(s)
-    }
-    catch (err) {
-        try {
-            if (!is_useclipboard) { throw new Error('') }
-            const _clipboard = require('nw.gui').Clipboard.get();
-            _clipboard.set(s, 'text');
-            return _clipboard.get('text');
-        }
-        catch (err2) {
-            try {
-                if (!is_useclipboard) { throw new Error('') }
-                const clipboard = require('electron').clipboard;
-                clipboard.writeText(s);
-                return clipboard.readText();
-            }
-            catch (err3) {
-                return s_raw;
-            }
-        }
-    }
-}
-function clipboardsender(name, s_raw, lpsplit) {
-    //magic split \x02 text
+function cppjsio(name, s_raw, lpsplit) {
     if (!s_raw)
         return s_raw
-    transwithfont = cppjsio(makecomplexs(name, s_raw, lpsplit))
-    if (transwithfont.length == 0) return s_raw;
+    transwithfont = ''
+    s = magicsend + name + '\x03' + lpsplit.toString() + '\x02' + s_raw;
+    if (internal_http_port) {
+        var xhr = new XMLHttpRequest();
+        var url = 'http://127.0.0.1:' + internal_http_port + '/fuck'
+        xhr.open('POST', url, false);
+        xhr.send(s);
+        if (xhr.status === 200) {
+            transwithfont = xhr.responseText;
+        }
+    }
+    else if (is_useclipboard) {
+        try {
+            const _clipboard = require('nw.gui').Clipboard.get();
+            _clipboard.set(s, 'text');
+            transwithfont = _clipboard.get('text');
+        }
+        catch (err) {
+            try {
+                const clipboard = require('electron').clipboard;
+                clipboard.writeText(s);
+                transwithfont = clipboard.readText();
+            }
+            catch (err2) {
+            }
+        }
+    }
+    if (!transwithfont) return s_raw;
     return splitfonttext(transwithfont)
 }
 
-function clipboardsender_only_send(name, s_raw, lpsplit) {
-    //magic split \x02 text
-    if (!s_raw)
-        return s_raw
-    cppjsio(makecomplexs(name, s_raw, lpsplit))
-}
 function rpgmakerhook() {
 
     if (Window_Message.prototype.originstartMessage) { }
@@ -99,7 +77,7 @@ function rpgmakerhook() {
     setInterval(function () {
         for (lpsplit in Bitmap.prototype.collectstring) {
             if (Bitmap.prototype.collectstring[lpsplit].length) {
-                clipboardsender_only_send('rpgmakermv', Bitmap.prototype.collectstring[lpsplit], lpsplit)
+                cppjsio('rpgmakermv', Bitmap.prototype.collectstring[lpsplit], lpsplit)
                 Bitmap.prototype.collectstring[lpsplit] = ''
             }
         }
@@ -121,12 +99,12 @@ function rpgmakerhook() {
     }
     Window_Message.prototype.startMessage = function () {
         gametext = $gameMessage.allText();
-        resp = clipboardsender('rpgmakermv', gametext, 0);
+        resp = cppjsio('rpgmakermv', gametext, 0);
         $gameMessage._texts = [resp]
         this.originstartMessage();
     };
     Window_Base.prototype.drawText = function (text, x, y, maxWidth, align) {
-        text = clipboardsender('rpgmakermv', text, 1)
+        text = cppjsio('rpgmakermv', text, 1)
         return this.drawText_origin(text, x, y, maxWidth, align)
     }
     Window_Base.prototype.lastcalltime = 0
@@ -135,7 +113,7 @@ function rpgmakerhook() {
         __now = new Date().getTime()
         Window_Base.prototype.lastcalltime = __now
         if (__now - __last > 100)
-            text = clipboardsender('rpgmakermv', text, 2)
+            text = cppjsio('rpgmakermv', text, 2)
         else {
             Bitmap.prototype.collectstring[2] += text;
         }
@@ -150,7 +128,7 @@ function tyranohook() {
     tyrano.plugin.kag.tag.chara_ptext.startorigin = tyrano.plugin.kag.tag.chara_ptext.start;
     tyrano.plugin.kag.tag.text.start = function (pm) {
         if (1 != this.kag.stat.is_script && 1 != this.kag.stat.is_html) {
-            pm.val = clipboardsender('tyranoscript', pm.val, 0);
+            pm.val = cppjsio('tyranoscript', pm.val, 0);
             if (fontface) {
                 this.kag.stat.font.face = fontface
             }
@@ -158,7 +136,7 @@ function tyranohook() {
         return this.originstart(pm)
     }
     tyrano.plugin.kag.tag.chara_ptext.start = function (pm) {
-        pm.name = clipboardsender('tyranoscript', pm.name, 1)
+        pm.name = cppjsio('tyranoscript', pm.name, 1)
         return this.startorigin(pm)
     }
 }
