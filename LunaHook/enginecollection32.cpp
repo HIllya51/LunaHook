@@ -58,7 +58,7 @@
 #include "engine32/Cotopha.h"
 #include "engine32/Xbangbang.h"
 #include "engine32/TeethingRing.h"
-#include "engine32/Unknown.h"
+#include "engine32/UnknownEngine.h"
 #include "engine32/Artemis.h"
 #include "engine32/CatSystem.h"
 #include "engine32/Atelier.h"
@@ -299,7 +299,7 @@ std::vector<ENGINE *> check_engines()
         new ACTGS,
         new Nijyuei,
         new Xbangbang,
-        new Unknown,
+        new UnknownEngine,
         new TSSystem,
         new Troy,
         new Tomato,

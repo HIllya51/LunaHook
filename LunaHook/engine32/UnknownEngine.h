@@ -1,8 +1,8 @@
 
 
-class Unknown:public ENGINE{
+class UnknownEngine:public ENGINE{
     public:
-    Unknown(){
+    UnknownEngine(){
         
         check_by=CHECK_BY::FILE;
         is_engine_certain=false;

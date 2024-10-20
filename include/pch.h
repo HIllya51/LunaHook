@@ -1,5 +1,6 @@
 #pragma once
-
+#include <Winsock2.h>
+#define _WINSOCKAPI_
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #include <windowsx.h>

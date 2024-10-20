@@ -241,54 +241,51 @@ auto makeserveronce(int port)
 }
 int GetRandomAvailablePort()
 {
-    static int xx = 9000 + GetCurrentProcessId() % 20000;
-    return xx++;
+    WSADATA wsaData;
+    int result = WSAStartup(MAKEWORD(2, 2), &wsaData);
+    if (result != 0)
+    {
+        return 0;
+    }
 
-    // WSADATA wsaData;
-    // int result = WSAStartup(MAKEWORD(2, 2), &wsaData);
-    // if (result != 0)
-    // {
-    //     return 0;
-    // }
+    // 创建一个 TCP 套接字
+    SOCKET sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (sock == INVALID_SOCKET)
+    {
+        WSACleanup();
+        return 0;
+    }
 
-    // // 创建一个 TCP 套接字
-    // SOCKET sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    // if (sock == INVALID_SOCKET)
-    // {
-    //     WSACleanup();
-    //     return 0;
-    // }
+    // 绑定到随机端口
+    sockaddr_in addr;
+    addr.sin_family = AF_INET;
+    addr.sin_addr.s_addr = INADDR_ANY;
+    addr.sin_port = 0; // 0 表示让系统自动选择一个可用端口
 
-    // // 绑定到随机端口
-    // sockaddr_in addr;
-    // addr.sin_family = AF_INET;
-    // addr.sin_addr.s_addr = INADDR_ANY;
-    // addr.sin_port = 0; // 0 表示让系统自动选择一个可用端口
+    result = bind(sock, (SOCKADDR *)&addr, sizeof(addr));
+    if (result == SOCKET_ERROR)
+    {
+        closesocket(sock);
+        WSACleanup();
+        return 0;
+    }
 
-    // result = bind(sock, (SOCKADDR *)&addr, sizeof(addr));
-    // if (result == SOCKET_ERROR)
-    // {
-    //     closesocket(sock);
-    //     WSACleanup();
-    //     return 0;
-    // }
+    // 获取实际绑定的端口号
+    int addrLen = sizeof(addr);
+    result = getsockname(sock, (SOCKADDR *)&addr, &addrLen);
+    if (result == SOCKET_ERROR)
+    {
+        closesocket(sock);
+        WSACleanup();
+        return 0;
+    }
 
-    // // 获取实际绑定的端口号
-    // int addrLen = sizeof(addr);
-    // result = getsockname(sock, (SOCKADDR *)&addr, &addrLen);
-    // if (result == SOCKET_ERROR)
-    // {
-    //     closesocket(sock);
-    //     WSACleanup();
-    //     return 0;
-    // }
+    // 关闭套接字
+    closesocket(sock);
+    WSACleanup();
 
-    // // 关闭套接字
-    // closesocket(sock);
-    // WSACleanup();
-
-    // // 返回实际绑定的端口号
-    // return ntohs(addr.sin_port);
+    // 返回实际绑定的端口号
+    return ntohs(addr.sin_port);
 }
 
 int makehttpgetserverinternal()
