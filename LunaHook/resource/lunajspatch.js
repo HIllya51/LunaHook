@@ -21,11 +21,11 @@ function splitfonttext(transwithfont) {
         return transwithfont;
     }
 }
-function cppjsio(name, s_raw, lpsplit) {
+function cppjsio(name, s_raw, lpsplit, embedable = true) {
     if (!s_raw)
         return s_raw
     transwithfont = ''
-    s = magicsend + name + '\x03' + lpsplit.toString() + '\x02' + s_raw;
+    s = magicsend + name + '\x03' + lpsplit.toString() + '\x04' + (embedable ? '1' : '0') + '\x02' + s_raw;
     if (internal_http_port) {
         var xhr = new XMLHttpRequest();
         var url = 'http://127.0.0.1:' + internal_http_port + '/fuck'
@@ -62,6 +62,7 @@ function rpgmakerhook() {
         Window_Base.prototype.drawTextEx_origin = Window_Base.prototype.drawTextEx;
         Window_Base.prototype.drawText_origin = Window_Base.prototype.drawText;
         Window_Message.prototype.originstartMessage = Window_Message.prototype.startMessage;
+        Window_Message.prototype.updateMessage_ori = Window_Message.prototype.updateMessage;
 
         Bitmap.prototype.drawText_ori = Bitmap.prototype.drawText;
         Bitmap.prototype.last_y = 0;
@@ -77,7 +78,7 @@ function rpgmakerhook() {
     setInterval(function () {
         for (lpsplit in Bitmap.prototype.collectstring) {
             if (Bitmap.prototype.collectstring[lpsplit].length) {
-                cppjsio('rpgmakermv', Bitmap.prototype.collectstring[lpsplit], lpsplit)
+                cppjsio('rpgmakermv', Bitmap.prototype.collectstring[lpsplit], lpsplit, false)
                 Bitmap.prototype.collectstring[lpsplit] = ''
             }
         }
@@ -102,6 +103,16 @@ function rpgmakerhook() {
         resp = cppjsio('rpgmakermv', gametext, 0);
         $gameMessage._texts = [resp]
         this.originstartMessage();
+    };
+    Window_Message.prototype.lastalltext = ''
+    Window_Message.prototype.updateMessage = function () {
+        if (this._textState) {
+            if (Window_Message.prototype.lastalltext != $gameMessage.allText()) {
+                cppjsio('rpgmakermv', $gameMessage.allText(), 18, false);
+                Window_Message.prototype.lastalltext = $gameMessage.allText()
+            }
+        }
+        return this.updateMessage_ori();
     };
     Window_Base.prototype.drawText = function (text, x, y, maxWidth, align) {
         text = cppjsio('rpgmakermv', text, 1)

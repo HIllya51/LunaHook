@@ -16,7 +16,8 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 }
 
 typedef void (*ProcessEvent)(DWORD);
-typedef void (*ThreadEvent)(const wchar_t *, const char *, ThreadParam);
+typedef void (*ThreadEvent)(const wchar_t *, const char *, ThreadParam, bool);
+typedef void (*ThreadEvent_2)(const wchar_t *, const char *, ThreadParam);
 typedef bool (*OutputCallback)(const wchar_t *, const char *, ThreadParam, const wchar_t *);
 typedef void (*ConsoleHandler)(const wchar_t *);
 typedef void (*HookInsertHandler)(uint64_t, const wchar_t *);
@@ -28,13 +29,13 @@ std::optional<T> checkoption(bool check, T &&t)
         return std::move(t);
     return {};
 }
-C_LUNA_API void Luna_Start(ProcessEvent Connect, ProcessEvent Disconnect, ThreadEvent Create, ThreadEvent Destroy, OutputCallback Output, ConsoleHandler console, HookInsertHandler hookinsert, EmbedCallback embed, ConsoleHandler Warning)
+C_LUNA_API void Luna_Start(ProcessEvent Connect, ProcessEvent Disconnect, ThreadEvent Create, ThreadEvent_2 Destroy, OutputCallback Output, ConsoleHandler console, HookInsertHandler hookinsert, EmbedCallback embed, ConsoleHandler Warning)
 {
     Host::StartEx(
         checkoption(Connect, std::function<void(DWORD)>(Connect)),
         checkoption(Disconnect, std::function<void(DWORD)>(Disconnect)),
         checkoption(Create, [=](const TextThread &thread)
-                    { Create(thread.hp.hookcode, thread.hp.name, thread.tp); }),
+                    { Create(thread.hp.hookcode, thread.hp.name, thread.tp, thread.hp.type & EMBED_ABLE); }),
         checkoption(Destroy, [=](const TextThread &thread)
                     { Destroy(thread.hp.hookcode, thread.hp.name, thread.tp); }),
         checkoption(Output, [=](const TextThread &thread, std::wstring &output)

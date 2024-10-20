@@ -24,9 +24,16 @@ namespace
 			auto spl = wcschr(text, L'\x03');
 			strcpy(hp->name, wcasta(std::wstring(text, spl - text)).c_str());
 			text = spl + 1;
-			spl = wcschr(text, L'\x02');
+			spl = wcschr(text, L'\x04');
 			*split = std::stoi(std::wstring(text, spl - text));
 			text = spl + 1;
+			auto embedable = wcschr(text, L'\x02');
+			auto isembedabl = std::stoi(std::wstring(text, embedable - text));
+			if (isembedabl)
+				hp->type |= EMBED_ABLE;
+			else
+				hp->type &= ~EMBED_ABLE;
+			text = embedable + 1;
 			*data = (uintptr_t)text;
 			*len = wcslen(text) * 2;
 		}
