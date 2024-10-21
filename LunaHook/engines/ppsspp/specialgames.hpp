@@ -408,6 +408,8 @@ namespace ppsspp
 		// Tokimeki Memorial 4
 		{0x899a510, {0, 2, 0, 0, FNPJH50127, "NPJH50127"}},
 		{0x88719dc, {0, 1, 0, 0, FNPJH50127, "NPJH50127"}},
+		// オメルタ～沈黙の掟～ THE LEGACY
+		{0x88861C8, {0, 3, 0, 0, 0, "ULJM06393"}},
 	};
 
 }
