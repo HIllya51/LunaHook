@@ -1215,6 +1215,17 @@ namespace
         last = s;
         return write_string_overwrite(data, len, s);
     }
+    bool F01007FD00DB20000(void *data, size_t *len, HookParam *hp)
+    {
+        auto s = utf32_to_utf16((uint32_t *)data, *len / 4);
+        s = std::regex_replace(s, std::wregex(LR"(\n+)"), L" ");
+        s = std::regex_replace(s, std::wregex(LR"(\#T1[^#]+)"), L"");
+        s = std::regex_replace(s, std::wregex(LR"(\#T\d)"), L"");
+        if (s == L"　　")
+            return false;
+        auto u32 = utf16_to_utf32(s.c_str(), s.size());
+        return write_string_overwrite(data, len, u32);
+    }
     bool F010021D01474E000(void *data, size_t *len, HookParam *hp)
     {
         auto s = utf32_to_utf16((uint32_t *)data, *len / 4);
@@ -3084,6 +3095,13 @@ namespace
             // Kaeru Batake DE Tsukamaete: Natsu Chigira Sansen! (カエル畑DEつかまえて・夏 千木良参戦!)
             {0x2210d0, {0, 0, 0, 0, F0100EFE0159C6000<false>, "0100EFE0159C6000", "1.0.0"}},
             {0x221768, {0, 0, 0, 0, F0100EFE0159C6000<false>, "0100EFE0159C6000", "1.0.0"}},
+            // Katakoi Contrast -collection of branch- (片恋いコントラスト ―collection of branch―)
+            {0x8004ba20, {CODEC_UTF32, 0, 0, 0, F01007FD00DB20000, "01007FD00DB20000", "1.0.0"}},
+            {0x800c6eb0, {CODEC_UTF32, 1, 0, 0, F01007FD00DB20000, "01007FD00DB20000", "1.0.0"}},
+            {0x8017e560, {CODEC_UTF32, 0, 0, 0, F01007FD00DB20000, "01007FD00DB20000", "1.0.0"}},
+            {0x801f67c0, {CODEC_UTF32, 1, 0, 0, F01007FD00DB20000, "01007FD00DB20000", "1.0.0"}},
+            {0x802a76c0, {CODEC_UTF32, 0, 0, 0, F01007FD00DB20000, "01007FD00DB20000", "1.0.0"}},
+            {0x8031fc80, {CODEC_UTF32, 1, 0, 0, F01007FD00DB20000, "01007FD00DB20000", "1.0.0"}},
 
         };
         return 1;
