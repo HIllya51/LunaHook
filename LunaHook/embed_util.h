@@ -28,7 +28,7 @@ namespace Engine
     };
 }
 inline std::atomic<void (*)()> patch_fun = nullptr;
-void ReplaceFunction(PVOID *oldf, PVOID newf);
+bool ReplaceFunction(PVOID oldf, PVOID newf, PVOID *pOrigin = nullptr);
 bool check_embed_able(const ThreadParam &tp);
 bool checktranslatedok(void *data, size_t len);
 #endif

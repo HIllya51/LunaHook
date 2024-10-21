@@ -21,7 +21,6 @@ enum
 #include "disasm/disasm.h"
 #include "engine.h"
 #include "embed_util.h"
-#include "detours.h"
 #include "hijackfuns.h"
 
 #include "Lang/Lang.h"

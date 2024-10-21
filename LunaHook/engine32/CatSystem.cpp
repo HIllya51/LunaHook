@@ -827,7 +827,7 @@ namespace
         hp.hook_font = F_GetGlyphOutlineA;
         patch_fun = []()
         {
-          ReplaceFunction((PVOID *)&p, (PVOID)(ULONG)Patch::Private::isLeadByteChar);
+          ReplaceFunction((PVOID)p, (PVOID)(ULONG)Patch::Private::isLeadByteChar);
         };
       }
 

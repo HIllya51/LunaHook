@@ -1,3 +1,5 @@
+#include "MinHook.h"
+
 DynamicShiftJISCodec *dynamiccodec = new DynamicShiftJISCodec(932);
 
 void cast_back(const HookParam &hp, void *data, size_t *len, const std::wstring &trans, bool normal)
@@ -72,14 +74,19 @@ bool _1f()
   return 0;
 }
 bool _1 = _1f();
-void ReplaceFunction(PVOID *oldf, PVOID newf)
+bool ReplaceFunction(PVOID oldf, PVOID newf, PVOID *pOrigin)
 {
-
-  RemoveHook((uintptr_t)*oldf);
-  DetourTransactionBegin();
-  DetourUpdateThread(GetCurrentThread());
-  DetourAttach((PVOID *)oldf, (PVOID)newf);
-  DetourTransactionCommit();
+  PVOID oldx;
+  if (!pOrigin)
+    pOrigin = &oldx;
+  RemoveHook((uintptr_t)oldf);
+  if (MH_OK == MH_CreateHook(oldf, newf, pOrigin))
+    return MH_OK == MH_EnableHook(oldf);
+  else
+  {
+    MH_RemoveHook(oldf);
+    return false;
+  }
 }
 void attachFunction(uintptr_t _hook_font_flag)
 {
@@ -89,23 +96,23 @@ void attachFunction(uintptr_t _hook_font_flag)
     {
       if (_func.second.attached)
         continue;
-      _func.second.attached = true;
-      *_func.second.oldFunction = _func.second.addr;
-      replacedfuns.push_back(_func.first);
-      ReplaceFunction((PVOID *)_func.second.oldFunction, (PVOID)_func.second.newFunction);
+
+      if (ReplaceFunction((PVOID)_func.second.addr, (PVOID)_func.second.newFunction, (PVOID *)_func.second.oldFunction))
+      {
+        _func.second.attached = true;
+        replacedfuns.push_back(_func.first);
+      }
     }
   }
 }
 void detachall()
 {
-  DetourTransactionBegin();
-  DetourUpdateThread(GetCurrentThread());
   for (auto _flag : replacedfuns)
   {
     auto info = funcs.at(_flag);
-    DetourDetach((PVOID *)info.oldFunction, (PVOID)info.newFunction);
+    if (MH_OK == MH_DisableHook((LPVOID)info.addr))
+      MH_RemoveHook((LPVOID)info.addr);
   }
-  DetourTransactionCommit();
 }
 void solvefont(HookParam hp)
 {
