@@ -189,8 +189,20 @@ bool InsertCatSystemHook()
   }
   else
   {
+    BYTE check[] = {0x66, 0x83, 0xff, 0x20, // 0x20
+                    0x0f, 0x84, XX4,
+                    0xb8, 0x40, 0x81, 0x00, 0x00, // 0x8140
+                    0x66, 0x3b, 0xf8};
+    if (MemDbg::findBytes(check, sizeof(check), addr, addr + 0x100))
+    {
+      hp.split = get_stack(1);
+      hp.offset = get_reg(regs::edx);
+    }
+    else
+    {
+      hp.split = get_reg(regs::edx);
+    }
     hp.type = CODEC_ANSI_BE | USING_SPLIT;
-    hp.split = get_reg(regs::edx);
     ConsoleOutput("INSERT CatSystem2");
     return NewHook(hp, "CatSystem2");
   }
@@ -257,6 +269,15 @@ namespace
 
         // return dynsjis::isleadstr(s); // no idea why this will cause Grisaia3 to hang
         // return ::IsDBCSLeadByte(HIBYTE(testChar));
+      }
+      __declspec(naked) bool thiscallisLeadByteChar()
+      {
+        __asm {
+            push ecx 
+            call isLeadByteChar
+            pop ecx
+            ret
+        }
       }
 
     } // namespace Private
@@ -612,13 +633,13 @@ namespace
         }
 
         std::string oldData(trimmedText, trimmedSize);
-
+        strReplace(oldData, "\\n", "\n");
         return write_string_overwrite(data, len, oldData);
       }
       void hookafter(hook_stack *s, void *data, size_t len)
       {
-
         auto newData = std::string((char *)data, len);
+        strReplace(newData, "\n", "\\n");
         if (trimmedText[trimmedSize])
           newData.append(trimmedText + trimmedSize);
         ::strcpy(trimmedText, newData.c_str());
@@ -827,7 +848,12 @@ namespace
         hp.hook_font = F_GetGlyphOutlineA;
         patch_fun = []()
         {
-          ReplaceFunction((PVOID)p, (PVOID)(ULONG)Patch::Private::isLeadByteChar);
+          if (*(WORD *)p == 0xc985)
+          { // test ecx,ecx , thiscall
+            ReplaceFunction((PVOID)p, (PVOID)(ULONG)Patch::Private::thiscallisLeadByteChar);
+          }
+          else
+            ReplaceFunction((PVOID)p, (PVOID)(ULONG)Patch::Private::isLeadByteChar);
         };
       }
 
