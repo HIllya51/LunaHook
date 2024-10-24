@@ -293,6 +293,37 @@ bool InsertNeXASHookA()
         return true;
     }
   }
+
+  // BALDR HEART
+  BYTE sig2[] = {
+      0x72, 0x02,
+      0x8b, 0x00,
+      0x50,
+      0x8d, 0x8d, 0x00, 0xfc, 0xff, 0xff,
+      0x68, 0x00, 0x04, 0x00, 0x00,
+      0x51,
+      0xe8, XX4};
+  auto addrx = MemDbg::findBytes(sig2, sizeof(sig2), processStartAddress, processStopAddress);
+  if (addrx)
+  {
+    HookParam hp;
+    hp.address = addrx + sizeof(sig2) - 5;
+    hp.offset = get_reg(regs::eax);
+    hp.type = USING_STRING;
+    hp.newlineseperator = L"@n";
+    hp.filter_fun = [](LPVOID data, size_t *size, HookParam *)
+    {
+      auto s = std::string((char *)data, *size);
+      s = std::regex_replace(s, std::regex("@r(.*?)@(.*?)@"), "$1");
+      s = std::regex_replace(s, std::regex("@v\\d{8}"), "");
+      s = std::regex_replace(s, std::regex("@k"), "");
+      s = std::regex_replace(s, std::regex("@g"), "");
+      s = std::regex_replace(s, std::regex("@d"), "");
+      return write_string_overwrite(data, size, s);
+    };
+    if (NewHook(hp, "NeXAS3"))
+      return true;
+  }
   // DWORD GetGlyphOutline(
   //   _In_   HDC hdc,
   //   _In_   UINT uChar,
