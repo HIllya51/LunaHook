@@ -175,7 +175,7 @@ std::wstring pluginitem::wpath()
 {
     auto wp = StringToWideString(path);
     if (isref)
-        return std::filesystem::current_path() / wp;
+        return std::filesystem::absolute(wp);
     else
         return wp;
 }
@@ -272,7 +272,7 @@ void Pluginmanager::remove(const std::wstring &wss)
     auto it = std::remove_if(plgs.begin(), plgs.end(), [&](auto &t)
                              {
         std::string p=t["path"];
-        return p==s; });
+        return std::filesystem::absolute(p)==std::filesystem::absolute(s); });
     plgs.erase(it, plgs.end());
     OnNewSentenceS.erase(wss);
 }
