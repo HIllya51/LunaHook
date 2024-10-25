@@ -29,32 +29,39 @@ struct MonoReflectionMethod;
 struct MonoAppDomain;
 struct MonoCustomAttrInfo;
 struct MonoTableInfo;
-struct MonoReflectionType { UInt32 offset[2]; MonoType* type;};
+struct MonoReflectionType
+{
+	UInt32 offset[2];
+	MonoType *type;
+};
 
-typedef void* gconstpointer;
-typedef void* gpointer;
+typedef void *gconstpointer;
+typedef void *gpointer;
 typedef int gboolean;
 typedef unsigned int guint32;
 typedef int gint32;
 typedef long gint64;
-typedef unsigned char   guchar;
+typedef unsigned char guchar;
 typedef UInt16 gunichar2;
 
-struct MonoObject {
-  MonoVTable *vtable;
-  MonoThreadsSync *synchronisation;
+struct MonoObject
+{
+	MonoVTable *vtable;
+	MonoThreadsSync *synchronisation;
 };
 
-typedef MonoObject* MonoStruct;
-typedef MonoObject** MonoStruct_out;
+typedef MonoObject *MonoStruct;
+typedef MonoObject **MonoStruct_out;
 
-struct MonoString {
-  MonoObject object;
-  gint32 length;
-  gunichar2 chars[0];
+struct MonoString
+{
+	MonoObject object;
+	gint32 length;
+	gunichar2 chars[0];
 };
 
-struct MonoMethod {
+struct MonoMethod
+{
 	UInt16 flags;
 	UInt16 iflags;
 };
@@ -67,22 +74,25 @@ typedef enum
 	MONO_VERIFIER_MODE_STRICT
 } MiniVerifierMode;
 
-typedef enum {
+typedef enum
+{
 	MONO_SECURITY_MODE_NONE,
 	MONO_SECURITY_MODE_CORE_CLR,
 	MONO_SECURITY_MODE_CAS,
 	MONO_SECURITY_MODE_SMCS_HACK
 } MonoSecurityMode;
 
-typedef void GFuncRef (void*, void*);
-typedef GFuncRef* GFunc;
+typedef void GFuncRef(void *, void *);
+typedef GFuncRef *GFunc;
 
-typedef enum {
+typedef enum
+{
 	MONO_UNHANDLED_POLICY_LEGACY,
 	MONO_UNHANDLED_POLICY_CURRENT
 } MonoRuntimeUnhandledExceptionPolicy;
 
-struct MonoMethodDesc {
+struct MonoMethodDesc
+{
 	char *namespace2;
 	char *klass;
 	char *name;
@@ -90,7 +100,6 @@ struct MonoMethodDesc {
 	UInt32 num_args;
 	gboolean include_namespace, klass_glob, name_glob;
 };
-
 
 struct MonoJitInfo;
 struct MonoAssemblyName;
@@ -101,53 +110,56 @@ struct LivenessState;
 
 struct MonoBreakPolicy;
 
-typedef bool (*MonoCoreClrPlatformCB) (const char *image_name);
+typedef bool (*MonoCoreClrPlatformCB)(const char *image_name);
 
 typedef unsigned int guint;
-typedef void (*register_object_callback)(gpointer* arr, int size, void* callback_userdata);
-typedef gboolean (*MonoStackWalk)     (MonoMethod *method, gint32 native_offset, gint32 il_offset, gboolean managed, gpointer data);
-typedef MonoBreakPolicy (*MonoBreakPolicyFunc) (MonoMethod *method);
-typedef void* (*MonoDlFallbackLoad) (const char *name, int flags, char **err, void *user_data);
-typedef void* (*MonoDlFallbackSymbol) (void *handle, const char *name, char **err, void *user_data);
-typedef void* (*MonoDlFallbackClose) (void *handle, void *user_data);
+typedef void (*register_object_callback)(gpointer *arr, int size, void *callback_userdata);
+typedef gboolean (*MonoStackWalk)(MonoMethod *method, gint32 native_offset, gint32 il_offset, gboolean managed, gpointer data);
+typedef MonoBreakPolicy (*MonoBreakPolicyFunc)(MonoMethod *method);
+typedef void *(*MonoDlFallbackLoad)(const char *name, int flags, char **err, void *user_data);
+typedef void *(*MonoDlFallbackSymbol)(void *handle, const char *name, char **err, void *user_data);
+typedef void *(*MonoDlFallbackClose)(void *handle, void *user_data);
 
-typedef enum {
+typedef enum
+{
 	MONO_TYPE_NAME_FORMAT_IL,
 	MONO_TYPE_NAME_FORMAT_REFLECTION,
 	MONO_TYPE_NAME_FORMAT_FULL_NAME,
 	MONO_TYPE_NAME_FORMAT_ASSEMBLY_QUALIFIED
 } MonoTypeNameFormat;
 
-//typedef void (*vprintf_func)(const char* msg, va_list args);
+// typedef void (*vprintf_func)(const char* msg, va_list args);
 
 struct MonoProfiler;
-typedef void (*MonoProfileFunc) (MonoProfiler *prof);
+typedef void (*MonoProfileFunc)(MonoProfiler *prof);
 
-typedef enum {
+typedef enum
+{
 	MONO_PROFILE_NONE = 0,
 	MONO_PROFILE_APPDOMAIN_EVENTS = 1 << 0,
-	MONO_PROFILE_ASSEMBLY_EVENTS  = 1 << 1,
-	MONO_PROFILE_MODULE_EVENTS    = 1 << 2,
-	MONO_PROFILE_CLASS_EVENTS     = 1 << 3,
-	MONO_PROFILE_JIT_COMPILATION  = 1 << 4,
-	MONO_PROFILE_INLINING         = 1 << 5,
-	MONO_PROFILE_EXCEPTIONS       = 1 << 6,
-	MONO_PROFILE_ALLOCATIONS      = 1 << 7,
-	MONO_PROFILE_GC               = 1 << 8,
-	MONO_PROFILE_THREADS          = 1 << 9,
-	MONO_PROFILE_REMOTING         = 1 << 10,
-	MONO_PROFILE_TRANSITIONS      = 1 << 11,
-	MONO_PROFILE_ENTER_LEAVE      = 1 << 12,
-	MONO_PROFILE_COVERAGE         = 1 << 13,
-	MONO_PROFILE_INS_COVERAGE     = 1 << 14,
-	MONO_PROFILE_STATISTICAL      = 1 << 15,
-	MONO_PROFILE_METHOD_EVENTS    = 1 << 16,
-	MONO_PROFILE_MONITOR_EVENTS   = 1 << 17,
+	MONO_PROFILE_ASSEMBLY_EVENTS = 1 << 1,
+	MONO_PROFILE_MODULE_EVENTS = 1 << 2,
+	MONO_PROFILE_CLASS_EVENTS = 1 << 3,
+	MONO_PROFILE_JIT_COMPILATION = 1 << 4,
+	MONO_PROFILE_INLINING = 1 << 5,
+	MONO_PROFILE_EXCEPTIONS = 1 << 6,
+	MONO_PROFILE_ALLOCATIONS = 1 << 7,
+	MONO_PROFILE_GC = 1 << 8,
+	MONO_PROFILE_THREADS = 1 << 9,
+	MONO_PROFILE_REMOTING = 1 << 10,
+	MONO_PROFILE_TRANSITIONS = 1 << 11,
+	MONO_PROFILE_ENTER_LEAVE = 1 << 12,
+	MONO_PROFILE_COVERAGE = 1 << 13,
+	MONO_PROFILE_INS_COVERAGE = 1 << 14,
+	MONO_PROFILE_STATISTICAL = 1 << 15,
+	MONO_PROFILE_METHOD_EVENTS = 1 << 16,
+	MONO_PROFILE_MONITOR_EVENTS = 1 << 17,
 	MONO_PROFILE_IOMAP_EVENTS = 1 << 18, /* this should likely be removed, too */
 	MONO_PROFILE_GC_MOVES = 1 << 19
 } MonoProfileFlags;
 
-typedef enum {
+typedef enum
+{
 	MONO_GC_EVENT_START,
 	MONO_GC_EVENT_MARK_START,
 	MONO_GC_EVENT_MARK_END,
@@ -160,16 +172,15 @@ typedef enum {
 	MONO_GC_EVENT_POST_START_WORLD
 } MonoGCEvent;
 
-typedef void (*MonoProfileMethodFunc)   (MonoProfiler *prof, MonoMethod   *method);
-typedef void (*MonoProfileGCFunc)         (MonoProfiler *prof, MonoGCEvent event, int generation);
-typedef void (*MonoProfileGCMoveFunc) (MonoProfiler *prof, void **objects, int num);
-typedef void (*MonoProfileGCResizeFunc)   (MonoProfiler *prof, gint64 new_size);
-typedef void (*MonoProfileAllocFunc)      (MonoProfiler *prof, MonoObject *obj, MonoClass *klass);
-typedef void (*MonoProfileJitResult)      (MonoProfiler *prof, MonoMethod   *method,   MonoJitInfo* jinfo,   int result);
-typedef void (*MonoProfileExceptionFunc) (MonoProfiler *prof, MonoObject *object);
-typedef void (*MonoProfileExceptionClauseFunc) (MonoProfiler *prof, MonoMethod *method, int clause_type, int clause_num);
-typedef void (*MonoProfileThreadFunc)     (MonoProfiler *prof, uint32_t tid);
-
+typedef void (*MonoProfileMethodFunc)(MonoProfiler *prof, MonoMethod *method);
+typedef void (*MonoProfileGCFunc)(MonoProfiler *prof, MonoGCEvent event, int generation);
+typedef void (*MonoProfileGCMoveFunc)(MonoProfiler *prof, void **objects, int num);
+typedef void (*MonoProfileGCResizeFunc)(MonoProfiler *prof, gint64 new_size);
+typedef void (*MonoProfileAllocFunc)(MonoProfiler *prof, MonoObject *obj, MonoClass *klass);
+typedef void (*MonoProfileJitResult)(MonoProfiler *prof, MonoMethod *method, MonoJitInfo *jinfo, int result);
+typedef void (*MonoProfileExceptionFunc)(MonoProfiler *prof, MonoObject *object);
+typedef void (*MonoProfileExceptionClauseFunc)(MonoProfiler *prof, MonoMethod *method, int clause_type, int clause_num);
+typedef void (*MonoProfileThreadFunc)(MonoProfiler *prof, uint32_t tid);
 
 inline void (*mono_thread_suspend_all_other_threads)();
 inline void (*mono_thread_pool_cleanup)();
@@ -329,7 +340,7 @@ inline char *(*mono_method_full_name)(MonoMethod *method, gboolean signature);
 inline MonoObject *(*mono_object_isinst)(MonoObject *obj, MonoClass *klass);
 inline MonoString *(*mono_string_new_len)(MonoDomain *domain, const char *text, guint length);
 inline MonoString *(*mono_string_from_utf16)(gunichar2 *data);
-inline MonoString* (*mono_string_new_utf16)(MonoDomain *domain, const gunichar2 *text, int32_t len);
+inline MonoString *(*mono_string_new_utf16)(MonoDomain *domain, const gunichar2 *text, int32_t len);
 inline MonoException *(*mono_get_exception_argument_null)(const char *arg);
 inline MonoClass *(*mono_get_boolean_class)();
 inline MonoClass *(*mono_get_byte_class)();
@@ -399,18 +410,18 @@ inline void (*mono_profiler_install_allocation)(MonoProfileAllocFunc callback);
 inline void (*mono_profiler_install_jit_end)(MonoProfileJitResult end);
 inline void (*mono_profiler_install_exception)(MonoProfileExceptionFunc throw_callback, MonoProfileMethodFunc exc_method_leave, MonoProfileExceptionClauseFunc clause_callback);
 inline void (*mono_profiler_install_thread)(MonoProfileThreadFunc start, MonoProfileThreadFunc end);
-inline uint64_t* (*mono_compile_method)(MonoMethod*);
-inline MonoTableInfo*(*mono_image_get_table_info)(MonoImage*,int);
-inline int (*mono_table_info_get_rows)(MonoTableInfo*);
-inline gunichar2* (*mono_string_chars)(MonoString* str);
-inline int (*mono_string_length)(MonoString* str);
+inline uint64_t *(*mono_compile_method)(MonoMethod *);
+inline MonoTableInfo *(*mono_image_get_table_info)(MonoImage *, int);
+inline int (*mono_table_info_get_rows)(MonoTableInfo *);
+inline gunichar2 *(*mono_string_chars)(MonoString *str);
+inline int (*mono_string_length)(MonoString *str);
 
+namespace monofunctions
+{
+	void init(HMODULE dll);
+	uintptr_t get_method_pointer(const char *assemblyName, const char *namespaze,
+								 const char *klassName, const char *name, int argsCount, bool strict);
 
-namespace monofunctions{
-    void init(HMODULE dll);
-    uintptr_t get_method_pointer(const char* assemblyName, const char* namespaze,
-								 const char* klassName, const char* name, int argsCount,bool strict);
-	
-	std::optional<std::wstring_view> get_string(void*);
-	void* create_string(std::wstring_view ws);
+	std::optional<std::wstring_view> get_string(void *);
+	void *create_string(std::wstring_view ws);
 }

@@ -108,10 +108,8 @@ void TextThread::Flush()
 
 	std::vector<std::wstring> sentences;
 	queuedSentences->swap(sentences);
-	int totalSize = 0;
 	for (auto &sentence : sentences)
 	{
-		totalSize += sentence.size();
 		sentence.erase(std::remove(sentence.begin(), sentence.end(), 0), sentence.end());
 		if (Output(*this, sentence))
 			storage->append(sentence + L"\n");
