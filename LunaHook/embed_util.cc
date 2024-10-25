@@ -165,18 +165,11 @@ static std::wstring insertSpacesAfterUnencodableSTD(const std::wstring &text, Ho
 }
 std::wstring adjustSpacesSTD(const std::wstring &text, HookParam hp)
 {
-
-  switch (embedsharedmem->spaceadjustpolicy)
-  {
-  case 0:
-    return text;
-  case 1:
+  if (hp.type & EMBED_INSERT_SPACE_ALWAYS)
     return alwaysInsertSpacesSTD(text);
-  case 2:
+  else if (hp.type & EMBED_INSERT_SPACE_AFTER_UNENCODABLE)
     return insertSpacesAfterUnencodableSTD(text, hp);
-  default:
-    return text;
-  }
+  return text;
 }
 bool isPauseKeyPressed()
 {

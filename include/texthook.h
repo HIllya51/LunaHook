@@ -19,7 +19,6 @@ struct EmbedSharedMem
 	uint64_t ctx1[10];
 	uint64_t ctx2[10];
 	UINT32 waittime;
-	UINT32 spaceadjustpolicy;
 	UINT32 keeprawtext;
 	uint64_t hash;
 	wchar_t text[1000];

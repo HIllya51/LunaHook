@@ -227,7 +227,7 @@ namespace
         0x8b, 0xcf,                               // 0042cf31   8bcf             mov ecx,edi
         0x50,                                     // 0042cf33   50               push eax
         0xe8                                      // XX4                              // 0042cf34   e8 e725f6ff      call .0038f520
-        // hook here
+                                                  // hook here
     };
     enum
     {
@@ -1786,7 +1786,7 @@ namespace
       // return Private::oldHookFun = (Private::hook_fun_t)winhook::replace_fun(addr, (ULONG)Private::newHookFun);
       HookParam hp;
       hp.address = addr;
-      hp.type = EMBED_ABLE | CODEC_UTF16; // 0x41
+      hp.type = EMBED_ABLE | CODEC_UTF16 | EMBED_INSERT_SPACE_AFTER_UNENCODABLE; // 0x41
       hp.hook_before = Private::text_fun;
       hp.hook_after = Private::hookafter;
       hp.hook_font = F_GetGlyphOutlineW;
@@ -1878,7 +1878,7 @@ namespace OtherHook
       return false;
     HookParam hp;
     hp.address = addr;
-    hp.type = EMBED_ABLE | CODEC_UTF16; // 0x41
+    hp.type = EMBED_ABLE | CODEC_UTF16 | EMBED_INSERT_SPACE_AFTER_UNENCODABLE; // 0x41
     hp.hook_before = Private::hookBefore;
     hp.hook_after = Private::hookafter2;
     hp.hook_font = F_GetGlyphOutlineW;
