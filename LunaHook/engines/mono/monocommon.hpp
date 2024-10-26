@@ -149,7 +149,7 @@ namespace monocommon
         // 虽然可能会有少量误伤，但这个乱码太多了，而且不知道原因，为了大多数更好，还是删了吧。
         // 一定要用的话，用特殊码：HMF1@mscorlib:System:String:ToString:0:JIT:UNITY
         {"mscorlib", "System", "String", "IndexOf", 1, 1},
-        {"mscorlib", "System", "String", "Substring", 2, 1},
+        {"mscorlib", "System", "String", "Substring", 2, 1, mscorlib_system_string_InternalSubString_hook_fun}, // 这个如果不加截断，对于部分游戏，会导致host.output内存占用爆炸多，直接爆内存。可能会影响部分游戏，待测试。
         {"mscorlib", "System", "String", "op_Inequality", 2, 1},
         {"mscorlib", "System", "String", "InternalSubString", 2, 1, mscorlib_system_string_InternalSubString_hook_fun},
 
