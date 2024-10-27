@@ -1772,6 +1772,48 @@ namespace
         return write_string_overwrite(data, len, s);
     }
 
+    bool F010005F00E036000_1(void *data, size_t *len, HookParam *hp)
+    {
+        static lru_cache<std::string> cache(5);
+        static std::string last;
+        auto s = std::string((char *)data, *len);
+
+        if (endWith(last, s))
+        {
+            last = s;
+            return false;
+        }
+        if (cache.touch(s))
+        {
+            last = s;
+            return false;
+        }
+        last = s;
+        return write_string_overwrite(data, len, s);
+    }
+    bool F010005F00E036000(void *data, size_t *len, HookParam *hp)
+    {
+        if (!F010005F00E036000_1(data, len, hp))
+            return false;
+        static std::string last;
+        auto s = std::string((char *)data, *len);
+
+        auto parse = [](std::string &s)
+        {
+            strReplace(s, u8"㊤", u8"―");
+            strReplace(s, u8"㊥", u8"―");
+            strReplace(s, u8"㊦", u8"―");
+            return s;
+        };
+        if (startWith(s, last))
+        {
+            write_string_overwrite(data, len, parse(s.substr(last.size(), s.size() - last.size())));
+            last = s;
+            return true;
+        }
+        last = s;
+        return write_string_overwrite(data, len, parse(s));
+    }
     bool F0100FC2019346000(void *data, size_t *len, HookParam *hp)
     {
         StringFilter((char *)data, len, "#n", 2);
@@ -3143,6 +3185,8 @@ namespace
             {0x801f67c0, {CODEC_UTF32, 1, 0, 0, F01007FD00DB20000, "01007FD00DB20000", "1.0.0"}},
             {0x802a76c0, {CODEC_UTF32, 0, 0, 0, F01007FD00DB20000, "01007FD00DB20000", "1.0.0"}},
             {0x8031fc80, {CODEC_UTF32, 1, 0, 0, F01007FD00DB20000, "01007FD00DB20000", "1.0.0"}},
+            // 真 流行り神１・２パック
+            {0x80072720, {CODEC_UTF8, 1, 0, 0, F010005F00E036000, "010005F00E036000", "1.0.0"}},
             // 真流行り神3
             {0x80082F70, {0, 0xb, 0, TF0100AA1013B96000, 0, "0100AA1013B96000", nullptr}}, //"1.0.0", "1.0.1"
 

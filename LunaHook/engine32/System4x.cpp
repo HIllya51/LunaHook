@@ -954,25 +954,7 @@ struct TextArgument // first argument of the scenario hook
         && !::strstr(text, "\x81\x5e"); // "／"
   }
 };
-enum : UINT64 { djb2_hash0 = 5381 };
-  inline UINT64 djb2(const UINT8 *str, UINT64 hash = djb2_hash0)
-{
-  UINT8 c;
-  while ((c = *str++))
-    hash = ((hash << 5) + hash) + c; // hash * 33 + c
-  return hash;
-}inline UINT64 djb2_n2(const char* str, size_t len, UINT64 hash = djb2_hash0)
-{
-    while (len--)
-        hash = ((hash << 5) + hash) + (*str++); // hash * 33 + c
-    return hash;
-}
-inline UINT64 hashByteArraySTD(const std::string& b, UINT64 h = djb2_hash0)
-{
-    return djb2_n2(b.c_str(), b.size(), h);
-}
-  inline UINT64 hashCharArray(const void *lp)
-{ return djb2(reinterpret_cast<const UINT8 *>(lp)); }
+
 namespace ScenarioHook {
 
 namespace Private {
@@ -1049,7 +1031,7 @@ namespace Private {
     arg->size = data_.size() + 1;
     arg->capacity = arg->size;
 
-    hashes_.insert(hashCharArray(arg->text));  
+    hashes_.insert(simplehash::hashCharArray(arg->text));  
   }
   bool hookBefore(hook_stack*s,void* data, size_t* len1,uintptr_t*role)
   {
@@ -1072,7 +1054,7 @@ namespace Private {
       return false;
     auto arg = (TextArgument *)s->stack[0]; // arg1
     if (!arg || !arg->isValid()
-        || hashes_.find(hashCharArray(arg->text)) != hashes_.end())
+        || hashes_.find(simplehash::hashCharArray(arg->text)) != hashes_.end())
       return false;
     if (arg->size < 0xf && split > 0 && !isOtherText(arg->text))
       return false;

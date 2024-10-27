@@ -142,3 +142,31 @@ struct SafeFptr
 		return ptr(std::forward<Args>(args)...);
 	}
 };
+namespace simplehash
+{
+	enum : UINT64
+	{
+		djb2_hash0 = 5381
+	};
+	inline UINT64 djb2(const UINT8 *str, UINT64 hash = djb2_hash0)
+	{
+		UINT8 c;
+		while ((c = *str++))
+			hash = ((hash << 5) + hash) + c; // hash * 33 + c
+		return hash;
+	}
+	inline UINT64 djb2_n2(const unsigned char *str, size_t len, UINT64 hash = djb2_hash0)
+	{
+		while (len--)
+			hash = ((hash << 5) + hash) + (*str++); // hash * 33 + c
+		return hash;
+	}
+	inline UINT64 hashByteArraySTD(const std::string &b, UINT64 h = djb2_hash0)
+	{
+		return djb2_n2((const unsigned char *)b.c_str(), b.size(), h);
+	}
+	inline UINT64 hashCharArray(const void *lp)
+	{
+		return djb2(reinterpret_cast<const UINT8 *>(lp));
+	}
+}

@@ -175,15 +175,6 @@ bool isPauseKeyPressed()
 {
   return WinKey::isKeyControlPressed() || WinKey::isKeyShiftPressed() && !WinKey::isKeyReturnPressed();
 }
-inline UINT64 djb2_n2(const unsigned char *str, size_t len, UINT64 hash = 5381)
-{
-  int i = 0;
-  while (len--)
-  {
-    hash = ((hash << 5) + hash) + (*str++); // hash * 33 + c
-  }
-  return hash;
-}
 std::unordered_map<UINT64, std::wstring> translatecache;
 bool check_is_thread_selected(const ThreadParam &tp)
 {
@@ -200,7 +191,7 @@ bool check_embed_able(const ThreadParam &tp)
 bool waitforevent(UINT32 timems, const ThreadParam &tp, const std::wstring &origin)
 {
   char eventname[1000];
-  sprintf(eventname, LUNA_EMBED_notify_event, GetCurrentProcessId(), djb2_n2((const unsigned char *)(origin.c_str()), origin.size() * 2));
+  sprintf(eventname, LUNA_EMBED_notify_event, GetCurrentProcessId(), simplehash::djb2_n2((const unsigned char *)(origin.c_str()), origin.size() * 2));
   auto event = win_event(eventname);
   while (timems)
   {

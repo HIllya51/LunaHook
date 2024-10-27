@@ -164,15 +164,6 @@ C_LUNA_API void Luna_useembed(DWORD pid, uint64_t address, uint64_t ctx1, uint64
     }
 }
 
-inline UINT64 djb2_n2(const unsigned char *str, size_t len, UINT64 hash = 5381)
-{
-    int i = 0;
-    while (len--)
-    {
-        hash = ((hash << 5) + hash) + (*str++); // hash * 33 + c
-    }
-    return hash;
-}
 C_LUNA_API void Luna_embedcallback(DWORD pid, LPCWSTR text, LPCWSTR trans)
 {
     auto sm = Host::GetEmbedSharedMem(pid);
@@ -180,7 +171,7 @@ C_LUNA_API void Luna_embedcallback(DWORD pid, LPCWSTR text, LPCWSTR trans)
         return;
     wcsncpy(sm->text, trans, ARRAYSIZE(sm->text));
     char eventname[1000];
-    sprintf(eventname, LUNA_EMBED_notify_event, pid, djb2_n2((const unsigned char *)(text), wcslen(text) * 2));
+    sprintf(eventname, LUNA_EMBED_notify_event, pid, simplehash::djb2_n2((const unsigned char *)(text), wcslen(text) * 2));
     win_event event1(eventname);
     event1.signal(true);
 }

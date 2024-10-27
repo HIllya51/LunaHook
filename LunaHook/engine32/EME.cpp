@@ -37,60 +37,11 @@ bool InsertEMEHook()
 }
 namespace
 {
-  
-// LRU template class, recv two type params: key & value
-template <typename Key>
-class LRUCache
-{
-
-private:
-   // cache capacity
-   size_t _capacity = 0;
-   // list _keys中key的指向位置
-   std::unordered_map<Key, typename std::list<Key>::iterator> _cache;
-   std::list<Key> _keys;
-
-public:
-   // construct function
-   LRUCache(size_t size) : _capacity(size){};
-
-   bool contains(Key key)
-   {
-      auto it = _cache.find(key);
-      if (it == _cache.end())
-      {
-         return false;
-      }; // 返回默认值
-      _keys.splice(_keys.begin(), _keys, it->second);
-      return true;
-   }
-
-   void put(Key key)
-   {
-      auto it = _cache.find(key);
-      if (it != _cache.end())
-      {
-         _keys.splice(_keys.begin(), _keys, it->second);
-         return;
-      }
-
-      if (_keys.size() == _capacity)
-      {
-         Key oldKey = _keys.back();
-         _keys.pop_back();
-         _cache.erase(oldKey);
-      }
-
-      _keys.push_front(key);
-      _cache[key] = _keys.begin();
-   }
-
-};
 
   bool takeout()
   {
-    //https://vndb.org/v6187
-    //みちくさ～Loitering on the way～
+    // https://vndb.org/v6187
+    // みちくさ～Loitering on the way～
 
     trigger_fun = [](LPVOID addr, hook_stack *stack)
     {
@@ -108,11 +59,8 @@ public:
       hp.filter_fun = [](LPVOID data, size_t *size, HookParam *)
       {
         auto xx = std::string((char *)data, *size);
-        static LRUCache<std::string> last(10);
-        if (last.contains(xx))
-          return false;
-        last.put(xx);
-        return true;
+        static lru_cache<std::string> last(10);
+        return !last.touch(xx);
       };
       return NewHook(hp, "takeout");
     };

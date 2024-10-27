@@ -42,3 +42,4 @@
 #include "hookcode.h"
 #include "texthook.h"
 #include "winevent.hpp"
+#include "lrucache.hpp"

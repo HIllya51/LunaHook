@@ -51,7 +51,7 @@ inline std::vector<StringT> strSplit_impl(const StringT &s, const StringT &delim
 template <class StringT>
 inline bool endWith_impl(const StringT &s, const StringT &s2)
 {
-  if ((s.size() >= s2.size()) && (s.substr(s.size() - s2.size(), s2.size()) == s2))
+  if (s2.size() && (s.size() >= s2.size()) && (s.substr(s.size() - s2.size(), s2.size()) == s2))
   {
     return true;
   }
@@ -61,7 +61,7 @@ inline bool endWith_impl(const StringT &s, const StringT &s2)
 template <class StringT>
 inline bool startWith_impl(const StringT &s, const StringT &s2)
 {
-  if ((s.size() >= s2.size()) && (s.substr(0, s2.size()) == s2))
+  if (s2.size() && (s.size() >= s2.size()) && (s.substr(0, s2.size()) == s2))
   {
     return true;
   }
@@ -215,7 +215,7 @@ size_t u32strlen(uint32_t *data)
   return s;
 }
 
-std::string wcasta(const std::wstring& x)
+std::string wcasta(const std::wstring &x)
 {
   std::string xx;
   for (auto c : x)
@@ -223,7 +223,7 @@ std::string wcasta(const std::wstring& x)
   return xx;
 }
 
-std::wstring acastw(const std::string& x)
+std::wstring acastw(const std::string &x)
 {
   std::wstring xx;
   for (auto c : x)
