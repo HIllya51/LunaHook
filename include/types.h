@@ -95,11 +95,12 @@ enum class JITTYPE
 };
 struct HookParam
 {
-	ALIGNPTR(uint64_t __11, uintptr_t address); // absolute or relative address
-	int offset,									// offset of the data in the memory
-		index,									// deref_offset1
-		split,									// offset of the split character
-		split_index;							// deref_offset2
+	// address和emu_addr需要在host和hook之间传递，因此不能用uintptr_t
+	uint64_t address; // absolute or relative address
+	int offset,		  // offset of the data in the memory
+		index,		  // deref_offset1
+		split,		  // offset of the split character
+		split_index;  // deref_offset2
 
 	wchar_t module[MAX_MODULE_SIZE];
 
@@ -113,7 +114,7 @@ struct HookParam
 	ALIGNPTR(uint64_t __3, bool (*filter_fun)(void *data, size_t *len, HookParam *hp)); // jichi 10/24/2014: Add filter function. Return false to skip the text
 	ALIGNPTR(uint64_t __6, bool (*hook_before)(hook_stack *stack, void *data, size_t *len, uintptr_t *role));
 	ALIGNPTR(uint64_t __7, void (*hook_after)(hook_stack *stack, void *data, size_t len));
-	ALIGNPTR(uint64_t __8, uintptr_t hook_font);
+	uint64_t hook_font;
 	ALIGNPTR(uint64_t __9, const wchar_t *newlineseperator);
 	char name[HOOK_NAME_SIZE];
 	wchar_t hookcode[HOOKCODE_LEN];
@@ -121,7 +122,7 @@ struct HookParam
 	{
 		ZeroMemory(this, sizeof(HookParam));
 	}
-	ALIGNPTR(uint64_t __10, uintptr_t emu_addr);
+	uint64_t emu_addr;
 	int argidx;
 	JITTYPE jittype;
 	char unityfunctioninfo[1024];
@@ -200,7 +201,7 @@ struct HookFoundNotif // From dll
 
 struct HookRemovedNotif // From dll
 {
-	HookRemovedNotif(uint64_t address) : address(address){};
+	HookRemovedNotif(uint64_t address) : address(address) {};
 	HostNotificationType command = HOST_NOTIFICATION_RMVHOOK;
 	uint64_t address;
 };

@@ -140,7 +140,13 @@ bool Hook_Network_RoomMember_SendGameInfo()
             //     Network::RoomMember *this,
             //     const AnnounceMultiplayerRoom::GameInfo *game_info)
             game_info = *(GameInfo *)stack->rdx;
-            ConsoleOutput("%s %llx %s", game_info.name.c_str(), game_info.id, game_info.version.c_str());
+            std::stringstream num;
+            num << std::uppercase
+                << std::hex
+                << std::setw(16)
+                << std::setfill('0')
+                << game_info.id;
+            ConsoleOutput("%s %s %s", game_info.name.c_str(), num.str().c_str(), game_info.version.c_str());
         };
         return NewHook(hp, "yuzuGameInfo");
     }
@@ -3138,7 +3144,7 @@ namespace
             {0x802a76c0, {CODEC_UTF32, 0, 0, 0, F01007FD00DB20000, "01007FD00DB20000", "1.0.0"}},
             {0x8031fc80, {CODEC_UTF32, 1, 0, 0, F01007FD00DB20000, "01007FD00DB20000", "1.0.0"}},
             // 真流行り神3
-            {0x80082F70, {0, 0xb, 0, TF0100AA1013B96000, 0, "0100AA1013B96000", nullptr}},//"1.0.0", "1.0.1"
+            {0x80082F70, {0, 0xb, 0, TF0100AA1013B96000, 0, "0100AA1013B96000", nullptr}}, //"1.0.0", "1.0.1"
 
         };
         return 1;
