@@ -95,8 +95,6 @@ namespace
 }
 namespace v8script
 {
-	HMODULE hmodule;
-
 	typedef void (*RequestInterrupt_callback)(void *, void *);
 #ifndef _WIN64
 
@@ -191,11 +189,8 @@ namespace v8script
 			ConsoleOutput("useless %p", useless);
 		}
 	}
-	bool v8runscript_isolate(void *isolate)
+	bool init_v8_functions(HMODULE hmodule)
 	{
-
-		if (isolate == 0)
-			return false;
 		RequestInterrupt = (decltype(RequestInterrupt))GetProcAddress(hmodule, fnRequestInterrupt);
 
 		NewFromUtf8v2 = (decltype(NewFromUtf8))GetProcAddress(hmodule, fnNewFromUtf8v2);
@@ -217,14 +212,21 @@ namespace v8script
 			Compile = (decltype(Compile))GetProcAddress(hmodule, fnCompilev2);
 			Run = (decltype(Run))GetProcAddress(hmodule, fnRunv2);
 		}
+
 		ConsoleOutput("%p %p", NewFromUtf8v1, NewFromUtf8v2);
 		ConsoleOutput("%p %p %p %p", GetCurrentContext, NewFromUtf8, Compile, Run);
+
 		if (!(GetCurrentContext && NewFromUtf8 && Compile && Run && RequestInterrupt))
 			return false;
 
 		if (RequestInterrupt == 0)
 			return false;
-
+		return true;
+	}
+	bool v8runscript_isolate(void *isolate)
+	{
+		if (!isolate)
+			return false;
 		RequestInterrupt(isolate, _interrupt_function, nullptr);
 
 		return true;
@@ -273,7 +275,6 @@ namespace v8script
 			auto isolategetter = GetProcAddress(_hmodule, fnisolategetter);
 			if (!isolategetter)
 				continue;
-			hmodule = _hmodule;
 			HookParam hp;
 			hp.address = (uintptr_t)isolategetter;
 			hp.text_fun = v8runscript_isolate_bypass;
@@ -362,7 +363,10 @@ bool tryhookv8()
 		auto hm = GetModuleHandleW(moduleName);
 		if (hm == 0)
 			continue;
-		if (hookstring(hm))
+		auto stringsucc = hookstring(hm);
+		auto funcsucc = v8script::init_v8_functions(hm);
+		auto succ = stringsucc;
+		if (funcsucc)
 		{
 			useclipboard = !std::filesystem::exists(std::filesystem::path(getModuleFilename().value()).replace_filename("disable.clipboard"));
 			usehttp = !std::filesystem::exists(std::filesystem::path(getModuleFilename().value()).replace_filename("disable.http"));
@@ -377,9 +381,11 @@ bool tryhookv8()
 			{
 				hookClipboard();
 			}
-
-			return v8script::v8runscript(hm);
+			if (useclipboard || usehttp)
+				succ |= v8script::v8runscript(hm);
 		}
+		if (stringsucc || funcsucc)
+			return succ;
 	}
 	return false;
 }

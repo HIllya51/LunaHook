@@ -62,7 +62,7 @@ include(generate_product_version)
 
 set(VERSION_MAJOR 3)
 set(VERSION_MINOR 16)
-set(VERSION_PATCH 1)
+set(VERSION_PATCH 2)
 set(VERSION_REVISION 0)
 
 if(BUILD_CORE)
