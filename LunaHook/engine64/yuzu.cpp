@@ -1759,6 +1759,11 @@ namespace
         s = WideStringToString(ws, 932);
         return write_string_overwrite(data, len, s);
     }
+    bool F010028D0148E6000_2(void *data, size_t *len, HookParam *hp)
+    {
+        StringFilter((char *)data, len, "@w", 2);
+        return true;
+    }
     template <bool choice>
     bool F0100EFE0159C6000(void *data, size_t *len, HookParam *hp)
     {
@@ -2734,6 +2739,9 @@ namespace
             // Sweet Clown ~Gozen San-ji no Okashi na Doukeshi~
             {0x20dbfc, {0, 0, 0x28, 0, F010028D0148E6000, "010028D0148E6000", "1.2.0"}}, // dialog, sjis
             {0x214978, {0, 2, 0xC, 0, F010028D0148E6000, "010028D0148E6000", "1.2.0"}},  // choices
+            // SWEET CLOWN ～午前三時のオカシな道化師～
+            {0x218B40, {FULL_STRING, 1, 0, 0, F010028D0148E6000_2, "010028D0148E6000", "1.0.1"}}, // TEXT
+            {0x20D420, {0, 0, 0, 0, 0, "010028D0148E6000", "1.0.1"}},                             // NAME+TEXT
             // Another Code: Recollection
             {0x82dcad30, {CODEC_UTF16, 0, 0, ReadTextAndLenDW<1>, F0100CB9018F5A000, "0100CB9018F5A000", "1.0.0"}}, // Main Text
             {0x82f2cfb0, {CODEC_UTF16, 0, 0, ReadTextAndLenDW<0>, F0100CB9018F5A000, "0100CB9018F5A000", "1.0.0"}}, // Item Description
@@ -3102,7 +3110,6 @@ namespace
             {0x801f67c0, {CODEC_UTF32, 1, 0, 0, F01007FD00DB20000, "01007FD00DB20000", "1.0.0"}},
             {0x802a76c0, {CODEC_UTF32, 0, 0, 0, F01007FD00DB20000, "01007FD00DB20000", "1.0.0"}},
             {0x8031fc80, {CODEC_UTF32, 1, 0, 0, F01007FD00DB20000, "01007FD00DB20000", "1.0.0"}},
-
         };
         return 1;
     }();
