@@ -1404,6 +1404,33 @@ namespace
         last = s;
         return write_string_overwrite(data, len, s);
     }
+    void TF0100AA1013B96000(hook_stack *stack, HookParam *hp, uintptr_t *data, uintptr_t *split, size_t *len)
+    {
+        auto ptr = (char *)*data;
+        std::string collect;
+        while (*ptr || *(ptr - 1))
+            ptr--;
+        while (!(*ptr && *(ptr + 1)))
+            ptr++;
+        do
+        {
+            if (!(*ptr))
+            {
+                ptr++;
+            }
+            else
+            {
+                collect += std::string(ptr);
+                ptr += strlen(ptr);
+            }
+        } while (*ptr || *(ptr + 1));
+        strReplace(collect, "\x87\x85", "\x81\x5c");
+        strReplace(collect, "\x87\x86", "\x81\x5c");
+        strReplace(collect, "\x87\x87", "\x81\x5c");
+        strReplace(collect, "\n", "");
+        strReplace(collect, "\x81\x40", "");
+        return write_string_new(data, len, collect);
+    }
     template <int idx>
     void T0100CF400F7CE000(hook_stack *stack, HookParam *hp, uintptr_t *data, uintptr_t *split, size_t *len)
     {
@@ -3110,6 +3137,9 @@ namespace
             {0x801f67c0, {CODEC_UTF32, 1, 0, 0, F01007FD00DB20000, "01007FD00DB20000", "1.0.0"}},
             {0x802a76c0, {CODEC_UTF32, 0, 0, 0, F01007FD00DB20000, "01007FD00DB20000", "1.0.0"}},
             {0x8031fc80, {CODEC_UTF32, 1, 0, 0, F01007FD00DB20000, "01007FD00DB20000", "1.0.0"}},
+            // 真流行り神3
+            {0x80082F70, {0, 0xb, 0, TF0100AA1013B96000, 0, "0100AA1013B96000", nullptr}},//"1.0.0", "1.0.1"
+
         };
         return 1;
     }();
