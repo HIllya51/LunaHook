@@ -1839,6 +1839,36 @@ namespace
         StringFilter((char *)data, len, "@w", 2);
         return true;
     }
+    namespace
+    {
+#pragma optimize("", off)
+        // 必须禁止优化这个函数，或者引用一下参数，否则参数被优化没了。
+        void F01009E600FAF6000_collect(const char *_) {}
+#pragma optimize("", on)
+        bool F01009E600FAF6000(void *data, size_t *len, HookParam *hpx)
+        {
+            auto s = std::string((char *)data, *len);
+            HookParam hp;
+            hp.address = (uintptr_t)F01009E600FAF6000_collect;
+            hp.offset = GETARG1;
+            hp.type = USING_STRING;
+            hp.filter_fun = [](void *data, size_t *size, HookParam *hp)
+            {
+                StringFilter((char *)data, size, "@1r", 3);
+                StringFilter((char *)data, size, "@-1r", 4);
+                return true;
+            };
+            static auto _ = NewHook(hp, "01009E600FAF6000");
+            static std::map<uint64_t, uintptr_t> mp;
+            // 这个address会被触发两次。
+            if (mp.find(hpx->emu_addr) == mp.end())
+                mp[hpx->emu_addr] = hpx->address;
+            if (mp[hpx->emu_addr] != hpx->address)
+                return false;
+            F01009E600FAF6000_collect(s.c_str());
+            return false;
+        }
+    }
     template <bool choice>
     bool F0100EFE0159C6000(void *data, size_t *len, HookParam *hp)
     {
@@ -3189,7 +3219,9 @@ namespace
             {0x80072720, {CODEC_UTF8, 1, 0, 0, F010005F00E036000, "010005F00E036000", "1.0.0"}},
             // 真流行り神3
             {0x80082F70, {0, 0xb, 0, TF0100AA1013B96000, 0, "0100AA1013B96000", nullptr}}, //"1.0.0", "1.0.1"
-
+            // NG
+            {0x228AA4, {0, 6, 0, 0, F01009E600FAF6000, "01009E600FAF6000", "1.0.0"}},
+            {0x228C0C, {0, 6, 0, 0, F01009E600FAF6000, "01009E600FAF6000", "1.0.0"}},
         };
         return 1;
     }();
