@@ -376,7 +376,7 @@ namespace
     bool FPCSG00468(void *data, size_t *len, HookParam *hp)
     {
         auto s = std::string((char *)data, *len);
-        s = std::regex_replace(s, std::regex(R"(\\n\u3000*|\\k)"), "");
+        s = std::regex_replace(s, std::regex(u8R"(\\n(　)*|\\k)"), "");
         s = std::regex_replace(s, std::regex(R"(\[|\*[^\]]+])"), "");
         s = std::regex_replace(s, std::regex(u8"×"), "");
         return write_string_overwrite(data, len, s);
@@ -389,6 +389,17 @@ namespace
         s = std::regex_replace(s, std::regex(R"(#\w+(\[.+?\])?)"), "");
         return write_string_overwrite(data, len, s);
     }
+    bool F010088B01A8FC000(void *data, size_t *len, HookParam *hp)
+    {
+        auto s = std::string((char *)data, *len);
+        static std::string last;
+        s = std::regex_replace(s, std::regex(R"(#\w+(\[.+?\])?)"), "");
+        s = std::regex_replace(s, std::regex(u8"　"), "");
+        if (last == s)
+            return false;
+        last = s;
+        return write_string_overwrite(data, len, s);
+    }
     bool FPCSG00815(void *data, size_t *len, HookParam *hp)
     {
         auto s = std::string((char *)data, *len);
@@ -399,7 +410,7 @@ namespace
     bool FPCSG00855(void *data, size_t *len, HookParam *hp)
     {
         auto s = std::string((char *)data, *len);
-        s = std::regex_replace(s, std::regex(R"(#n\u3000*)"), "");
+        s = std::regex_replace(s, std::regex(u8R"(#n(　)*)"), "");
         s = std::regex_replace(s, std::regex(R"(#\w.+?])"), "");
         return write_string_overwrite(data, len, s);
     }
@@ -447,7 +458,7 @@ namespace
     bool FPCSG01066(void *data, size_t *len, HookParam *hp)
     {
         auto s = std::string((char *)data, *len);
-        s = std::regex_replace(s, std::regex(R"(\n\u3000*)"), "");
+        s = std::regex_replace(s, std::regex(u8R"(\n(　)*)"), "");
         return write_string_overwrite(data, len, s);
     }
     bool FPCSG01075(void *data, size_t *len, HookParam *hp)
@@ -569,6 +580,9 @@ namespace
             // PsychicEmotion6 (サイキックエモーション ムー)
             {0x80035948, {CODEC_UTF8, 9, 0, 0, FPCSG00815, "PCSG00815"}},
             {0x80034580, {CODEC_UTF8, 6, 0, 0, FPCSG00815, "PCSG00815"}},
+            // Code: Realize ~Shirogane no Kiseki~ (Code:Realize ～白銀の奇跡～)
+            {0x80015bcc, {CODEC_UTF8, 0, 0x1c, 0, F010088B01A8FC000, "PCSG01110"}},
+            {0x80038e76, {CODEC_UTF8, 8, 0, 0, F010088B01A8FC000, "PCSG01110"}},
         };
         return 1;
     }();

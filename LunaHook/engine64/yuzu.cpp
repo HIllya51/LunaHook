@@ -334,7 +334,7 @@ namespace
         auto s = std::string((char *)data, *len);
         s = std::regex_replace(s, std::regex("#[^\\]]*\\]"), "");
         s = std::regex_replace(s, std::regex("#[^\\n]*\\n"), "");
-        s = std::regex_replace(s, std::regex("\\u3000"), "");
+        s = std::regex_replace(s, std::regex(u8"　"), "");
         s = std::regex_replace(s, std::regex(u8"Save[\\s\\S]*データ"), "");
         return write_string_overwrite(data, len, s);
     }
@@ -865,7 +865,7 @@ namespace
         s = std::regex_replace(s, specialCharsRegex, "");
         return write_string_overwrite(data, len, s);
     }
-    bool F0100B6900A668000(void *data, size_t *len, HookParam *hp)
+    bool F0100C1E0102B8000(void *data, size_t *len, HookParam *hp)
     {
         auto s = std::string((char *)data, *len);
         s = std::regex_replace(s, std::regex("#N"), "\n");
@@ -1082,7 +1082,7 @@ namespace
         static std::string last;
         s = std::regex_replace(s, std::regex(R"((#Ruby\[)([^,]+),(#\w+\[.\])?(.+?]))"), "$2");
         s = std::regex_replace(s, std::regex(R"(#\w+(\[.+?\])?)"), "");
-        s = std::regex_replace(s, std::regex(R"(\u3000)"), "");
+        s = std::regex_replace(s, std::regex(u8"　"), "");
         if (last == s)
             return false;
         last = s;
@@ -1093,7 +1093,7 @@ namespace
         auto s = std::string((char *)data, *len);
         static std::string last;
         s = std::regex_replace(s, std::regex(R"(#\w+(\[.+?\])?)"), "");
-        s = std::regex_replace(s, std::regex(R"(\u3000)"), "");
+        s = std::regex_replace(s, std::regex(u8"　"), "");
         if (last == s)
             return false;
         last = s;
@@ -1123,7 +1123,7 @@ namespace
     bool F0100CEF0152DE000(void *data, size_t *len, HookParam *hp)
     {
         auto s = std::string((char *)data, *len);
-        s = std::regex_replace(s, std::regex(R"(\u3000)"), "");
+        s = std::regex_replace(s, std::regex(u8"　"), "");
         s = std::regex_replace(s, std::regex(R"(#n)"), "");
         s = std::regex_replace(s, std::regex(R"(#\w.+?])"), "");
         return write_string_overwrite(data, len, s);
@@ -1132,7 +1132,7 @@ namespace
     {
         auto s = std::string((char *)data, *len);
         s = std::regex_replace(s, std::regex(R"(%\w+)"), "");
-        s = std::regex_replace(s, std::regex(R"(\u3000)"), "");
+        s = std::regex_replace(s, std::regex(u8"　"), "");
         return write_string_overwrite(data, len, s);
     }
     bool F0100E4000F616000(void *data, size_t *len, HookParam *hp)
@@ -1153,7 +1153,7 @@ namespace
     bool F010027300A660000(void *data, size_t *len, HookParam *hp)
     {
         auto s = std::string((char *)data, *len);
-        s = std::regex_replace(s, std::regex(R"(#n\u3000*)"), "");
+        s = std::regex_replace(s, std::regex(u8R"(#n(　)*)"), "");
         return write_string_overwrite(data, len, s);
     }
     bool F0100FA10185B0000(void *data, size_t *len, HookParam *hp)
@@ -1344,10 +1344,10 @@ namespace
     bool F0100B5500CA0C000(void *data, size_t *len, HookParam *hp)
     {
         auto s = std::string((char *)data, *len);
-        std::regex pattern1("\\\\u0000+$");
+        // std::regex pattern1("\\\\u0000+$");
         std::regex pattern2("\\\\");
         std::regex pattern3("\\$");
-        s = std::regex_replace(s, pattern1, "");
+        // s = std::regex_replace(s, pattern1, "");
         s = std::regex_replace(s, pattern2, "");
         s = std::regex_replace(s, pattern3, "");
         return write_string_overwrite(data, len, s);
@@ -2357,17 +2357,19 @@ namespace
             {0x808e7068, {CODEC_UTF16, 3, 0, 0, 0, "0100B8E016F76000", "1.0.2"}}, // Text
             // Reine des Fleurs
             {0x80026434, {CODEC_UTF8, 0, 0, 0, 0, "0100B5800C0E4000", "1.0.0"}}, // Dialogue text
-            // Code : Realize - Saikou no Hanataba
-            {0x80024eac, {CODEC_UTF8, 0, 0, 0, F0100B6900A668000, "0100B6900A668000", "1.0.0"}},
+            // Code: Realize ~Saikou no Hanataba~ (Code：Realize ～彩虹の花束～)
+            {0x80019c14, {CODEC_UTF8, 0, 0x1c, 0, F010088B01A8FC000, "0100B6900A668000", "1.0.0"}},
+            {0x80041560, {CODEC_UTF8, 1, 0, 0, F010088B01A8FC000, "0100B6900A668000", "1.0.0"}},
+            {0x800458c8, {CODEC_UTF8, 0, 0, 0, F010088B01A8FC000, "0100B6900A668000", "1.0.0"}},
             // Diabolik Lovers Grand Edition
             {0x80041080, {CODEC_UTF8, 1, 0, 0, F0100BD700E648000, "0100BD700E648000", "1.0.0"}}, // name
             {0x80041080, {CODEC_UTF8, 0, 0, 0, F0100BD700E648000, "0100BD700E648000", "1.0.0"}}, // dialogue
             {0x80041080, {CODEC_UTF8, 2, 0, 0, F0100BD700E648000, "0100BD700E648000", "1.0.0"}}, // choice1
             // Shinobi, Koi Utsutsu
-            {0x8002aca0, {CODEC_UTF8, 0, 0, 0, F0100B6900A668000, "0100C1E0102B8000", "1.0.0"}}, // name
-            {0x8002aea4, {CODEC_UTF8, 0, 0, 0, F0100B6900A668000, "0100C1E0102B8000", "1.0.0"}}, // dialogue1
-            {0x8001ca90, {CODEC_UTF8, 2, 0, 0, F0100B6900A668000, "0100C1E0102B8000", "1.0.0"}}, // dialogue2
-            {0x80049dbc, {CODEC_UTF8, 1, 0, 0, F0100B6900A668000, "0100C1E0102B8000", "1.0.0"}}, // choice
+            {0x8002aca0, {CODEC_UTF8, 0, 0, 0, F0100C1E0102B8000, "0100C1E0102B8000", "1.0.0"}}, // name
+            {0x8002aea4, {CODEC_UTF8, 0, 0, 0, F0100C1E0102B8000, "0100C1E0102B8000", "1.0.0"}}, // dialogue1
+            {0x8001ca90, {CODEC_UTF8, 2, 0, 0, F0100C1E0102B8000, "0100C1E0102B8000", "1.0.0"}}, // dialogue2
+            {0x80049dbc, {CODEC_UTF8, 1, 0, 0, F0100C1E0102B8000, "0100C1E0102B8000", "1.0.0"}}, // choice
             // Yoru, Tomosu
             {0xe2748eb0, {CODEC_UTF32, 1, 0, 0, 0, "0100C2901153C000", "1.0.0"}}, // text1
             // Closed Nightmare
@@ -2629,7 +2631,8 @@ namespace
             {0x8003fc90, {CODEC_UTF8, 1, 0, 0, 0, "0100F8A017BAA000", "1.0.0"}}, // text1
             {0x8017a740, {CODEC_UTF8, 0, 0, 0, 0, "0100F8A017BAA000", "1.0.0"}}, // text2
             // Olympia Soiree
-            {0x8002ad04, {CODEC_UTF8, 0, 0, 0, F0100C310110B4000, "0100F9D00C186000", "1.0.0"}},
+            {0x8002ad60, {CODEC_UTF8, 31, 0, 0, F0100C310110B4000, "0100F9D00C186000", "1.0.0"}},
+            {0x8004b9e0, {CODEC_UTF8, 1, 0, 0, F0100C310110B4000, "0100F9D00C186000", "1.0.0"}},
             // Getsuei no Kusari -Sakuran Paranoia-
             {0x21801c, {0, 2, 0, 0, F0100F7401AA74000, "0100F7401AA74000", "1.0.0"}}, // text,sjis
             {0x228fac, {0, 1, 0, 0, F0100F7401AA74000, "0100F7401AA74000", "1.0.0"}}, // choices
