@@ -1771,6 +1771,20 @@ namespace
         s = std::regex_replace(s, std::regex("@[0-9]"), "");
         return write_string_overwrite(data, len, s);
     }
+    bool F010060301588A000(void *data, size_t *len, HookParam *hp)
+    {
+        auto s = std::string((char *)data, *len);
+        static lru_cache<std::string> cache(4);
+        static std::string last;
+        if (cache.touch(s))
+            return false;
+        if (startWith(s, last))
+        {
+            write_string_overwrite(data, len, s.substr(last.size(), s.size() - last.size()));
+        }
+        last = s;
+        return true;
+    }
 
     bool F010005F00E036000_1(void *data, size_t *len, HookParam *hp)
     {
@@ -3225,6 +3239,9 @@ namespace
             // NG
             {0x228AA4, {0, 6, 0, 0, F01009E600FAF6000, "01009E600FAF6000", "1.0.0"}},
             {0x228C0C, {0, 6, 0, 0, F01009E600FAF6000, "01009E600FAF6000", "1.0.0"}},
+            // アサツグトリ
+            {0x8012C824, {CODEC_UTF8, 1, 0, 0, F010060301588A000, "010060301588A000", "1.0.0"}},
+
         };
         return 1;
     }();
