@@ -32,6 +32,11 @@ namespace
     if (i < 4)
     {
       hp->offset = i << 2;
+      if (i == 2 && hp->user_value != 1)
+      {
+        hp->split = get_stack(1);
+        hp->type |= USING_SPLIT;
+      }
       *data = val;
       *len = 2;
       hp->text_fun = nullptr;
@@ -66,6 +71,21 @@ namespace
         return false;
       if (DWORD i = SafeFindEnclosingAlignedFunction((DWORD)s, 0x200))
       {
+        auto [s, e] = Util::QueryModuleLimits((HMODULE)low);
+        auto refs = findxref_reverse_checkcallop(i, s, e, 0xe8);
+        if (refs.size() == 1)
+        {
+          auto f2 = findfuncstart(refs[0], 0x100, true);
+          if (f2)
+          {
+            HookParam hp;
+            hp.address = f2;
+            hp.text_fun = SpecialHookRUGP1;
+            hp.user_value = 1;
+            hp.type = CODEC_ANSI_BE | USING_CHAR;
+            return NewHook(hp, "rUGP");
+          }
+        }
         HookParam hp;
         hp.address = i;
         hp.text_fun = SpecialHookRUGP1;

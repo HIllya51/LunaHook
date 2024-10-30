@@ -93,7 +93,17 @@ uintptr_t getasbaddr(const HookParam &hp)
 	{
 		if (hp.type & FUNCTION_OFFSET)
 		{
-			if (FARPROC function = GetProcAddress(GetModuleHandleW(hp.module), hp.function))
+			FARPROC function = NULL;
+			try
+			{
+				auto ordinal = std::stoi(hp.function);
+				function = GetProcAddress(GetModuleHandleW(hp.module), (LPCSTR)ordinal);
+			}
+			catch (...)
+			{
+				function = GetProcAddress(GetModuleHandleW(hp.module), hp.function);
+			}
+			if (function)
 				address += (uint64_t)function;
 			else
 				return ConsoleOutput(FUNC_MISSING), 0;
