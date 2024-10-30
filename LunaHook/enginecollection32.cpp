@@ -9,6 +9,7 @@
 #include "engine32/Tarte.h"
 #include "engine32/sakanagl.h"
 #include "engine32/LCScript.h"
+#include "engine32/Cage.h"
 #include "engine32/ONScripterru.h"
 #include "engine32/CoffeeMaker.h"
 #include "engine32/TACTICS.h"
@@ -410,5 +411,6 @@ std::vector<ENGINE *> check_engines()
         new Aisystem6,
         new AksysGames,
         new AGE_System,
+        new Cage,
     };
 }
