@@ -149,7 +149,7 @@ struct SearchParam
 		codepage = SHIFT_JIS;
 	// uintptr_t padding = 0, // same as hook param padding
 	//	minAddress = 0, maxAddress = (uintptr_t)-1; // hook all functions between these addresses (used only if both modules empty)
-	ALIGNPTR(uint64_t __1, uintptr_t padding = 0);
+	ALIGNPTR(uint64_t __1, intptr_t padding = 0);
 	ALIGNPTR(uint64_t __2, uintptr_t minAddress = 0);
 	ALIGNPTR(uint64_t __3, uintptr_t maxAddress = (uintptr_t)-1);
 	wchar_t boundaryModule[MAX_MODULE_SIZE] = {}; // hook all functions within this module (middle priority)

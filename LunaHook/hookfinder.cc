@@ -10,7 +10,7 @@ namespace
 		uint64_t address = 0;
 		uint64_t em_addr = 0;
 		int argidx = 0;
-		uintptr_t padding = 0;
+		intptr_t padding = 0;
 		int offset = 0;
 		JITTYPE jittype;
 		char text[MAX_STRING_SIZE] = {};
@@ -124,7 +124,7 @@ bool IsBadReadPtr(void *data)
 	}
 	return cacheEntry == BAD_PAGE;
 }
-void DoSend(int i, uintptr_t address, char *str, uintptr_t padding, JITTYPE jittype = JITTYPE::PC, uint64_t em_addr = 0)
+void DoSend(int i, uintptr_t address, char *str, intptr_t padding, JITTYPE jittype = JITTYPE::PC, uint64_t em_addr = 0)
 {
 	str += padding;
 	if (IsBadReadPtr(str) || IsBadReadPtr(str + MAX_STRING_SIZE))
@@ -189,7 +189,7 @@ void Send(char **stack, uintptr_t address)
 			DoSend(i, address, stack[i], sp.padding);
 	}
 }
-void SafeSendJitVeh(hook_stack *stack, uintptr_t address, uint64_t em_addr, JITTYPE jittype, uintptr_t padding)
+void SafeSendJitVeh(hook_stack *stack, uintptr_t address, uint64_t em_addr, JITTYPE jittype, intptr_t padding)
 {
 	__try
 	{
@@ -225,7 +225,7 @@ void SafeSendJitVeh(hook_stack *stack, uintptr_t address, uint64_t em_addr, JITT
 	}
 }
 std::unordered_map<uintptr_t, uint64_t> addresscalledtime;
-bool SendJitVeh(PCONTEXT context, uintptr_t address, uint64_t em_addr, JITTYPE jittype, uintptr_t padding)
+bool SendJitVeh(PCONTEXT context, uintptr_t address, uint64_t em_addr, JITTYPE jittype, intptr_t padding)
 {
 	if (safeautoleaveveh)
 		return true;

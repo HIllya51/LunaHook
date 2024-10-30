@@ -134,7 +134,7 @@ namespace
 		// [padding+]
 		if (std::regex_search(HCode, match, std::wregex(L"^([[:xdigit:]]+)\\+")))
 		{
-			hp.padding = std::stoull(match[1], nullptr, 16);
+			hp.padding = std::stoll(match[1], nullptr, 16);
 			HCode.erase(0, match[0].length());
 		}
 
