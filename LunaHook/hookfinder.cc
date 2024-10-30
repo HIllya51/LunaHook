@@ -183,12 +183,13 @@ void Send(char **stack, uintptr_t address)
 	if (recordsAvailable <= 0)
 		return;
 	for (int i = -registers; i < 10; ++i)
-		for (auto padding : {uintptr_t{}, sp.padding})
-		{
-			DoSend(i, address, stack[i], padding);
-		}
+	{
+		DoSend(i, address, stack[i], 0);
+		if (sp.padding)
+			DoSend(i, address, stack[i], sp.padding);
+	}
 }
-void SafeSendJitVeh(hook_stack *stack, uintptr_t address, uintptr_t em_addr, JITTYPE jittype)
+void SafeSendJitVeh(hook_stack *stack, uintptr_t address, uintptr_t em_addr, JITTYPE jittype, uintptr_t padding)
 {
 	__try
 	{
@@ -215,6 +216,8 @@ void SafeSendJitVeh(hook_stack *stack, uintptr_t address, uintptr_t em_addr, JIT
 				return;
 			}
 			DoSend(i, address, str, 0, jittype, em_addr);
+			if (padding)
+				DoSend(i, address, str, padding, jittype, em_addr);
 		}
 	}
 	__except (EXCEPTION_EXECUTE_HANDLER)
@@ -222,7 +225,7 @@ void SafeSendJitVeh(hook_stack *stack, uintptr_t address, uintptr_t em_addr, JIT
 	}
 }
 std::unordered_map<uintptr_t, uint64_t> addresscalledtime;
-bool SendJitVeh(PCONTEXT context, uintptr_t address, uintptr_t em_addr, JITTYPE jittype)
+bool SendJitVeh(PCONTEXT context, uintptr_t address, uintptr_t em_addr, JITTYPE jittype, uintptr_t padding)
 {
 	if (safeautoleaveveh)
 		return true;
@@ -236,7 +239,7 @@ bool SendJitVeh(PCONTEXT context, uintptr_t address, uintptr_t em_addr, JITTYPE 
 	addresscalledtime[address] = tm;
 	auto stack = std::make_unique<hook_stack>();
 	context_get(stack.get(), context);
-	SafeSendJitVeh(stack.get(), address, em_addr, jittype);
+	SafeSendJitVeh(stack.get(), address, em_addr, jittype, padding);
 	return true;
 }
 std::vector<uintptr_t> GetFunctions(uintptr_t module)
@@ -473,7 +476,7 @@ void SearchForHooks(SearchParam spUser)
 				if(addr.second.second>sp.maxAddress||addr.second.second<sp.minAddress)continue;
 				i+=1;
 				//addresses.push_back(addr.first);
-				if(add_veh_hook((void*)addr.first,std::bind(SendJitVeh,std::placeholders::_1,addr.first,addr.second.second,addr.second.first)))
+				if(add_veh_hook((void*)addr.first,std::bind(SendJitVeh,std::placeholders::_1,addr.first,addr.second.second,addr.second.first,sp.padding)))
 					successaddr.push_back(addr.first);
 				if (i % 2500 == 0) ConsoleOutput(HOOK_SEARCH_INITIALIZING, 1 + 98. * i / jitaddr2emuaddr.size());
 			}
