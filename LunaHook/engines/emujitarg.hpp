@@ -24,7 +24,7 @@ namespace YUZU
         bool is64;
 
     public:
-        emu_arg(hook_stack *stack_, uintptr_t em_addr = 0) : stack(stack_), is64(em_addr == 0 || em_addr > 0x80004000) {};
+        emu_arg(hook_stack *stack_, uint64_t em_addr = 0) : stack(stack_), is64(em_addr == 0 || em_addr > 0x80004000) {};
         uintptr_t operator[](int idx)
         {
             auto base = stack->r13;

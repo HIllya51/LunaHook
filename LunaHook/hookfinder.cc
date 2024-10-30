@@ -124,7 +124,7 @@ bool IsBadReadPtr(void *data)
 	}
 	return cacheEntry == BAD_PAGE;
 }
-void DoSend(int i, uintptr_t address, char *str, uintptr_t padding, JITTYPE jittype = JITTYPE::PC, uintptr_t em_addr = 0)
+void DoSend(int i, uintptr_t address, char *str, uintptr_t padding, JITTYPE jittype = JITTYPE::PC, uint64_t em_addr = 0)
 {
 	str += padding;
 	if (IsBadReadPtr(str) || IsBadReadPtr(str + MAX_STRING_SIZE))
@@ -189,7 +189,7 @@ void Send(char **stack, uintptr_t address)
 			DoSend(i, address, stack[i], sp.padding);
 	}
 }
-void SafeSendJitVeh(hook_stack *stack, uintptr_t address, uintptr_t em_addr, JITTYPE jittype, uintptr_t padding)
+void SafeSendJitVeh(hook_stack *stack, uintptr_t address, uint64_t em_addr, JITTYPE jittype, uintptr_t padding)
 {
 	__try
 	{
@@ -225,7 +225,7 @@ void SafeSendJitVeh(hook_stack *stack, uintptr_t address, uintptr_t em_addr, JIT
 	}
 }
 std::unordered_map<uintptr_t, uint64_t> addresscalledtime;
-bool SendJitVeh(PCONTEXT context, uintptr_t address, uintptr_t em_addr, JITTYPE jittype, uintptr_t padding)
+bool SendJitVeh(PCONTEXT context, uintptr_t address, uint64_t em_addr, JITTYPE jittype, uintptr_t padding)
 {
 	if (safeautoleaveveh)
 		return true;
@@ -473,6 +473,7 @@ void SearchForHooks(SearchParam spUser)
 			ConsoleOutput("%p %p",minemaddr,maxemaddr);
 			ConsoleOutput("%p %p",sp.minAddress,sp.maxAddress);
 			for(auto addr:jitaddr2emuaddr){
+				//ConsoleOutput("%llx => %p", addr.second.second ,addr.first);
 				if(addr.second.second>sp.maxAddress||addr.second.second<sp.minAddress)continue;
 				i+=1;
 				//addresses.push_back(addr.first);

@@ -18,16 +18,16 @@ inline SearchParam spDefault;
 
 // EOF
 int HookStrLen(HookParam *, BYTE *data);
-inline std::unordered_map<uintptr_t, std::pair<JITTYPE, uintptr_t>> emuaddr2jitaddr;
-inline std::unordered_map<uintptr_t, std::pair<JITTYPE, uintptr_t>> jitaddr2emuaddr;
-void jitaddraddr(uintptr_t em_addr, uintptr_t jitaddr, JITTYPE);
+inline std::unordered_map<uint64_t, std::pair<JITTYPE, uintptr_t>> emuaddr2jitaddr;
+inline std::unordered_map<uintptr_t, std::pair<JITTYPE, uint64_t>> jitaddr2emuaddr;
+void jitaddraddr(uint64_t em_addr, uintptr_t jitaddr, JITTYPE);
 
 void context_get(hook_stack *, PCONTEXT);
 void context_set(hook_stack *, PCONTEXT);
 
-inline std::map<uintptr_t, std::pair<std::string, HookParam>> delayinserthook;
+inline std::map<uint64_t, std::pair<std::string, HookParam>> delayinserthook;
 void delayinsertadd(HookParam, std::string);
-void delayinsertNewHook(uintptr_t);
+void delayinsertNewHook(uint64_t);
 inline bool safeautoleaveveh = false;
 inline bool dont_detach = false;
 inline bool host_connected = false;

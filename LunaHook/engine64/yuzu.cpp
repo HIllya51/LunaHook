@@ -71,7 +71,7 @@ namespace
         const char *_id;
         const char *_version;
     };
-    std::unordered_map<uintptr_t, emfuncinfo> emfunctionhooks;
+    std::unordered_map<uint64_t, emfuncinfo> emfunctionhooks;
 
     struct GameInfo
     {
@@ -169,7 +169,7 @@ bool yuzu::attach_function()
     {
         auto descriptor = *argidx(stack, idxDescriptor + 1); // r8
         auto entrypoint = *argidx(stack, idxEntrypoint + 1); // r9
-        auto em_address = *(uintptr_t *)descriptor;
+        auto em_address = *(uint64_t *)descriptor;
         if (!entrypoint)
             return;
         jitaddraddr(em_address, entrypoint, JITTYPE::YUZU);

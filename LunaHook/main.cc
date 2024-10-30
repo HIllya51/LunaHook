@@ -209,7 +209,7 @@ int HookStrLen(HookParam *hp, BYTE *data)
 		return strnlen((char *)data, TEXT_BUFFER_SIZE);
 }
 static std::mutex maplock;
-void jitaddraddr(uintptr_t em_addr, uintptr_t jitaddr, JITTYPE jittype)
+void jitaddraddr(uint64_t em_addr, uintptr_t jitaddr, JITTYPE jittype)
 {
 	std::lock_guard _(maplock);
 	emuaddr2jitaddr[em_addr] = {jittype, jitaddr};
@@ -248,7 +248,7 @@ void delayinsertadd(HookParam hp, std::string name)
 	delayinserthook[hp.emu_addr] = {name, hp};
 	ConsoleOutput(INSERTING_HOOK, name.c_str(), hp.emu_addr);
 }
-void delayinsertNewHook(uintptr_t em_address)
+void delayinsertNewHook(uint64_t em_address)
 {
 	if (delayinserthook.find(em_address) == delayinserthook.end())
 		return;
