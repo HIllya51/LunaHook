@@ -21,7 +21,7 @@ function splitfonttext(transwithfont) {
         return transwithfont;
     }
 }
-function cppjsio(name, s_raw, lpsplit, embedable = true) {
+function cppjsio(name, s_raw, lpsplit, embedable) {
     if (!s_raw)
         return s_raw
     transwithfont = ''
@@ -100,7 +100,7 @@ function rpgmakerhook() {
     }
     Window_Message.prototype.startMessage = function () {
         gametext = $gameMessage.allText();
-        resp = cppjsio('rpgmakermv', gametext, 0);
+        resp = cppjsio('rpgmakermv', gametext, 0, true);
         $gameMessage._texts = [resp]
         this.originstartMessage();
     };
@@ -115,7 +115,7 @@ function rpgmakerhook() {
         return this.updateMessage_ori();
     };
     Window_Base.prototype.drawText = function (text, x, y, maxWidth, align) {
-        text = cppjsio('rpgmakermv', text, 1)
+        text = cppjsio('rpgmakermv', text, 1, true)
         return this.drawText_origin(text, x, y, maxWidth, align)
     }
     Window_Base.prototype.lastcalltime = 0
@@ -124,7 +124,7 @@ function rpgmakerhook() {
         __now = new Date().getTime()
         Window_Base.prototype.lastcalltime = __now
         if (__now - __last > 100)
-            text = cppjsio('rpgmakermv', text, 2)
+            text = cppjsio('rpgmakermv', text, 2, true)
         else {
             Bitmap.prototype.collectstring[2] += text;
         }
@@ -139,7 +139,7 @@ function tyranohook() {
     tyrano.plugin.kag.tag.chara_ptext.startorigin = tyrano.plugin.kag.tag.chara_ptext.start;
     tyrano.plugin.kag.tag.text.start = function (pm) {
         if (1 != this.kag.stat.is_script && 1 != this.kag.stat.is_html) {
-            pm.val = cppjsio('tyranoscript', pm.val, 0);
+            pm.val = cppjsio('tyranoscript', pm.val, 0, true);
             if (fontface) {
                 this.kag.stat.font.face = fontface
             }
@@ -147,7 +147,7 @@ function tyranohook() {
         return this.originstart(pm)
     }
     tyrano.plugin.kag.tag.chara_ptext.start = function (pm) {
-        pm.name = cppjsio('tyranoscript', pm.name, 1)
+        pm.name = cppjsio('tyranoscript', pm.name, 1, true)
         return this.startorigin(pm)
     }
 }
