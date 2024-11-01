@@ -190,16 +190,8 @@ namespace ppsspp
 		*split = haveNamve;
 		write_string_new(data, len, s);
 	}
-
 	void ULJM05054(hook_stack *stack, HookParam *hp, uintptr_t *data, uintptr_t *split, size_t *len)
 	{
-		if (hp->emu_addr != 0x886162c)
-		{
-			auto addr = PPSSPP::emu_arg(stack)[0] + 0x3c;
-			*data = addr;
-			*len = strlen((char *)addr);
-			return;
-		}
 		auto address = PPSSPP::emu_arg(stack)[1];
 		bool haveNamve;
 		auto s = Corda::readBinaryString(address, &haveNamve);
@@ -225,6 +217,22 @@ namespace ppsspp
 		StringFilter(text, len, "%P", 2);
 
 		return true;
+	}
+
+	void ULJM05810(hook_stack *stack, HookParam *hp, uintptr_t *data, uintptr_t *split, size_t *len)
+	{
+		*data = *data + 400;
+		std::string s;
+		while (true)
+		{
+			std::string sub = (char *)*data;
+			s += sub;
+			*data += sub.size() + 1;
+			if (!*(char *)*data)
+				break;
+		}
+		strReplace(s, "\n", "");
+		write_string_new(data, len, s);
 	}
 	namespace NPJH50530
 	{
@@ -365,7 +373,7 @@ namespace ppsspp
 		{0x89b59dc, {0, 0, 0, ULJM05428, 0, "ULJM05428"}},
 		// Kin'iro no Corda
 		{0x886162c, {0, 0, 0, ULJM05054, 0, "ULJM05054"}}, // dialogue: 0x886162c (x1), 0x889d5fc-0x889d520(a2) fullLine
-		{0x8899e90, {0, 0, 0, ULJM05054, 0, "ULJM05054"}}, // name 0x88da57c, 0x8899ca4 (x0, oneTime), 0x8899e90
+		{0x8899e90, {0, 0, 0x3c, 0, "ULJM05054"}},		   // name 0x88da57c, 0x8899ca4 (x0, oneTime), 0x8899e90
 		// Sol Trigger
 		{0x8952cfc, {CODEC_UTF8, 0, 0, 0, NPJH50619F, "NPJH50619"}}, // dialog
 		{0x884aad4, {CODEC_UTF8, 0, 0, 0, NPJH50619F, "NPJH50619"}}, // description
@@ -421,6 +429,8 @@ namespace ppsspp
 		{0x889E970, {0, 0, 0, 0, ULJM05943F, "ULJM06131"}}, // NAME
 		// 源狼 GENROH
 		{0x8940DA8, {0, 1, 0, 0, ULJM06145, "ULJM06145"}}, // TEXT
+		// 遙かなる時空の中で４ 愛蔵版
+		{0x8955CE0, {0, 0xf, 0, ULJM05810, 0, " ULJM05810"}},
 	};
 
 }
