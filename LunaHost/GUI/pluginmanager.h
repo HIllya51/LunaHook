@@ -16,7 +16,6 @@ struct pluginitem
 {
     std::string path;
     bool isQt;
-    bool isref;
     bool enable;
     bool vissetting;
     pluginitem(const nlohmann::json &);

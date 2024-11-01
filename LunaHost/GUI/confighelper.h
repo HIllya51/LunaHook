@@ -32,4 +32,7 @@ T safequeryjson(const nlohmann::json &js, const std::string &key, const T &defau
     }
     return js[key];
 }
+
+constexpr auto pluginkey = x64 ? "plugins64" : "plugins32";
+
 #endif

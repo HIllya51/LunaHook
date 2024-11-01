@@ -25,7 +25,7 @@ void writefile(const wchar_t *fname, const std::string &s)
 
 confighelper::confighelper()
 {
-    configpath = std::filesystem::current_path() / (x64 ? "config64.json" : "config32.json");
+    configpath = std::filesystem::current_path() / "config.json";
     try
     {
         configs = nlohmann::json::parse(readfile(configpath.c_str()));
@@ -35,9 +35,9 @@ confighelper::confighelper()
         configs = {};
     }
 
-    if (configs.find("plugins") == configs.end())
+    if (configs.find(pluginkey) == configs.end())
     {
-        configs["plugins"] = {};
+        configs[pluginkey] = {};
     }
 }
 confighelper::~confighelper()

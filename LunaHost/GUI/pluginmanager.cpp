@@ -148,53 +148,47 @@ bool Pluginmanager::dispatch(TextThread &thread, std::wstring &sentence)
 
 void Pluginmanager::add(const pluginitem &item)
 {
-    configs->configs["plugins"].push_back(item.dump());
+    configs->configs[pluginkey].push_back(item.dump());
 }
 int Pluginmanager::count()
 {
-    return configs->configs["plugins"].size();
+    return configs->configs[pluginkey].size();
 }
 pluginitem Pluginmanager::get(int i)
 {
-    return pluginitem{configs->configs["plugins"][i]};
+    return pluginitem{configs->configs[pluginkey][i]};
 }
 void Pluginmanager::set(int i, const pluginitem &item)
 {
-    configs->configs["plugins"][i] = item.dump();
+    configs->configs[pluginkey][i] = item.dump();
 }
 
 pluginitem::pluginitem(const nlohmann::json &js)
 {
     path = js["path"];
     isQt = safequeryjson(js, "isQt", false);
-    isref = safequeryjson(js, "isref", false);
     enable = safequeryjson(js, "enable", true);
     vissetting = safequeryjson(js, "vissetting", true);
 }
 std::wstring pluginitem::wpath()
 {
     auto wp = StringToWideString(path);
-    if (isref)
-        return std::filesystem::absolute(wp);
-    else
-        return wp;
+    return std::filesystem::absolute(wp);
 }
 
-std::pair<std::wstring, bool> castabs2ref(const std::wstring &p)
+std::wstring castabs2ref(const std::wstring &p)
 {
     auto curr = std::filesystem::current_path().wstring();
     if (startWith(p, curr))
     {
-        return {p.substr(curr.size() + 1), true};
+        return p.substr(curr.size() + 1);
     }
-    return {p, false};
+    return p;
 }
 pluginitem::pluginitem(const std::wstring &pabs, bool _isQt)
 {
     isQt = _isQt;
-    auto [p, _isref] = castabs2ref(pabs);
-    isref = _isref;
-    path = WideStringToString(p);
+    path = WideStringToString(castabs2ref(pabs));
     enable = true;
     vissetting = true;
 }
@@ -203,7 +197,6 @@ nlohmann::json pluginitem::dump() const
     return {
         {"path", path},
         {"isQt", isQt},
-        {"isref", isref},
         {"enable", enable},
         {"vissetting", vissetting}};
 }
@@ -268,7 +261,7 @@ void Pluginmanager::remove(const std::wstring &wss)
     unload(wss);
 
     auto s = WideStringToString(wss);
-    auto &plgs = configs->configs["plugins"];
+    auto &plgs = configs->configs[pluginkey];
     auto it = std::remove_if(plgs.begin(), plgs.end(), [&](auto &t)
                              {
         std::string p=t["path"];
@@ -282,7 +275,7 @@ std::optional<std::wstring> Pluginmanager::selectpluginfile()
 }
 void Pluginmanager::swaprank(int a, int b)
 {
-    auto &plgs = configs->configs["plugins"];
+    auto &plgs = configs->configs[pluginkey];
     auto _b = plgs[b];
     plgs[b] = plgs[a];
     plgs[a] = _b;
