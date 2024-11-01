@@ -210,13 +210,9 @@ namespace ppsspp
 	bool ULJM05943F(void *data, size_t *len, HookParam *hp)
 	{
 		auto s = std::string((char *)data, *len);
-		std::regex pattern1("#n+");
-		std::string replacement1 = " ";
-		std::string result1 = std::regex_replace(s, pattern1, replacement1);
-		std::regex pattern2("#[A-Za-z]+\\[(\\d*\\.)?\\d+\\]+");
-		std::string replacement2 = "";
-		std::string result2 = std::regex_replace(result1, pattern2, replacement2);
-		return write_string_overwrite(data, len, result2);
+		strReplace(s, "#n", "");
+		s = std::regex_replace(s, std::regex("#[A-Za-z]+\\[(\\d*\\.)?\\d+\\]+"), "");
+		return write_string_overwrite(data, len, s);
 	}
 
 	bool FULJM05603(LPVOID data, size_t *size, HookParam *)
@@ -262,11 +258,20 @@ namespace ppsspp
 		StringCharReplacer((char *)data, len, "\\n", 2, '\n');
 		return true;
 	}
+	bool ULJM06145(void *data, size_t *len, HookParam *hp)
+	{
+		auto s = std::string((char *)data, *len);
+		s = std::regex_replace(s, std::regex(R"(#Ruby\[(.*?),(.*?)\])"), "$1");
+		s = std::regex_replace(s, std::regex("#[A-Za-z]+\\[(\\d*\\.)?\\d+\\]+"), "");
+		strReplace(s, "#n", "");
+		strReplace(s, "\x84\xbd", "!?");
+		return write_string_overwrite(data, len, s);
+	}
 	bool FULJM05690(void *data, size_t *len, HookParam *hp)
 	{
 		auto s = std::string((char *)data, *len);
-		s = std::regex_replace(s, std::regex("#Kana[(.*?),(.*?)]"), "");
-		strReplace(s, "#n", "\n");
+		s = std::regex_replace(s, std::regex(R"(#Kana\[(.*?),(.*?)\])"), "$1");
+		strReplace(s, "#n", "");
 		return write_string_overwrite(data, len, s);
 	}
 	bool FULJM05889(LPVOID data, size_t *size, HookParam *)
@@ -410,6 +415,12 @@ namespace ppsspp
 		{0x88719dc, {0, 1, 0, 0, FNPJH50127, "NPJH50127"}},
 		// オメルタ～沈黙の掟～ THE LEGACY
 		{0x88861C8, {0, 3, 0, 0, 0, "ULJM06393"}},
+		// L.G.S～新説 封神演義～
+		{0x888A358, {0, 0, 0, 0, ULJM05943F, "ULJM06131"}}, // NAME+TEXT
+		{0x88DB214, {0, 0, 0, 0, ULJM05943F, "ULJM06131"}}, // TEXT
+		{0x889E970, {0, 0, 0, 0, ULJM05943F, "ULJM06131"}}, // NAME
+		// 源狼 GENROH
+		{0x8940DA8, {0, 1, 0, 0, ULJM06145, "ULJM06145"}}, // TEXT
 	};
 
 }
