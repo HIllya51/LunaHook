@@ -1,4 +1,4 @@
-#include"AOS.h"
+#include "AOS.h"
 
 /**
  *  jichi 4/1/2014: Insert AOS hook
@@ -65,7 +65,7 @@ bool InsertAOS1Hook()
   // jichi 4/2/2014: The starting of this function is different from ヂ�モノツキ
   // So, use a pattern in the middle of the function instead.
   //
-  //const BYTE bytes[] = {
+  // const BYTE bytes[] = {
   //  0x51,                                 // 00e3c2f0  /$ 51              push ecx    ; jichi: hook here, function begins
   //  0xa1, 0x0c,0x64,0xeb,0x00,            // 00e3c2f1  |. a1 0c64eb00     mov eax,dword ptr ds:[0xeb640c]
   //  0x8b,0x0d, 0x78,0x46,0xeb,0x00,       // 00e3c2f6  |. 8b0d 7846eb00   mov ecx,dword ptr ds:[0xeb4678]
@@ -78,118 +78,144 @@ bool InsertAOS1Hook()
   //  0x0f,0xb6,0x3d, 0xc7,0x46,0xeb,0x00,  // 00e3c30a  |. 0fb63d c746eb00 movzx edi,byte ptr ds:[0xeb46c7]
   //  0x81,0xe6, 0xff,0xff,0xff,0x00        // 00e3c311  |. 81e6 ffffff00   and esi,0xffffff
   //};
-  //enum { addr_offset = 0 };
+  // enum { addr_offset = 0 };
 
   const BYTE bytes[] = {
-    0x0f,0xbf,0x55, 0x1c,   // 00e3c33c  |> 0fbf55 1c                  movsx edx,word ptr ss:[ebp+0x1c]
-    0x0f,0xbf,0x45, 0x0a,   // 00e3c340  |. 0fbf45 0a                  movsx eax,word ptr ss:[ebp+0xa]
-    0x0f,0xbf,0x75, 0x1a,   // 00e3c344  |. 0fbf75 1a                  movsx esi,word ptr ss:[ebp+0x1a]
-    0x03,0xd7,              // 00e3c348  |. 03d7                       add edx,edi
-    0x03,0xc2,              // 00e3c34a  |. 03c2                       add eax,edx
-    0x0f,0xbf,0x55, 0x08,   // 00e3c34c  |. 0fbf55 08                  movsx edx,word ptr ss:[ebp+0x8]
-    0x03,0xf7,              // 00e3c350  |. 03f7                       add esi,edi
-    0x03,0xd6,              // 00e3c352  |. 03d6                       add edx,esi
-    0x85,0xc9               // 00e3c354  |. 85c9                       test ecx,ecx
+      0x0f, 0xbf, 0x55, 0x1c, // 00e3c33c  |> 0fbf55 1c                  movsx edx,word ptr ss:[ebp+0x1c]
+      0x0f, 0xbf, 0x45, 0x0a, // 00e3c340  |. 0fbf45 0a                  movsx eax,word ptr ss:[ebp+0xa]
+      0x0f, 0xbf, 0x75, 0x1a, // 00e3c344  |. 0fbf75 1a                  movsx esi,word ptr ss:[ebp+0x1a]
+      0x03, 0xd7,             // 00e3c348  |. 03d7                       add edx,edi
+      0x03, 0xc2,             // 00e3c34a  |. 03c2                       add eax,edx
+      0x0f, 0xbf, 0x55, 0x08, // 00e3c34c  |. 0fbf55 08                  movsx edx,word ptr ss:[ebp+0x8]
+      0x03, 0xf7,             // 00e3c350  |. 03f7                       add esi,edi
+      0x03, 0xd6,             // 00e3c352  |. 03d6                       add edx,esi
+      0x85, 0xc9              // 00e3c354  |. 85c9                       test ecx,ecx
   };
-  enum { addr_offset = 0x00e3c2f0 - 0x00e3c33c }; // distance to the beginning of the function, which is 0x51 (push ecx)
+  enum
+  {
+    addr_offset = 0x00e3c2f0 - 0x00e3c33c
+  }; // distance to the beginning of the function, which is 0x51 (push ecx)
   ULONG range = min(processStopAddress - processStartAddress, MAX_REL_ADDR);
   ULONG addr = MemDbg::findBytes(bytes, sizeof(bytes), processStartAddress, processStartAddress + range);
-  //GROWL(reladdr);
-  if (!addr) {
+  // GROWL(reladdr);
+  if (!addr)
+  {
     ConsoleOutput("AOS1: pattern not found");
     return false;
   }
   addr += addr_offset;
-  //GROWL(addr);
-  enum { push_ecx = 0x51 }; // beginning of the function
-  if (*(BYTE *)addr != push_ecx) {
+  // GROWL(addr);
+  enum
+  {
+    push_ecx = 0x51
+  }; // beginning of the function
+  if (*(BYTE *)addr != push_ecx)
+  {
     ConsoleOutput("AOS1: beginning of the function not found");
     return false;
   }
 
   HookParam hp;
   hp.address = addr;
-  hp.offset=get_stack(2);
+  hp.offset = get_stack(2);
   hp.type = DATA_INDIRECT;
 
   ConsoleOutput("INSERT AOS1");
- 
-  return  NewHook(hp, "AOS1");
+
+  return NewHook(hp, "AOS1");
 }
 
 bool InsertAOS2Hook()
 {
   const BYTE bytes[] = {
-    0x51,                  // 00C4E7E0  /$  51            PUSH ECX ; mireado: hook here, function begins
-    0x33,0xc0,             // 00C4E7E1  |.  33C0          XOR EAX,EAX
-    0x53,                  // 00C4E7E3  |.  53            PUSH EBX
-    0x55,                  // 00C4E7E4  |.  55            PUSH EBP
-    0x8b,0x2d//, XX4,           // 00C4E7E5  |.  8B2D 40A3CF00 MOV EBP,DWORD PTR DS:[0CFA340] ; mireado: some time changing 40A3CF00 => 40A3C000
-    //0x89,0x07,             // 00C4E7EB  |.  8907          MOV DWORD PTR DS:[EDI],EAX
-    //0x89,0x47, 0x04       // 00C4E7ED  |.  8947 04       MOV DWORD PTR DS:[EDI+4],EAX
-    //0x56,                  // 00C4E7F0  |.  56            PUSH ESI
-    //0x8b,0x75, 0x44        // 00C4E7F1  |.  8B75 44       MOV ESI,DWORD PTR SS:[EBP+44]
+      0x51,       // 00C4E7E0  /$  51            PUSH ECX ; mireado: hook here, function begins
+      0x33, 0xc0, // 00C4E7E1  |.  33C0          XOR EAX,EAX
+      0x53,       // 00C4E7E3  |.  53            PUSH EBX
+      0x55,       // 00C4E7E4  |.  55            PUSH EBP
+      0x8b, 0x2d  //, XX4,           // 00C4E7E5  |.  8B2D 40A3CF00 MOV EBP,DWORD PTR DS:[0CFA340] ; mireado: some time changing 40A3CF00 => 40A3C000
+      // 0x89,0x07,             // 00C4E7EB  |.  8907          MOV DWORD PTR DS:[EDI],EAX
+      // 0x89,0x47, 0x04       // 00C4E7ED  |.  8947 04       MOV DWORD PTR DS:[EDI+4],EAX
+      // 0x56,                  // 00C4E7F0  |.  56            PUSH ESI
+      // 0x8b,0x75, 0x44        // 00C4E7F1  |.  8B75 44       MOV ESI,DWORD PTR SS:[EBP+44]
   };
 
-  enum { addr_offset = 0 }; // distance to the beginning of the function, which is 0x51 (push ecx)
+  enum
+  {
+    addr_offset = 0
+  }; // distance to the beginning of the function, which is 0x51 (push ecx)
   ULONG range = min(processStopAddress - processStartAddress, MAX_REL_ADDR);
   ULONG addr = MemDbg::findBytes(bytes, sizeof(bytes), processStartAddress, processStartAddress + range);
-  //GROWL(reladdr);
-  if (!addr) {
+  // GROWL(reladdr);
+  if (!addr)
+  {
     ConsoleOutput("AOS2: pattern not found");
     return false;
   }
   addr += addr_offset;
-  //GROWL(addr);
-  enum { push_ecx = 0x51 }; // beginning of the function
-  if (*(BYTE *)addr != push_ecx) {
+  // GROWL(addr);
+  enum
+  {
+    push_ecx = 0x51
+  }; // beginning of the function
+  if (*(BYTE *)addr != push_ecx)
+  {
     ConsoleOutput("AOS2: beginning of the function not found");
     return false;
   }
 
   HookParam hp;
   hp.address = addr;
-  hp.offset=get_stack(2);
+  hp.offset = get_stack(2);
   hp.type = DATA_INDIRECT;
 
   ConsoleOutput("INSERT AOS2");
-  
+
   return NewHook(hp, "AOS2");
 }
 
 bool InsertAOSHook()
-{ return InsertAOS1Hook() ||  InsertAOS2Hook();}
-
-  
-namespace{
-
-DWORD calladdr(DWORD addr){
-  if(addr==0)return 0;
-  BYTE callop[] = { 0xe8 };
-  addr = reverseFindBytes(callop, sizeof(callop), addr - 0x20, addr);
-  if (addr == 0)return 0;
-  auto calladdr = *(int*)((char*)addr + 1);
-  ConsoleOutput("calladdr %p", calladdr);
-  addr = calladdr + addr + 5;
-  ConsoleOutput("funcaddr %p", addr);
-  if (*(BYTE*)((BYTE*)addr - 1) != 0xcc)return 0;
-  return addr; 
+{
+  return InsertAOS1Hook() || InsertAOS2Hook();
 }
-DWORD lastcall(){
-  auto addr = findiatcallormov((DWORD)TextOutA,processStartAddress,processStartAddress, processStopAddress,true);
-  if(addr==0)return 0;
-  addr = MemDbg::findEnclosingAlignedFunction(addr);
-  return addr;
-}  
+
+namespace
+{
+
+  DWORD calladdr(DWORD addr)
+  {
+    if (addr == 0)
+      return 0;
+    BYTE callop[] = {0xe8};
+    addr = reverseFindBytes(callop, sizeof(callop), addr - 0x20, addr);
+    if (addr == 0)
+      return 0;
+    auto calladdr = *(int *)((char *)addr + 1);
+    ConsoleOutput("calladdr %p", calladdr);
+    addr = calladdr + addr + 5;
+    ConsoleOutput("funcaddr %p", addr);
+    if (*(BYTE *)((BYTE *)addr - 1) != 0xcc)
+      return 0;
+    return addr;
+  }
+  DWORD lastcall()
+  {
+    auto addr = findiatcallormov((DWORD)TextOutA, processStartAddress, processStartAddress, processStopAddress, true);
+    if (addr == 0)
+      return 0;
+    addr = MemDbg::findEnclosingAlignedFunction(addr);
+    return addr;
+  }
 }
-regs mov_reg_ebpoffset(int reg) {
-  switch (reg) {
+regs mov_reg_ebpoffset(int reg)
+{
+  switch (reg)
+  {
   case 0x4B:
-   return regs::ebx;
+    return regs::ebx;
   case 0x48:
     return regs::eax;
   case 0x49:
-   return regs::ecx;
+    return regs::ecx;
   case 0x4a:
     return regs::edx;
   case 0x4c:
@@ -204,71 +230,78 @@ regs mov_reg_ebpoffset(int reg) {
     return regs::invalid;
   }
 }
-bool AOS_EX() {
-  BYTE aos_shared_bytes1[] = { 
-    0x3c,XX,
-    0x74,XX,
-    0x3c,XX,
-    0x74,XX,
-    0x3c,XX,
-    0x74,XX,
-    0x3c,XX,
-    0x74,XX,
-    0x3c,XX,
-    0x74,XX,
-  };
-  BYTE aos_shared_bytes2[] = { 
-    
-      0x80,0xfb,XX,
-      0x74,XX,
-      0x80,0xfb,XX,
-      0x74,XX,
-      0x80,0xfb,XX,
-      0x74,XX,
-      0x80,0xfb,XX,
-      0x74,XX
-  }; 
-  std::vector<DWORD>addrs;
+bool AOS_EX()
+{
+  BYTE aos_shared_bytes1[] = {
+      0x3c, XX,
+      0x74, XX,
+      0x3c, XX,
+      0x74, XX,
+      0x3c, XX,
+      0x74, XX,
+      0x3c, XX,
+      0x74, XX,
+      0x3c, XX,
+      0x74, XX};
+  BYTE aos_shared_bytes2[] = {
+
+      0x80, 0xfb, XX,
+      0x74, XX,
+      0x80, 0xfb, XX,
+      0x74, XX,
+      0x80, 0xfb, XX,
+      0x74, XX,
+      0x80, 0xfb, XX,
+      0x74, XX};
+  std::vector<DWORD> addrs;
   addrs.push_back(calladdr(MemDbg::findBytes(aos_shared_bytes1, sizeof(aos_shared_bytes1), processStartAddress, processStopAddress)));
   addrs.push_back(calladdr(MemDbg::findBytes(aos_shared_bytes2, sizeof(aos_shared_bytes2), processStartAddress, processStopAddress)));
   addrs.push_back(lastcall());
-  for(auto addr: addrs){ 
-        if (addr == 0)continue; 
-        auto reg = mov_reg_ebpoffset(*(BYTE*)((BYTE*)addr + 5));
-        int off;
-        if (reg!=regs::invalid){
-          //usercall
-          off=get_reg(reg);
-        }
-        else if(((*(WORD*)addr))==0xec83) {
-          //姫様LOVEライフ！
-          //也是usercall，但是第二个参数是栈上。
-          off=get_stack(1);  
-        }
-        else{
-          //螺旋遡行のディストピア -The infinite set of alternative version- 官方中文
-          BYTE sig[]={0x89,0x55,0xFC};
-          if(MemDbg::findBytes(sig, sizeof(sig), addr, addr+0x20)){
-            off=get_reg(regs::edx);
-          }
-          else{
-            //cdecl;
-            off=get_stack(2);  
-          }
-        } 
-        HookParam hp;
-        hp.address = addr;
-        hp.offset = off;
-        hp.type = NO_CONTEXT | DATA_INDIRECT;
-        hp.index = 0;
-        
-        return NewHook(hp, "AOS_EX");
+  for (auto addr : addrs)
+  {
+    if (addr == 0)
+      continue;
+    auto reg = mov_reg_ebpoffset(*(BYTE *)((BYTE *)addr + 5));
+    int off;
+    if (reg != regs::invalid)
+    {
+      // usercall
+      off = get_reg(reg);
+    }
+    else if (((*(WORD *)addr)) == 0xec83)
+    {
+      // 姫様LOVEライフ！
+      // 也是usercall，但是第二个参数是栈上。
+      off = get_stack(1);
+    }
+    else
+    {
+      // 螺旋遡行のディストピア -The infinite set of alternative version- 官方中文
+      BYTE sig[] = {0x89, 0x55, 0xFC};
+      if (MemDbg::findBytes(sig, sizeof(sig), addr, addr + 0x20))
+      {
+        off = get_reg(regs::edx);
+      }
+      else
+      {
+        // cdecl;
+        off = get_stack(2);
+      }
+    }
+    HookParam hp;
+    hp.address = addr;
+    hp.offset = off;
+    hp.type = NO_CONTEXT | DATA_INDIRECT;
+    hp.index = 0;
+
+    return NewHook(hp, "AOS_EX");
   }
   return false;
 }
 
-bool AOS::attach_function() {  
-    bool b1=InsertAOSHook(); 
-		bool b3=AOS_EX();
-    return b1||b3;
-} 
+bool AOS::attach_function()
+{
+  bool b1 = InsertAOSHook();
+  bool b3 = AOS_EX();
+  return b1 || b3;
+}

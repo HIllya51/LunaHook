@@ -8,7 +8,6 @@ bool Fizzattach_function1()
   // さくらテイル
 
   const BYTE bytes[] = {
-      //clang-format off
       0x55, 0x8b, 0xec,
       0x6a, 0xff,
       0x68, XX4,
@@ -25,10 +24,7 @@ bool Fizzattach_function1()
       0xc7, 0x45, XX, 0, 0, 0, 0,
       0xc7, 0x45, XX, 0, 0, 0, 0,
       0x8d, 0x4d, XX,
-      0xe8, XX4,
-      //clang-format on
-
-  };
+      0xe8, XX4};
   ULONG addr = MemDbg::findBytes(bytes, sizeof(bytes), processStartAddress, processStopAddress);
   if (!addr)
     return false;
@@ -47,16 +43,13 @@ namespace
     // https://vndb.org/v5688
     // size_t __cdecl strlen(const char *Str)
     const BYTE bytes[] = {
-        //clang-format off
         0xBA, 0xFF, 0xFE, 0xFE, 0x7E,
         0x03, 0xD0,
         0x83, 0xF0, 0xFF,
         0x33, 0xC2,
         0x83, 0xC1, 0x04,
         0xA9, 0x00, 0x01, 0x01, 0x81,
-        0x74, XX,
-        //clang-format on
-    };
+        0x74, XX};
     ULONG addr = MemDbg::findBytes(bytes, sizeof(bytes), processStartAddress, processStopAddress);
     if (!addr)
       return false;

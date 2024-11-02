@@ -80,15 +80,12 @@ namespace
   {
     // void __usercall sub_425580(char *a1@<edx>, int a2@<ecx>, int a3)
     BYTE bytes[] = {
-        //clang-format off
         0x3c, 0x24,
         0x75, XX,
         0x80, 0x7e, 0x01, 0x00,
         0x74, XX,
         0x83, XX, 0x02,
-        0x83, XX, 0x02,
-        //clang-format on
-    };
+        0x83, XX, 0x02};
     auto addr = MemDbg::findBytes(bytes, sizeof(bytes), processStartAddress, processStopAddress);
     if (!addr)
       return 0;

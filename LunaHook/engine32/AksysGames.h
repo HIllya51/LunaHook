@@ -31,12 +31,12 @@ FILESUBTYPE    0x0
 class AksysGames : public ENGINE
 {
 public:
-    AksysGames()
-    {
+  AksysGames()
+  {
 
-        check_by = CHECK_BY::RESOURCE_STR;
-        check_by_target = L"Aksys Games";
-        is_engine_certain = false;
-    };
-    bool attach_function();
+    check_by = CHECK_BY::RESOURCE_STR;
+    check_by_target = L"Aksys Games";
+    is_engine_certain = false;
+  };
+  bool attach_function();
 };

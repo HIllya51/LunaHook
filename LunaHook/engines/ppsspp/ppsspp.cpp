@@ -79,30 +79,17 @@ namespace
             return NULL;
 
         BYTE sig1[] = {
-            //clang-format off
             0xCC,
-            0x48, 0x89, XX, 0x24, XX,
-            //clang-format on
-        };
-
+            0x48, 0x89, XX, 0x24, XX};
         BYTE sig2[] = {
-            //clang-format off
             0xC3,
-            0x48, 0x89, XX, 0x24, XX,
-            //clang-format on
-        };
+            0x48, 0x89, XX, 0x24, XX};
         BYTE sig3[] = {
-            //clang-format off
             0xCC,
-            0x89, XX, 0x24, XX,
-            //clang-format on
-        };
+            0x89, XX, 0x24, XX4};
         BYTE sig4[] = {
-            //clang-format off
             0xC3,
-            0x89, XX, 0x24, XX,
-            //clang-format on
-        };
+            0x89, XX, 0x24, XX};
         int idx = 0;
         uintptr_t maxaddr = 0;
         for (auto sig : {sig1, sig2, sig3, sig4})
@@ -567,12 +554,9 @@ namespace
         for (auto addr : Util::SearchMemory(sig, sizeof(sig), PAGE_EXECUTE, processStartAddress, processStopAddress))
         {
             BYTE sig1[] = {
-                //clang-format off
                 0x55, 0x8b, 0xec,
                 0x81, 0xec, XX4,
-                0x8b, 0x0d, XX4,
-                //clang-format on
-            };
+                0x8b, 0x0d, XX4};
             addr = reverseFindBytes(sig1, sizeof(sig1), addr - 0x200, addr);
             if (!addr)
                 continue;

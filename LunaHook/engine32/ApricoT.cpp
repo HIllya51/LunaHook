@@ -1,4 +1,4 @@
-#include"ApricoT.h"
+#include "ApricoT.h"
 
 /********************************************************************************************
 Apricot hook:
@@ -63,7 +63,7 @@ Apricot hook:
  *  001aec68   ffffffff
  *  001aec6c   00cb9f40  return to .00cb9f40 from .00cc8030 ; jichi: split here
  */
-static void SpecialHookApricoT(hook_stack* stack,  HookParam *, uintptr_t *data, uintptr_t *split, size_t *len)
+static void SpecialHookApricoT(hook_stack *stack, HookParam *, uintptr_t *data, uintptr_t *split, size_t *len)
 {
   DWORD reg_esi = stack->esi;
   DWORD base = *(DWORD *)(reg_esi + 0x24);
@@ -71,48 +71,60 @@ static void SpecialHookApricoT(hook_stack* stack,  HookParam *, uintptr_t *data,
   DWORD *script = (DWORD *)(base + index * 4);
   // jichi 2/14/2015
   // Change reg_esp to the return address
-  //DWORD reg_esp = regof(esp, esp_base);
+  // DWORD reg_esp = regof(esp, esp_base);
   //*split = reg_esp;
   //*split = regof(esp, esp_base);
-  DWORD arg = stack->stack[16]; // return address
+  DWORD arg = stack->stack[16];                                         // return address
   *split = arg > processStartAddress ? arg - processStartAddress : arg; // use relative split value
   //*split = argof(1, esp_base);
-  if (script[0] == L'<') {
+  if (script[0] == L'<')
+  {
     DWORD *end;
-    for (end = script; *end != L'>'; end++); // jichi 2/14/2015: i.e. = ::wcschr(script) or script
-    switch (script[1]) {
+    for (end = script; *end != L'>'; end++)
+      ; // jichi 2/14/2015: i.e. = ::wcschr(script) or script
+    switch (script[1])
+    {
     case L'N':
-      if (script[2] == L'a' && script[3] == L'm' && script[4] == L'e') {
+      if (script[2] == L'a' && script[3] == L'm' && script[4] == L'e')
+      {
         buffer_index = 0;
         for (script += 5; script < end; script++)
           if (*script > 0x20)
             wc_buffer[buffer_index++] = *script & 0xFFFF;
-        *len = buffer_index<<1;
+        *len = buffer_index << 1;
         *data = (DWORD)wc_buffer;
         // jichi 1/4/2014: The way I save subconext is not able to distinguish the split value
         // Change to shift 16
         //*split |= 1 << 31;
         *split |= 1 << 16; // jichi: differentiate name and text script
-      } break;
+      }
+      break;
     case L'T':
-      if (script[2] == L'e' && script[3] == L'x' && script[4] == L't') {
+      if (script[2] == L'e' && script[3] == L'x' && script[4] == L't')
+      {
         buffer_index = 0;
-        for (script += 5; script < end; script++) {
-          if (*script > 0x40) {
-            while (*script == L'{') {
+        for (script += 5; script < end; script++)
+        {
+          if (*script > 0x40)
+          {
+            while (*script == L'{')
+            {
               script++;
-              while (*script!=L'\\') {
+              while (*script != L'\\')
+              {
                 wc_buffer[buffer_index++] = *script & 0xffff;
                 script++;
               }
-              while (*script++!=L'}');
+              while (*script++ != L'}')
+                ;
             }
             wc_buffer[buffer_index++] = *script & 0xffff;
           }
         }
         *len = buffer_index << 1;
         *data = (DWORD)wc_buffer;
-      } break;
+      }
+      break;
     }
   }
 }
@@ -120,20 +132,21 @@ static void SpecialHookApricoT(hook_stack* stack,  HookParam *, uintptr_t *data,
 bool InsertApricoTHook()
 {
   for (DWORD i = processStartAddress + 0x1000; i < processStopAddress - 4; i++)
-    if ((*(DWORD *)i & 0xfff8fc) == 0x3cf880)  // cmp reg,0x3c
+    if ((*(DWORD *)i & 0xfff8fc) == 0x3cf880) // cmp reg,0x3c
       for (DWORD j = i + 3, k = i + 0x100; j < k; j++)
-        if ((*(DWORD *)j & 0xffffff) == 0x4c2) { // retn 4
+        if ((*(DWORD *)j & 0xffffff) == 0x4c2)
+        { // retn 4
           HookParam hp;
           hp.address = j + 3;
           hp.text_fun = SpecialHookApricoT;
-          hp.type = USING_STRING|NO_CONTEXT|CODEC_UTF16;
+          hp.type = USING_STRING | NO_CONTEXT | CODEC_UTF16;
           ConsoleOutput("INSERT ApricoT");
-          //GROWL_DWORD3(hp.address, processStartAddress, processStopAddress);
-          
-          //RegisterEngineType(ENGINE_APRICOT);
-          // jichi 2/14/2015: disable cached GDI functions
+          // GROWL_DWORD3(hp.address, processStartAddress, processStopAddress);
+
+          // RegisterEngineType(ENGINE_APRICOT);
+          //  jichi 2/14/2015: disable cached GDI functions
           ConsoleOutput("ApRicoT: disable GDI hooks");
-          
+
           return NewHook(hp, "ApRicoT");
         }
 
@@ -141,7 +154,8 @@ bool InsertApricoTHook()
   return false;
 }
 
-bool ApricoT::attach_function() {
-    
-    return InsertApricoTHook();
-} 
+bool ApricoT::attach_function()
+{
+
+  return InsertApricoTHook();
+}

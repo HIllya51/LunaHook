@@ -1,5 +1,5 @@
-#include"Abel.h"
- 
+#include "Abel.h"
+
 /********************************************************************************************
 AbelSoftware hook:
   The game folder usually is made up many no extended name files(file name doesn't have '.').
@@ -399,18 +399,16 @@ bool InsertAbelHook()
   // 004413DB   894424 58        MOV DWORD PTR SS:[ESP+0x58],EAX
 
   const DWORD character[] = {0xc981d48a, 0xffffff00};
-  if (DWORD j = SearchPattern(processStartAddress, processStopAddress - processStartAddress, character, sizeof(character))) {
+  if (DWORD j = SearchPattern(processStartAddress, processStopAddress - processStartAddress, character, sizeof(character)))
+  {
     j += processStartAddress;
     for (DWORD i = j - 0x100; j > i; j--)
-      if (*(WORD *)j == 0xff6a) {
+      if (*(WORD *)j == 0xff6a)
+      {
         HookParam hp;
         hp.address = j;
-        hp.offset=get_stack(1);
-        hp.type = USING_STRING|NO_CONTEXT;
-        ConsoleOutput("INSERT Abel");
-        //GROWL_DWORD(hp.address);
-        
-        //RegisterEngineType(ENGINE_ABEL);
+        hp.offset = get_stack(1);
+        hp.type = USING_STRING | NO_CONTEXT;
         return NewHook(hp, "Abel");
       }
   }
@@ -418,7 +416,8 @@ bool InsertAbelHook()
   return false;
 }
 
-bool Abel::attach_function() {  
-     
-    return InsertAbelHook();
-} 
+bool Abel::attach_function()
+{
+
+  return InsertAbelHook();
+}

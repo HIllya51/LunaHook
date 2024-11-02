@@ -46,7 +46,6 @@ return i;
 .text:00451B2D                 jmp     short loc_451B13
   */
   BYTE check[] = {
-      //clang-format off
       0x8B, 0x44, 0x24, 0x0C,
       0x59,
       0x33, 0xF6,
@@ -61,9 +60,7 @@ return i;
       0x74, 0x04,
       0x46,
       0x40,
-      0xEB, 0xE4
-      //clang-format on
-  };
+      0xEB, 0xE4};
   auto addrx = MemDbg::findBytes(check, sizeof(check), processStartAddress, processStopAddress);
   if (!addrx)
     return false;

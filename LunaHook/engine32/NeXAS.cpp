@@ -365,13 +365,12 @@ bool InsertNeXASHookW()
     if (!addr)
       continue;
     BYTE check[] = {
-        //clang-format off
         0x83, XX, XX4, 0x10, // cmp     dword ptr [edi+0BCh], 10h; XX4:0xbc, 0x00, 0x00, 0x00
         0x8d, XX, XX4,       // lea     edx, [edi+0A8h], XX4:0xa8, 0x00, 0x00, 0x00
         0x89, XX, XX,
         0x72, 0x06,
         0x8b, XX, XX4, // mov     edx, [edi+0A8h], XX4:0xa8, 0x00, 0x00, 0x00
-                       //clang-format on
+
     };
     auto addrx = MemDbg::findBytes(check, sizeof(check), addr, addr1);
     if (!addrx)

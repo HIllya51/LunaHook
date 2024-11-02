@@ -1,4 +1,4 @@
-#include"Artemis.h"
+#include "Artemis.h"
 
 /**
  *  jichi 10/1/2013: Artemis Engine
@@ -59,180 +59,203 @@
 bool InsertArtemis1Hook()
 {
   const BYTE bytes[] = {
-    0x83,0xc4, 0x0c, // add esp,0xc ; hook here
-    0x0f,0xb6,0xc0,  // movzx eax,al
-    0x85,0xc0,       // test eax,eax
-    0x75, 0x0e       // jnz XXOO ; it must be 0xe, or there will be duplication
+      0x83, 0xc4, 0x0c, // add esp,0xc ; hook here
+      0x0f, 0xb6, 0xc0, // movzx eax,al
+      0x85, 0xc0,       // test eax,eax
+      0x75, 0x0e        // jnz XXOO ; it must be 0xe, or there will be duplication
   };
-  //enum { addr_offset = 0 };
+  // enum { addr_offset = 0 };
   ULONG range = min(processStopAddress - processStartAddress, MAX_REL_ADDR);
   ULONG addr = MemDbg::findBytes(bytes, sizeof(bytes), processStartAddress, processStartAddress + range);
-  //GROWL_DWORD3(reladdr, processStartAddress, range);
-  if (!addr) {
+  // GROWL_DWORD3(reladdr, processStartAddress, range);
+  if (!addr)
+  {
     ConsoleOutput("Artemis1: pattern not exist");
     return false;
   }
 
   HookParam hp;
   hp.address = addr;
-  hp.offset=get_reg(regs::ecx);
+  hp.offset = get_reg(regs::ecx);
   hp.split = get_stack(5);
-  hp.type = NO_CONTEXT|DATA_INDIRECT|USING_SPLIT; // 0x418
+  hp.type = NO_CONTEXT | DATA_INDIRECT | USING_SPLIT; // 0x418
 
-  //hp.address = 0x650a2f;
-  //GROWL_DWORD(hp.address);
+  // hp.address = 0x650a2f;
+  // GROWL_DWORD(hp.address);
 
   ConsoleOutput("INSERT Artemis1");
-  
-  //ConsoleOutput("Artemis1");
+
+  // ConsoleOutput("Artemis1");
   return NewHook(hp, "Artemis1");
 }
 
 bool InsertArtemis2Hook()
 {
   const BYTE bytes[] = {
-                       // 0054461F | CC                       | int3                                    |
-    0x55,              // 00544620 | 55                       | push ebp                                |
-	0x8B, 0xEC,        // 00544621 | 8B EC                    | mov ebp,esp                             |
-	0x83, 0xE4, 0xF8,  // 00544623 | 83 E4 F8                 | and esp,FFFFFFF8                        |
-	0x6A, 0xFF,        // 00544626 | 6A FF                    | push FFFFFFFF                           |
-	0x68, XX4,         // 00544628 | 68 68 7C 6A 00           | push 空のつくりかた体験版_ver3.0.6A7C68           |
-	0x64, 0xA1, 0x00, 0x00, 0x00, 0x00, // 0054462D | 64 A1 00 00 00 00        | mov eax,dword ptr fs:[0]                |
-	0x50,              // 00544633 | 50                       | push eax                                |
-	0x83, 0xEC, XX,  // 00544634 | 83 EC 28                 | sub esp,28                              |
-	0xA1, XX4,         // 00544637 | A1 F0 57 81 00           | mov eax,dword ptr ds:[8157F0]           |
-	0x33, 0xC4,        // 0054463C | 33 C4                    | xor eax,esp                             |
-    0x89, 0x44, 0x24, XX, // 0054463E | 89 44 24 20              | mov dword ptr ss:[esp+20],eax           |
-    0x53,              // 00544642 | 53                       | push ebx                                |
-	0x56,              // 00544643 | 56                       | push esi                                |
-	0x57,              // 00544644 | 57                       | push edi                                |
-	0xA1, XX4,         // 00544645 | A1 F0 57 81 00           | mov eax,dword ptr ds:[8157F0]           |
-	0x33, 0xC4,        // 0054464A | 33 C4                    | xor eax,esp                             |
-	0x50,              // 0054464C | 50                       | push eax                                |
-	0x8D, 0x44, 0x24, XX, // 0054464D | 8D 44 24 38              | lea eax,dword ptr ss:[esp+38]           | [esp+38]:BaseThreadInitThunk
-	0x64, 0xA3, 0x00, 0x00, 0x00, 0x00, // 00544651 | 64 A3 00 00 00 00        | mov dword ptr fs:[0],eax                |
-	0x8B, 0xF1,        // 00544657 | 8B F1                    | mov esi,ecx                             |
-	0x8B, 0x5D, 0x08,  // 00544659 | 8B 5D 08                 | mov ebx,dword ptr ss:[ebp+8]            |
-	0x8B, 0x4D, 0x0C   // 0054465C | 8B 4D 0C                 | mov ecx,dword ptr ss:[ebp+C]            | ecx:DbgUiRemoteBreakin, [ebp+C]:BaseThreadInitThunk
+      // 0054461F | CC                       | int3                                    |
+      0x55,                               // 00544620 | 55                       | push ebp                                |
+      0x8B, 0xEC,                         // 00544621 | 8B EC                    | mov ebp,esp                             |
+      0x83, 0xE4, 0xF8,                   // 00544623 | 83 E4 F8                 | and esp,FFFFFFF8                        |
+      0x6A, 0xFF,                         // 00544626 | 6A FF                    | push FFFFFFFF                           |
+      0x68, XX4,                          // 00544628 | 68 68 7C 6A 00           | push 空のつくりかた体験版_ver3.0.6A7C68           |
+      0x64, 0xA1, 0x00, 0x00, 0x00, 0x00, // 0054462D | 64 A1 00 00 00 00        | mov eax,dword ptr fs:[0]                |
+      0x50,                               // 00544633 | 50                       | push eax                                |
+      0x83, 0xEC, XX,                     // 00544634 | 83 EC 28                 | sub esp,28                              |
+      0xA1, XX4,                          // 00544637 | A1 F0 57 81 00           | mov eax,dword ptr ds:[8157F0]           |
+      0x33, 0xC4,                         // 0054463C | 33 C4                    | xor eax,esp                             |
+      0x89, 0x44, 0x24, XX,               // 0054463E | 89 44 24 20              | mov dword ptr ss:[esp+20],eax           |
+      0x53,                               // 00544642 | 53                       | push ebx                                |
+      0x56,                               // 00544643 | 56                       | push esi                                |
+      0x57,                               // 00544644 | 57                       | push edi                                |
+      0xA1, XX4,                          // 00544645 | A1 F0 57 81 00           | mov eax,dword ptr ds:[8157F0]           |
+      0x33, 0xC4,                         // 0054464A | 33 C4                    | xor eax,esp                             |
+      0x50,                               // 0054464C | 50                       | push eax                                |
+      0x8D, 0x44, 0x24, XX,               // 0054464D | 8D 44 24 38              | lea eax,dword ptr ss:[esp+38]           | [esp+38]:BaseThreadInitThunk
+      0x64, 0xA3, 0x00, 0x00, 0x00, 0x00, // 00544651 | 64 A3 00 00 00 00        | mov dword ptr fs:[0],eax                |
+      0x8B, 0xF1,                         // 00544657 | 8B F1                    | mov esi,ecx                             |
+      0x8B, 0x5D, 0x08,                   // 00544659 | 8B 5D 08                 | mov ebx,dword ptr ss:[ebp+8]            |
+      0x8B, 0x4D, 0x0C                    // 0054465C | 8B 4D 0C                 | mov ecx,dword ptr ss:[ebp+C]            | ecx:DbgUiRemoteBreakin, [ebp+C]:BaseThreadInitThunk
   };
-  enum { addr_offset = 0 }; // distance to the beginning of the function, which is 0x55 (push ebp)
+  enum
+  {
+    addr_offset = 0
+  }; // distance to the beginning of the function, which is 0x55 (push ebp)
   ULONG range = min(processStopAddress - processStartAddress, MAX_REL_ADDR);
   ULONG addr = MemDbg::findBytes(bytes, sizeof(bytes), processStartAddress, processStartAddress + range);
-  if (!addr) {
+  if (!addr)
+  {
     ConsoleOutput("Artemis2: pattern not found");
     return false;
   }
   addr += addr_offset;
-  enum { push_ebp = 0x55 }; // beginning of the function
-  if (*(BYTE *)addr != push_ebp) {
+  enum
+  {
+    push_ebp = 0x55
+  }; // beginning of the function
+  if (*(BYTE *)addr != push_ebp)
+  {
     ConsoleOutput("Artemis2: beginning of the function not found");
     return false;
   }
 
   HookParam hp;
   hp.address = addr;
-  hp.offset=get_stack(1);
-  hp.type = USING_STRING|NO_CONTEXT;
+  hp.offset = get_stack(1);
+  hp.type = USING_STRING | NO_CONTEXT;
 
   ConsoleOutput("INSERT Artemis2");
-  bool succ=NewHook(hp, "Artemis2");
+  bool succ = NewHook(hp, "Artemis2");
 
   // Artikash 1/1/2019: Recent games seem to use utf8 encoding instead, other than that the hook is identical.
   // Not sure how to differentiate which games are sjis/utf8 so insert both
   hp.address = addr + 6;
-  hp.offset=get_reg(regs::ebp);
+  hp.offset = get_reg(regs::ebp);
   hp.index = 8; // ebp was also pushed
-  hp.type = CODEC_UTF8 | USING_STRING | DATA_INDIRECT ;
-  succ|=NewHook(hp, "Artemis2");
-  //ConsoleOutput("Artemis2");
+  hp.type = CODEC_UTF8 | USING_STRING | DATA_INDIRECT;
+  succ |= NewHook(hp, "Artemis2");
+  // ConsoleOutput("Artemis2");
   return succ;
 }
 
 bool InsertArtemis3Hook()
 {
   const BYTE bytes[] = {
-    0x55,                   // 005FD780 | 55                       | push ebp                                |
-    0x8B, 0xEC,             // 005FD781 | 8BEC                     | mov ebp,esp                             |
-    0x83, 0xE4, 0xF8,       // 005FD783 | 83E4 F8                  | and esp,FFFFFFF8                        |
-    0x83, 0xEC, 0x3C,       // 005FD786 | 83EC 3C                  | sub esp,3C                              |
-    0xA1, XX4,              // 005FD789 | A1 6C908600              | mov eax,dword ptr ds:[86906C]           |
-    0x33, 0xC4,             // 005FD78E | 33C4                     | xor eax,esp                             |
-    0x89, 0x44, 0x24, 0x38, // 005FD790 | 894424 38                | mov dword ptr ss:[esp+38],eax           |
-    0x53,                   // 005FD794 | 53                       | push ebx                                |
-    0x56,                   // 005FD795 | 56                       | push esi                                |
-    0x8B, 0xC1,             // 005FD796 | 8BC1                     | mov eax,ecx                             |
-    0xC7, 0x44, 0x24, 0x14, 0x00, 0x00, 0x00, 0x00, // 005FD798 | C74424 14 00000000       | mov dword ptr ss:[esp+14],0             |
-    0x8B, 0x4D, 0x0C,       // 005FD7A0 | 8B4D 0C                  | mov ecx,dword ptr ss:[ebp+C]            |
-    0x33, 0xF6,             // 005FD7A3 | 33F6                     | xor esi,esi                             |
-    0x57,                   // 005FD7A5 | 57                       | push edi                                |
-    0x8B, 0x7D, 0x08,       // 005FD7A6 | 8B7D 08                  | mov edi,dword ptr ss:[ebp+8]            |
-    0x89, 0x44, 0x24, 0x14, // 005FD7A9 | 894424 14                | mov dword ptr ss:[esp+14],eax           |
-    0x89, 0x4C, 0x24, 0x28, // 005FD7AD | 894C24 28                | mov dword ptr ss:[esp+28],ecx           |
-    0x80, 0x3F, 0x00,       // 005FD7B1 | 803F 00                  | cmp byte ptr ds:[edi],0                 |
-    0x0F, 0x84, XX4,        // 005FD7B4 | 0F84 88040000            | je ヘンタイ・プリズンsplit 1.5FDC42              |
-    0x83, 0xB8, XX4, 0x00,  // 005FD7BA | 83B8 74030000 00         | cmp dword ptr ds:[eax+374],0            |
-    0x8B, 0xDF,             // 005FD7C1 | 8BDF                     | mov ebx,edi                             |
+      0x55,                                           // 005FD780 | 55                       | push ebp                                |
+      0x8B, 0xEC,                                     // 005FD781 | 8BEC                     | mov ebp,esp                             |
+      0x83, 0xE4, 0xF8,                               // 005FD783 | 83E4 F8                  | and esp,FFFFFFF8                        |
+      0x83, 0xEC, 0x3C,                               // 005FD786 | 83EC 3C                  | sub esp,3C                              |
+      0xA1, XX4,                                      // 005FD789 | A1 6C908600              | mov eax,dword ptr ds:[86906C]           |
+      0x33, 0xC4,                                     // 005FD78E | 33C4                     | xor eax,esp                             |
+      0x89, 0x44, 0x24, 0x38,                         // 005FD790 | 894424 38                | mov dword ptr ss:[esp+38],eax           |
+      0x53,                                           // 005FD794 | 53                       | push ebx                                |
+      0x56,                                           // 005FD795 | 56                       | push esi                                |
+      0x8B, 0xC1,                                     // 005FD796 | 8BC1                     | mov eax,ecx                             |
+      0xC7, 0x44, 0x24, 0x14, 0x00, 0x00, 0x00, 0x00, // 005FD798 | C74424 14 00000000       | mov dword ptr ss:[esp+14],0             |
+      0x8B, 0x4D, 0x0C,                               // 005FD7A0 | 8B4D 0C                  | mov ecx,dword ptr ss:[ebp+C]            |
+      0x33, 0xF6,                                     // 005FD7A3 | 33F6                     | xor esi,esi                             |
+      0x57,                                           // 005FD7A5 | 57                       | push edi                                |
+      0x8B, 0x7D, 0x08,                               // 005FD7A6 | 8B7D 08                  | mov edi,dword ptr ss:[ebp+8]            |
+      0x89, 0x44, 0x24, 0x14,                         // 005FD7A9 | 894424 14                | mov dword ptr ss:[esp+14],eax           |
+      0x89, 0x4C, 0x24, 0x28,                         // 005FD7AD | 894C24 28                | mov dword ptr ss:[esp+28],ecx           |
+      0x80, 0x3F, 0x00,                               // 005FD7B1 | 803F 00                  | cmp byte ptr ds:[edi],0                 |
+      0x0F, 0x84, XX4,                                // 005FD7B4 | 0F84 88040000            | je ヘンタイ・プリズンsplit 1.5FDC42              |
+      0x83, 0xB8, XX4, 0x00,                          // 005FD7BA | 83B8 74030000 00         | cmp dword ptr ds:[eax+374],0            |
+      0x8B, 0xDF,                                     // 005FD7C1 | 8BDF                     | mov ebx,edi                             |
   };
 
-  enum { addr_offset = 0 }; // distance to the beginning of the function, which is 0x55 (push ebp)
+  enum
+  {
+    addr_offset = 0
+  }; // distance to the beginning of the function, which is 0x55 (push ebp)
   ULONG range = min(processStopAddress - processStartAddress, MAX_REL_ADDR);
   ULONG addr = MemDbg::findBytes(bytes, sizeof(bytes), processStartAddress, processStartAddress + range);
-  if (!addr) {
+  if (!addr)
+  {
     ConsoleOutput("Artemis3: pattern not found");
     return false;
   }
   addr += addr_offset;
-  enum { push_ebp = 0x55 }; // beginning of the function
-  if (*(BYTE *)addr != push_ebp) {
+  enum
+  {
+    push_ebp = 0x55
+  }; // beginning of the function
+  if (*(BYTE *)addr != push_ebp)
+  {
     ConsoleOutput("Artemis3: beginning of the function not found");
     return false;
   }
 
   HookParam hp;
   hp.address = addr;
-  hp.offset=get_stack(1);
-  hp.type = USING_STRING| EMBED_ABLE|CODEC_UTF8|EMBED_BEFORE_SIMPLE|EMBED_AFTER_NEW; 
-  
+  hp.offset = get_stack(1);
+  hp.type = USING_STRING | EMBED_ABLE | CODEC_UTF8 | EMBED_BEFORE_SIMPLE | EMBED_AFTER_NEW;
 
-  return NewHook(hp, "EmbedArtemis"); 
+  return NewHook(hp, "EmbedArtemis");
 }
 
-namespace{
-  bool a4(){
-    //高慢な奥さんは好きですか？～傲慢人妻教師の堕とし方～
+namespace
+{
+  bool a4()
+  {
+    // 高慢な奥さんは好きですか？～傲慢人妻教師の堕とし方～
     std::vector<uint64_t> addrs;
-    for(DWORD func:{(DWORD)GetGlyphOutlineA,(DWORD)GetGlyphOutlineW})
+    for (DWORD func : {(DWORD)GetGlyphOutlineA, (DWORD)GetGlyphOutlineW})
     {
-      auto addrs_ = findiatcallormov_all(func,processStartAddress,processStartAddress,processStopAddress,PAGE_EXECUTE);
+      auto addrs_ = findiatcallormov_all(func, processStartAddress, processStartAddress, processStopAddress, PAGE_EXECUTE);
       addrs.insert(addrs.end(), addrs_.begin(), addrs_.end());
     }
-    bool ok=false;
-    for (auto addr : addrs) { 
+    bool ok = false;
+    for (auto addr : addrs)
+    {
       auto funcaddr = MemDbg::findEnclosingAlignedFunction(addr);
-      if (!funcaddr) continue; 
-      BYTE sig1[]={0x81,XX,0x00,0x00,0x10,0x00};
-      BYTE sig2[]={0x68,0x00,0x02,0x00,0x00,0x68,0x00,0x02,0x00,0x00};
-      BYTE sig3[]={XX,0x80,0x00,0x00,0x00,0x0f,0x95,0xc1};
-      BYTE sig4[]={0xC1,XX,0x18};
-      int found=0;
-      for(auto sigsz:std::vector<std::pair<BYTE*,int>>{{sig1,sizeof(sig1)},{sig2,sizeof(sig2)},{sig3,sizeof(sig3)},{sig4,sizeof(sig4)}}){
-        auto fd= MemDbg::findBytes(sigsz.first, sigsz.second, funcaddr, addr);
-        if(fd)found+=1;
+      if (!funcaddr)
+        continue;
+      BYTE sig1[] = {0x81, XX, 0x00, 0x00, 0x10, 0x00};
+      BYTE sig2[] = {0x68, 0x00, 0x02, 0x00, 0x00, 0x68, 0x00, 0x02, 0x00, 0x00};
+      BYTE sig3[] = {XX, 0x80, 0x00, 0x00, 0x00, 0x0f, 0x95, 0xc1};
+      BYTE sig4[] = {0xC1, XX, 0x18};
+      int found = 0;
+      for (auto sigsz : std::vector<std::pair<BYTE *, int>>{{sig1, sizeof(sig1)}, {sig2, sizeof(sig2)}, {sig3, sizeof(sig3)}, {sig4, sizeof(sig4)}})
+      {
+        auto fd = MemDbg::findBytes(sigsz.first, sigsz.second, funcaddr, addr);
+        if (fd)
+          found += 1;
       }
-      if(found==4){
+      if (found == 4)
+      {
         {
           HookParam hp;
           hp.address = funcaddr;
-          hp.type  = CODEC_ANSI_BE;
-          hp.offset=get_stack(2);
-          ok|=NewHook(hp, "Artemis4A");
+          hp.type = CODEC_ANSI_BE;
+          hp.offset = get_stack(2);
+          ok |= NewHook(hp, "Artemis4A");
         }
         {
           HookParam hp;
-          hp.address = funcaddr+5;
+          hp.address = funcaddr + 5;
           hp.type = CODEC_UTF16;
-          hp.offset=get_stack(2);
-          ok|=NewHook(hp, "Artemis4W");
+          hp.offset = get_stack(2);
+          ok |= NewHook(hp, "Artemis4W");
         }
         return ok;
       }
@@ -240,7 +263,8 @@ namespace{
     return false;
   }
 }
-bool Artemis::attach_function() {
-    
-  return InsertArtemis1Hook() ||  InsertArtemis2Hook() || InsertArtemis3Hook()||a4();
-} 
+bool Artemis::attach_function()
+{
+
+  return InsertArtemis1Hook() || InsertArtemis2Hook() || InsertArtemis3Hook() || a4();
+}

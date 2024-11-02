@@ -41,7 +41,6 @@ bool AksysGames::attach_function()
    .text:004BCB9E                 cmp     cl, 0FCh
    .text:004BCBA1                 ja      short loc_4BCBC3
       */
-      //clang-format off
       0x8a, 0x08,
       0x80, 0xf9, 0x80,
       0x0f, 0x84, XX4,
@@ -58,9 +57,7 @@ bool AksysGames::attach_function()
       0x80, 0xf9, 0xe0,
       0x72, XX,
       0x80, 0xf9, 0xfc,
-      0x77, XX,
-      //clang-format on
-  };
+      0x77, XX};
 
   ULONG range = min(processStopAddress - processStartAddress, MAX_REL_ADDR);
   ULONG addr = MemDbg::findBytes(bytes, sizeof(bytes), processStartAddress, processStartAddress + range);

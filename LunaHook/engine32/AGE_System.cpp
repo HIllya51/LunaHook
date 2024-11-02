@@ -11,7 +11,6 @@ namespace
     // 未破解
     // v8 = _mbsnextc(String);
     BYTE sig[] = {
-        //clang-format off
         0x8b, 0x4c, 0x24, 0x04,
         0x33, 0xd2,
         0x0f, 0xb6, 0x01,
@@ -22,9 +21,7 @@ namespace
         0x41,
         0x0f, 0xb6, 0x01,
         0x03, 0xc2,
-        0xc3
-        //clang-format on
-    };
+        0xc3};
     addr = MemDbg::findBytes(sig, sizeof(sig), processStartAddress, processStopAddress);
     if (!addr)
       return 0;

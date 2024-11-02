@@ -1,5 +1,4 @@
-#include"AdobeFlash10.h"
-
+#include "AdobeFlash10.h"
 
 /** jichi 10/31/2014 Adobe Flash Player v10
  *
@@ -229,58 +228,61 @@ static bool AdobeFlashFilter(LPVOID data, size_t *size, HookParam *)
 bool InsertAdobeFlash10Hook()
 {
   const BYTE bytes[] = {
-    0x8b,0x4c,0x24, 0x0c,   // 01612940   8b4c24 0c        mov ecx,dword ptr ss:[esp+0xc] ; jichi: hook here
-    0x53,                   // 01612944   53               push ebx
-    0x55,                   // 01612945   55               push ebp
-    0x56,                   // 01612946   56               push esi
-    0x57,                   // 01612947   57               push edi
-    0x33,0xff,              // 01612948   33ff             xor edi,edi
-    0x85,0xc9,              // 0161294a   85c9             test ecx,ecx
-    0x0f,0x84 //, 5f010000  // 0161294c   0f84 5f010000    je ron2.01612ab1
+      0x8b, 0x4c, 0x24, 0x0c, // 01612940   8b4c24 0c        mov ecx,dword ptr ss:[esp+0xc] ; jichi: hook here
+      0x53,                   // 01612944   53               push ebx
+      0x55,                   // 01612945   55               push ebp
+      0x56,                   // 01612946   56               push esi
+      0x57,                   // 01612947   57               push edi
+      0x33, 0xff,             // 01612948   33ff             xor edi,edi
+      0x85, 0xc9,             // 0161294a   85c9             test ecx,ecx
+      0x0f, 0x84              //, 5f010000  // 0161294c   0f84 5f010000    je ron2.01612ab1
   };
   ULONG addr = MemDbg::findBytes(bytes, sizeof(bytes), processStartAddress, processStopAddress);
-  //addr = 0x01612940;
-  //addr = 0x01612AC0;
-  if (!addr) {
+  // addr = 0x01612940;
+  // addr = 0x01612AC0;
+  if (!addr)
+  {
     ConsoleOutput("AdobeFlash10: pattern not found");
     return false;
   }
 
   HookParam hp;
   hp.address = addr;
-  hp.offset=get_stack(1);
-  //hp.length_offset = 2 * 4; // arg2 might be the length
-  hp.type = CODEC_UTF16|USING_STRING;
+  hp.offset = get_stack(1);
+  // hp.length_offset = 2 * 4; // arg2 might be the length
+  hp.type = CODEC_UTF16 | USING_STRING;
   hp.filter_fun = AdobeFlashFilter;
   ConsoleOutput("INSERT Adobe Flash 10");
-  
 
   ConsoleOutput("AdobeFlash10: disable GDI hooks");
-  
+
   return NewHook(hp, "Adobe Flash 10");
 }
-namespace{
-  bool __(){
+namespace
+{
+  bool __()
+  {
     //[yosino] ANCIENT
-    //https://ci-en.dlsite.com/creator/5059/
+    // https://ci-en.dlsite.com/creator/5059/
     const BYTE bytes[] = {
-      0x55,0x8b,0xec,
-      0x51,0x51,0x8b,0x45,0x10,
-      0x53,0x8b,0xd9,0x89,0x43,0x08,
-      0x8a,0x45,0x0c
-    };
+        0x55, 0x8b, 0xec,
+        0x51, 0x51, 0x8b, 0x45, 0x10,
+        0x53, 0x8b, 0xd9, 0x89, 0x43, 0x08,
+        0x8a, 0x45, 0x0c};
     ULONG addr = MemDbg::findBytes(bytes, sizeof(bytes), processStartAddress, processStopAddress);
-     
-    if (!addr)  return false; 
+
+    if (!addr)
+      return false;
 
     HookParam hp;
     hp.address = addr;
-    hp.offset=get_stack(4); 
-    hp.type = CODEC_UTF16|USING_STRING;
+    hp.offset = get_stack(4);
+    hp.type = CODEC_UTF16 | USING_STRING;
     return NewHook(hp, "Adobe Flash 11");
   }
 }
-bool AdobeFlash10::attach_function() {  
-     
-    return InsertAdobeFlash10Hook()|__();
-} 
+bool AdobeFlash10::attach_function()
+{
+
+  return InsertAdobeFlash10Hook() | __();
+}

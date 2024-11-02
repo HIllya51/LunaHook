@@ -1,5 +1,5 @@
-﻿#include"5pb.h"
-#include"mages/mages.h"
+﻿#include "5pb.h"
+#include "mages/mages.h"
 /** jichi 12/2/2014 5pb
  *
  *  Sample game: [140924] CROSS�CHANNEL 〜FINAL COMPLETE� *  See: http://sakuradite.com/topic/528
@@ -123,275 +123,285 @@
  *  001e9b2a   c9               leave
  *  001e9b2b   c3               retn
  */
-namespace { // unnamed
+namespace
+{ // unnamed
 
-    // Characters to ignore: [%0-9A-Z]
-    bool Insert5pbHook1()
+  // Characters to ignore: [%0-9A-Z]
+  bool Insert5pbHook1()
+  {
+    const BYTE bytes[] = {
+        0xcc,            // 0016d90e   cc               int3
+        0xcc,            // 0016d90f   cc               int3
+        0x8b, 0x15, XX4, // 0016d910   8b15 782b6e06    mov edx,dword ptr ds:[0x66e2b78]         ; .00b43bfe
+        0x8a, 0x0a,      // 0016d916   8a0a             mov cl,byte ptr ds:[edx]	; jichi: hook here
+        0x33, 0xc0,      // 0016d918   33c0             xor eax,eax
+        0x84, 0xc9       // 0016d91a   84c9             test cl,cl
+    };
+    enum
     {
-        const BYTE bytes[] = {
-          0xcc,           // 0016d90e   cc               int3
-          0xcc,           // 0016d90f   cc               int3
-          0x8b,0x15, XX4, // 0016d910   8b15 782b6e06    mov edx,dword ptr ds:[0x66e2b78]         ; .00b43bfe
-          0x8a,0x0a,      // 0016d916   8a0a             mov cl,byte ptr ds:[edx]	; jichi: hook here
-          0x33,0xc0,      // 0016d918   33c0             xor eax,eax
-          0x84,0xc9       // 0016d91a   84c9             test cl,cl
-        };
-        enum { addr_offset = 0x0016d916 - 0x0016d90e };
+      addr_offset = 0x0016d916 - 0x0016d90e
+    };
 
-        ULONG addr = MemDbg::findBytes(bytes, sizeof(bytes), processStartAddress, processStopAddress);
-        //GROWL_DWORD3(addr+addr_offset, processStartAddress,processStopAddress);
-        if (!addr) {
-            ConsoleOutput("5pb1: pattern not found");
-            return false;
-        }
-
-        HookParam hp;
-        hp.address = addr + addr_offset;
-        hp.offset=get_reg(regs::edx);
-        hp.type = USING_STRING;
-        ConsoleOutput("INSERT 5pb1");
-        
-
-        // GDI functions are not used by 5pb games anyway.
-        //ConsoleOutput("5pb: disable GDI hooks");
-        //
-        return NewHook(hp, "5pb1");
+    ULONG addr = MemDbg::findBytes(bytes, sizeof(bytes), processStartAddress, processStopAddress);
+    // GROWL_DWORD3(addr+addr_offset, processStartAddress,processStopAddress);
+    if (!addr)
+    {
+      ConsoleOutput("5pb1: pattern not found");
+      return false;
     }
 
-    // Characters to ignore: [%@A-z]
-    inline bool _5pb2garbage_ch(char c)
+    HookParam hp;
+    hp.address = addr + addr_offset;
+    hp.offset = get_reg(regs::edx);
+    hp.type = USING_STRING;
+    ConsoleOutput("INSERT 5pb1");
+
+    // GDI functions are not used by 5pb games anyway.
+    // ConsoleOutput("5pb: disable GDI hooks");
+    //
+    return NewHook(hp, "5pb1");
+  }
+
+  // Characters to ignore: [%@A-z]
+  inline bool _5pb2garbage_ch(char c)
+  {
+    return c == '%' || c == '@' || c >= 'A' && c <= 'z';
+  }
+
+  // 001e9b15   8a10             mov dl,byte ptr ds:[eax]    ; jichi: here, word by word
+  void SpecialHook5pb2(hook_stack *stack, HookParam *, uintptr_t *data, uintptr_t *split, size_t *len)
+  {
+    static DWORD lasttext;
+    DWORD text = stack->eax;
+    if (lasttext == text)
+      return;
+    BYTE c = *(BYTE *)text;
+    if (!c)
+      return;
+    BYTE size = ::LeadByteTable[c]; // 1, 2, or 3
+    if (size == 1 && _5pb2garbage_ch(*(LPCSTR)text))
+      return;
+    lasttext = text;
+    *data = text;
+    *len = size;
+  }
+
+  bool Insert5pbHook2()
+  {
+    const BYTE bytes[] = {
+        0x8a, 0x10, // 001e9b15   8a10             mov dl,byte ptr ds:[eax]    ; jichi: here, word by word
+        0x84, 0xd2, // 001e9b17   84d2             test dl,dl
+        0x74, 0x11  // 001e9b19   74 11            je short .001e9b2c
+    };
+    ULONG addr = MemDbg::findBytes(bytes, sizeof(bytes), processStartAddress, processStopAddress);
+    // GROWL_DWORD3(addr, processStartAddress,processStopAddress);
+    if (!addr)
     {
-        return c == '%' || c == '@' || c >= 'A' && c <= 'z';
+      ConsoleOutput("5pb2: pattern not found");
+      return false;
     }
 
-    // 001e9b15   8a10             mov dl,byte ptr ds:[eax]    ; jichi: here, word by word
-    void SpecialHook5pb2(hook_stack* stack, HookParam*, uintptr_t* data, uintptr_t* split, size_t* len)
+    HookParam hp;
+    hp.address = addr;
+    hp.type = USING_STRING;
+    hp.text_fun = SpecialHook5pb2;
+    ConsoleOutput("INSERT 5pb2");
+
+    // GDI functions are not used by 5pb games anyway.
+    // ConsoleOutput("5pb: disable GDI hooks");
+    //
+    return NewHook(hp, "5pb2");
+  }
+
+  /** jichi 2/2/2015: New 5pb hook
+   *  Sample game: Hyperdimension.Neptunia.ReBirth1
+   *
+   *  Debugging method: hardware breakpoint and find function in msvc110
+   *  Then, backtrack the function stack to find proper function.
+   *
+   *  Hooked function: 558BEC56FF750C8BF1FF75088D460850
+   *
+   *  0025A12E   CC               INT3
+   *  0025A12F   CC               INT3
+   *  0025A130   55               PUSH EBP
+   *  0025A131   8BEC             MOV EBP,ESP
+   *  0025A133   56               PUSH ESI
+   *  0025A134   FF75 0C          PUSH DWORD PTR SS:[EBP+0xC]
+   *  0025A137   8BF1             MOV ESI,ECX
+   *  0025A139   FF75 08          PUSH DWORD PTR SS:[EBP+0x8]
+   *  0025A13C   8D46 08          LEA EAX,DWORD PTR DS:[ESI+0x8]
+   *  0025A13F   50               PUSH EAX
+   *  0025A140   E8 DB100100      CALL .0026B220
+   *  0025A145   8B8E 988D0000    MOV ECX,DWORD PTR DS:[ESI+0x8D98]
+   *  0025A14B   8988 80020000    MOV DWORD PTR DS:[EAX+0x280],ECX
+   *  0025A151   8B8E A08D0000    MOV ECX,DWORD PTR DS:[ESI+0x8DA0]
+   *  0025A157   8988 88020000    MOV DWORD PTR DS:[EAX+0x288],ECX
+   *  0025A15D   8B8E A88D0000    MOV ECX,DWORD PTR DS:[ESI+0x8DA8]
+   *  0025A163   8988 90020000    MOV DWORD PTR DS:[EAX+0x290],ECX
+   *  0025A169   8B8E B08D0000    MOV ECX,DWORD PTR DS:[ESI+0x8DB0]
+   *  0025A16F   8988 98020000    MOV DWORD PTR DS:[EAX+0x298],ECX
+   *  0025A175   83C4 0C          ADD ESP,0xC
+   *  0025A178   8D8E 188B0000    LEA ECX,DWORD PTR DS:[ESI+0x8B18]
+   *  0025A17E   E8 DDD8FEFF      CALL .00247A60
+   *  0025A183   5E               POP ESI
+   *  0025A184   5D               POP EBP
+   *  0025A185   C2 0800          RETN 0x8
+   *  0025A188   CC               INT3
+   *  0025A189   CC               INT3
+   *
+   *  Runtime stack, text in arg1, and name in arg2:
+   *
+   *  0015F93C   00252330  RETURN to .00252330 from .0025A130
+   *  0015F940   181D0D4C  ASCII "That's my line! I won't let any of you
+   *  take the title of True Goddess!"
+   *  0015F944   0B8B4D20  ASCII "  White Heart  "
+   *  0015F948   0B8B5528
+   *  0015F94C   0B8B5524
+   *  0015F950  /0015F980
+   *  0015F954  |0026000F  RETURN to .0026000F from .002521D0
+   *
+   *
+   *  Another candidate funciton for backup usage.
+   *  Previous text in arg1.
+   *  Current text in arg2.
+   *  Current name in arg3.
+   *
+   *  0026B21C   CC               INT3
+   *  0026B21D   CC               INT3
+   *  0026B21E   CC               INT3
+   *  0026B21F   CC               INT3
+   *  0026B220   55               PUSH EBP
+   *  0026B221   8BEC             MOV EBP,ESP
+   *  0026B223   81EC A0020000    SUB ESP,0x2A0
+   *  0026B229   BA A0020000      MOV EDX,0x2A0
+   *  0026B22E   53               PUSH EBX
+   *  0026B22F   8B5D 08          MOV EBX,DWORD PTR SS:[EBP+0x8]
+   *  0026B232   56               PUSH ESI
+   *  0026B233   57               PUSH EDI
+   *  0026B234   8D041A           LEA EAX,DWORD PTR DS:[EDX+EBX]
+   *  0026B237   B9 A8000000      MOV ECX,0xA8
+   *  0026B23C   8BF3             MOV ESI,EBX
+   *  0026B23E   8DBD 60FDFFFF    LEA EDI,DWORD PTR SS:[EBP-0x2A0]
+   *  0026B244   F3:A5            REP MOVS DWORD PTR ES:[EDI],DWORD PTR DS>
+   *  0026B246   B9 A8000000      MOV ECX,0xA8
+   *  0026B24B   8BF0             MOV ESI,EAX
+   *  0026B24D   8BFB             MOV EDI,EBX
+   *  0026B24F   F3:A5            REP MOVS DWORD PTR ES:[EDI],DWORD PTR DS>
+   *  0026B251   81C2 A0020000    ADD EDX,0x2A0
+   *  0026B257   B9 A8000000      MOV ECX,0xA8
+   *  0026B25C   8DB5 60FDFFFF    LEA ESI,DWORD PTR SS:[EBP-0x2A0]
+   *  0026B262   8BF8             MOV EDI,EAX
+   *  0026B264   F3:A5            REP MOVS DWORD PTR ES:[EDI],DWORD PTR DS>
+   *  0026B266   81FA 40830000    CMP EDX,0x8340
+   *  0026B26C  ^7C C6            JL SHORT .0026B234
+   *  0026B26E   8BCB             MOV ECX,EBX
+   *  0026B270   E8 EBC7FDFF      CALL .00247A60
+   *  0026B275   FF75 0C          PUSH DWORD PTR SS:[EBP+0xC]
+   *  0026B278   8B35 D8525000    MOV ESI,DWORD PTR DS:[0x5052D8]          ; msvcr110.sprintf
+   *  0026B27E   68 805C5000      PUSH .00505C80                           ; ASCII "%s"
+   *  0026B283   53               PUSH EBX
+   *  0026B284   FFD6             CALL ESI
+   *  0026B286   FF75 10          PUSH DWORD PTR SS:[EBP+0x10]
+   *  0026B289   8D83 00020000    LEA EAX,DWORD PTR DS:[EBX+0x200]
+   *  0026B28F   68 805C5000      PUSH .00505C80                           ; ASCII "%s"
+   *  0026B294   50               PUSH EAX
+   *  0026B295   FFD6             CALL ESI
+   *  0026B297   83C4 18          ADD ESP,0x18
+   *  0026B29A   8BC3             MOV EAX,EBX
+   *  0026B29C   5F               POP EDI
+   *  0026B29D   5E               POP ESI
+   *  0026B29E   5B               POP EBX
+   *  0026B29F   8BE5             MOV ESP,EBP
+   *  0026B2A1   5D               POP EBP
+   *  0026B2A2   C3               RETN
+   *  0026B2A3   CC               INT3
+   *  0026B2A4   CC               INT3
+   *  0026B2A5   CC               INT3
+   *  0026B2A6   CC               INT3
+   */
+  void SpecialHook5pb3(hook_stack *stack, HookParam *hp, uintptr_t *data, uintptr_t *split, size_t *len)
+  {
+    int index = 0;
+    // Text in arg1, name in arg2
+    if (LPCSTR text = (LPCSTR)stack->stack[index + 1])
+      if (*text)
+      {
+        if (index) // trim spaces in character name
+          while (*text == ' ')
+            text++;
+        size_t sz = ::strlen(text);
+        if (index)
+          while (sz && text[sz - 1] == ' ')
+            sz--;
+        *data = (DWORD)text;
+        *len = sz;
+        *split = FIXED_SPLIT_VALUE << index;
+      }
+  }
+  bool Insert5pbHook3()
+  {
+    const BYTE bytes[] = {
+        // function starts
+        0x55,             // 0025A130   55               PUSH EBP
+        0x8b, 0xec,       // 0025A131   8BEC             MOV EBP,ESP
+        0x56,             // 0025A133   56               PUSH ESI
+        0xff, 0x75, 0x0c, // 0025A134   FF75 0C          PUSH DWORD PTR SS:[EBP+0xC]
+        0x8b, 0xf1,       // 0025A137   8BF1             MOV ESI,ECX
+        0xff, 0x75, 0x08, // 0025A139   FF75 08          PUSH DWORD PTR SS:[EBP+0x8]
+        0x8d, 0x46, 0x08, // 0025A13C   8D46 08          LEA EAX,DWORD PTR DS:[ESI+0x8]
+        0x50,             // 0025A13F   50               PUSH EAX
+        0xe8              // 0025A140   E8 DB100100      CALL .0026B220
+    };
+    ULONG addr = MemDbg::findBytes(bytes, sizeof(bytes), processStartAddress, processStopAddress);
+    // GROWL_DWORD3(addr, processStartAddress,processStopAddress);
+    if (!addr)
     {
-        static DWORD lasttext;
-        DWORD text = stack->eax;
-        if (lasttext == text)
-            return;
-        BYTE c = *(BYTE*)text;
-        if (!c)
-            return;
-        BYTE size = ::LeadByteTable[c]; // 1, 2, or 3
-        if (size == 1 && _5pb2garbage_ch(*(LPCSTR)text))
-            return;
-        lasttext = text;
-        *data = text;
-        *len = size;
+      ConsoleOutput("5pb2: pattern not found");
+      return false;
     }
 
-    bool Insert5pbHook2()
-    {
-        const BYTE bytes[] = {
-          0x8a,0x10, // 001e9b15   8a10             mov dl,byte ptr ds:[eax]    ; jichi: here, word by word
-          0x84,0xd2, // 001e9b17   84d2             test dl,dl
-          0x74,0x11  // 001e9b19   74 11            je short .001e9b2c
-        };
-        ULONG addr = MemDbg::findBytes(bytes, sizeof(bytes), processStartAddress, processStopAddress);
-        //GROWL_DWORD3(addr, processStartAddress,processStopAddress);
-        if (!addr) {
-            ConsoleOutput("5pb2: pattern not found");
-            return false;
-        }
+    HookParam hp;
+    hp.address = addr;
+    hp.type = USING_STRING | NO_CONTEXT;
+    hp.text_fun = SpecialHook5pb3;
+    hp.filter_fun = NewLineCharToSpaceFilterA; // replace '\n' by ' '
+    ConsoleOutput("INSERT 5pb3");
 
-        HookParam hp;
-        hp.address = addr;
-        hp.type = USING_STRING;
-        hp.text_fun = SpecialHook5pb2;
-        ConsoleOutput("INSERT 5pb2");
-        
-
-        // GDI functions are not used by 5pb games anyway.
-        //ConsoleOutput("5pb: disable GDI hooks");
-        //
-        return NewHook(hp, "5pb2");
-    }
-
-    /** jichi 2/2/2015: New 5pb hook
-     *  Sample game: Hyperdimension.Neptunia.ReBirth1
-     *
-     *  Debugging method: hardware breakpoint and find function in msvc110
-     *  Then, backtrack the function stack to find proper function.
-     *
-     *  Hooked function: 558BEC56FF750C8BF1FF75088D460850
-     *
-     *  0025A12E   CC               INT3
-     *  0025A12F   CC               INT3
-     *  0025A130   55               PUSH EBP
-     *  0025A131   8BEC             MOV EBP,ESP
-     *  0025A133   56               PUSH ESI
-     *  0025A134   FF75 0C          PUSH DWORD PTR SS:[EBP+0xC]
-     *  0025A137   8BF1             MOV ESI,ECX
-     *  0025A139   FF75 08          PUSH DWORD PTR SS:[EBP+0x8]
-     *  0025A13C   8D46 08          LEA EAX,DWORD PTR DS:[ESI+0x8]
-     *  0025A13F   50               PUSH EAX
-     *  0025A140   E8 DB100100      CALL .0026B220
-     *  0025A145   8B8E 988D0000    MOV ECX,DWORD PTR DS:[ESI+0x8D98]
-     *  0025A14B   8988 80020000    MOV DWORD PTR DS:[EAX+0x280],ECX
-     *  0025A151   8B8E A08D0000    MOV ECX,DWORD PTR DS:[ESI+0x8DA0]
-     *  0025A157   8988 88020000    MOV DWORD PTR DS:[EAX+0x288],ECX
-     *  0025A15D   8B8E A88D0000    MOV ECX,DWORD PTR DS:[ESI+0x8DA8]
-     *  0025A163   8988 90020000    MOV DWORD PTR DS:[EAX+0x290],ECX
-     *  0025A169   8B8E B08D0000    MOV ECX,DWORD PTR DS:[ESI+0x8DB0]
-     *  0025A16F   8988 98020000    MOV DWORD PTR DS:[EAX+0x298],ECX
-     *  0025A175   83C4 0C          ADD ESP,0xC
-     *  0025A178   8D8E 188B0000    LEA ECX,DWORD PTR DS:[ESI+0x8B18]
-     *  0025A17E   E8 DDD8FEFF      CALL .00247A60
-     *  0025A183   5E               POP ESI
-     *  0025A184   5D               POP EBP
-     *  0025A185   C2 0800          RETN 0x8
-     *  0025A188   CC               INT3
-     *  0025A189   CC               INT3
-     *
-     *  Runtime stack, text in arg1, and name in arg2:
-     *
-     *  0015F93C   00252330  RETURN to .00252330 from .0025A130
-     *  0015F940   181D0D4C  ASCII "That's my line! I won't let any of you
-     *  take the title of True Goddess!"
-     *  0015F944   0B8B4D20  ASCII "  White Heart  "
-     *  0015F948   0B8B5528
-     *  0015F94C   0B8B5524
-     *  0015F950  /0015F980
-     *  0015F954  |0026000F  RETURN to .0026000F from .002521D0
-     *
-     *
-     *  Another candidate funciton for backup usage.
-     *  Previous text in arg1.
-     *  Current text in arg2.
-     *  Current name in arg3.
-     *
-     *  0026B21C   CC               INT3
-     *  0026B21D   CC               INT3
-     *  0026B21E   CC               INT3
-     *  0026B21F   CC               INT3
-     *  0026B220   55               PUSH EBP
-     *  0026B221   8BEC             MOV EBP,ESP
-     *  0026B223   81EC A0020000    SUB ESP,0x2A0
-     *  0026B229   BA A0020000      MOV EDX,0x2A0
-     *  0026B22E   53               PUSH EBX
-     *  0026B22F   8B5D 08          MOV EBX,DWORD PTR SS:[EBP+0x8]
-     *  0026B232   56               PUSH ESI
-     *  0026B233   57               PUSH EDI
-     *  0026B234   8D041A           LEA EAX,DWORD PTR DS:[EDX+EBX]
-     *  0026B237   B9 A8000000      MOV ECX,0xA8
-     *  0026B23C   8BF3             MOV ESI,EBX
-     *  0026B23E   8DBD 60FDFFFF    LEA EDI,DWORD PTR SS:[EBP-0x2A0]
-     *  0026B244   F3:A5            REP MOVS DWORD PTR ES:[EDI],DWORD PTR DS>
-     *  0026B246   B9 A8000000      MOV ECX,0xA8
-     *  0026B24B   8BF0             MOV ESI,EAX
-     *  0026B24D   8BFB             MOV EDI,EBX
-     *  0026B24F   F3:A5            REP MOVS DWORD PTR ES:[EDI],DWORD PTR DS>
-     *  0026B251   81C2 A0020000    ADD EDX,0x2A0
-     *  0026B257   B9 A8000000      MOV ECX,0xA8
-     *  0026B25C   8DB5 60FDFFFF    LEA ESI,DWORD PTR SS:[EBP-0x2A0]
-     *  0026B262   8BF8             MOV EDI,EAX
-     *  0026B264   F3:A5            REP MOVS DWORD PTR ES:[EDI],DWORD PTR DS>
-     *  0026B266   81FA 40830000    CMP EDX,0x8340
-     *  0026B26C  ^7C C6            JL SHORT .0026B234
-     *  0026B26E   8BCB             MOV ECX,EBX
-     *  0026B270   E8 EBC7FDFF      CALL .00247A60
-     *  0026B275   FF75 0C          PUSH DWORD PTR SS:[EBP+0xC]
-     *  0026B278   8B35 D8525000    MOV ESI,DWORD PTR DS:[0x5052D8]          ; msvcr110.sprintf
-     *  0026B27E   68 805C5000      PUSH .00505C80                           ; ASCII "%s"
-     *  0026B283   53               PUSH EBX
-     *  0026B284   FFD6             CALL ESI
-     *  0026B286   FF75 10          PUSH DWORD PTR SS:[EBP+0x10]
-     *  0026B289   8D83 00020000    LEA EAX,DWORD PTR DS:[EBX+0x200]
-     *  0026B28F   68 805C5000      PUSH .00505C80                           ; ASCII "%s"
-     *  0026B294   50               PUSH EAX
-     *  0026B295   FFD6             CALL ESI
-     *  0026B297   83C4 18          ADD ESP,0x18
-     *  0026B29A   8BC3             MOV EAX,EBX
-     *  0026B29C   5F               POP EDI
-     *  0026B29D   5E               POP ESI
-     *  0026B29E   5B               POP EBX
-     *  0026B29F   8BE5             MOV ESP,EBP
-     *  0026B2A1   5D               POP EBP
-     *  0026B2A2   C3               RETN
-     *  0026B2A3   CC               INT3
-     *  0026B2A4   CC               INT3
-     *  0026B2A5   CC               INT3
-     *  0026B2A6   CC               INT3
-     */
-    void SpecialHook5pb3(hook_stack* stack, HookParam *hp, uintptr_t* data, uintptr_t* split, size_t* len)
-    {
-        int index=0;
-        // Text in arg1, name in arg2
-        if (LPCSTR text = (LPCSTR)stack->stack[index+1])
-            if (*text) {
-                if (index)  // trim spaces in character name
-                    while (*text == ' ') text++;
-                size_t sz = ::strlen(text);
-                if (index)
-                    while (sz && text[sz - 1] == ' ') sz--;
-                *data = (DWORD)text;
-                *len = sz;
-                *split = FIXED_SPLIT_VALUE << index;
-            }
-    }
-    bool Insert5pbHook3()
-    {
-        const BYTE bytes[] = { // function starts 
-          0x55,            // 0025A130   55               PUSH EBP
-          0x8b,0xec,       // 0025A131   8BEC             MOV EBP,ESP
-          0x56,            // 0025A133   56               PUSH ESI
-          0xff,0x75, 0x0c, // 0025A134   FF75 0C          PUSH DWORD PTR SS:[EBP+0xC]
-          0x8b,0xf1,       // 0025A137   8BF1             MOV ESI,ECX
-          0xff,0x75, 0x08, // 0025A139   FF75 08          PUSH DWORD PTR SS:[EBP+0x8]
-          0x8d,0x46, 0x08, // 0025A13C   8D46 08          LEA EAX,DWORD PTR DS:[ESI+0x8]
-          0x50,            // 0025A13F   50               PUSH EAX
-          0xe8             // 0025A140   E8 DB100100      CALL .0026B220
-        };
-        ULONG addr = MemDbg::findBytes(bytes, sizeof(bytes), processStartAddress, processStopAddress);
-        //GROWL_DWORD3(addr, processStartAddress,processStopAddress);
-        if (!addr) {
-            ConsoleOutput("5pb2: pattern not found");
-            return false;
-        }
-
-        HookParam hp;
-        hp.address = addr;
-        hp.type = USING_STRING | NO_CONTEXT;
-        hp.text_fun = SpecialHook5pb3;
-        hp.filter_fun = NewLineCharToSpaceFilterA; // replace '\n' by ' '
-        ConsoleOutput("INSERT 5pb3");
-        
-        // GDI functions are not used by 5pb games anyway.
-        //ConsoleOutput("5pb: disable GDI hooks");
-        //
-        return NewHook(hp, "5pb3");
-    }
+    // GDI functions are not used by 5pb games anyway.
+    // ConsoleOutput("5pb: disable GDI hooks");
+    //
+    return NewHook(hp, "5pb3");
+  }
 } // unnamed namespace
 
 bool Insert5pbHook()
 {
-    bool ok = Insert5pbHook1();
-    ok = Insert5pbHook2() || ok;
-    ok = Insert5pbHook3() || ok;
-    return ok;
+  bool ok = Insert5pbHook1();
+  ok = Insert5pbHook2() || ok;
+  ok = Insert5pbHook3() || ok;
+  return ok;
 }
-bool Insert5pbHookex() {
-    //祝姬
-    const BYTE bytes[] = {
-      0x0F,0xB6,0xC2, 0x35,0xC5 ,0x9D ,0x1C ,0x81
-    };
-    auto addr = MemDbg::findBytes(bytes, sizeof(bytes), processStartAddress, processStopAddress);
-    if (addr == 0)return false;
-    const BYTE start[] = {
-      0x55,0x8b,0xec,0x83,0xe4
-    };
-    addr = reverseFindBytes(start, sizeof(start), addr - 0x40, addr);
-    if (addr == 0)return false;
-    HookParam hp;
-    hp.address = addr;
-    hp.offset=get_reg(regs::ecx);
-    hp.type = CODEC_UTF16;
-    
-    return  NewHook(hp, "5pb");
+bool Insert5pbHookex()
+{
+  // 祝姬
+  const BYTE bytes[] = {
+      0x0F, 0xB6, 0xC2, 0x35, 0xC5, 0x9D, 0x1C, 0x81};
+  auto addr = MemDbg::findBytes(bytes, sizeof(bytes), processStartAddress, processStopAddress);
+  if (addr == 0)
+    return false;
+  const BYTE start[] = {
+      0x55, 0x8b, 0xec, 0x83, 0xe4};
+  addr = reverseFindBytes(start, sizeof(start), addr - 0x40, addr);
+  if (addr == 0)
+    return false;
+  HookParam hp;
+  hp.address = addr;
+  hp.offset = get_reg(regs::ecx);
+  hp.type = CODEC_UTF16;
+
+  return NewHook(hp, "5pb");
 }
- 
+
 bool InsertStuffScriptHook()
 {
   // BOOL GetTextExtentPoint32(
@@ -402,19 +412,20 @@ bool InsertStuffScriptHook()
   // );
   HookParam hp;
   hp.address = (DWORD)::GetTextExtentPoint32A;
-  hp.offset=get_stack(2); // arg2 lpString
+  hp.offset = get_stack(2); // arg2 lpString
   hp.split = get_reg(regs::esp);
   hp.type = USING_STRING | USING_SPLIT;
   ConsoleOutput("INSERT StuffScriptEngine");
   return NewHook(hp, "StuffScriptEngine");
-  //RegisterEngine(ENGINE_STUFFSCRIPT);
+  // RegisterEngine(ENGINE_STUFFSCRIPT);
 }
 bool StuffScript2Filter(LPVOID data, size_t *size, HookParam *)
 {
   auto text = reinterpret_cast<LPSTR>(data);
   auto len = reinterpret_cast<size_t *>(size);
 
-  if (text[0] == '-') {
+  if (text[0] == '-')
+  {
     StringFilter(text, len, "-/-", 3);
     StringFilterBetween(text, len, "-", 1, "-", 1);
   }
@@ -425,36 +436,36 @@ bool StuffScript2Filter(LPVOID data, size_t *size, HookParam *)
 
   return true;
 }
-bool InsertStuffScript2Hook() 
+bool InsertStuffScript2Hook()
 {
-  
-    /*
-    * Sample games:
-    * https://vndb.org/r41537
-    * https://vndb.org/r41539
-    */
+
+  /*
+   * Sample games:
+   * https://vndb.org/r41537
+   * https://vndb.org/r41539
+   */
   const BYTE bytes[] = {
-    0x0F, XX, XX4,         // jne tokyobabel.exe+3D4E8
-    0xB9, XX4,             // mov ecx,tokyobabel.exe+54EAC
-    0x8D, 0x85, XX4,       // lea eax,[ebp+tokyobabel.exe+59B968]
-    0x8A, 0x10,            // mov dl,[eax]                         <-- hook here
-    0x3A, 0x11,            // cmp dl,[ecx]
-    0x75, 0x1A,            // jne tokyobabel.exe+3D1D7
-    0x84, 0xD2,            // test dl,dl
-    0x74, 0x12,            // je tokyobabel.exe+3D1D3
-    0x8A, 0x50, 0x01,      // mov dl,[eax+01]
-    0x3A, 0x51, 0x01,      // cmp dl,[ecx+01]
-    0x75, 0x0E,            // jne tokyobabel.exe+3D1D7
-    0x83, 0xC0, 0x02,      // add eax,02
-    0x83, 0xC1, 0x02,      // add ecx,02
-    0x84, 0xD2,            // test dl,dl
-    0x75, 0xE4,            // jne Agreement.exe+4F538
-    0x33, 0xC0,            // xor eax,eax
-    0xEB, 0x05,            // jmp Agreement.exe+4F55D
-    0x1B, 0xC0,            // sbb eax,eax
-    0x83, 0xD8, 0xFF,      // sbb eax,-01
-    XX2,                   // cmp eax,edi
-    0x0F, 0x84, XX4        // je tokyobabel.exe+3D4E8
+      0x0F, XX, XX4,    // jne tokyobabel.exe+3D4E8
+      0xB9, XX4,        // mov ecx,tokyobabel.exe+54EAC
+      0x8D, 0x85, XX4,  // lea eax,[ebp+tokyobabel.exe+59B968]
+      0x8A, 0x10,       // mov dl,[eax]                         <-- hook here
+      0x3A, 0x11,       // cmp dl,[ecx]
+      0x75, 0x1A,       // jne tokyobabel.exe+3D1D7
+      0x84, 0xD2,       // test dl,dl
+      0x74, 0x12,       // je tokyobabel.exe+3D1D3
+      0x8A, 0x50, 0x01, // mov dl,[eax+01]
+      0x3A, 0x51, 0x01, // cmp dl,[ecx+01]
+      0x75, 0x0E,       // jne tokyobabel.exe+3D1D7
+      0x83, 0xC0, 0x02, // add eax,02
+      0x83, 0xC1, 0x02, // add ecx,02
+      0x84, 0xD2,       // test dl,dl
+      0x75, 0xE4,       // jne Agreement.exe+4F538
+      0x33, 0xC0,       // xor eax,eax
+      0xEB, 0x05,       // jmp Agreement.exe+4F55D
+      0x1B, 0xC0,       // sbb eax,eax
+      0x83, 0xD8, 0xFF, // sbb eax,-01
+      XX2,              // cmp eax,edi
+      0x0F, 0x84, XX4   // je tokyobabel.exe+3D4E8
   };
   ULONG range = min(processStopAddress - processStartAddress, MAX_REL_ADDR);
   ULONG addr = MemDbg::findBytes(bytes, sizeof(bytes), processStartAddress, processStartAddress + range);
@@ -463,7 +474,7 @@ bool InsertStuffScript2Hook()
 
   HookParam hp;
   hp.address = addr + 0x11;
-  hp.offset=get_reg(regs::eax);
+  hp.offset = get_reg(regs::eax);
   hp.index = 0;
   hp.type = USING_STRING | NO_CONTEXT;
   hp.filter_fun = StuffScript2Filter;
@@ -475,15 +486,16 @@ bool StuffScript3Filter(LPVOID data, size_t *size, HookParam *)
   auto text = reinterpret_cast<LPSTR>(data);
   auto len = reinterpret_cast<size_t *>(size);
 
-  if (text[0] == '\x81' && text[1] == '\x40') { //removes space at the beginning of the sentence
+  if (text[0] == '\x81' && text[1] == '\x40')
+  { // removes space at the beginning of the sentence
     *len -= 2;
     ::memmove(text, text + 2, *len);
   }
 
-  StringFilterBetween(text, len, "/\x81\x79", 3, "\x81\x7A", 2); //remove hidden name
-  StringFilterBetween(text, len, "[", 1, "]", 1); //garbage
+  StringFilterBetween(text, len, "/\x81\x79", 3, "\x81\x7A", 2); // remove hidden name
+  StringFilterBetween(text, len, "[", 1, "]", 1);                // garbage
 
-  //ruby
+  // ruby
   CharFilter(text, len, '<');
   StringFilterBetween(text, len, ",", 1, ">", 1);
 
@@ -492,26 +504,27 @@ bool StuffScript3Filter(LPVOID data, size_t *size, HookParam *)
 
   return true;
 }
-bool InsertStuffScript3Hook() 
+bool InsertStuffScript3Hook()
 {
-    /*
-    * Sample games:
-    * https://vndb.org/v3111
-    */
+  /*
+   * Sample games:
+   * https://vndb.org/v3111
+   */
   const BYTE bytes[] = {
-    0xCC,                    // int 3 
-    0x81, 0xEC, XX4,         // sub esp,00000140          <-- hook here
-    0xA1, XX4,               // mov eax,[EVOLIMIT.exe+8C1F0]
-    0x33, 0xC4,              // xor eax,esp
-    0x89, 0x84, 0x24, XX4,   // mov [esp+0000013C],eax
-    0x53,                    // push ebx
-    0x55,                    // push ebp
-    0x8B, 0xAC, 0x24, XX4,   // mov ebp,[esp+0000014C]
-    0x8B, 0x45, 0x2C         // mov eax,[ebp+2C]
+      0xCC,                  // int 3
+      0x81, 0xEC, XX4,       // sub esp,00000140          <-- hook here
+      0xA1, XX4,             // mov eax,[EVOLIMIT.exe+8C1F0]
+      0x33, 0xC4,            // xor eax,esp
+      0x89, 0x84, 0x24, XX4, // mov [esp+0000013C],eax
+      0x53,                  // push ebx
+      0x55,                  // push ebp
+      0x8B, 0xAC, 0x24, XX4, // mov ebp,[esp+0000014C]
+      0x8B, 0x45, 0x2C       // mov eax,[ebp+2C]
   };
   ULONG range = min(processStopAddress - processStartAddress, MAX_REL_ADDR);
   ULONG addr = MemDbg::findBytes(bytes, sizeof(bytes), processStartAddress, processStartAddress + range);
-  if (!addr) return false;
+  if (!addr)
+    return false;
 
   HookParam hp = {};
   hp.address = addr + 1;
@@ -521,182 +534,198 @@ bool InsertStuffScript3Hook()
   NewHook(hp, "StuffScript3");
   return true;
 }
-bool StuffScript_attach_function() {
-    auto _=InsertStuffScriptHook();
-    _|=InsertStuffScript2Hook();
-    _|=InsertStuffScript3Hook();
-    return _;
-} 
-bool _5pb::attach_function() {
-    bool b1 = Insert5pbHook();
-    bool b2 = Insert5pbHookex();
-    bool b3=hookmages::MAGES();
-    bool sf=StuffScript_attach_function();
-    return b1 || b2 || b3||sf;
+bool StuffScript_attach_function()
+{
+  auto _ = InsertStuffScriptHook();
+  _ |= InsertStuffScript2Hook();
+  _ |= InsertStuffScript3Hook();
+  return _;
+}
+bool _5pb::attach_function()
+{
+  bool b1 = Insert5pbHook();
+  bool b2 = Insert5pbHookex();
+  bool b3 = hookmages::MAGES();
+  bool sf = StuffScript_attach_function();
+  return b1 || b2 || b3 || sf;
 }
 
-
-bool KaleidoFilter(LPVOID data, size_t* size, HookParam*)
+bool KaleidoFilter(LPVOID data, size_t *size, HookParam *)
 {
-    auto text = reinterpret_cast<LPSTR>(data);
-    auto len = reinterpret_cast<size_t*>(size);
+  auto text = reinterpret_cast<LPSTR>(data);
+  auto len = reinterpret_cast<size_t *>(size);
 
-    // Unofficial eng TL with garbage newline spaces
-    StringCharReplacer(text, len, " \\n ", 4, ' ');
-    StringCharReplacer(text, len, " \\n", 3, ' ');
-    StringCharReplacer(text, len, "\\n", 2, ' ');
-    StringCharReplacer(text, len, "\xEF\xBC\x9F", 3, '?');
+  // Unofficial eng TL with garbage newline spaces
+  StringCharReplacer(text, len, " \\n ", 4, ' ');
+  StringCharReplacer(text, len, " \\n", 3, ' ');
+  StringCharReplacer(text, len, "\\n", 2, ' ');
+  StringCharReplacer(text, len, "\xEF\xBC\x9F", 3, '?');
 
-    return true;
+  return true;
 }
 
 bool InsertKaleidoHook()
 {
-    
-      /*
-      * Sample games:
-      * https://vndb.org/v29889
-      */
-    const BYTE bytes[] = {
-      0xFF, 0x75, 0xD4,              // push [ebp-2C]
-      0xE8, XX4,                     // call 5toubun.exe+1DD0
-      0x83, 0xC4, 0x0C,              // add esp,0C
-      0x8A, 0xC3,                    // mov al,bl
-      0x8B, 0x4D, 0xF4,              // mov ecx,[ebp-0C]
-      0x64, 0x89, 0x0D, XX4,         // mov fs:[00000000],ecx
-      0x59                           // pop ecx          << hook here
-    };
-    enum { addr_offset = sizeof(bytes) - 1 };
 
-    ULONG range = min(processStopAddress - processStartAddress, MAX_REL_ADDR);
-    ULONG addr = MemDbg::findBytes(bytes, sizeof(bytes), processStartAddress, processStartAddress + range);
-    if (!addr) return false; 
+  /*
+   * Sample games:
+   * https://vndb.org/v29889
+   */
+  const BYTE bytes[] = {
+      0xFF, 0x75, 0xD4,      // push [ebp-2C]
+      0xE8, XX4,             // call 5toubun.exe+1DD0
+      0x83, 0xC4, 0x0C,      // add esp,0C
+      0x8A, 0xC3,            // mov al,bl
+      0x8B, 0x4D, 0xF4,      // mov ecx,[ebp-0C]
+      0x64, 0x89, 0x0D, XX4, // mov fs:[00000000],ecx
+      0x59                   // pop ecx          << hook here
+  };
+  enum
+  {
+    addr_offset = sizeof(bytes) - 1
+  };
 
-    HookParam hp;
-    hp.address = addr + addr_offset;
-    hp.offset=get_reg(regs::esi);
-    hp.index = 0;
-    hp.split =get_stack(3);
-    hp.split_index = 0;
-    hp.type = USING_STRING | USING_SPLIT;
-    hp.filter_fun = KaleidoFilter;
-    ConsoleOutput(" INSERT Kaleido");
-    
-    return NewHook(hp, "Kaleido");
+  ULONG range = min(processStopAddress - processStartAddress, MAX_REL_ADDR);
+  ULONG addr = MemDbg::findBytes(bytes, sizeof(bytes), processStartAddress, processStartAddress + range);
+  if (!addr)
+    return false;
+
+  HookParam hp;
+  hp.address = addr + addr_offset;
+  hp.offset = get_reg(regs::esi);
+  hp.index = 0;
+  hp.split = get_stack(3);
+  hp.split_index = 0;
+  hp.type = USING_STRING | USING_SPLIT;
+  hp.filter_fun = KaleidoFilter;
+  ConsoleOutput(" INSERT Kaleido");
+
+  return NewHook(hp, "Kaleido");
 }
 namespace
-{ //ANONYMOUS;CODE 官中
-    bool __1() {
-        BYTE bytes[] = {
-          0x8d,0x45,0xf4,0x64,0xA3,0x00,0x00,0x00,0x00,0x8b,0xf1,0x8a,0x46,0x2c,0x8b,0x55,0x08,0x84,0xc0,0x74,0x04,0x32,0xc0
-        };
-        ULONG addr = MemDbg::findBytes(bytes, sizeof(bytes), processStartAddress, processStopAddress);
-        if (!addr) return false;
-        addr = MemDbg::findEnclosingAlignedFunction(addr);
-        if (addr == 0)return false;
-        HookParam hp;
-        hp.address = addr;
-        hp.offset=get_stack(1);
-        hp.type = USING_STRING | CODEC_UTF8 | EMBED_ABLE | EMBED_BEFORE_SIMPLE | EMBED_AFTER_NEW;
-        hp.newlineseperator = L"\\n";
-        return NewHook(hp, "5bp");
-    }
-    bool __() {
-        BYTE sig1[] = {
-          0x81,0xFE,0xF0,0x00,0x00,0x00
-        };
-        BYTE sig2[] = {
-          0x81,0xFE,0xF8,0x00,0x00,0x00
-        };
-        BYTE sig3[] = {
-          0x81,0xFE,0xFC,0x00,0x00,0x00
-        };
-        BYTE sig4[] = {
-          0x81,0xFE,0xFE,0x00,0x00,0x00
-        };
-        BYTE sig5[] = {
-          0x81,0xFE,0x80,0x00,0x00,0x00
-        };
-        BYTE sig6[] = {
-          0x81,0xFE,0xE0,0x00,0x00,0x00
-        };
-        std::unordered_map<uintptr_t, int>addr_hit;
-        for (auto sigsz : std::vector<std::pair<BYTE*, int>>{ {sig1,sizeof(sig1)},{sig2,sizeof(sig2)},{sig3,sizeof(sig3)},{sig4,sizeof(sig4)},{sig5,sizeof(sig5)},{sig6,sizeof(sig6)} }) {
-            for (auto addr : Util::SearchMemory(sigsz.first, sigsz.second, PAGE_EXECUTE, processStartAddress, processStopAddress)) {
-                addr = MemDbg::findEnclosingAlignedFunction(addr);
-                if (addr == 0)continue;
-                if (addr_hit.find(addr) == addr_hit.end()) {
-                    addr_hit[addr] = 1;
-                }
-                else addr_hit[addr] += 1;
-            }
-        }
-        DWORD addr = 0; int m = 0;
-        for (auto _ : addr_hit) {
-            if (_.second > m) {
-                m = _.second;
-                addr = _.first;
-            }
-        }
-        if(!addr)return false;
-         
-        HookParam hp;
-        hp.address = addr;
-        hp.offset=get_stack(1);
-        hp.type = USING_STRING | CODEC_UTF8;
-        hp.filter_fun = [](LPVOID data, size_t* size, HookParam*) {
-            auto text = reinterpret_cast<LPSTR>(data);
-            auto len = reinterpret_cast<size_t*>(size);
-            StringCharReplacer(text, len, "\\n", 2, '\n');
-            return true;
-        };
-        return NewHook(hp, "5bp");
-    }
-} // namespace name
-namespace{
-  bool __2()
+{ // ANONYMOUS;CODE 官中
+  bool __1()
   {
-    //レヱル・ロマネスク origin 多国語版
-    //https://vndb.org/r119877
-    //char __thiscall sub_426B70(float *this, int a2, int a3, int a4, int a5, char a6, char a7)
-    BYTE bytes[]={
-      0x0f,0xb7,0x04,0x72,
-      0x46,
-      0x89,0x85,XX4,
-      0x0f,0xb7,0xc0,
-      0x83,0xc0,0xf6,
-      0x83,0xf8,0x52,
-      0x0f,0x87
-    };
-    auto addr = MemDbg::findBytes(bytes, sizeof(bytes), processStartAddress, processStopAddress);
-    if(!addr)return false;
-    addr=MemDbg::findEnclosingAlignedFunction_strict(addr);
-    if(!addr)return false;
+    BYTE bytes[] = {
+        0x8d, 0x45, 0xf4, 0x64, 0xA3, 0x00, 0x00, 0x00, 0x00, 0x8b, 0xf1, 0x8a, 0x46, 0x2c, 0x8b, 0x55, 0x08, 0x84, 0xc0, 0x74, 0x04, 0x32, 0xc0};
+    ULONG addr = MemDbg::findBytes(bytes, sizeof(bytes), processStartAddress, processStopAddress);
+    if (!addr)
+      return false;
+    addr = MemDbg::findEnclosingAlignedFunction(addr);
+    if (addr == 0)
+      return false;
     HookParam hp;
     hp.address = addr;
-    hp.offset=get_stack(1);
-    hp.split=get_stack(2);
-    hp.type = USING_SPLIT|USING_STRING|FULL_STRING | CODEC_UTF16|EMBED_ABLE|EMBED_BEFORE_SIMPLE|EMBED_AFTER_NEW;//中文显示不出来
-    hp.filter_fun = [](LPVOID data, size_t* size, HookParam*) {
-      //そうして、[おひとよ,2]御一夜――\n眼下に広がるこの町も、僕を間違いなく救ってくれた。
-      //「行政に関しての最大の変化は、市長です。\n現在の市長には[ひない,1]雛衣・ポーレットが就任しています」
-      //「なるほど。それゆえ、御一夜は衰退し、\n\x%lエアクラ;#00ffc040;エアクラ%l;#;工場の誘致話が持ち上がったわけか？」
-      //「ナビ。お前も\x%lエアクラ;#00ffc040;エアクラ%l;#;の仲間だったな。\n気を悪くしたか？」
-        auto text = reinterpret_cast<LPWSTR>(data);
-        auto len = reinterpret_cast<size_t*>(size);
-        auto xx=std::wstring(text,*len/2);
-        xx = std::regex_replace(xx, std::wregex(L"\\[(.*?),\\d\\]"), L"$1");
-        xx = std::regex_replace(xx, std::wregex(L"\\\\x%l(.*?);(.*?);(.*?);#;"), L"$1");
-        return write_string_overwrite(data,size,xx);
+    hp.offset = get_stack(1);
+    hp.type = USING_STRING | CODEC_UTF8 | EMBED_ABLE | EMBED_BEFORE_SIMPLE | EMBED_AFTER_NEW;
+    hp.newlineseperator = L"\\n";
+    return NewHook(hp, "5bp");
+  }
+  bool __()
+  {
+    BYTE sig1[] = {
+        0x81, 0xFE, 0xF0, 0x00, 0x00, 0x00};
+    BYTE sig2[] = {
+        0x81, 0xFE, 0xF8, 0x00, 0x00, 0x00};
+    BYTE sig3[] = {
+        0x81, 0xFE, 0xFC, 0x00, 0x00, 0x00};
+    BYTE sig4[] = {
+        0x81, 0xFE, 0xFE, 0x00, 0x00, 0x00};
+    BYTE sig5[] = {
+        0x81, 0xFE, 0x80, 0x00, 0x00, 0x00};
+    BYTE sig6[] = {
+        0x81, 0xFE, 0xE0, 0x00, 0x00, 0x00};
+    std::unordered_map<uintptr_t, int> addr_hit;
+    for (auto sigsz : std::vector<std::pair<BYTE *, int>>{{sig1, sizeof(sig1)}, {sig2, sizeof(sig2)}, {sig3, sizeof(sig3)}, {sig4, sizeof(sig4)}, {sig5, sizeof(sig5)}, {sig6, sizeof(sig6)}})
+    {
+      for (auto addr : Util::SearchMemory(sigsz.first, sigsz.second, PAGE_EXECUTE, processStartAddress, processStopAddress))
+      {
+        addr = MemDbg::findEnclosingAlignedFunction(addr);
+        if (addr == 0)
+          continue;
+        if (addr_hit.find(addr) == addr_hit.end())
+        {
+          addr_hit[addr] = 1;
+        }
+        else
+          addr_hit[addr] += 1;
+      }
+    }
+    DWORD addr = 0;
+    int m = 0;
+    for (auto _ : addr_hit)
+    {
+      if (_.second > m)
+      {
+        m = _.second;
+        addr = _.first;
+      }
+    }
+    if (!addr)
+      return false;
+
+    HookParam hp;
+    hp.address = addr;
+    hp.offset = get_stack(1);
+    hp.type = USING_STRING | CODEC_UTF8;
+    hp.filter_fun = [](LPVOID data, size_t *size, HookParam *)
+    {
+      auto text = reinterpret_cast<LPSTR>(data);
+      auto len = reinterpret_cast<size_t *>(size);
+      StringCharReplacer(text, len, "\\n", 2, '\n');
+      return true;
     };
-    hp.newlineseperator=L"\\n";
+    return NewHook(hp, "5bp");
+  }
+} // namespace name
+namespace
+{
+  bool __2()
+  {
+    // レヱル・ロマネスク origin 多国語版
+    // https://vndb.org/r119877
+    // char __thiscall sub_426B70(float *this, int a2, int a3, int a4, int a5, char a6, char a7)
+    BYTE bytes[] = {
+        0x0f, 0xb7, 0x04, 0x72,
+        0x46,
+        0x89, 0x85, XX4,
+        0x0f, 0xb7, 0xc0,
+        0x83, 0xc0, 0xf6,
+        0x83, 0xf8, 0x52,
+        0x0f, 0x87};
+    auto addr = MemDbg::findBytes(bytes, sizeof(bytes), processStartAddress, processStopAddress);
+    if (!addr)
+      return false;
+    addr = MemDbg::findEnclosingAlignedFunction_strict(addr);
+    if (!addr)
+      return false;
+    HookParam hp;
+    hp.address = addr;
+    hp.offset = get_stack(1);
+    hp.split = get_stack(2);
+    hp.type = USING_SPLIT | USING_STRING | FULL_STRING | CODEC_UTF16 | EMBED_ABLE | EMBED_BEFORE_SIMPLE | EMBED_AFTER_NEW; // 中文显示不出来
+    hp.filter_fun = [](LPVOID data, size_t *size, HookParam *)
+    {
+      // そうして、[おひとよ,2]御一夜――\n眼下に広がるこの町も、僕を間違いなく救ってくれた。
+      // 「行政に関しての最大の変化は、市長です。\n現在の市長には[ひない,1]雛衣・ポーレットが就任しています」
+      // 「なるほど。それゆえ、御一夜は衰退し、\n\x%lエアクラ;#00ffc040;エアクラ%l;#;工場の誘致話が持ち上がったわけか？」
+      // 「ナビ。お前も\x%lエアクラ;#00ffc040;エアクラ%l;#;の仲間だったな。\n気を悪くしたか？」
+      auto text = reinterpret_cast<LPWSTR>(data);
+      auto len = reinterpret_cast<size_t *>(size);
+      auto xx = std::wstring(text, *len / 2);
+      xx = std::regex_replace(xx, std::wregex(L"\\[(.*?),\\d\\]"), L"$1");
+      xx = std::regex_replace(xx, std::wregex(L"\\\\x%l(.*?);(.*?);(.*?);#;"), L"$1");
+      return write_string_overwrite(data, size, xx);
+    };
+    hp.newlineseperator = L"\\n";
     return NewHook(hp, "5bp");
   }
 
 }
 
-bool _5pb_2::attach_function() {
-    bool ___1 = __1() || __();
-    ___1|=__2();
-    return InsertKaleidoHook() || ___1;
+bool _5pb_2::attach_function()
+{
+  bool ___1 = __1() || __();
+  ___1 |= __2();
+  return InsertKaleidoHook() || ___1;
 }

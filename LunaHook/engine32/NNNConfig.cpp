@@ -6,11 +6,7 @@ bool NNNConfig::attach_function()
 	// 復讐の女仕官ハイネ ～肢体に刻まれる淫欲のプログラム～
 	// https://vndb.org/v24955
 	const BYTE bytes[] = {
-		//clang-format off
-		0x68, 0xE8, 0x03, 0x00, 0x00, 0x6a, 0x00,
-		//clang-format on
-
-	};
+		0x68, 0xE8, 0x03, 0x00, 0x00, 0x6a, 0x00};
 	auto addr = MemDbg::findBytes(bytes, sizeof(bytes), processStartAddress, processStopAddress);
 	if (addr == 0)
 		return false;

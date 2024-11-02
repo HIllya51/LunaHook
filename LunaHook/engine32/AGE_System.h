@@ -37,17 +37,17 @@ FILESUBTYPE    0x0
 class AGE_System : public ENGINE
 {
 public:
-    AGE_System()
-    {
+  AGE_System()
+  {
 
-        check_by = CHECK_BY::CUSTOM;
-        check_by_target = []()
-        {
-            auto s = check_by_list{L"Agrd.pac", L"vic.pac", L"se.pac", L"mus.pac"};
-            return Util::SearchResourceString(L"AGE_System") // 已破解
-                   || std::all_of(s.begin(), s.end(), [](auto f)
-                                  { return Util::CheckFile_exits(f, true); }); // 未破解
-        };
+    check_by = CHECK_BY::CUSTOM;
+    check_by_target = []()
+    {
+      auto s = check_by_list{L"Agrd.pac", L"vic.pac", L"se.pac", L"mus.pac"};
+      return Util::SearchResourceString(L"AGE_System") // 已破解
+             || std::all_of(s.begin(), s.end(), [](auto f)
+                            { return Util::CheckFile_exits(f, true); }); // 未破解
     };
-    bool attach_function();
+  };
+  bool attach_function();
 };

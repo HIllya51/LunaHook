@@ -82,12 +82,9 @@ namespace
 		auto succ = NewHook(hp, "dmmdrc");
 
 		BYTE sig2[] = {
-			//clang-format off
 			0x68, 0x00, 0x02, 0x00, 0x00,
 			0xba, XX4,
-			0xe8, XX4,
-			//clang-format on
-		};
+			0xe8, XX4};
 		memcpy(sig2 + 6, (void *)(addr + 2), 4);
 		addr = MemDbg::findBytes(sig2, sizeof(sig2), addr, addr + 0x100);
 		if (addr)

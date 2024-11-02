@@ -433,7 +433,6 @@ namespace
     // WORDS WORTH【Windows10対応】
     // elf3只能拿到人名，跳过
     uint8_t bytes[] = {
-        //clang-format off
         0x72, 0x02,
         0x8b, 0x36,
         0x8a, 0x0e,
@@ -448,9 +447,7 @@ namespace
         0x76, 0x07,
         0x8d, 0x41, 0x20,
         0x3c, 0x0f,
-        0x77, XX,
-        //clang-format on
-    };
+        0x77, XX};
     ULONG addr = MemDbg::findBytes(bytes, sizeof(bytes), processStartAddress, processStopAddress);
     if (!addr)
       return false;
@@ -468,7 +465,6 @@ namespace
     // https://vndb.org/v3327
     // 女系家族～淫謀～
     BYTE sig[] = {
-        //clang-format off
         0X55,
         0x8b, 0xec, // mov ebp,esp
         0x51, 0x53, 0x56,
@@ -480,10 +476,7 @@ namespace
         0x80, 0xfa, 0x81, // cmp dl,0x81
         0x72, 0x05,
         0x80, 0xfa, 0x9f, // cmp dl,0x9f
-        0x76, XX,
-        //clang-format on
-    };
-    // clang-format on
+        0x76, XX};
     ULONG addr = MemDbg::findBytes(sig, sizeof(sig), processStartAddress, processStopAddress);
     if (!addr)
       return false;
@@ -605,31 +598,28 @@ namespace
   {
     // HAN4@49570:AI5WIN.exe
 
-    // clang-format off
-    BYTE sig[]={
-      0x33,0xc5,
-      0x89,0x45,0xfc,
-      0x8a,0x81,XX4,
+    BYTE sig[] = {
+        0x33, 0xc5,
+        0x89, 0x45, 0xfc,
+        0x8a, 0x81, XX4,
 
-      0x84,0xc0,
-      0x75,0x0e,
-      0x8b,0x81,XX4,
-      0x03,0x81,XX4,
-      0xeb,XX,
+        0x84, 0xc0,
+        0x75, 0x0e,
+        0x8b, 0x81, XX4,
+        0x03, 0x81, XX4,
+        0xeb, XX,
 
-      0x3c,0x01,
-      0x75,0x0e,
-      0x8b,0x81,XX4,
-      0x03,0x81,XX4,
-      0xeb,XX,
+        0x3c, 0x01,
+        0x75, 0x0e,
+        0x8b, 0x81, XX4,
+        0x03, 0x81, XX4,
+        0xeb, XX,
 
-      0x3c,0x02,
-      0x75,0x0e,
-      0x8b,0x81,XX4,
-      0x03,0x81,XX4,
-      0xeb,XX,
-    };
-    // clang-format on
+        0x3c, 0x02,
+        0x75, 0x0e,
+        0x8b, 0x81, XX4,
+        0x03, 0x81, XX4,
+        0xeb, XX};
     ULONG addr = MemDbg::findBytes(sig, sizeof(sig), processStartAddress, processStopAddress);
     if (!addr)
       return false;
@@ -666,7 +656,6 @@ namespace
         0x72, 0x10,
         0x3c, 0xef,
         0x77, 0x0c};
-    // clang-format on
     ULONG addr = MemDbg::findBytes(sig, sizeof(sig), processStartAddress, processStopAddress);
     if (!addr)
       return false;

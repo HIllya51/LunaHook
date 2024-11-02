@@ -489,7 +489,6 @@ namespace
       if (addrX == 0)
         break;
       lower = addrX + 0x100;
-      // clang-format off
 
       const uint8_t bytes[] = {
           0x55, 0x8b, 0xec,
@@ -499,11 +498,9 @@ namespace
           0x74, XX,
           0x8b, 0x4e, 0x14,
           0x83, 0xf9, 0x10,
-          0x72,0x04,
-          0x8b,0x06,
-          0xeb,0x02,
-          };
-      // clang-format on
+          0x72, 0x04,
+          0x8b, 0x06,
+          0xeb, 0x02};
 
       ULONG addr = reverseFindBytes(bytes, sizeof(bytes), addrX - 0x200, addrX);
       if (!addr)

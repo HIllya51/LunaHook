@@ -5,7 +5,6 @@
 bool RPGMaker::attach_function()
 {
   BYTE bytes2[] = {
-      //clang-format off
       0x81, 0xf9, 0xff, 0xff, 0xff, 0x7f,
       XX2,
       0xb9, 0xff, 0xff, 0xff, 0x7f,
@@ -17,9 +16,7 @@ bool RPGMaker::attach_function()
       0x2b, 0x45, 0x0c,
       0x3b, 0xd0,
       XX2,
-      0xb9, 0xff, 0xff, 0xff, 0x7f,
-      //clang-format on
-  };
+      0xb9, 0xff, 0xff, 0xff, 0x7f};
   auto addr = MemDbg::findBytes(bytes2, sizeof(bytes2), processStartAddress, processStopAddress);
   if (!addr)
     return false;

@@ -1,6 +1,4 @@
-#include"Alice.h"
-
-
+#include "Alice.h"
 
 /********************************************************************************************
 System40 hook:
@@ -31,48 +29,52 @@ System40 hook:
 
 static bool InsertAliceHook1(DWORD addr)
 {
-  if (!addr) {
+  if (!addr)
+  {
     ConsoleOutput("AliceHook1: failed");
     return false;
   }
   for (DWORD i = addr, s = addr; i < s + 0x100; i++)
-    if (*(BYTE *)i == 0xe8) { // Find the first relative call.
+    if (*(BYTE *)i == 0xe8)
+    { // Find the first relative call.
       DWORD j = i + 5 + *(DWORD *)(i + 1);
-        while (true) { // Find the first register push onto stack.
-          DWORD c = ::disasm((BYTE *)s);
-          if (c == 1)
-            break;
-          s += c;
-        }
-        DWORD c = *(BYTE *)s;
-        HookParam hp;
-        hp.address = j;
-        hp.offset=get_reg(regs::eax);
-        hp.split = -8 -((c & 0xf) << 2);
-        hp.type = USING_STRING|USING_SPLIT;
-        //if (s>j) hp.type^=USING_SPLIT;
-        ConsoleOutput("INSERT AliceHook1");
-        
-        //RegisterEngineType(ENGINE_SYS40);
-        return NewHook(hp, "System40");
+      while (true)
+      { // Find the first register push onto stack.
+        DWORD c = ::disasm((BYTE *)s);
+        if (c == 1)
+          break;
+        s += c;
       }
+      DWORD c = *(BYTE *)s;
+      HookParam hp;
+      hp.address = j;
+      hp.offset = get_reg(regs::eax);
+      hp.split = -8 - ((c & 0xf) << 2);
+      hp.type = USING_STRING | USING_SPLIT;
+      // if (s>j) hp.type^=USING_SPLIT;
+      ConsoleOutput("INSERT AliceHook1");
+
+      // RegisterEngineType(ENGINE_SYS40);
+      return NewHook(hp, "System40");
+    }
   ConsoleOutput("AliceHook1: failed");
   return false;
 }
 static bool InsertAliceHook2(DWORD addr)
 {
-  if (!addr) {
+  if (!addr)
+  {
     ConsoleOutput("AliceHook2: failed");
     return false;
   }
   HookParam hp;
   hp.address = addr;
-  hp.offset=get_reg(regs::eax);
+  hp.offset = get_reg(regs::eax);
   hp.index = 0x8;
   hp.type = DATA_INDIRECT;
   ConsoleOutput("INSERT AliceHook2");
   return NewHook(hp, "System40");
-  //RegisterEngineType(ENGINE_SYS40);
+  // RegisterEngineType(ENGINE_SYS40);
 }
 
 // jichi 8/23/2013 Move here from engine.cc
@@ -80,25 +82,27 @@ static bool InsertAliceHook2(DWORD addr)
 // jichi 5/13/2015: Looking for function entries in StoatSpriteEngine.dll
 bool InsertAliceHook()
 {
-  bool ok=false;
-  if (auto addr = Util::FindFunction("SP_TextDraw")) {
-    
-    ok|= InsertAliceHook1(addr);
+  bool ok = false;
+  if (auto addr = Util::FindFunction("SP_TextDraw"))
+  {
+
+    ok |= InsertAliceHook1(addr);
   }
-  //if (GetFunctionAddr("SP_SetTextSprite", &addr, &low, &high, 0) && addr) {
-	 // InsertAliceHook2(addr);
-	 // return true;
+  // if (GetFunctionAddr("SP_SetTextSprite", &addr, &low, &high, 0) && addr) {
+  //  InsertAliceHook2(addr);
+  //  return true;
   //}
-  if (auto addr = Util::FindFunction("SP_SetTextSprite")) { // Artikash 6/27/2018 not sure if this works
-    
-    ok|= InsertAliceHook2(addr);
+  if (auto addr = Util::FindFunction("SP_SetTextSprite"))
+  { // Artikash 6/27/2018 not sure if this works
+
+    ok |= InsertAliceHook2(addr);
   }
-  //ConsoleOutput("AliceHook: failed");
+  // ConsoleOutput("AliceHook: failed");
   return ok;
 }
 
+bool Alice::attach_function()
+{
 
-bool Alice::attach_function() {  
-     
-    return InsertAliceHook();
-} 
+  return InsertAliceHook();
+}

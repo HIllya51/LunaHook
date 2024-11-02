@@ -1,4 +1,4 @@
-#include"AB2Try.h"
+#include "AB2Try.h"
 
 /********************************************************************************************
 AkabeiSoft2Try hook:
@@ -18,65 +18,58 @@ AkabeiSoft2Try hook:
   So if you are in title screen this approach will fail.
 
 ********************************************************************************************/
-namespace { // unnamed
+namespace
+{ // unnamed
 
-typedef struct _NSTRING
-{
-  PVOID vfTable;
-  DWORD lenWithNull;
-  DWORD lenWithoutNull;
-  WCHAR str[1];
-} NSTRING;
+  typedef struct _NSTRING
+  {
+    PVOID vfTable;
+    DWORD lenWithNull;
+    DWORD lenWithoutNull;
+    WCHAR str[1];
+  } NSTRING;
 
-// qsort correctly identifies overflow.
-int cmp(const void * a, const void * b)
-{ return *(int*)a - *(int*)b; }
-
-void SpecialHookAB2Try(hook_stack* stack, HookParam *, uintptr_t *data, uintptr_t *split, size_t *len)
-{
-  //DWORD test = *(DWORD*)(esp_base - 0x10);
-  DWORD edx = stack->edx;
-  if (edx != 0)
-    return;
-
-  //NSTRING *s = *(NSTRING **)(esp_base - 8);
-  if (const NSTRING *s = (NSTRING *)stack->eax) {
-    *len = s->lenWithoutNull << 1;
-    *data = (DWORD)s->str;
-    //*split = 0;
-    *split = FIXED_SPLIT_VALUE; // 8/3/2014 jichi: change to single threads
+  // qsort correctly identifies overflow.
+  int cmp(const void *a, const void *b)
+  {
+    return *(int *)a - *(int *)b;
   }
-}
 
-bool FindCharacteristInstruction()
-{
-	const BYTE bytes[] = { 0x0F, 0xB7, 0x44, 0x50, 0x0C, 0x89 };
-	for (auto addr : Util::SearchMemory(bytes, sizeof(bytes), PAGE_EXECUTE_READWRITE))
-	{
-		//GROWL_DWORD(addr);
-		HookParam hp;
-		hp.address = addr;
-		hp.text_fun = SpecialHookAB2Try;
-		hp.type = USING_STRING | NO_CONTEXT | CODEC_UTF16;
-		ConsoleOutput("INSERT AB2Try");
-		//ConsoleOutput("Please adjust text speed to fastest/immediate.");
-		//RegisterEngineType(ENGINE_AB2T);
-		return NewHook(hp, "AB2Try");
-	}
-  return false;
-}
+  void SpecialHookAB2Try(hook_stack *stack, HookParam *, uintptr_t *data, uintptr_t *split, size_t *len)
+  {
+    // DWORD test = *(DWORD*)(esp_base - 0x10);
+    DWORD edx = stack->edx;
+    if (edx != 0)
+      return;
+
+    // NSTRING *s = *(NSTRING **)(esp_base - 8);
+    if (const NSTRING *s = (NSTRING *)stack->eax)
+    {
+      *len = s->lenWithoutNull << 1;
+      *data = (DWORD)s->str;
+      //*split = 0;
+      *split = FIXED_SPLIT_VALUE; // 8/3/2014 jichi: change to single threads
+    }
+  }
+
+  bool FindCharacteristInstruction()
+  {
+    const BYTE bytes[] = {0x0F, 0xB7, 0x44, 0x50, 0x0C, 0x89};
+    for (auto addr : Util::SearchMemory(bytes, sizeof(bytes), PAGE_EXECUTE_READWRITE))
+    {
+      // GROWL_DWORD(addr);
+      HookParam hp;
+      hp.address = addr;
+      hp.text_fun = SpecialHookAB2Try;
+      hp.type = USING_STRING | NO_CONTEXT | CODEC_UTF16;
+      // ConsoleOutput("Please adjust text speed to fastest/immediate.");
+      // RegisterEngineType(ENGINE_AB2T);
+      return NewHook(hp, "AB2Try");
+    }
+    return false;
+  }
 } // unnamed namespace
-bool InsertAB2TryHook()
+bool AB2Try::attach_function()
 {
-	bool ret = FindCharacteristInstruction();
-  if (ret)
-    ConsoleOutput("AB2Try: found characteristic sequence");
-  else
-    ConsoleOutput("AB2Try: cannot find characteristic sequence. Make sure you have start the game and have seen some text on the screen.");
-  return ret;
+  return FindCharacteristInstruction();
 }
-
-
-bool AB2Try::attach_function() { 
-    return InsertAB2TryHook();
-} 

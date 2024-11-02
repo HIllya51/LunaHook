@@ -210,13 +210,10 @@ bool Reallive::attach_function()
 bool avg3216dattach_function()
 {
   BYTE pattern1[] = {
-      //clang-format off
       0x3c, 0x81, XX2,
       0x3c, 0x9f, XX2,
       0x3c, 0xe0, XX2,
-      0x3c, 0xfc, XX2,
-      //clang-format on
-  };
+      0x3c, 0xfc, XX2};
   BYTE pattern2[] = {
       0x8b, 0x75, 0x08,
       0x8a, 0x06,
@@ -245,7 +242,6 @@ bool avg3216dattach_function2()
   // https://vndb.org/v12860
   // effect～悪魔の仔～
   BYTE pattern2[] = {
-      //clang-format off
       0x80, 0xf9, 0x81,
       0x72, 0x05,
       0x80, 0xf9, 0x9f,
@@ -253,9 +249,7 @@ bool avg3216dattach_function2()
       0x80, 0xf9, 0xe0,
       0x72, 0x05,
       0x80, 0xf9, 0xfc,
-      0x76, 0x0d,
-      //clang-format on
-  };
+      0x76, 0x0d};
   auto addr = MemDbg::findBytes(pattern2, sizeof(pattern2), processStartAddress, processStopAddress);
   if (addr == 0)
     return false;

@@ -111,7 +111,6 @@ namespace
     auto [s, e] = Util::QueryModuleLimits(TextXtra);
     // Text Asset.x32->this function
     const BYTE bytes[] = {
-        //clang-format off
         0x55, 0x8b, 0xec,
         0x56,
         0x8b, 0x75, 0x08,
@@ -126,9 +125,7 @@ namespace
         0xff, 0x70, 0x24,
         0xe8, XX4,
         0x66, 0x85, 0xc0,
-        0x74, XX,
-        //clang-format on
-    };
+        0x74, XX};
     auto addr = MemDbg::findBytes(bytes, sizeof(bytes), s, e);
     if (addr == 0)
       return false;

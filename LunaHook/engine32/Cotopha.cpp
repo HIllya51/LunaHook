@@ -727,10 +727,10 @@ namespace
 {
   bool h5()
   {
-    //狙われた優等生 身代わりの代償
+    // 狙われた優等生 身代わりの代償
     const BYTE bytes[] = {
         //  if ( v90 && ((v40 = *(_WORD *)(v94 + 28), v40 >= 0x41u && v40 <= 0x5Au) || v40 >= 0x61u && v40 <= 0x7Au) )
-        //clang-format off
+
         0x8b, 0x45, XX,
         0x0f, 0xb7, 0x50, XX,
 
@@ -754,9 +754,7 @@ namespace
         0x66, 0x3b, 0xc2,
         0x1b, 0xc0,
         0x40,
-        0x85, 0xc8,
-
-        //clang-format on
+        0x85, 0xc8
 
     };
 
