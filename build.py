@@ -35,6 +35,8 @@ vcltlFileName = "VC-LTL-5.0.9-Binary.7z"
 
 
 print(sys.version)
+print(__file__)
+print(rootDir)
 def installVCLTL():
     os.chdir(rootDir)
     if os.path.exists("temp"):
