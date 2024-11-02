@@ -4,8 +4,16 @@ on:
   workflow_dispatch:
 
 jobs:
+  loadversion:
+    runs-on: windows-latest
+    outputs:
+      version: ${{ steps.loadversion.outputs.version }}
+    steps:
+      - id: loadversion
+        run: python build.py loadversion | Out-File -FilePath $Env:GITHUB_OUTPUT -Encoding utf8 -Append
   build_xp:
     runs-on: windows-2019
+    needs: loadversion
     strategy:
       matrix:
         language: [Chinese,English,Russian,TradChinese]
@@ -20,12 +28,6 @@ jobs:
         uses: GuillaumeFalourd/setup-windows10-sdk-action@v2
         with:
           sdk-version: 22621
-      - name: Install Python 3.11
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-          architecture: x64
-
       - name: Run build script
         run: python build.py build ${{ matrix.language }} winxp
 
@@ -41,19 +43,17 @@ jobs:
         with:
           name: ${{ matrix.language }}_winxp
           path: builds/Release_${{ matrix.language }}_winxp.zip
-      - name: loadversion
-        id: loadversion
-        run: python build.py loadversion | Out-File -FilePath $Env:GITHUB_OUTPUT -Encoding utf8 -Append
       - name: Release LunaHook
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.loadversion.outputs.version }}
+          tag_name: ${{ needs.loadversion.outputs.version }}
           files: builds/Release_${{ matrix.language }}_winxp.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   
   build_plugin:
     runs-on: windows-latest
+    needs: [loadversion]
     strategy:
       matrix:
         include:
@@ -99,13 +99,10 @@ jobs:
         with:
           name: ${{ matrix.target }}
           path: builds/${{ matrix.target }}.zip
-      - name: loadversion
-        id: loadversion
-        run: python build.py loadversion | Out-File -FilePath $Env:GITHUB_OUTPUT -Encoding utf8 -Append
       - name: Release LunaHook
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.loadversion.outputs.version }}
+          tag_name: ${{ needs.loadversion.outputs.version }}
           files: builds/${{ matrix.target }}.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -126,11 +123,6 @@ jobs:
         uses: GuillaumeFalourd/setup-windows10-sdk-action@v2
         with:
           sdk-version: 22621
-      - name: Install Python 3.11
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-          architecture: x64
       - name: Run build script
         run: python build.py build ${{ matrix.language }} ${{matrix.bits}}
 
@@ -142,30 +134,20 @@ jobs:
   
   release:
     runs-on: windows-latest
-    needs: build
+    needs: [build, loadversion]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Install Python 3.11
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-          architecture: x64
-      
       - name: Restore artifacts
         uses: actions/download-artifact@v4
         with:
             path: build
-      - name: loadversion
-        id: loadversion
-        run: python build.py loadversion | Out-File -FilePath $Env:GITHUB_OUTPUT -Encoding utf8 -Append
-      
       - name: Pack
         run: python build.py merge
       - name: Release LunaHook
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.loadversion.outputs.version }}
+          tag_name: ${{ needs.loadversion.outputs.version }}
           files: builds/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
