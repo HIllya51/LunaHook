@@ -2,6 +2,8 @@ import os, sys, re, shutil
 import subprocess
 
 rootDir = os.path.dirname(__file__)
+if not rootDir:
+    rootDir = os.path.abspath(".")
 if len(sys.argv) and sys.argv[1] == "loadversion":
     os.chdir(rootDir)
     with open("CMakeLists.txt", "r", encoding="utf8") as ff:
@@ -37,6 +39,8 @@ vcltlFileName = "VC-LTL-5.0.9-Binary.7z"
 print(sys.version)
 print(__file__)
 print(rootDir)
+
+
 def installVCLTL():
     os.chdir(rootDir)
     if os.path.exists("temp"):
