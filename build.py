@@ -1,4 +1,4 @@
-import os, sys, re
+import os, sys, re, shutil
 import subprocess
 
 rootDir = os.path.dirname(__file__)
@@ -25,18 +25,22 @@ def installVCLTL():
     subprocess.run("cmd /c temp\\VC-LTL5\\Install.cmd")
 
 
-def build_langx(lang):
+def build_langx(lang, bit):
     with open("do.bat", "w") as ff:
-        ff.write(
-            rf"""
+        if bit == "32":
+            ff.write(
+                rf"""
 cmake -DBUILD_PLUGIN=OFF -DLANGUAGE={lang} ../CMakeLists.txt -G "Visual Studio 17 2022" -A win32 -T host=x86 -B ../build/x86_{lang}
 cmake --build ../build/x86_{lang} --config Release --target ALL_BUILD -j 14
-
+"""
+            )
+        elif bit == "64":
+            ff.write(
+                rf"""
 cmake -DBUILD_PLUGIN=OFF -DLANGUAGE={lang} ../CMakeLists.txt -G "Visual Studio 17 2022" -A x64 -T host=x64 -B ../build/x64_{lang}
 cmake --build ../build/x64_{lang} --config Release --target ALL_BUILD -j 14
-
 """
-        )
+            )
     os.system(f"cmd /c do.bat")
 
 
@@ -55,7 +59,13 @@ call dobuildxp.bat
 
 if sys.argv[1] == "pack":
     os.chdir(os.path.join(rootDir, "scripts"))
-    os.system(f"python pack.py pack")
+    sys.path.append(".")
+
+    from pack import dopack
+
+    dopack(sys.argv[2])
+elif sys.argv[1]=='release':
+    pass
 else:
     installVCLTL()
     os.chdir(os.path.join(rootDir, "scripts"))
@@ -63,19 +73,10 @@ else:
         os.system(f"cmd /c buildplugin32.bat")
     elif sys.argv[1] == "plg64":
         os.system(f"cmd /c buildplugin64.bat")
-    elif sys.argv[1] == "Release_English":
-        build_langx("English")
-    elif sys.argv[1] == "Release_Chinese":
-        build_langx("Chinese")
-    elif sys.argv[1] == "Release_Russian":
-        build_langx("Russian")
-    elif sys.argv[1] == "Release_TradChinese":
-        build_langx("TradChinese")
-    elif sys.argv[1] == "Release_English_winxp":
-        build_langx_xp("English")
-    elif sys.argv[1] == "Release_Chinese_winxp":
-        build_langx_xp("Chinese")
-    elif sys.argv[1] == "Release_Russian_winxp":
-        build_langx_xp("Russian")
-    elif sys.argv[1] == "Release_TradChinese_winxp":
-        build_langx_xp("TradChinese")
+    elif sys.argv[1] == "build":
+        lang = sys.argv[2]
+        bit = sys.argv[3]
+        if bit == "winxp":
+            build_langx_xp(lang)
+        else:
+            build_langx(lang, bit)
