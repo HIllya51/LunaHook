@@ -140,7 +140,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.language }}
+          name: ${{ matrix.language }}_${{matrix.bits}}
           path: builds/Release_${{ matrix.language }}_${{matrix.bits}}.zip
   
   release:
