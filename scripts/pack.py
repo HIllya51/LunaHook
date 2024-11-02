@@ -1,5 +1,11 @@
 import os, shutil, sys
 
+def listdir():
+    for f in os.walk("."):
+        _dir, _, _fs = f
+        for _f in _fs:
+            print(os.path.abspath(os.path.join(_dir, _f)))
+listdir()
 os.chdir(os.path.dirname(__file__))
 
 
