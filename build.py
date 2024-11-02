@@ -1,6 +1,7 @@
 import os, sys, re, shutil
 import subprocess
 
+print(sys.version)
 rootDir = os.path.dirname(__file__)
 if len(sys.argv) and sys.argv[1] == "loadversion":
     os.chdir(rootDir)
