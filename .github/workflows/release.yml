@@ -161,7 +161,7 @@ jobs:
         run: python build.py loadversion | Out-File -FilePath $Env:GITHUB_OUTPUT -Encoding utf8 -Append
       
       - name: Pack
-        run: python scripts/pack.py
+        run: python build.py merge
       - name: Release LunaHook
         uses: softprops/action-gh-release@v2
         with:

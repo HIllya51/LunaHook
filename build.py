@@ -11,6 +11,19 @@ if len(sys.argv) and sys.argv[1] == "loadversion":
         versionstring = f"v{version_major}.{version_minor}.{version_patch}"
         print("version=" + versionstring)
         exit()
+if len(sys.argv) and sys.argv[1] == "merge":
+    os.mkdir("builds")
+    language = ["Chinese", "English", "Russian", "TradChinese"]
+    bits = [32, 64]
+    for lang in language:
+        for bit in bits:
+            shutil.move(f"build/{lang}_{bit}/Release_{lang}", f"build/Release_{lang}")
+
+        targetdir = f"build/Release_{lang}"
+        target = f"builds/Release_{lang}.zip"
+        os.system(
+            rf'"C:\Program Files\7-Zip\7z.exe" a -m0=Deflate -mx9 {target} {targetdir}'
+        )
 vcltlFile = "https://github.com/Chuyu-Team/VC-LTL5/releases/download/v5.0.9/VC-LTL-5.0.9-Binary.7z"
 vcltlFileName = "VC-LTL-5.0.9-Binary.7z"
 
