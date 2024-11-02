@@ -18,7 +18,11 @@ if len(sys.argv) and sys.argv[1] == "merge":
     bits = [32, 64]
     for lang in language:
         for bit in bits:
-            shutil.move(f"build/{lang}_{bit}/Release_{lang}", f"../build/Release_{lang}")
+            shutil.copytree(
+                f"build/{lang}_{bit}/Release_{lang}",
+                f"../build/Release_{lang}",
+                dirs_exist_ok=True,
+            )
 
         targetdir = f"../build/Release_{lang}"
         target = f"builds/Release_{lang}.zip"
