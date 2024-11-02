@@ -1,5 +1,7 @@
 import os, shutil, sys
 
+os.chdir(os.path.dirname(__file__))
+
 
 def dopack(fname=None):
     for f in os.listdir("../builds"):

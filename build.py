@@ -57,26 +57,16 @@ call dobuildxp.bat
     os.system(f"cmd /c do.bat")
 
 
-if sys.argv[1] == "pack":
-    os.chdir(os.path.join(rootDir, "scripts"))
-    sys.path.append(".")
-
-    from pack import dopack
-
-    dopack(sys.argv[2])
-elif sys.argv[1]=='release':
-    pass
-else:
-    installVCLTL()
-    os.chdir(os.path.join(rootDir, "scripts"))
-    if sys.argv[1] == "plg32":
-        os.system(f"cmd /c buildplugin32.bat")
-    elif sys.argv[1] == "plg64":
-        os.system(f"cmd /c buildplugin64.bat")
-    elif sys.argv[1] == "build":
-        lang = sys.argv[2]
-        bit = sys.argv[3]
-        if bit == "winxp":
-            build_langx_xp(lang)
-        else:
-            build_langx(lang, bit)
+installVCLTL()
+os.chdir(os.path.join(rootDir, "scripts"))
+if sys.argv[1] == "plg32":
+    os.system(f"cmd /c buildplugin32.bat")
+elif sys.argv[1] == "plg64":
+    os.system(f"cmd /c buildplugin64.bat")
+elif sys.argv[1] == "build":
+    lang = sys.argv[2]
+    bit = sys.argv[3]
+    if bit == "winxp":
+        build_langx_xp(lang)
+    else:
+        build_langx(lang, bit)
