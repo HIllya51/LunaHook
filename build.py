@@ -13,7 +13,7 @@ if len(sys.argv) and sys.argv[1] == "loadversion":
         exit()
 if len(sys.argv) and sys.argv[1] == "merge":
     os.mkdir("../build")
-    os.mkdir("../builds")
+    os.mkdir("builds")
     language = ["Chinese", "English", "Russian", "TradChinese"]
     bits = [32, 64]
     for lang in language:
@@ -21,7 +21,7 @@ if len(sys.argv) and sys.argv[1] == "merge":
             shutil.move(f"build/{lang}_{bit}/Release_{lang}", f"../build/Release_{lang}")
 
         targetdir = f"../build/Release_{lang}"
-        target = f"../builds/Release_{lang}.zip"
+        target = f"builds/Release_{lang}.zip"
         os.system(
             rf'"C:\Program Files\7-Zip\7z.exe" a -m0=Deflate -mx9 {target} {targetdir}'
         )
