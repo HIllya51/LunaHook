@@ -1,7 +1,6 @@
 import os, sys, re, shutil
 import subprocess
 
-print(sys.version)
 rootDir = os.path.dirname(__file__)
 if len(sys.argv) and sys.argv[1] == "loadversion":
     os.chdir(rootDir)
@@ -35,6 +34,7 @@ vcltlFile = "https://github.com/Chuyu-Team/VC-LTL5/releases/download/v5.0.9/VC-L
 vcltlFileName = "VC-LTL-5.0.9-Binary.7z"
 
 
+print(sys.version)
 def installVCLTL():
     os.chdir(rootDir)
     if os.path.exists("temp"):
