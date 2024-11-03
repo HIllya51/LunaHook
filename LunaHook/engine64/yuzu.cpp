@@ -1150,6 +1150,15 @@ namespace
         s = std::regex_replace(s, std::regex(R"(\|(.*?)\|(.*?)\|)"), "$1");
         return write_string_overwrite(data, len, s);
     }
+    bool F01005A401D766000_2(void *data, size_t *len, HookParam *hp)
+    {
+        auto s = std::string((char *)data, *len);
+        s = std::regex_replace(s, std::regex(R"((#Ruby\[)([^,]+).([^\]]+).)"), "$2");
+        s = std::regex_replace(s, std::regex(R"((\\n)+)"), "");
+        s = std::regex_replace(s, std::regex(R"((#[A-Za-z]+\[(\d*[.])?\d+\])+)"), "");
+        s = std::regex_replace(s, std::regex(R"((<color=.*>(.*)<\/color>)"), "$1");
+        return write_string_overwrite(data, len, s);
+    }
     bool F010027300A660000(void *data, size_t *len, HookParam *hp)
     {
         auto s = std::string((char *)data, *len);
@@ -2159,6 +2168,18 @@ namespace
         auto s = std::wstring((wchar_t *)data, *len / 2);
         s = std::regex_replace(s, std::wregex(LR"(\r\n)"), L"");
         s = std::regex_replace(s, std::wregex(LR"(\u3000)"), L"");
+        return write_string_overwrite(data, len, s);
+    }
+    template <bool choice>
+    bool F0100A250191E8000(void *data, size_t *len, HookParam *hp)
+    {
+        auto s = std::string((char *)data, *len);
+        strReplace(s, "\n", "");
+        s = std::regex_replace(s, std::regex(R"(\\d$|^\@[a-z]+|#.*?#|\$)"), "");
+        strReplace(s, "\x81\x40", "");
+        s = std::regex_replace(s, std::regex(R"(@w|\\c)"), "");
+        if (choice)
+            s = std::regex_replace(s, std::regex(R"(, ?\w+)"), "");
         return write_string_overwrite(data, len, s);
     }
     bool F0100B1F0123B6000(void *data, size_t *len, HookParam *hp)
@@ -3190,11 +3211,16 @@ namespace
             // 月影の鎖～狂爛モラトリアム～
             {0x2170B4, {0, 1, 0, 0, F010076501DAEA000, "010076501DAEA000", "1.0.0"}}, // text
             {0x2179A8, {0, 2, 0, 0, 0, "010076501DAEA000", "1.0.0"}},                 // name+text
+            {0x217950, {0, 0, 0, 0, F0100A250191E8000<false>, "010076501DAEA000", "1.0.0"}},
+            {0x217f64, {0, 0, 0, 0, F0100A250191E8000<true>, "010076501DAEA000", "1.0.0"}},
             // 神々の悪戯 Unite Edition
             {0x812BFF40, {CODEC_UTF16, 1, -2, 0, F01006530151F0000, "01006530151F0000", "1.0.0"}}, // 只有第一行
             {0x812BCEB8, {CODEC_UTF16, 1, -2, 0, F01006530151F0000, "01006530151F0000", "1.0.0"}}, // 只有2&3行
             // 新宿羅生門 ―Rashomon of Shinjuku―
             {0x80062158, {CODEC_UTF8, 0, 0, 0, F01005A401D766000, "01005A401D766000", "1.0.0"}},
+            {0x80062a74, {CODEC_UTF8, 0, 0, 0, F01005A401D766000_2, "01005A401D766000", "1.0.0"}},
+            {0x800629f4, {CODEC_UTF8, 0, 0, 0, F01005A401D766000_2, "01005A401D766000", "1.0.0"}},
+            {0x800ea870, {CODEC_UTF8, 1, 0, 0, F01005A401D766000_2, "01005A401D766000", "1.0.0"}},
             // 夏空のモノローグ ～Another Memory～
             {0x8006007c, {0, 0, 0, 0, F0100FC2019346000, "01000E701DAE8000", "1.0.0"}},
             {0x800578c4, {0, 1, 0, 0, F0100FC2019346000, "01000E701DAE8000", "1.0.0"}},
@@ -3242,7 +3268,9 @@ namespace
             // アサツグトリ
             {0x8012C824, {CODEC_UTF8, 1, 0, 0, F010060301588A000, "010060301588A000", "1.0.0"}},
             {0x80095370, {CODEC_UTF8, 4, 0, 0, F010060301588A000, "010060301588A000", "1.0.2"}}, // text only
-
+            // Money Parasite ~Usotsuki na Onna~
+            {0x2169ac, {0, 0, 0, 0, F0100A250191E8000<false>, "0100A250191E8000", "1.0.0"}},
+            {0x217030, {0, 0, 0, 0, F0100A250191E8000<true>, "0100A250191E8000", "1.0.0"}},
         };
         return 1;
     }();
