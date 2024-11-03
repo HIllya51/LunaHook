@@ -164,7 +164,19 @@ C_LUNA_API void Luna_embedcallback(DWORD pid, LPCWSTR text, LPCWSTR trans)
 
 C_LUNA_API void Luna_SyncThread(ThreadParam tp, bool sync)
 {
-    auto sm = Host::GetCommonSharedMem(tp.processId);
-    if (!sm)
-        return;
+    // 必须放到线程里去异步做，不然GetThread死锁
+    std::thread([=]()
+                {
+    try
+    {
+        auto &&t=Host::GetThread(tp);
+        if (sync)
+            TextThread::syncThreads->insert(&t);
+        else
+            TextThread::syncThreads->erase(&t);
+    }
+    catch (...)
+    {
+    } })
+        .detach();
 }

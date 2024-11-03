@@ -10,6 +10,7 @@ public:
 	inline static int flushDelay = 100;
 	inline static int maxBufferSize = 3000;
 	inline static int maxHistorySize = 10'000'000;
+	inline static Synchronized<std::set<TextThread *>> syncThreads;
 
 	TextThread(ThreadParam tp, HookParam hp, std::optional<std::wstring> name = {});
 
@@ -41,4 +42,5 @@ private:
 		void operator()(HANDLE h) { DeleteTimerQueueTimer(NULL, h, INVALID_HANDLE_VALUE); }
 	};
 	AutoHandle<TimerDeleter> timer = NULL;
+	void UpdateFlushTime(bool recursive = true);
 };

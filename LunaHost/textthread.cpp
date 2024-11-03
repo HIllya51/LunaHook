@@ -68,7 +68,7 @@ void TextThread::Push(BYTE *data, int length)
 	else
 		Host::AddConsoleOutput(INVALID_CODEPAGE);
 
-	lastPushTime = GetTickCount64();
+	UpdateFlushTime();
 
 	if (filterRepetition)
 	{
@@ -89,12 +89,26 @@ void TextThread::Push(BYTE *data, int length)
 		buffer.clear();
 	}
 }
-
+void TextThread::UpdateFlushTime(bool recursive)
+{
+	lastPushTime = GetTickCount64();
+	if (!recursive)
+		return;
+	auto&& ths = syncThreads.Acquire().contents;
+	if (ths.find(this) == ths.end())
+		return;
+	for (auto t : ths)
+	{
+		if (t == this)
+			continue;
+		t->UpdateFlushTime(false);
+	}
+}
 void TextThread::Push(const wchar_t *data)
 {
 	std::scoped_lock lock(bufferMutex);
 	// not sure if this should filter repetition
-	lastPushTime = GetTickCount64();
+	UpdateFlushTime();
 	buffer += data;
 }
 

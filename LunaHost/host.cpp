@@ -61,6 +61,13 @@ namespace
 				threadsToRemove.push_back(&thread);
 		for (auto thread : threadsToRemove)
 		{
+			try
+			{
+				TextThread::syncThreads->erase(thread);
+			}
+			catch (...)
+			{
+			}
 			OnDestroy(*thread);
 			textThreadsByParams->erase(thread->tp);
 		}
