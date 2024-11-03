@@ -18,7 +18,7 @@ void cast_back(const HookParam &hp, void *data, size_t *len, const std::wstring 
     }
     else
     {
-      astr = WideStringToString(trans, hp.codepage ? hp.codepage : ((hp.type & CODEC_UTF8) ? CP_UTF8 : embedsharedmem->codepage));
+      astr = WideStringToString(trans, hp.codepage ? hp.codepage : ((hp.type & CODEC_UTF8) ? CP_UTF8 : commonsharedmem->codepage));
     }
     write_string_overwrite(data, len, astr);
   }
@@ -158,7 +158,7 @@ static std::wstring insertSpacesAfterUnencodableSTD(const std::wstring &text, Ho
   for (const wchar_t &c : text)
   {
     ret.push_back(c);
-    if (!charEncodableSTD(c, hp.codepage ? hp.codepage : embedsharedmem->codepage))
+    if (!charEncodableSTD(c, hp.codepage ? hp.codepage : commonsharedmem->codepage))
       ret.push_back(L' ');
   }
   return ret;
@@ -178,15 +178,16 @@ bool isPauseKeyPressed()
 std::unordered_map<UINT64, std::wstring> translatecache;
 bool check_is_thread_selected(const ThreadParam &tp)
 {
-  for (int i = 0; i < 10; i++)
-    if (embedsharedmem->use[i])
-      if ((embedsharedmem->addr[i] == tp.addr) && (embedsharedmem->ctx1[i] == tp.ctx) && (embedsharedmem->ctx2[i] == tp.ctx2))
-        return true;
+  for (int i = 0; i < ARRAYSIZE(commonsharedmem->embedtps); i++)
+  {
+    if (commonsharedmem->embedtps[i].use && (commonsharedmem->embedtps[i].tp == tp))
+      return true;
+  }
   return false;
 }
 bool check_embed_able(const ThreadParam &tp)
 {
-  return host_connected && check_is_thread_selected(tp) && ((isPauseKeyPressed() == false) ? true : !embedsharedmem->fastskipignore);
+  return host_connected && check_is_thread_selected(tp) && ((isPauseKeyPressed() == false) ? true : !commonsharedmem->fastskipignore);
 }
 bool waitforevent(UINT32 timems, const ThreadParam &tp, const std::wstring &origin)
 {
@@ -238,7 +239,7 @@ UINT64 texthash(void *data, size_t len)
 }
 bool checktranslatedok(void *data, size_t len)
 {
-  ZeroMemory(embedsharedmem->text, sizeof(embedsharedmem->text)); // clear trans before call
+  ZeroMemory(commonsharedmem->text, sizeof(commonsharedmem->text)); // clear trans before call
   if (len > 1000)
     return true;
   return (translatecache.find(texthash(data, len)) != translatecache.end());
@@ -246,7 +247,7 @@ bool checktranslatedok(void *data, size_t len)
 bool TextHook::waitfornotify(TextOutput_T *buffer, void *data, size_t *len, ThreadParam tp)
 {
   std::wstring origin;
-  if (auto t = commonparsestring(data, *len, &hp, embedsharedmem->codepage))
+  if (auto t = commonparsestring(data, *len, &hp, commonsharedmem->codepage))
     origin = t.value();
   else
     return false;
@@ -259,9 +260,9 @@ bool TextHook::waitfornotify(TextOutput_T *buffer, void *data, size_t *len, Thre
   }
   else
   {
-    if (waitforevent(embedsharedmem->waittime, tp, origin) == false)
+    if (waitforevent(commonsharedmem->waittime, tp, origin) == false)
       return false;
-    translate = embedsharedmem->text;
+    translate = commonsharedmem->text;
     if ((translate.size() == 0))
       return false;
     translatecache.insert(std::make_pair(hash, translate));
@@ -269,7 +270,7 @@ bool TextHook::waitfornotify(TextOutput_T *buffer, void *data, size_t *len, Thre
   if (hp.newlineseperator)
     strReplace(translate, L"\n", hp.newlineseperator);
   translate = adjustSpacesSTD(translate, hp);
-  if (embedsharedmem->keeprawtext)
+  if (commonsharedmem->keeprawtext)
     translate = origin + L" " + translate;
   solvefont(hp);
   cast_back(hp, data, len, translate, false);

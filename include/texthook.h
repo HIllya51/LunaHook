@@ -12,12 +12,8 @@ inline std::atomic<bool (*)(LPVOID addr, hook_stack *stack)> trigger_fun = nullp
 
 // jichi 9/25/2013: This class will be used by NtMapViewOfSectionfor
 // interprocedure communication, where constructor/destructor will NOT work.
-struct EmbedSharedMem
+struct CommonSharedMem
 {
-	uint64_t use[10];
-	uint64_t addr[10];
-	uint64_t ctx1[10];
-	uint64_t ctx2[10];
 	UINT32 waittime;
 	UINT32 keeprawtext;
 	uint64_t hash;
@@ -27,6 +23,11 @@ struct EmbedSharedMem
 	wchar_t fontFamily[100];
 	UINT codepage;
 	bool fastskipignore;
+	struct
+	{
+		bool use;
+		ThreadParam tp;
+	} embedtps[32];
 };
 class TextHook
 {

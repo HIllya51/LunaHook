@@ -1422,7 +1422,7 @@ namespace Private {
   bool hookBefore(hook_stack*s,void* data1, size_t* len,uintptr_t*role)
   {
     static std::wstring fontFace_;
-    auto fontFamily=std::wstring(embedsharedmem->fontFamily);
+    auto fontFamily=std::wstring(commonsharedmem->fontFamily);
      
         if (!fontFamily.empty()) {
           if (fontFace_ != fontFamily)

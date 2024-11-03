@@ -109,9 +109,9 @@ namespace
   void customizeLogFontA(LOGFONTA *lplf)
   {
 
-    if (embedsharedmem->fontCharSetEnabled)
+    if (commonsharedmem->fontCharSetEnabled)
     {
-      auto charSet = embedsharedmem->fontCharSet;
+      auto charSet = commonsharedmem->fontCharSet;
       if (!charSet)
         charSet = systemCharSet();
       if (charSet)
@@ -131,7 +131,7 @@ namespace
   {
     customizeLogFontA((LOGFONTA *)lplf);
 
-    std::wstring s = embedsharedmem->fontFamily;
+    std::wstring s = commonsharedmem->fontFamily;
     if (!s.empty())
     {
       lplf->lfFaceName[s.size()] = 0;
@@ -217,7 +217,7 @@ namespace
   }
   bool isFontCustomized()
   {
-    return embedsharedmem->fontCharSetEnabled || wcslen(embedsharedmem->fontFamily);
+    return commonsharedmem->fontCharSetEnabled || wcslen(commonsharedmem->fontFamily);
   }
   DCFontSwitcher::DCFontSwitcher(HDC hdc)
       : hdc_(hdc), oldFont_(nullptr), newFont_(nullptr), newfontname(L"")
@@ -247,18 +247,18 @@ namespace
 
     customizeLogFontW(&lf);
 
-    if (std::wstring(embedsharedmem->fontFamily).empty())
+    if (std::wstring(commonsharedmem->fontFamily).empty())
       ::GetTextFaceW(hdc_, LF_FACESIZE, lf.lfFaceName);
     else
     {
-      wcscpy(lf.lfFaceName, embedsharedmem->fontFamily);
+      wcscpy(lf.lfFaceName, commonsharedmem->fontFamily);
     }
     newFont_ = fonts_.get(lf);
-    if ((!newFont_) || (newfontname != std::wstring(embedsharedmem->fontFamily)))
+    if ((!newFont_) || (newfontname != std::wstring(commonsharedmem->fontFamily)))
     {
       newFont_ = Hijack::oldCreateFontIndirectW(&lf);
       fonts_.add(newFont_, lf);
-      newfontname = std::wstring(embedsharedmem->fontFamily);
+      newfontname = std::wstring(commonsharedmem->fontFamily);
     }
     oldFont_ = (HFONT)SelectObject(hdc_, newFont_);
   }
@@ -275,7 +275,7 @@ HFONT WINAPI Hijack::newCreateFontIndirectA(const LOGFONTA *lplf)
   // DOUT("width:" << lplf->lfWidth << ", height:" << lplf->lfHeight << ", weight:" << lplf->lfWeight);
   // if (auto p = HijackHelper::instance()) {
   // auto s = p->settings();
-  std::wstring fontFamily = embedsharedmem->fontFamily;
+  std::wstring fontFamily = commonsharedmem->fontFamily;
   if (lplf && isFontCustomized())
   {
     union
@@ -324,9 +324,9 @@ HFONT WINAPI Hijack::newCreateFontA(int nHeight, int nWidth, int nEscapement, in
 
   if (isFontCustomized())
   {
-    if (embedsharedmem->fontCharSetEnabled)
+    if (commonsharedmem->fontCharSetEnabled)
     {
-      auto charSet = embedsharedmem->fontCharSet;
+      auto charSet = commonsharedmem->fontCharSet;
       if (!charSet)
         charSet = systemCharSet();
       if (charSet)
@@ -340,7 +340,7 @@ HFONT WINAPI Hijack::newCreateFontA(int nHeight, int nWidth, int nEscapement, in
       nHeight *= s->fontScale;
     }
     */
-    std::wstring fontFamily = embedsharedmem->fontFamily;
+    std::wstring fontFamily = commonsharedmem->fontFamily;
     if (!fontFamily.empty())
     {
       if (all_ascii(fontFamily.c_str(), fontFamily.size()))
@@ -363,9 +363,9 @@ HFONT WINAPI Hijack::newCreateFontW(int nHeight, int nWidth, int nEscapement, in
 
   if (isFontCustomized())
   {
-    if (embedsharedmem->fontCharSetEnabled)
+    if (commonsharedmem->fontCharSetEnabled)
     {
-      auto charSet = embedsharedmem->fontCharSet;
+      auto charSet = commonsharedmem->fontCharSet;
       if (!charSet)
         charSet = systemCharSet();
       if (charSet)
@@ -378,8 +378,8 @@ HFONT WINAPI Hijack::newCreateFontW(int nHeight, int nWidth, int nEscapement, in
       nWidth *= s->fontScale;
       nHeight *= s->fontScale;
     }*/
-    if (!std::wstring(embedsharedmem->fontFamily).empty())
-      lpszFace = (LPCWSTR)embedsharedmem;
+    if (!std::wstring(commonsharedmem->fontFamily).empty())
+      lpszFace = (LPCWSTR)commonsharedmem;
   }
   return oldCreateFontW(CREATE_FONT_ARGS);
 }

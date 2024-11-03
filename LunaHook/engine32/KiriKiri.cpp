@@ -1,4 +1,4 @@
-#include"KiriKiri.h"
+#include "KiriKiri.h"
 
 /********************************************************************************************
 KiriKiri hook:
@@ -20,7 +20,7 @@ KiriKiri hook:
   string. After the loop EBX will point to the end of the string. So EBX-2 is the last
   char and we insert hook here to extract it.
 ********************************************************************************************/
-#if 0 // jichi 11/12/2013: not used
+#if 0  // jichi 11/12/2013: not used
 static void SpecialHookKiriKiri(hook_stack* stack,  HookParam *, uintptr_t *data, uintptr_t *split, size_t*len)
 {
   DWORD p1 =  *(DWORD *)(esp_base - 0x14),
@@ -41,74 +41,76 @@ static void SpecialHookKiriKiri(hook_stack* stack,  HookParam *, uintptr_t *data
 }
 #endif // 0
 
-namespace kirikiri{
+namespace kirikiri
+{
 #pragma pack(push, 4)
 #define TJS_VS_SHORT_LEN 21
-typedef int tjs_int;    /* at least 32bits */
-typedef wchar_t tjs_char;
-typedef uint32_t tjs_uint32;
+  typedef int tjs_int; /* at least 32bits */
+  typedef wchar_t tjs_char;
+  typedef uint32_t tjs_uint32;
 
-struct tTJSVariantString_S
-{
-	tjs_int RefCount; // reference count - 1
-	tjs_char *LongString;
-	tjs_char ShortString[TJS_VS_SHORT_LEN +1];
-	tjs_int Length; // string length
-	tjs_uint32 HeapFlag;
-	tjs_uint32 Hint;
-};
+  struct tTJSVariantString_S
+  {
+    tjs_int RefCount; // reference count - 1
+    tjs_char *LongString;
+    tjs_char ShortString[TJS_VS_SHORT_LEN + 1];
+    tjs_int Length; // string length
+    tjs_uint32 HeapFlag;
+    tjs_uint32 Hint;
+  };
 #pragma pack(pop)
-class tTJSVariantString : public tTJSVariantString_S{
-
-};
-struct tTJSString_S
-{
-	tTJSVariantString *Ptr;
-};
-class tTJSString : public tTJSString_S{
-
-};
-typedef tTJSString ttstr;
+  class tTJSVariantString : public tTJSVariantString_S
+  {
+  };
+  struct tTJSString_S
+  {
+    tTJSVariantString *Ptr;
+  };
+  class tTJSString : public tTJSString_S
+  {
+  };
+  typedef tTJSString ttstr;
 #pragma pack(push, 4)
-struct tTVPPoint
-{
-	tjs_int x;
-	tjs_int y;
-};
+  struct tTVPPoint
+  {
+    tjs_int x;
+    tjs_int y;
+  };
 #pragma pack(pop)
-struct tTVPRect
-{ 
-	union
-	{
-		struct
-		{
-			tjs_int left;
-			tjs_int top;
-			tjs_int right;
-			tjs_int bottom;
-		};
+  struct tTVPRect
+  {
+    union
+    {
+      struct
+      {
+        tjs_int left;
+        tjs_int top;
+        tjs_int right;
+        tjs_int bottom;
+      };
 
-		struct
-		{
-			// capital style
-			tjs_int Left;
-			tjs_int Top;
-			tjs_int Right;
-			tjs_int Bottom;
-		};
+      struct
+      {
+        // capital style
+        tjs_int Left;
+        tjs_int Top;
+        tjs_int Right;
+        tjs_int Bottom;
+      };
 
-		struct
-		{
-			tTVPPoint upper_left;
-			tTVPPoint bottom_right;
-		};
-	};
-};
+      struct
+      {
+        tTVPPoint upper_left;
+        tTVPPoint bottom_right;
+      };
+    };
+  };
 }
 
 bool FindKiriKiriHook(DWORD fun, DWORD size, DWORD pt, DWORD flag) // jichi 10/20/2014: change return value to bool
 {
-  enum : DWORD {
+  enum : DWORD
+  {
     // jichi 10/20/2014: mov ebp,esp, sub esp,*
     kirikiri1_sig = 0xec8b55,
 
@@ -118,99 +120,120 @@ bool FindKiriKiriHook(DWORD fun, DWORD size, DWORD pt, DWORD flag) // jichi 10/2
     // 00e01544   57               push edi
     kirikiri2_sig = 0x575653
   };
-  enum : DWORD { StartAddress = 0x1000 };
-  enum : DWORD { StartRange = 0x6000, StopRange = 0x8000 }; // jichi 10/20/2014: ITH original pattern range
+  enum : DWORD
+  {
+    StartAddress = 0x1000
+  };
+  enum : DWORD
+  {
+    StartRange = 0x6000,
+    StopRange = 0x8000
+  }; // jichi 10/20/2014: ITH original pattern range
 
   // jichi 10/20/2014: The KiriKiri patterns exist in multiple places of the game.
-  //enum : DWORD { StartRange = 0x8000, StopRange = 0x9000 }; // jichi 10/20/2014: change to a different range
+  // enum : DWORD { StartRange = 0x8000, StopRange = 0x9000 }; // jichi 10/20/2014: change to a different range
 
-  //WCHAR str[0x40];
+  // WCHAR str[0x40];
   DWORD sig = flag ? kirikiri2_sig : kirikiri1_sig;
   DWORD t = 0;
   for (DWORD i = StartAddress; i < size - 4; i++)
-    if (*(WORD *)(pt + i) == 0x15ff) { // jichi 10/20/2014: call dword ptr ds
+    if (*(WORD *)(pt + i) == 0x15ff)
+    { // jichi 10/20/2014: call dword ptr ds
       DWORD addr = *(DWORD *)(pt + i + 2);
 
       // jichi 10/20/2014: There are multiple function calls. The flag+1 one is selected.
       // i.e. KiriKiri1: The first call to GetGlyphOutlineW is selected
       //      KiriKiri2: The second call to GetTextExtentPoint32W is selected
-      if (addr >= pt && addr <= pt + size - 4
-          && *(DWORD *)addr == fun)
+      if (addr >= pt && addr <= pt + size - 4 && *(DWORD *)addr == fun)
         t++;
-      if (t == flag + 1)  // We find call to GetGlyphOutlineW or GetTextExtentPoint32W.
-        //swprintf(str, L"CALL addr:0x%.8X",i+pt);
-        //ConsoleOutput(str);
+      if (t == flag + 1) // We find call to GetGlyphOutlineW or GetTextExtentPoint32W.
+        // swprintf(str, L"CALL addr:0x%.8X",i+pt);
+        // ConsoleOutput(str);
         for (DWORD j = i; j > i - StartAddress; j--)
-          if (((*(DWORD *)(pt + j)) & 0xffffff) == sig) {
-            if (flag)  { // We find the function entry. flag indicate 2 hooks.
-              t = 0;  // KiriKiri2, we need to find call to this function.
+          if (((*(DWORD *)(pt + j)) & 0xffffff) == sig)
+          {
+            if (flag)
+            {                                                        // We find the function entry. flag indicate 2 hooks.
+              t = 0;                                                 // KiriKiri2, we need to find call to this function.
               for (DWORD k = j + StartRange; k < j + StopRange; k++) // Empirical range.
-                if (*(BYTE *)(pt + k) == 0xe8) {
+                if (*(BYTE *)(pt + k) == 0xe8)
+                {
                   if (k + 5 + *(DWORD *)(pt + k + 1) == j)
                     t++;
-                  if (t == 2) {
-                    //for (k+=pt+0x14; *(WORD*)(k)!=0xC483;k++);
-                    //swprintf(str, L"Hook addr: 0x%.8X",pt+k);
-                    //ConsoleOutput(str);
+                  if (t == 2)
+                  {
+                    // for (k+=pt+0x14; *(WORD*)(k)!=0xC483;k++);
+                    // swprintf(str, L"Hook addr: 0x%.8X",pt+k);
+                    // ConsoleOutput(str);
                     HookParam hp;
                     hp.address = pt + k + 0x14;
-                    hp.offset=get_reg(regs::ebx);
+                    hp.offset = get_reg(regs::ebx);
                     hp.index = -0x2;
                     hp.split = get_reg(regs::ecx);
-                    hp.type = CODEC_UTF16|NO_CONTEXT|USING_SPLIT|DATA_INDIRECT;
+                    hp.type = CODEC_UTF16 | NO_CONTEXT | USING_SPLIT | DATA_INDIRECT;
                     ConsoleOutput("INSERT KiriKiri2");
-                    if(!NewHook(hp, "KiriKiri2"))return false;
+                    if (!NewHook(hp, "KiriKiri2"))
+                      return false;
 
-                    //https://vndb.org/v5127
-                    //蝶の毒 華の鎖
-                    //KiriKiri2被注音的汉字数量若>=2，则会少字。
-                    auto addr=pt+k+0x14-5;
-                    BYTE check[]={0x66,0x85,0xC0,0x75};//mov ax,[ebx]; test ax,ax; jnz 
-                    if(memcmp(check,(void*)addr,sizeof(check))==0){
+                    // https://vndb.org/v5127
+                    // 蝶の毒 華の鎖
+                    // KiriKiri2被注音的汉字数量若>=2，则会少字。
+                    auto addr = pt + k + 0x14 - 5;
+                    BYTE check[] = {0x66, 0x85, 0xC0, 0x75}; // mov ax,[ebx]; test ax,ax; jnz
+                    if (memcmp(check, (void *)addr, sizeof(check)) == 0)
+                    {
                       HookParam hp_1;
                       hp_1.address = addr;
-                      hp_1.type = CODEC_UTF16|NO_CONTEXT|USING_CHAR;
-                      hp_1.text_fun=[](hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
-                        *split=stack->ecx;
-                        if(*split!=0x16)return;
-                        *data=*(WORD*)(stack->ebx-2);
-                        *len=2;
+                      hp_1.type = CODEC_UTF16 | NO_CONTEXT | USING_CHAR;
+                      hp_1.text_fun = [](hook_stack *stack, HookParam *hp, uintptr_t *data, uintptr_t *split, size_t *len)
+                      {
+                        *split = stack->ecx;
+                        if (*split != 0x16)
+                          return;
+                        *data = *(WORD *)(stack->ebx - 2);
+                        *len = 2;
                       };
                       NewHook(hp_1, "KiriKiri2X");
                     }
-                    
-                    
+
                     return true;
                   }
                 }
-            } else {
-              //swprintf(str, L"Hook addr: 0x%.8X",pt+j);
-              //ConsoleOutput(str);
+            }
+            else
+            {
+              // swprintf(str, L"Hook addr: 0x%.8X",pt+j);
+              // ConsoleOutput(str);
               HookParam hp;
               hp.address = (DWORD)pt + j;
-              hp.offset=get_reg(regs::eax);
+              hp.offset = get_reg(regs::eax);
               hp.index = 0x14;
               hp.split = get_reg(regs::eax);
-              hp.type = CODEC_UTF16|DATA_INDIRECT|USING_SPLIT|SPLIT_INDIRECT;
+              hp.type = CODEC_UTF16 | DATA_INDIRECT | USING_SPLIT | SPLIT_INDIRECT;
               ConsoleOutput("INSERT KiriKiri1");
-              if(!NewHook(hp, "KiriKiri1"))return false;
-              //该函数为InternalDrawText
-              //有4个xref， DrawTextMultiple*2，DrawTextSingle*2
-              //DrawTextMultiple和DrawTextSingle均只有一个xref->DrawText
-              auto xrefs=findxref_reverse_checkcallop(pt+j,processStartAddress,processStopAddress,0xe8);
-              if(xrefs.size()==4)
-                for(auto addr:xrefs){
-                  //ConsoleOutput("%p",addr);
-                  addr=findfuncstart(addr,0x300);//DrawTextMultiple or 2，DrawTextSingle
-                  //ConsoleOutput("%p",addr);
-                  if(addr){
-                    xrefs=findxref_reverse_checkcallop(addr,processStartAddress,processStopAddress,0xe8);
-                    if(xrefs.size()==1){
-                      addr=xrefs[0];
-                      //ConsoleOutput("%p",addr);
-                      addr=findfuncstart(addr,0x300);//DrawText
-                      //ConsoleOutput("%p",addr);
-                      if(addr){
+              if (!NewHook(hp, "KiriKiri1"))
+                return false;
+              // 该函数为InternalDrawText
+              // 有4个xref， DrawTextMultiple*2，DrawTextSingle*2
+              // DrawTextMultiple和DrawTextSingle均只有一个xref->DrawText
+              auto xrefs = findxref_reverse_checkcallop(pt + j, processStartAddress, processStopAddress, 0xe8);
+              if (xrefs.size() == 4)
+                for (auto addr : xrefs)
+                {
+                  // ConsoleOutput("%p",addr);
+                  addr = findfuncstart(addr, 0x300); // DrawTextMultiple or 2，DrawTextSingle
+                  // ConsoleOutput("%p",addr);
+                  if (addr)
+                  {
+                    xrefs = findxref_reverse_checkcallop(addr, processStartAddress, processStopAddress, 0xe8);
+                    if (xrefs.size() == 1)
+                    {
+                      addr = xrefs[0];
+                      // ConsoleOutput("%p",addr);
+                      addr = findfuncstart(addr, 0x300); // DrawText
+                      // ConsoleOutput("%p",addr);
+                      if (addr)
+                      {
                         /*
                         void DrawText(const tTVPRect &destrect, tjs_int x, tjs_int y, const ttstr &text,
                           tjs_uint32 color, tTVPBBBltMethod bltmode, tjs_int opa = 255,
@@ -220,21 +243,21 @@ bool FindKiriKiriHook(DWORD fun, DWORD size, DWORD pt, DWORD flag) // jichi 10/2
                             tTVPComplexRect *updaterects = NULL)
                             */
 
-                          HookParam hp;
-                          hp.address = addr;
-                          hp.type = CODEC_UTF16|USING_STRING|NO_CONTEXT;
-                          hp.text_fun=[](hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len){
-                            //fastcall, a4
-                            auto text=(kirikiri::ttstr*)stack->stack[9];
-                            auto destrect=(kirikiri::tTVPRect*)stack->eax;
-                            //*split=destrect->Bottom-destrect->Top;//split by font size;不知道为什么destrect里面的值是乱七八糟的
-                            *split=stack->ecx;//y. 值似乎不是y，多行不会被分开。
-                            *len=text->Ptr->Length *2 ;
-                            *data=(uintptr_t)(text->Ptr->LongString?text->Ptr->LongString:text->Ptr->ShortString);
-                            
-                          };
-                          NewHook(hp, "tTVPNativeBaseBitmap::DrawText");
-                          return true;
+                        HookParam hp;
+                        hp.address = addr;
+                        hp.type = CODEC_UTF16 | USING_STRING | NO_CONTEXT;
+                        hp.text_fun = [](hook_stack *stack, HookParam *hp, uintptr_t *data, uintptr_t *split, size_t *len)
+                        {
+                          // fastcall, a4
+                          auto text = (kirikiri::ttstr *)stack->stack[9];
+                          auto destrect = (kirikiri::tTVPRect *)stack->eax;
+                          //*split=destrect->Bottom-destrect->Top;//split by font size;不知道为什么destrect里面的值是乱七八糟的
+                          *split = stack->ecx; // y. 值似乎不是y，多行不会被分开。
+                          *len = text->Ptr->Length * 2;
+                          *data = (uintptr_t)(text->Ptr->LongString ? text->Ptr->LongString : text->Ptr->ShortString);
+                        };
+                        NewHook(hp, "tTVPNativeBaseBitmap::DrawText");
+                        return true;
                       }
                     }
                   }
@@ -243,7 +266,7 @@ bool FindKiriKiriHook(DWORD fun, DWORD size, DWORD pt, DWORD flag) // jichi 10/2
             }
             return false;
           }
-        //ConsoleOutput("KiriKiri: FAILED to find function entry");
+      // ConsoleOutput("KiriKiri: FAILED to find function entry");
     }
   if (flag)
     ConsoleOutput("KiriKiri2: failed");
@@ -254,12 +277,12 @@ bool FindKiriKiriHook(DWORD fun, DWORD size, DWORD pt, DWORD flag) // jichi 10/2
 
 bool InsertKiriKiriHook() // 9/20/2014 jichi: change return type to bool
 {
-  bool k1 = FindKiriKiriHook((DWORD)GetGlyphOutlineW,      processStopAddress - processStartAddress, processStartAddress, 0), // KiriKiri1
-       k2 = FindKiriKiriHook((DWORD)GetTextExtentPoint32W, processStopAddress - processStartAddress, processStartAddress, 1); // KiriKiri2
-  //RegisterEngineType(ENGINE_KIRIKIRI);
-  if (k1 && k2) {
+  bool k1 = FindKiriKiriHook((DWORD)GetGlyphOutlineW, processStopAddress - processStartAddress, processStartAddress, 0),     // KiriKiri1
+      k2 = FindKiriKiriHook((DWORD)GetTextExtentPoint32W, processStopAddress - processStartAddress, processStartAddress, 1); // KiriKiri2
+  // RegisterEngineType(ENGINE_KIRIKIRI);
+  if (k1 && k2)
+  {
     ConsoleOutput("KiriKiri1: disable GDI hooks");
-    
   }
   return k1 || k2;
 }
@@ -364,7 +387,7 @@ bool InsertKiriKiriHook() // 9/20/2014 jichi: change return type to bool
  *  1001399a   e8 e16fffff      call _3.1000a980
  */
 
-#if 0 // not used, as KiriKiriZ is sufficient, and most KiriKiriZ games use KAGParserEx instead of KAGParser.
+#if 0  // not used, as KiriKiriZ is sufficient, and most KiriKiriZ games use KAGParserEx instead of KAGParser.
 namespace { // unnamed
 
 bool KAGParserFilter(LPVOID data, size_t *size, HookParam *)
@@ -1011,99 +1034,104 @@ bool InsertKAGParserExHook()
  *  01228378   cc               int3
  */
 
-namespace { // unnamed
+namespace
+{ // unnamed
 
-// Skip individual L'\n' which might cause repetition.
-//bool NewLineWideCharSkipper(LPVOID data, DWORD *size, HookParam *)
-//{
-//  LPCWSTR text = (LPCWSTR)data;
-//  if (*size == 2 && *text == L'\n')
-//    return false;
-//  return true;
-//}
-//
+  // Skip individual L'\n' which might cause repetition.
+  // bool NewLineWideCharSkipper(LPVOID data, DWORD *size, HookParam *)
+  //{
+  //  LPCWSTR text = (LPCWSTR)data;
+  //  if (*size == 2 && *text == L'\n')
+  //    return false;
+  //  return true;
+  //}
+  //
 
-bool NewKiriKiriZHook(DWORD addr)
-{
-  HookParam hp;
-  hp.address = addr;
-  hp.offset=get_reg(regs::ecx);
-  hp.split = hp.offset;    // the same logic but diff value as KiriKiri1, use [ecx] as split
-  hp.index = 0x14;        // the same as KiriKiri1
-  hp.type = CODEC_UTF16|DATA_INDIRECT|USING_SPLIT|SPLIT_INDIRECT;
-  //hp.filter_fun = NewLineCharFilterW;
-  ConsoleOutput("INSERT KiriKiriZ");
-  ConsoleOutput("KiriKiriZ: disable GDI hooks");
-  return NewHook(hp, "KiriKiriZ");
-
-  
-}
-
-bool InsertKiriKiriZHook1()
-{
-  ULONG addr = MemDbg::findCallerAddressAfterInt3((DWORD)::GetGlyphOutlineW, processStartAddress, processStopAddress);
-  if (!addr) {
-    ConsoleOutput("KiriKiriZ1: could not find caller of GetGlyphOutlineW");
-    return false;
+  bool NewKiriKiriZHook(DWORD addr)
+  {
+    HookParam hp;
+    hp.address = addr;
+    hp.offset = get_reg(regs::ecx);
+    hp.split = hp.offset; // the same logic but diff value as KiriKiri1, use [ecx] as split
+    hp.index = 0x14;      // the same as KiriKiri1
+    hp.type = CODEC_UTF16 | DATA_INDIRECT | USING_SPLIT | SPLIT_INDIRECT;
+    // hp.filter_fun = NewLineCharFilterW;
+    ConsoleOutput("INSERT KiriKiriZ");
+    ConsoleOutput("KiriKiriZ: disable GDI hooks");
+    return NewHook(hp, "KiriKiriZ");
   }
 
-  HookParam hp;
-  hp.address = addr;
-  hp.text_fun = 
-    [](hook_stack* stack, HookParam* hp, uintptr_t* data, uintptr_t* split, size_t* len)
+  bool InsertKiriKiriZHook1()
+  {
+    ULONG addr = MemDbg::findCallerAddressAfterInt3((DWORD)::GetGlyphOutlineW, processStartAddress, processStopAddress);
+    if (!addr)
     {
-      hp->text_fun=nullptr;
-      hp->type=HOOK_EMPTY;
-      DWORD addr = stack->stack[0]; // retaddr
+      ConsoleOutput("KiriKiriZ1: could not find caller of GetGlyphOutlineW");
+      return false;
+    }
+
+    HookParam hp;
+    hp.address = addr;
+    hp.text_fun =
+        [](hook_stack *stack, HookParam *hp, uintptr_t *data, uintptr_t *split, size_t *len)
+    {
+      hp->text_fun = nullptr;
+      hp->type = HOOK_EMPTY;
+      DWORD addr = stack->stack[0];                             // retaddr
       addr = MemDbg::findEnclosingAlignedFunction(addr, 0x400); // range is around 0x377c50 - 0x377a40 = 0x210
-      if (!addr) {
+      if (!addr)
+      {
         ConsoleOutput("KiriKiriZ: failed to find enclosing function");
         return;
       }
       NewKiriKiriZHook(addr);
       ConsoleOutput("KiriKiriZ1 inserted");
     };
-  ConsoleOutput("INSERT KiriKiriZ1 empty hook");
-  
-  return NewHook(hp, "KiriKiriZ Hook");
-}
+    ConsoleOutput("INSERT KiriKiriZ1 empty hook");
 
-
-// jichi 1/30/2015: Add KiriKiriZ2 for サノバウィッ�
-// It inserts to the same location as the old KiriKiriZ, but use a different way to find it.
-bool InsertKiriKiriZHook2()
-{
-  const BYTE bytes[] = {
-    0x38,0x4b, 0x21,     // 0122812f   384b 21          cmp byte ptr ds:[ebx+0x21],cl
-    0x0f,0x95,0xc1,      // 01228132   0f95c1           setne cl
-    0x33,0xc0,           // 01228135   33c0             xor eax,eax
-    0x38,0x43, 0x20,     // 01228137   3843 20          cmp byte ptr ds:[ebx+0x20],al
-    0x0f,0x95,0xc0,      // 0122813a   0f95c0           setne al
-    0x33,0xc8,           // 0122813d   33c8             xor ecx,eax
-    0x33,0x4b, 0x10,     // 0122813f   334b 10          xor ecx,dword ptr ds:[ebx+0x10]
-    0x0f,0xb7,0x43, 0x14 // 01228142   0fb743 14        movzx eax,word ptr ds:[ebx+0x14]
-  };
-  ULONG range = min(processStopAddress - processStartAddress, MAX_REL_ADDR);
-  ULONG addr = MemDbg::findBytes(bytes, sizeof(bytes), processStartAddress, processStartAddress + range);
-  //GROWL_DWORD(addr);
-  if (!addr) {
-    ConsoleOutput("KiriKiriZ2: pattern not found");
-    return false;
+    return NewHook(hp, "KiriKiriZ Hook");
   }
 
-  // 012280e0   55               push ebp
-  // 012280e1   8bec             mov ebp,esp
-  addr = MemDbg::findEnclosingAlignedFunction(addr, 0x100); // 0x0122812f-0x012280e0 = 0x4F
-  enum : BYTE { push_ebp = 0x55 };  // 011d4c80  /$ 55             push ebp
-  if (!addr || *(BYTE *)addr != push_ebp) {
-    ConsoleOutput("KiriKiriZ2: pattern found but the function offset is invalid");
-    return false;
-  }
+  // jichi 1/30/2015: Add KiriKiriZ2 for サノバウィッ�
+  // It inserts to the same location as the old KiriKiriZ, but use a different way to find it.
+  bool InsertKiriKiriZHook2()
+  {
+    const BYTE bytes[] = {
+        0x38, 0x4b, 0x21,      // 0122812f   384b 21          cmp byte ptr ds:[ebx+0x21],cl
+        0x0f, 0x95, 0xc1,      // 01228132   0f95c1           setne cl
+        0x33, 0xc0,            // 01228135   33c0             xor eax,eax
+        0x38, 0x43, 0x20,      // 01228137   3843 20          cmp byte ptr ds:[ebx+0x20],al
+        0x0f, 0x95, 0xc0,      // 0122813a   0f95c0           setne al
+        0x33, 0xc8,            // 0122813d   33c8             xor ecx,eax
+        0x33, 0x4b, 0x10,      // 0122813f   334b 10          xor ecx,dword ptr ds:[ebx+0x10]
+        0x0f, 0xb7, 0x43, 0x14 // 01228142   0fb743 14        movzx eax,word ptr ds:[ebx+0x14]
+    };
+    ULONG range = min(processStopAddress - processStartAddress, MAX_REL_ADDR);
+    ULONG addr = MemDbg::findBytes(bytes, sizeof(bytes), processStartAddress, processStartAddress + range);
+    // GROWL_DWORD(addr);
+    if (!addr)
+    {
+      ConsoleOutput("KiriKiriZ2: pattern not found");
+      return false;
+    }
 
-  NewKiriKiriZHook(addr);
-  ConsoleOutput("KiriKiriZ2 inserted");
-  return true;
-}
+    // 012280e0   55               push ebp
+    // 012280e1   8bec             mov ebp,esp
+    addr = MemDbg::findEnclosingAlignedFunction(addr, 0x100); // 0x0122812f-0x012280e0 = 0x4F
+    enum : BYTE
+    {
+      push_ebp = 0x55
+    }; // 011d4c80  /$ 55             push ebp
+    if (!addr || *(BYTE *)addr != push_ebp)
+    {
+      ConsoleOutput("KiriKiriZ2: pattern found but the function offset is invalid");
+      return false;
+    }
+
+    NewKiriKiriZHook(addr);
+    ConsoleOutput("KiriKiriZ2 inserted");
+    return true;
+  }
 
 } // unnamed namespace
 
@@ -1117,66 +1145,73 @@ bool KiriKiriZ_msvcFilter(LPVOID data, size_t *size, HookParam *)
 
   if (!*len)
     return false;
-  text[*len/sizeof(wchar_t)] = L'\0';  // clean text
+  text[*len / sizeof(wchar_t)] = L'\0'; // clean text
 
   if (!prevText.compare(text))
     return false;
   prevText = text;
 
   StringCharReplacer(text, len, L"\\n", 2, L' ');
-  if (cpp_wcsnstr(text, L"%", *len/sizeof(wchar_t))) {
+  if (cpp_wcsnstr(text, L"%", *len / sizeof(wchar_t)))
+  {
     StringFilterBetween(text, len, L"%", 1, L";", 1);
   }
   return true;
 }
-bool Krkrtextrenderdll () {
+bool Krkrtextrenderdll()
+{
   HMODULE module = GetModuleHandleW(L"textrender.dll");
-  if (module == 0)return false;
-  if (GetProcAddress(module, "V2Link") == 0)return false;
-  
-  bool b1=[module]() {
+  if (module == 0)
+    return false;
+  if (GetProcAddress(module, "V2Link") == 0)
+    return false;
+
+  bool b1 = [module]()
+  {
     auto [minAddress, maxAddress] = Util::QueryModuleLimits(module);
     BYTE bytes[] = {
-    0x81,0xEC,0xFC,0x00,0x00,0x00
-    };
+        0x81, 0xEC, 0xFC, 0x00, 0x00, 0x00};
     auto addr = MemDbg::findBytes(bytes, sizeof(bytes), minAddress, maxAddress);
-    if (addr == 0)return false;
+    if (addr == 0)
+      return false;
     addr = MemDbg::findEnclosingAlignedFunction(addr);
-    if (addr == 0)return false;
+    if (addr == 0)
+      return false;
     ConsoleOutput("textrender %p", addr);
     HookParam hp;
     hp.address = (DWORD)addr;
-    hp.offset=get_stack(2);
+    hp.offset = get_stack(2);
     hp.type = CODEC_UTF16;
-    
+
     return NewHook(hp, "krkr_textrender");
   }();
-  bool b2=[module]() {
+  bool b2 = [module]()
+  {
     auto [minAddress, maxAddress] = Util::QueryModuleLimits(module);
     BYTE bytes[] = {
-      0xFF, XX,
-      0x88, XX, XX, XX,
-      XX, XX, XX, XX,
-      XX, XX,
-      0x74, XX,
-      XX, XX, XX, XX,
-      XX,
-      XX,
-      0xE8, XX, XX, XX, XX,
-      0xB0, 0x01,
-      0xC3
-    };
+        0xFF, XX,
+        0x88, XX, XX, XX,
+        XX, XX, XX, XX,
+        XX, XX,
+        0x74, XX,
+        XX, XX, XX, XX,
+        XX,
+        XX,
+        0xE8, XX, XX, XX, XX,
+        0xB0, 0x01,
+        0xC3};
     auto addr = MemDbg::findBytes(bytes, sizeof(bytes), minAddress, maxAddress);
-    if (addr == 0)return false; 
+    if (addr == 0)
+      return false;
     ConsoleOutput("textrender %p", addr);
     HookParam hp;
-    hp.address = addr -0xb;
-    hp.offset=get_reg(regs::eax);
+    hp.address = addr - 0xb;
+    hp.offset = get_reg(regs::eax);
     hp.type = CODEC_UTF16 | USING_STRING;
     hp.filter_fun = KiriKiriZ_msvcFilter;
     return NewHook(hp, "krkr_textrender");
   }();
-  return b1||b2;
+  return b1 || b2;
 }
 bool KiriKiriZ3Filter(LPVOID data, size_t *size, HookParam *)
 {
@@ -1184,40 +1219,42 @@ bool KiriKiriZ3Filter(LPVOID data, size_t *size, HookParam *)
   auto len = reinterpret_cast<size_t *>(size);
 
   CharFilter(text, len, L'\x000A');
-  if (cpp_wcsnstr(text, L"%", *len/sizeof(wchar_t))) {
+  if (cpp_wcsnstr(text, L"%", *len / sizeof(wchar_t)))
+  {
     StringFilterBetween(text, len, L"%", 1, L"%", 1);
   }
 
   return true;
 }
 
-bool InsertKiriKiriZHook3() 
+bool InsertKiriKiriZHook3()
 {
-  
-    /*
-    * Sample games:
-    * https://vndb.org/r109253
-    */
+
+  /*
+   * Sample games:
+   * https://vndb.org/r109253
+   */
   const BYTE bytes[] = {
-    0x66, 0x83, 0x3F, 0x00,    // cmp word ptr [edi],00          << hook here
-    0x75, 0x06,                // jne Imouto_no_Seiiki.exe+195C1
-    0x33, 0xDB,                // xor ebx,ebx
-    0x89, 0x1E,                // mov [esi],ebx
-    0xEB, 0x1B                 // jmp Imouto_no_Seiiki.exe+195DC
+      0x66, 0x83, 0x3F, 0x00, // cmp word ptr [edi],00          << hook here
+      0x75, 0x06,             // jne Imouto_no_Seiiki.exe+195C1
+      0x33, 0xDB,             // xor ebx,ebx
+      0x89, 0x1E,             // mov [esi],ebx
+      0xEB, 0x1B              // jmp Imouto_no_Seiiki.exe+195DC
   };
 
   ULONG range = min(processStopAddress - processStartAddress, MAX_REL_ADDR);
   ULONG addr = MemDbg::findBytes(bytes, sizeof(bytes), processStartAddress, processStartAddress + range);
-  if (!addr) {
+  if (!addr)
+  {
     ConsoleOutput("KiriKiriZ3: pattern not found");
     return false;
   }
 
   HookParam hp;
   hp.address = addr;
-  hp.offset =get_reg(regs::edi);
-  hp.split  = get_reg(regs::edx);
-  hp.type =  NO_CONTEXT | CODEC_UTF16 | USING_STRING | USING_SPLIT;
+  hp.offset = get_reg(regs::edi);
+  hp.split = get_reg(regs::edx);
+  hp.type = NO_CONTEXT | CODEC_UTF16 | USING_STRING | USING_SPLIT;
   hp.filter_fun = KiriKiriZ3Filter;
   ConsoleOutput("INSERT KiriKiriZ3");
   return NewHook(hp, "KiriKiriZ3");
@@ -1229,9 +1266,10 @@ bool KiriKiriZ4Filter(LPVOID data, size_t *size, HookParam *)
   auto len = reinterpret_cast<size_t *>(size);
 
   if (text[0] == L' ' || text[0] == L':' || text[0] == L'@' || text[0] == L'[' || text[0] == L']')
-	return false;
+    return false;
 
-  if (cpp_wcsnstr(text, L"[", *len/sizeof(wchar_t))) {
+  if (cpp_wcsnstr(text, L"[", *len / sizeof(wchar_t)))
+  {
     StringCharReplacer(text, len, L"[r]", 3, L' ');
     StringFilterBetween(text, len, L"[", 1, L"]", 1);
   }
@@ -1239,24 +1277,25 @@ bool KiriKiriZ4Filter(LPVOID data, size_t *size, HookParam *)
   return true;
 }
 
-bool InsertKiriKiriZHook4() 
+bool InsertKiriKiriZHook4()
 {
-  
-    /*
-    * Sample games:
-    * https://vndb.org/r111774
-    * https://vndb.org/v38021
-    */
+
+  /*
+   * Sample games:
+   * https://vndb.org/r111774
+   * https://vndb.org/v38021
+   */
   const BYTE bytes[] = {
-    0xE8, 0xE8, 0xBA, 0xFE, 0xFF,    // call Shironagasu.exe+227B0       << hook here
-    0xC7, 0x45, 0xFC, XX4,           // mov [ebp-04],00000000
-    0xC7, 0x45, 0xF0, XX4,           // mov [ebp-10],00000001
-    0x8B, 0x45, 0x08                 // mov eax,[ebp+08]
+      0xE8, 0xE8, 0xBA, 0xFE, 0xFF, // call Shironagasu.exe+227B0       << hook here
+      0xC7, 0x45, 0xFC, XX4,        // mov [ebp-04],00000000
+      0xC7, 0x45, 0xF0, XX4,        // mov [ebp-10],00000001
+      0x8B, 0x45, 0x08              // mov eax,[ebp+08]
   };
 
   ULONG range = min(processStopAddress - processStartAddress, MAX_REL_ADDR);
   ULONG addr = MemDbg::findBytes(bytes, sizeof(bytes), processStartAddress, processStartAddress + range);
-  if (!addr) {
+  if (!addr)
+  {
     ConsoleOutput("KiriKiriZ4: pattern not found");
     return false;
   }
@@ -1264,45 +1303,50 @@ bool InsertKiriKiriZHook4()
   HookParam hp;
   hp.address = addr;
   hp.offset = get_reg(regs::ebx);
-  hp.type =  NO_CONTEXT | CODEC_UTF16 | USING_STRING;
+  hp.type = NO_CONTEXT | CODEC_UTF16 | USING_STRING;
   hp.filter_fun = KiriKiriZ4Filter;
   ConsoleOutput("INSERT KiriKiriZ4");
   return NewHook(hp, "KiriKiriZ4");
 }
 bool InsertKiriKiriZHook()
-{ 
-  auto ok=Krkrtextrenderdll();
+{
+  auto ok = Krkrtextrenderdll();
   ok = InsertKiriKiriZHook3() || ok;
   ok = InsertKiriKiriZHook4() || ok;
-  return InsertKiriKiriZHook2() || InsertKiriKiriZHook1()|| ok; 
-  
+  return InsertKiriKiriZHook2() || InsertKiriKiriZHook1() || ok;
 }
-namespace{
-  int type=0;std::wstring saveend=L"";
-  void hookafter(hook_stack*s,void* data, size_t len){
-      
-      auto newText =std::wstring((wchar_t*)data,len/2);// EngineController::instance()->dispatchTextWSTD(innner, Engine::ScenarioRole, 0);
-      newText=newText+L"[plc]";
-      if(type==2){
-        newText=L"[x]"+newText;
-      }
-      else if(type==1){
-        newText=std::regex_replace(newText, std::wregex(L"\u300c"), L"\\[\u300c\\]");
-        newText=std::regex_replace(newText, std::wregex(L"\u300d"), L"\\[\u300d\\]");
-      } 
-      newText+=saveend;
-      auto text = (LPWSTR)s->esi; 
-      wcscpy(text,newText.c_str()); 
-  }
-  bool hookBefore(hook_stack*s,void* data, size_t* len,uintptr_t*role)
+namespace
+{
+  int type = 0;
+  std::wstring saveend = L"";
+  void hookafter(hook_stack *s, void *data, size_t len)
   {
-     //シロガネオトメ
-    auto text = (LPWSTR)s->esi; 
-    if (  !text || !*text)
+
+    auto newText = std::wstring((wchar_t *)data, len / 2); // EngineController::instance()->dispatchTextWSTD(innner, Engine::ScenarioRole, 0);
+    newText = newText + L"[plc]";
+    if (type == 2)
+    {
+      newText = L"[x]" + newText;
+    }
+    else if (type == 1)
+    {
+      newText = std::regex_replace(newText, std::wregex(L"\u300c"), L"\\[\u300c\\]");
+      newText = std::regex_replace(newText, std::wregex(L"\u300d"), L"\\[\u300d\\]");
+    }
+    newText += saveend;
+    auto text = (LPWSTR)s->esi;
+    wcscpy(text, newText.c_str());
+  }
+  bool hookBefore(hook_stack *s, void *data, size_t *len, uintptr_t *role)
+  {
+    // シロガネオトメ
+    auto text = (LPWSTR)s->esi;
+    if (!text || !*text)
       return false;
-    
-    if (all_ascii(text,wcslen(text)))return false;
-    std::wstring wstext=text;
+
+    if (all_ascii(text, wcslen(text)))
+      return false;
+    std::wstring wstext = text;
     //[「]ぱ、ぱんつなんてどうしてそんなに気になるの。ゆきちゃんだってはいてるでしょ[」][plc]     ->对话
     //[x]彼女は言葉通りに、お風呂上がりにパンツを穿き忘れてそのまま一日過ごしかけたりすることがあった。ボクはそれをまじめに心配していたのだ（開き直り）。[plc]    ->旁白
     /*
@@ -1312,7 +1356,7 @@ namespace{
     auto checkisname=std::regex_replace(wstext, std::wregex(L"\\[name name=\"(.*?)\"\\]"), L"");
     if(wstext!=L"" && checkisname==L""){
       auto name=std::regex_replace(wstext, std::wregex(L"\\[name name=\"(.*?)\"\\]"), L"$1");
-      
+
       auto _idx=name.find(L'\uff0f');
       std::wstring end=L"";
       if(_idx!=name.npos){
@@ -1322,106 +1366,127 @@ namespace{
       name = EngineController::instance()->dispatchTextWSTD(name, Engine::NameRole, 0);
       name+=end;
       name=L"[name name=\""+name+L"\"]";
-      wcscpy(text,name.c_str()); 
+      wcscpy(text,name.c_str());
       return true;
     }
     */
-    if(wstext.size()<5||(wstext.substr(wstext.size()-5)!=L"[plc]"))return false;
-    
-    type=0;
-    if(wstext.substr(0,3)==L"[x]"){
-      type=1;
-      wstext=wstext.substr(3);
+    if (wstext.size() < 5 || (wstext.substr(wstext.size() - 5) != L"[plc]"))
+      return false;
+
+    type = 0;
+    if (wstext.substr(0, 3) == L"[x]")
+    {
+      type = 1;
+      wstext = wstext.substr(3);
     }
-    else if (wstext.substr(0,3)==L"[\u300c]"){  //「 」
-      type=2;
-      wstext=std::regex_replace(wstext, std::wregex(L"\\[\u300c\\]"), L"\u300c");
-      wstext=std::regex_replace(wstext, std::wregex(L"\\[\u300d\\]"), L"\u300d");
+    else if (wstext.substr(0, 3) == L"[\u300c]")
+    { // 「 」
+      type = 2;
+      wstext = std::regex_replace(wstext, std::wregex(L"\\[\u300c\\]"), L"\u300c");
+      wstext = std::regex_replace(wstext, std::wregex(L"\\[\u300d\\]"), L"\u300d");
     }
-    if(type==0)return false;//未知类型
-   saveend=L"";
-    auto innner=wstext.substr(0,wstext.size()-5);
-    innner=std::regex_replace(innner, std::wregex(L"\\[eruby text=(.*?) str=(.*?)\\]"), L"$2");
-    if(innner[innner.size()-1]==L']'){
-      //「ボクの身体をあれだけ好き勝手しておいて、いまさらカマトトぶっても遅いよ。ほら、正直になりなよ」[waitsd layer=&CHAR6]
-      for(int i=innner.size();i>0;i--){
-        if(innner[i]=='['){
-          saveend=innner.substr(i);
-          innner=innner.substr(0,i);
+    if (type == 0)
+      return false; // 未知类型
+    saveend = L"";
+    auto innner = wstext.substr(0, wstext.size() - 5);
+    innner = std::regex_replace(innner, std::wregex(L"\\[eruby text=(.*?) str=(.*?)\\]"), L"$2");
+    if (innner[innner.size() - 1] == L']')
+    {
+      // 「ボクの身体をあれだけ好き勝手しておいて、いまさらカマトトぶっても遅いよ。ほら、正直になりなよ」[waitsd layer=&CHAR6]
+      for (int i = innner.size(); i > 0; i--)
+      {
+        if (innner[i] == '[')
+        {
+          saveend = innner.substr(i);
+          innner = innner.substr(0, i);
           break;
         }
       }
     }
-    
-    return write_string_overwrite(data,len,innner);
-  }
- 
-bool attachkr2(ULONG startAddress, ULONG stopAddress)
-{
-   //シロガネオトメ
-//    .text:005D288D 66 8B 06                      mov     ax, [esi]
-// .text:005D2890 66 83 F8 3B                   cmp     ax, 3Bh ; ';'
-// .text:005D2894 0F 84 AA 06 00 00             jz      loc_5D2F44
-// .text:005D2894
-// .text:005D289A 66 83 F8 2A                   cmp     ax, 2Ah ; '*'
-// .text:005D289E 0F 85 DF 02 00 00             jnz     loc_5D2B83
 
-//修改v3的值
-// v3 = *(const wchar_t **)(*(_DWORD *)(a1 + 100) + 8 * *(_DWORD *)(a1 + 116));
-//     if ( *v3 != 59 )
-//     {
-//       if ( *v3 == 42 )
-     const uint8_t bytes[] = {
-    0x66,0x8B,0x06,0x66,0x83,0xF8,0x3B,0x0F,XX,XX4,0x66,0x83,0xF8,0x2A,0x0F
-  };
-  ULONG addr = MemDbg::findBytes(bytes, sizeof(bytes), startAddress, stopAddress);
-  if (!addr)  return false;
-  HookParam hp;
-    hp.address = addr; 
-    hp.type = EMBED_ABLE|CODEC_UTF16;
-    hp.hook_before=hookBefore;
-    hp.hook_after=hookafter; 
-    return NewHook(hp, "EmbedKrkr2"); 
-}
-  
+    return write_string_overwrite(data, len, innner);
+  }
+
+  bool attachkr2(ULONG startAddress, ULONG stopAddress)
+  {
+    // シロガネオトメ
+    //    .text:005D288D 66 8B 06                      mov     ax, [esi]
+    // .text:005D2890 66 83 F8 3B                   cmp     ax, 3Bh ; ';'
+    // .text:005D2894 0F 84 AA 06 00 00             jz      loc_5D2F44
+    // .text:005D2894
+    // .text:005D289A 66 83 F8 2A                   cmp     ax, 2Ah ; '*'
+    // .text:005D289E 0F 85 DF 02 00 00             jnz     loc_5D2B83
+
+    // 修改v3的值
+    //  v3 = *(const wchar_t **)(*(_DWORD *)(a1 + 100) + 8 * *(_DWORD *)(a1 + 116));
+    //      if ( *v3 != 59 )
+    //      {
+    //        if ( *v3 == 42 )
+    const uint8_t bytes[] = {
+        0x66, 0x8B, 0x06, 0x66, 0x83, 0xF8, 0x3B, 0x0F, XX, XX4, 0x66, 0x83, 0xF8, 0x2A, 0x0F};
+    ULONG addr = MemDbg::findBytes(bytes, sizeof(bytes), startAddress, stopAddress);
+    if (!addr)
+      return false;
+    HookParam hp;
+    hp.address = addr;
+    hp.type = EMBED_ABLE | CODEC_UTF16;
+    hp.hook_before = hookBefore;
+    hp.hook_after = hookafter;
+    return NewHook(hp, "EmbedKrkr2");
+  }
+
 } // namespace Private
 
-namespace Private {
-  
-  std::wstring ConvertToFullWidth(const std::wstring& str) {
+namespace Private
+{
+
+  std::wstring ConvertToFullWidth(const std::wstring &str)
+  {
     std::wstring fullWidthStr;
-    wchar_t last=0;
-    for (wchar_t c : str) {
-        if (c >= 32 && c <= 126 && c!=L'\\' && last!=L'\\') {
-            fullWidthStr += static_cast<wchar_t>(c + 65248);
-        } else {
-            fullWidthStr += c;
-        }
-        last=c;
+    wchar_t last = 0;
+    for (wchar_t c : str)
+    {
+      if (c >= 32 && c <= 126 && c != L'\\' && last != L'\\')
+      {
+        fullWidthStr += static_cast<wchar_t>(c + 65248);
+      }
+      else
+      {
+        fullWidthStr += c;
+      }
+      last = c;
     }
     return fullWidthStr;
-}
+  }
 
-  bool hookBeforez(hook_stack*s,void* data, size_t* len,uintptr_t*role)
+  bool hookBeforez(hook_stack *s, void *data, size_t *len, uintptr_t *role)
   {
-    
-    auto text = (LPCSTR)s->ecx; 
-    if (  !text || !*text)
+
+    auto text = (LPCSTR)s->ecx;
+    if (!text || !*text)
       return false;
-    if(strlen(text)>2000)return false;
-    if (all_ascii(text,strlen(text)))return false;
+    if (strlen(text) > 2000)
+      return false;
+    if (all_ascii(text, strlen(text)))
+      return false;
     //"。」』？―！、"
-    auto chatflags={"\xe3\x80\x82", "\xe3\x80\x8d","\xe3\x80\x8f","\xef\xbc\x9f","\xe2\x80\x95","\xef\xbc\x81","\xe3\x80\x81"};
-    bool ok=false;
-    for (auto f:chatflags){
-      if(strstr(text,f))ok=true;
+    auto chatflags = {"\xe3\x80\x82", "\xe3\x80\x8d", "\xe3\x80\x8f", "\xef\xbc\x9f", "\xe2\x80\x95", "\xef\xbc\x81", "\xe3\x80\x81"};
+    bool ok = false;
+    for (auto f : chatflags)
+    {
+      if (strstr(text, f))
+        ok = true;
     }
-    if(ok==false)return false;
-   // auto role =  Engine::ScenarioRole ;
-    //auto split = s->edx;
-    //auto sig = Engine::hashThreadSignature(role, split);
-    enum { sig = 0 }; // split not used
-    std::string utf8save=text;
+    if (ok == false)
+      return false;
+    // auto role =  Engine::ScenarioRole ;
+    // auto split = s->edx;
+    // auto sig = Engine::hashThreadSignature(role, split);
+    enum
+    {
+      sig = 0
+    }; // split not used
+    std::string utf8save = text;
     strReplace(utf8save, "%51;", "\\-");
     strReplace(utf8save, "%164;", "\\+\\+");
     strReplace(utf8save, "%123;", "\\+");
@@ -1431,181 +1496,223 @@ namespace Private {
     strReplace(utf8save, "#00ff0000;", "\\#FF0000");
     strReplace(utf8save, "%p-1;%f\xef\xbc\xad\xef\xbc\xb3 \xe3\x82\xb4\xe3\x82\xb7\xe3\x83\x83\xe3\x82\xaf;", ""); //"%p-1;%fＭＳ ゴシック;"
     strReplace(utf8save, "%p;%fuser;", "");
-    
-    return write_string_overwrite(data,len,utf8save);
-    
-  }
- void after(hook_stack*s,void* data, size_t len){
-    
-   std::string res= std::string((char*)data,len);// EngineController::instance()->dispatchTextWSTD(innner, Engine::ScenarioRole, 0);
-     strReplace(res, "\\-", "%51;");
-        strReplace(res, "\\+\\+", "%164;");
-        strReplace(res, "\\+", "%123;");
-        strReplace(res, "\\+\\+\\+", "%205;");
-        strReplace(res, "\\#0033FF", "#000033ff;");
-        strReplace(res, "\\#FFFFFF", "#;");
-        strReplace(res, "\\#FF0000", "#00ff0000;");
-      res=WideStringToString(ConvertToFullWidth((StringToWideString(res))));
-   
-   write_string_new(&s->ecx,0,res);
-    
- }
-bool attach(ULONG startAddress, ULONG stopAddress)
-{
-  //findbytes搜索1长度BYTE[]时有问题。
-  //mashiro_fhd
-    //  BYTE sig0[]={0x8B,XX};//mov esi,ecx 
-       //ecx->XXX->esi->al/bl/cl/dl
-      /*
-      eax   c1
-      ebx   d9
-      ebp e9
-      edx d1
-      edi f9
-      esi f1 
-      */ 
 
-  //    BYTE sig01[]={0x8A,XX};//mov     al, [esi]    
-      /*
-      al 06
-      bl 1e
-      cl 0e
-      dl 16
-      */
-      #define sigs(n,N) BYTE sig1##n[]={0x3C,N};BYTE sig2##n[]={0x80,XX,N};
-      #define addsig(n) {sig1##n,sig2##n},
-      sigs(1,0x80)sigs(2,0xc2)sigs(3,0xE0)sigs(4,0xF0)sigs(5,0xF8)sigs(6,0xFC)sigs(7,0xFE)
-      // BYTE sig1[]={0x3C,0x80,XX};//0x73//0x0f
-			// BYTE sig2[]={0x3C,0xC2,XX};
-			// BYTE sig3[]={0x3C,0xE0,XX};
-			// BYTE sig4[]={0x3C,0xF0,XX};
-			// BYTE sig5[]={0x3C,0xF8,XX};
-			// BYTE sig6[]={0x3C,0xFC,XX};
-			// BYTE sig7[]={0x3C,0xFE,XX};
-     
-  ULONG addr =startAddress;
-  bool succ=false;
-  while(addr){ 
-    // MessageBox(0,xx,L"",0);
-    
-    addr=[](DWORD addr,DWORD stopAddress){
-      for(;addr<stopAddress ;addr++) 
-      if((*(BYTE*)addr)==0x8b)
-      switch (*(BYTE*)(addr+1))
-      {
-      case 0xc1:case 0xd9:case 0xe9:case 0xd1:case 0xf9: case 0xf1: return addr; default:continue;
-      }
-      return (DWORD)0;
-     
-    }(addr+1,stopAddress);
-   // ConsoleOutput("%p",0x400000+addr-startAddress);
-    if(addr==0)continue;
-    auto check=[](DWORD addr,DWORD stopAddress){
-      for(;addr<stopAddress;addr++) 
-      if((*(BYTE*)addr)==0x8a)
-      switch (*(BYTE*)(addr+1))
-      {
-      case 0x06:case 0x1e:case 0x0e:case 0x16: return addr; default:continue;
-      }
-      return (DWORD)0;
-     
-    }(addr,addr+0x10); 
-    if(check==0)continue;
-    switch (*(BYTE*)(check+1))
+    return write_string_overwrite(data, len, utf8save);
+  }
+  void after(hook_stack *s, void *data, size_t len)
+  {
+
+    std::string res = std::string((char *)data, len); // EngineController::instance()->dispatchTextWSTD(innner, Engine::ScenarioRole, 0);
+    strReplace(res, "\\-", "%51;");
+    strReplace(res, "\\+\\+", "%164;");
+    strReplace(res, "\\+", "%123;");
+    strReplace(res, "\\+\\+\\+", "%205;");
+    strReplace(res, "\\#0033FF", "#000033ff;");
+    strReplace(res, "\\#FFFFFF", "#;");
+    strReplace(res, "\\#FF0000", "#00ff0000;");
+    res = WideStringToString(ConvertToFullWidth((StringToWideString(res))));
+
+    write_string_new(&s->ecx, 0, res);
+  }
+  bool attach(ULONG startAddress, ULONG stopAddress)
+  {
+    // findbytes搜索1长度BYTE[]时有问题。
+    // mashiro_fhd
+    //   BYTE sig0[]={0x8B,XX};//mov esi,ecx
+    // ecx->XXX->esi->al/bl/cl/dl
+    /*
+    eax   c1
+    ebx   d9
+    ebp e9
+    edx d1
+    edi f9
+    esi f1
+    */
+
+    //    BYTE sig01[]={0x8A,XX};//mov     al, [esi]
+/*
+al 06
+bl 1e
+cl 0e
+dl 16
+*/
+#define sigs(n, N)            \
+  BYTE sig1##n[] = {0x3C, N}; \
+  BYTE sig2##n[] = {0x80, XX, N};
+#define addsig(n) {sig1##n, sig2##n},
+    sigs(1, 0x80) sigs(2, 0xc2) sigs(3, 0xE0) sigs(4, 0xF0) sigs(5, 0xF8) sigs(6, 0xFC) sigs(7, 0xFE)
+        // BYTE sig1[]={0x3C,0x80,XX};//0x73//0x0f
+        // BYTE sig2[]={0x3C,0xC2,XX};
+        // BYTE sig3[]={0x3C,0xE0,XX};
+        // BYTE sig4[]={0x3C,0xF0,XX};
+        // BYTE sig5[]={0x3C,0xF8,XX};
+        // BYTE sig6[]={0x3C,0xFC,XX};
+        // BYTE sig7[]={0x3C,0xFE,XX};
+
+        ULONG addr = startAddress;
+    bool succ = false;
+    while (addr)
     {
-    case 0x06:case 0x1e:case 0x0e:case 0x16: break; default:continue;
-    }
-    bool ok=true;
-    for(auto p:std::vector<std::pair<BYTE*,BYTE*>>{
-       addsig(1)addsig(2)addsig(3)addsig(4)addsig(5)addsig(6)addsig(7)
+      // MessageBox(0,xx,L"",0);
 
-      }){
-      auto check1=MemDbg::findBytes(p.first, 2, check, check+0x1000);
-      auto check2=MemDbg::findBytes(p.second, 3, check, check+0x1000);
-      check=min(check1,check2);
-      if(check==0)check=max(check1,check2);
-      if(check==0){
-        ok=false;break;
+      addr = [](DWORD addr, DWORD stopAddress)
+      {
+        for (; addr < stopAddress; addr++)
+          if ((*(BYTE *)addr) == 0x8b)
+            switch (*(BYTE *)(addr + 1))
+            {
+            case 0xc1:
+            case 0xd9:
+            case 0xe9:
+            case 0xd1:
+            case 0xf9:
+            case 0xf1:
+              return addr;
+            default:
+              continue;
+            }
+        return (DWORD)0;
+      }(addr + 1, stopAddress);
+      // ConsoleOutput("%p",0x400000+addr-startAddress);
+      if (addr == 0)
+        continue;
+      auto check = [](DWORD addr, DWORD stopAddress)
+      {
+        for (; addr < stopAddress; addr++)
+          if ((*(BYTE *)addr) == 0x8a)
+            switch (*(BYTE *)(addr + 1))
+            {
+            case 0x06:
+            case 0x1e:
+            case 0x0e:
+            case 0x16:
+              return addr;
+            default:
+              continue;
+            }
+        return (DWORD)0;
+      }(addr, addr + 0x10);
+      if (check == 0)
+        continue;
+      switch (*(BYTE *)(check + 1))
+      {
+      case 0x06:
+      case 0x1e:
+      case 0x0e:
+      case 0x16:
+        break;
+      default:
+        continue;
+      }
+      bool ok = true;
+      for (auto p : std::vector<std::pair<BYTE *, BYTE *>>{
+               addsig(1) addsig(2) addsig(3) addsig(4) addsig(5) addsig(6) addsig(7)
+
+           })
+      {
+        auto check1 = MemDbg::findBytes(p.first, 2, check, check + 0x1000);
+        auto check2 = MemDbg::findBytes(p.second, 3, check, check + 0x1000);
+        check = min(check1, check2);
+        if (check == 0)
+          check = max(check1, check2);
+        if (check == 0)
+        {
+          ok = false;
+          break;
+        }
+      }
+      if (ok)
+      {
+        HookParam hp;
+        hp.address = addr;
+        hp.type = EMBED_ABLE | CODEC_UTF8;
+        hp.hook_before = hookBeforez;
+        hp.hook_after = after;
+        hp.newlineseperator = L"\\n";
+        hp.hook_font = F_GetTextExtentPoint32W | F_GetGlyphOutlineW;
+        succ |= NewHook(hp, "EmbedKrkrZ");
+        // return true;
       }
     }
-    if(ok){
-      HookParam hp;
-    hp.address = addr; 
-    hp.type = EMBED_ABLE|CODEC_UTF8;
-    hp.hook_before=hookBeforez;
-    hp.hook_after=after;
-    hp.newlineseperator=L"\\n";
-    succ|=NewHook(hp, "EmbedKrkrZ"); 
-    // return true;
-    }
-    
+
+    return succ;
   }
-    
-  return succ;
-}
 
 } // namespace ScenarioHook
-namespace{
-  bool wcslen_wcscpy(){
-    //LOVELY×CATION
+namespace
+{
+  bool wcslen_wcscpy()
+  {
+    // LOVELY×CATION
     const uint8_t bytes2[] = {
-      //wcscpy 唯一
-        0x55,0x8b,0xec,
-        0x53,0x56,0x8b,0x75,0x0c,0x56,0xe8,XX,0xFF,0xFF,0xFF,//call wcslen，距离很近，故均为ff
-        0x59,0x8b,0xd8,0x33,XX,0x8b,0x45,0x08
-    };
+        // wcscpy 唯一
+        0x55, 0x8b, 0xec,
+        0x53, 0x56, 0x8b, 0x75, 0x0c, 0x56, 0xe8, XX, 0xFF, 0xFF, 0xFF, // call wcslen，距离很近，故均为ff
+        0x59, 0x8b, 0xd8, 0x33, XX, 0x8b, 0x45, 0x08};
     const uint8_t bytes[] = {
-      //wcslen 有多个，可以修改任意一个，但是会造成困扰
-        0x55,0x8b,0xec,
-        0x33,XX,
-        0x8b,0x45,0x08,
-        0xeb,0x04,
+        // wcslen 有多个，可以修改任意一个，但是会造成困扰
+        0x55, 0x8b, 0xec,
+        0x33, XX,
+        0x8b, 0x45, 0x08,
+        0xeb, 0x04,
         XX,
-        0x83,0xc0,0x02,
-        0x66,0x83,0x38,0x00,
-        0x75,0xf6,
-        0x8b,XX,
-        0x5d,0xc3
-    };
+        0x83, 0xc0, 0x02,
+        0x66, 0x83, 0x38, 0x00,
+        0x75, 0xf6,
+        0x8b, XX,
+        0x5d, 0xc3};
     ULONG addr = MemDbg::findBytes(bytes2, sizeof(bytes2), processStartAddress, processStopAddress);
     static int off;
-    off=8;
-    if (addr==0){
+    off = 8;
+    if (addr == 0)
+    {
       addr = MemDbg::findBytes(bytes, sizeof(bytes), processStartAddress, processStopAddress);
-      off=4;
+      off = 4;
     }
-    if(addr==0)return false;
+    if (addr == 0)
+      return false;
     HookParam hp;
-      hp.address = addr; 
-      if(off==8)
-        hp.type = CODEC_UTF16|USING_STRING|NO_CONTEXT|EMBED_ABLE|EMBED_BEFORE_SIMPLE;
-      else
-        hp.type = CODEC_UTF16|USING_STRING|EMBED_ABLE|EMBED_BEFORE_SIMPLE;
-      hp.offset=off;
-      hp.filter_fun=[](LPVOID data, size_t *size, HookParam *){
-        auto t=std::wstring((wchar_t*)data,*size/2);
-        if(all_ascii(t.c_str(),t.size()))return false;
-        if(t.find(L".ks")!=t.npos ||t.find(L".tjs")!=t.npos ||t.find(L".xp3")!=t.npos || t.find(L"/")!=t.npos||t.find(L"\\")!=t.npos||t[0]==L'@')return false; //脚本路径或文件路径
-        //if(t.find(L"[\u540d\u524d]")!=t.npos)return false; //[名前]，翻译后破坏结构
-        if(t.find(L"\u8aad\u307f\u8fbc\u307f")!=t.npos)return false;          //読み込み
-        if(t.size()>4&&t.substr(t.size()-4)==L"[np]")t=t.substr(0,t.size()-4);
-        if(t.size()>4&&t.substr(t.size()-3)==L"[r]")t=t.substr(0,t.size()-3); //揺り籠より天使まで
-        t=std::regex_replace(t,std::wregex(L"\\[\ruby text=\"(.*?)\"\\]"),L"");
-        t=std::regex_replace(t,std::wregex(L"\\[ruby text=\"(.*?)\"\\]"),L"");
-        t=std::regex_replace(t,std::wregex(L"\\[ch text=\"(.*?)\"\\]"),L"$1"); 
-        if(std::any_of(t.begin(),t.end(),[](wchar_t c){return (c<=127)&&((c!=L'[')||c!=L']');}))return false;
-        return write_string_overwrite(data,size,t);
-      }; 
-      hp.hook_after=[](hook_stack*s,void* data, size_t len){ 
-        auto t=std::wstring((wchar_t*)s->stack[off/4]);
-        auto newText =std::wstring((wchar_t*)data,len/2); 
-        if(t.size()>4&&t.substr(t.size()-4)==L"[np]")newText=newText+L"[np]";  
-        if(t.size()>3&&t.substr(t.size()-3)==L"[r]")newText=newText+L"[r]";  //揺り籠より天使まで
-        wcscpy((wchar_t*)s->stack[off/4],newText.c_str()); 
-      } ;
-      hp.hook_font=F_GetTextExtentPoint32W|F_GetGlyphOutlineW;
-      return NewHook(hp, "Krkr2wcs");
-    }
+    hp.address = addr;
+    if (off == 8)
+      hp.type = CODEC_UTF16 | USING_STRING | NO_CONTEXT | EMBED_ABLE | EMBED_BEFORE_SIMPLE;
+    else
+      hp.type = CODEC_UTF16 | USING_STRING | EMBED_ABLE | EMBED_BEFORE_SIMPLE;
+    hp.offset = off;
+    hp.filter_fun = [](LPVOID data, size_t *size, HookParam *)
+    {
+      auto t = std::wstring((wchar_t *)data, *size / 2);
+      if (all_ascii(t.c_str(), t.size()))
+        return false;
+      if (t.find(L".ks") != t.npos || t.find(L".tjs") != t.npos || t.find(L".xp3") != t.npos || t.find(L"/") != t.npos || t.find(L"\\") != t.npos || t[0] == L'@')
+        return false; // 脚本路径或文件路径
+      // if(t.find(L"[\u540d\u524d]")!=t.npos)return false; //[名前]，翻译后破坏结构
+      if (t.find(L"\u8aad\u307f\u8fbc\u307f") != t.npos)
+        return false; // 読み込み
+      if (t.size() > 4 && t.substr(t.size() - 4) == L"[np]")
+        t = t.substr(0, t.size() - 4);
+      if (t.size() > 4 && t.substr(t.size() - 3) == L"[r]")
+        t = t.substr(0, t.size() - 3); // 揺り籠より天使まで
+      t = std::regex_replace(t, std::wregex(L"\\[\ruby text=\"(.*?)\"\\]"), L"");
+      t = std::regex_replace(t, std::wregex(L"\\[ruby text=\"(.*?)\"\\]"), L"");
+      t = std::regex_replace(t, std::wregex(L"\\[ch text=\"(.*?)\"\\]"), L"$1");
+      if (std::any_of(t.begin(), t.end(), [](wchar_t c)
+                      { return (c <= 127) && ((c != L'[') || c != L']'); }))
+        return false;
+      return write_string_overwrite(data, size, t);
+    };
+    hp.hook_after = [](hook_stack *s, void *data, size_t len)
+    {
+      auto t = std::wstring((wchar_t *)s->stack[off / 4]);
+      auto newText = std::wstring((wchar_t *)data, len / 2);
+      if (t.size() > 4 && t.substr(t.size() - 4) == L"[np]")
+        newText = newText + L"[np]";
+      if (t.size() > 3 && t.substr(t.size() - 3) == L"[r]")
+        newText = newText + L"[r]"; // 揺り籠より天使まで
+      wcscpy((wchar_t *)s->stack[off / 4], newText.c_str());
+    };
+    hp.hook_font = F_GetTextExtentPoint32W | F_GetGlyphOutlineW;
+    return NewHook(hp, "Krkr2wcs");
+  }
 }
 bool KiriKiri3Filter(LPVOID data, size_t *size, HookParam *)
 {
@@ -1615,12 +1722,13 @@ bool KiriKiri3Filter(LPVOID data, size_t *size, HookParam *)
 
   if (!*len)
     return false;
-  text[*len/sizeof(wchar_t)] = L'\0';  // clean text
+  text[*len / sizeof(wchar_t)] = L'\0'; // clean text
   if (!prevText.compare(text))
     return false;
   prevText = text;
 
-  if (cpp_wcsnstr(text, L"[", *len/sizeof(wchar_t))) {
+  if (cpp_wcsnstr(text, L"[", *len / sizeof(wchar_t)))
+  {
     StringCharReplacer(text, len, L"[r]", 3, L' ');
     StringFilterBetween(text, len, L"[", 1, L"]\\", 2);
     // ruby type 1
@@ -1634,42 +1742,43 @@ bool KiriKiri3Filter(LPVOID data, size_t *size, HookParam *)
     StringFilter(text, len, L"[heart]", 7);
   }
 
-  StringCharReplacer(text,len,L"\uff0f",1,L'\n');
-  if (cpp_wcsnstr(text, L"[", *len/sizeof(wchar_t))) // detect garbage sentence. [ruby text=%r][ch text=%text][macropop]
+  StringCharReplacer(text, len, L"\uff0f", 1, L'\n');
+  if (cpp_wcsnstr(text, L"[", *len / sizeof(wchar_t))) // detect garbage sentence. [ruby text=%r][ch text=%text][macropop]
     return false;
 
   return true;
 }
 bool InsertKiriKiri3Hook()
 {
-  
+
   /*
-  * Sample games:
-  * https://vndb.org/v16190
-  * https://vndb.org/v43048
-  * https://vndb.org/v46112
-  * https://vndb.org/v20491
-  * https://vndb.org/v28695
-  * https://vndb.org/v5549
-  * https://vndb.org/v28513
-  * https://vndb.org/v46499
-  */
+   * Sample games:
+   * https://vndb.org/v16190
+   * https://vndb.org/v43048
+   * https://vndb.org/v46112
+   * https://vndb.org/v20491
+   * https://vndb.org/v28695
+   * https://vndb.org/v5549
+   * https://vndb.org/v28513
+   * https://vndb.org/v46499
+   */
   const BYTE bytes[] = {
-    0x75, 0x09,                      // jne GAME.EXE+1D5B37
-    0x8B, 0x85, XX4,                 // mov eax,[ebp-00000254]
-    0xFF, 0x40, 0x78                 // inc [eax+78]
+      0x75, 0x09,      // jne GAME.EXE+1D5B37
+      0x8B, 0x85, XX4, // mov eax,[ebp-00000254]
+      0xFF, 0x40, 0x78 // inc [eax+78]
   };
 
   ULONG range = min(processStopAddress - processStartAddress, MAX_REL_ADDR);
   ULONG addr = MemDbg::findBytes(bytes, sizeof(bytes), processStartAddress, processStartAddress + range);
-  if (!addr) {
+  if (!addr)
+  {
     ConsoleOutput("KiriKiri3: pattern not found");
     return false;
   }
 
   HookParam hp;
   hp.address = addr;
-  hp.offset=get_reg(regs::ecx);
+  hp.offset = get_reg(regs::ecx);
   hp.index = 0;
   hp.split = get_reg(regs::eax);
   hp.split_index = 0;
@@ -1684,10 +1793,11 @@ bool KiriKiri4Filter(LPVOID data, size_t *size, HookParam *)
   auto text = reinterpret_cast<LPWSTR>(data);
   auto len = reinterpret_cast<size_t *>(size);
 
-  if (text[0] == L'[' || text[0] == L'@' || (*len<=2 && text[0] == L' '))
+  if (text[0] == L'[' || text[0] == L'@' || (*len <= 2 && text[0] == L' '))
     return false;
 
-  if (cpp_wcsnstr(text, L"[", *len/sizeof(wchar_t))) {
+  if (cpp_wcsnstr(text, L"[", *len / sizeof(wchar_t)))
+  {
     StringCharReplacer(text, len, L"[r]", 3, L' ');
     StringFilterBetween(text, len, L"[", 1, L"]\\", 2);
     // ruby type 1
@@ -1708,25 +1818,26 @@ bool KiriKiri4Filter(LPVOID data, size_t *size, HookParam *)
 bool InsertKiriKiri4Hook()
 {
   /*
-  * Sample games:
-  * https://vndb.org/r114393
-  * https://vndb.org/v2916
-  * https://vndb.org/r117083
-  * https://vndb.org/v3851
-  * https://vndb.org/v7804
-  * https://vndb.org/v11123
-  * https://vndb.org/v18650
-  * https://vndb.org/v38034
-  */
+   * Sample games:
+   * https://vndb.org/r114393
+   * https://vndb.org/v2916
+   * https://vndb.org/r117083
+   * https://vndb.org/v3851
+   * https://vndb.org/v7804
+   * https://vndb.org/v11123
+   * https://vndb.org/v18650
+   * https://vndb.org/v38034
+   */
   const BYTE bytes[] = {
-    0xE8, XX4,                     // call Kansen1._GetExceptDLLinfo+67B      <-- hook here
-    0x8D, 0x45, 0xA4,              // lea eax,[ebp-5C]
-    0xFF, 0x45, 0x9C,              // inc [ebp-64]
-    0xE8, XX4                      // call Kansen1.exe+1D561C
+      0xE8, XX4,        // call Kansen1._GetExceptDLLinfo+67B      <-- hook here
+      0x8D, 0x45, 0xA4, // lea eax,[ebp-5C]
+      0xFF, 0x45, 0x9C, // inc [ebp-64]
+      0xE8, XX4         // call Kansen1.exe+1D561C
   };
   ULONG range = min(processStopAddress - processStartAddress, MAX_REL_ADDR);
   ULONG addr = MemDbg::findBytes(bytes, sizeof(bytes), processStartAddress, processStartAddress + range);
-  if (!addr) {
+  if (!addr)
+  {
     ConsoleOutput("KiriKiri4: pattern not found");
     return false;
   }
@@ -1740,19 +1851,21 @@ bool InsertKiriKiri4Hook()
   NewHook(hp, "KiriKiri4");
   return true;
 }
-bool KiriKiri::attach_function() { 
-    if (Util::SearchResourceString(L"TVP(KIRIKIRI) Z ")) { // TVP(KIRIKIRI) Z CORE
-      // jichi 11/24/2014: Disabled that might crash VBH
-      //if (Util::CheckFile(L"plugin\\KAGParser.dll"))
-      //  InsertKAGParserHook();
-      //else if (Util::CheckFile(L"plugin\\KAGParserEx.dll"))
-      //  InsertKAGParserExHook();
-      bool krz=Private::attach(processStartAddress,processStopAddress);
-      if (InsertKiriKiriZHook()||krz)
-        return true;
-    }
-    bool b1=attachkr2(processStartAddress,processStopAddress);
-    bool _3=wcslen_wcscpy();
-    auto _= InsertKiriKiriHook() || InsertKiriKiriZHook()||b1||_3;
-    return (InsertKiriKiri4Hook()|InsertKiriKiri3Hook())||_;
-}  
+bool KiriKiri::attach_function()
+{
+  if (Util::SearchResourceString(L"TVP(KIRIKIRI) Z "))
+  { // TVP(KIRIKIRI) Z CORE
+    // jichi 11/24/2014: Disabled that might crash VBH
+    // if (Util::CheckFile(L"plugin\\KAGParser.dll"))
+    //  InsertKAGParserHook();
+    // else if (Util::CheckFile(L"plugin\\KAGParserEx.dll"))
+    //  InsertKAGParserExHook();
+    bool krz = Private::attach(processStartAddress, processStopAddress);
+    if (InsertKiriKiriZHook() || krz)
+      return true;
+  }
+  bool b1 = attachkr2(processStartAddress, processStopAddress);
+  bool _3 = wcslen_wcscpy();
+  auto _ = InsertKiriKiriHook() || InsertKiriKiriZHook() || b1 || _3;
+  return (InsertKiriKiri4Hook() | InsertKiriKiri3Hook()) || _;
+}

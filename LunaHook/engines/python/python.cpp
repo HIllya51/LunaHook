@@ -6,16 +6,16 @@ extern "C" __declspec(dllexport) const wchar_t *internal_renpy_call_host(const w
 }
 bool Luna_checkisusingembed(uint64_t address, uint64_t ctx2, bool usingsplit)
 {
-    auto sm = embedsharedmem;
+    auto sm = commonsharedmem;
     if (!sm)
         return false;
-    for (int i = 0; i < 10; i++)
+    for (int i = 0; i < ARRAYSIZE(sm->embedtps); i++)
     {
-        if (sm->use[i])
+        if (sm->embedtps[i].use)
         {
             if (!usingsplit)
                 return true;
-            if ((sm->addr[i] == address) && (sm->ctx2[i] == ctx2))
+            if ((sm->embedtps[i].tp.addr == address) && (sm->embedtps[i].tp.ctx2 == ctx2))
                 return true;
         }
     }
@@ -270,13 +270,13 @@ namespace
 }
 extern "C" __declspec(dllexport) const wchar_t *internal_renpy_get_font()
 {
-    if (wcslen(embedsharedmem->fontFamily) == 0)
+    if (wcslen(commonsharedmem->fontFamily) == 0)
         return NULL;
 
     fnDWriteCreateFactory = (decltype(fnDWriteCreateFactory))GetProcAddress(LoadLibrary(L"Dwrite.dll"), "DWriteCreateFactory");
     if (fnDWriteCreateFactory)
     {
-        auto fonts_filename_list = get_fonts_path(embedsharedmem->fontFamily, false, false, DEFAULT_CHARSET);
+        auto fonts_filename_list = get_fonts_path(commonsharedmem->fontFamily, false, false, DEFAULT_CHARSET);
         if (fonts_filename_list.size() == 0)
             return NULL;
         return *fonts_filename_list.begin();
@@ -284,10 +284,10 @@ extern "C" __declspec(dllexport) const wchar_t *internal_renpy_get_font()
     else
     {
         static auto fontname2fontfile = std::move(loadfontfiles());
-        if (fontname2fontfile.find(embedsharedmem->fontFamily) == fontname2fontfile.end())
+        if (fontname2fontfile.find(commonsharedmem->fontFamily) == fontname2fontfile.end())
             return NULL;
         else
-            return fontname2fontfile.at(embedsharedmem->fontFamily).c_str();
+            return fontname2fontfile.at(commonsharedmem->fontFamily).c_str();
     }
 }
 bool hookrenpy(HMODULE module)

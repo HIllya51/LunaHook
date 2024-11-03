@@ -20,7 +20,7 @@ typedef void (*ThreadEvent_maybe_embed)(const wchar_t *, const char *, ThreadPar
 typedef void (*ThreadEvent)(const wchar_t *, const char *, ThreadParam);
 typedef bool (*OutputCallback)(const wchar_t *, const char *, ThreadParam, const wchar_t *);
 typedef void (*ConsoleHandler)(const wchar_t *);
-typedef void (*HookInsertHandler)(uint64_t, const wchar_t *);
+typedef void (*HookInsertHandler)(DWORD, uint64_t, const wchar_t *);
 typedef void (*EmbedCallback)(const wchar_t *, ThreadParam);
 template <typename T>
 std::optional<T> checkoption(bool check, T &&t)
@@ -42,8 +42,8 @@ C_LUNA_API void Luna_Start(ProcessEvent Connect, ProcessEvent Disconnect, Thread
                     { return Output(thread.hp.hookcode, thread.hp.name, thread.tp, output.c_str()); }),
         checkoption(console, [=](const std::wstring &output)
                     { console(output.c_str()); }),
-        checkoption(hookinsert, [=](uint64_t addr, const std::wstring &output)
-                    { hookinsert(addr, output.c_str()); }),
+        checkoption(hookinsert, [=](DWORD pid, uint64_t addr, const std::wstring &output)
+                    { hookinsert(pid, addr, output.c_str()); }),
         checkoption(embed, [=](const std::wstring &output, const ThreadParam &tp)
                     { embed(output.c_str(), tp); }),
         checkoption(Warning, [=](const std::wstring &output)
@@ -104,7 +104,7 @@ C_LUNA_API void Luna_FindHooks(DWORD pid, SearchParam sp, findhookcallback_t fin
 }
 C_LUNA_API void Luna_EmbedSettings(DWORD pid, UINT32 waittime, UINT8 fontCharSet, bool fontCharSetEnabled, wchar_t *fontFamily, UINT32 keeprawtext, bool fastskipignore)
 {
-    auto sm = Host::GetEmbedSharedMem(pid);
+    auto sm = Host::GetCommonSharedMem(pid);
     if (!sm)
         return;
     sm->waittime = waittime;
@@ -114,59 +114,45 @@ C_LUNA_API void Luna_EmbedSettings(DWORD pid, UINT32 waittime, UINT8 fontCharSet
     sm->keeprawtext = keeprawtext;
     sm->fastskipignore = fastskipignore;
 }
-C_LUNA_API bool Luna_checkisusingembed(DWORD pid, uint64_t address, uint64_t ctx1, uint64_t ctx2)
+C_LUNA_API bool Luna_checkisusingembed(ThreadParam tp)
 {
-    auto sm = Host::GetEmbedSharedMem(pid);
+    auto sm = Host::GetCommonSharedMem(tp.processId);
     if (!sm)
         return false;
-    for (int i = 0; i < 10; i++)
+    for (int i = 0; i < ARRAYSIZE(sm->embedtps); i++)
     {
-        if (sm->use[i])
-        {
-            if ((sm->addr[i] == address) && (sm->ctx1[i] == ctx1) && (sm->ctx2[i] == ctx2))
-                return true;
-        }
+        if (sm->embedtps[i].use && (sm->embedtps[i].tp == tp))
+            return true;
     }
     return false;
 }
-C_LUNA_API void Luna_useembed(DWORD pid, uint64_t address, uint64_t ctx1, uint64_t ctx2, bool use)
+C_LUNA_API void Luna_useembed(ThreadParam tp, bool use)
 {
-    auto sm = Host::GetEmbedSharedMem(pid);
+    auto sm = Host::GetCommonSharedMem(tp.processId);
     if (!sm)
         return;
     sm->codepage = Host::defaultCodepage;
-    for (int i = 0; i < 10; i++)
+    for (int i = 0; i < ARRAYSIZE(sm->embedtps); i++)
     {
-        if (sm->use[i])
-        {
-            if ((sm->addr[i] == address) && (sm->ctx1[i] == ctx1) && (sm->ctx2[i] == ctx2))
-            {
-                if (use == false)
-                {
-                    sm->addr[i] = sm->ctx1[i] = sm->ctx2[i] = sm->use[i] = 0;
-                }
-            }
-        }
+        if (sm->embedtps[i].use && (sm->embedtps[i].tp == tp))
+            if (!use)
+                ZeroMemory(sm->embedtps + i, sizeof(sm->embedtps[i]));
     }
     if (use)
-    {
-        for (int i = 0; i < 10; i++)
+        for (int i = 0; i < ARRAYSIZE(sm->embedtps); i++)
         {
-            if (sm->use[i] == 0)
+            if (!sm->embedtps[i].use)
             {
-                sm->use[i] = 1;
-                sm->addr[i] = address;
-                sm->ctx1[i] = ctx1;
-                sm->ctx2[i] = ctx2;
+                sm->embedtps[i].use = true;
+                sm->embedtps[i].tp = tp;
                 break;
             }
         }
-    }
 }
 
 C_LUNA_API void Luna_embedcallback(DWORD pid, LPCWSTR text, LPCWSTR trans)
 {
-    auto sm = Host::GetEmbedSharedMem(pid);
+    auto sm = Host::GetCommonSharedMem(pid);
     if (!sm)
         return;
     wcsncpy(sm->text, trans, ARRAYSIZE(sm->text));
@@ -174,4 +160,11 @@ C_LUNA_API void Luna_embedcallback(DWORD pid, LPCWSTR text, LPCWSTR trans)
     sprintf(eventname, LUNA_EMBED_notify_event, pid, simplehash::djb2_n2((const unsigned char *)(text), wcslen(text) * 2));
     win_event event1(eventname);
     event1.signal(true);
+}
+
+C_LUNA_API void Luna_SyncThread(ThreadParam tp, bool sync)
+{
+    auto sm = Host::GetCommonSharedMem(tp.processId);
+    if (!sm)
+        return;
 }

@@ -12,13 +12,13 @@ namespace
 													  viewMutex(ITH_HOOKMAN_MUTEX_ + std::to_wstring(processId))
 
 		{
-			embedsharedmem = (EmbedSharedMem *)MapViewOfFile(mappedFile2, FILE_MAP_READ | FILE_MAP_WRITE, 0, 0, sizeof(EmbedSharedMem));
+			commonsharedmem = (CommonSharedMem *)MapViewOfFile(mappedFile2, FILE_MAP_READ | FILE_MAP_WRITE, 0, 0, sizeof(CommonSharedMem));
 			// 放到构造表里就不行，不知道为何。
 		}
 
 		~ProcessRecord()
 		{
-			UnmapViewOfFile(embedsharedmem);
+			UnmapViewOfFile(commonsharedmem);
 		}
 
 		template <typename T>
@@ -35,7 +35,7 @@ namespace
 			Host::AddConsoleOutput(std::wstring(hp.hookcode) + L": " + text);
 		};
 
-		EmbedSharedMem *embedsharedmem;
+		CommonSharedMem *commonsharedmem;
 
 	private:
 		HANDLE pipe;
@@ -132,7 +132,7 @@ namespace
 				{
 					if(HookInsert){
 						auto info = (HookInsertingNotif*)buffer;
-            			HookInsert(info->addr,info->hookcode);
+            			HookInsert(processId, info->addr,info->hookcode);
 					}
 				}
 				break;
@@ -374,12 +374,12 @@ namespace Host
 				return &thread;
 		return nullptr;
 	}
-	EmbedSharedMem *GetEmbedSharedMem(DWORD processId)
+	CommonSharedMem *GetCommonSharedMem(DWORD processId)
 	{
 		auto &prs = processRecordsByIds.Acquire().contents;
 		if (prs.find(processId) == prs.end())
 			return 0;
-		return prs.at(processId).embedsharedmem;
+		return prs.at(processId).commonsharedmem;
 	}
 	void AddConsoleOutput(std::wstring text)
 	{

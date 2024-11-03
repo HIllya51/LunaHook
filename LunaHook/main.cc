@@ -4,7 +4,7 @@ void HIJACK();
 void detachall();
 HMODULE hLUNAHOOKDLL;
 WinMutex viewMutex;
-EmbedSharedMem *embedsharedmem;
+CommonSharedMem *commonsharedmem;
 namespace
 {
 	AutoHandle<> hookPipe = INVALID_HANDLE_VALUE,
@@ -178,7 +178,7 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD fdwReason, LPVOID)
 		};
 		hooks = (decltype(hooks))new TextHook[MAX_HOOK];
 		VirtualProtect((LPVOID)hooks, sizeof(TextHook) * MAX_HOOK, PAGE_EXECUTE_READWRITE, DUMMY);
-		createfm(mappedFile3, (void **)&embedsharedmem, sizeof(EmbedSharedMem), EMBED_SHARED_MEM + std::to_wstring(GetCurrentProcessId()));
+		createfm(mappedFile3, (void **)&commonsharedmem, sizeof(CommonSharedMem), EMBED_SHARED_MEM + std::to_wstring(GetCurrentProcessId()));
 
 		MH_Initialize();
 
@@ -190,7 +190,7 @@ BOOL WINAPI DllMain(HINSTANCE hModule, DWORD fdwReason, LPVOID)
 		MH_Uninitialize();
 		detachall();
 		delete[] hooks;
-		UnmapViewOfFile(embedsharedmem);
+		UnmapViewOfFile(commonsharedmem);
 	}
 	break;
 	}

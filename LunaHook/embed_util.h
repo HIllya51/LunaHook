@@ -1,7 +1,7 @@
 #ifndef __LUNA_EMBED_ENGINE_H
 #define __LUNA_EMBED_ENGINE_H
 
-extern EmbedSharedMem *embedsharedmem;
+extern CommonSharedMem *commonsharedmem;
 extern DynamicShiftJISCodec *dynamiccodec;
 
 namespace WinKey

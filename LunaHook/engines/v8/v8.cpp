@@ -41,7 +41,7 @@ namespace
 	std::wstring parseafter(void *data, size_t len)
 	{
 		std::wstring transwithfont = magicrecv;
-		transwithfont += embedsharedmem->fontFamily;
+		transwithfont += commonsharedmem->fontFamily;
 		transwithfont += L'\x02';
 		transwithfont += std::wstring((wchar_t *)data, len / 2);
 		return transwithfont;
