@@ -15,13 +15,14 @@ BOOL APIENTRY DllMain(HMODULE hModule,
     return TRUE;
 }
 
-typedef void (*ProcessEvent)(DWORD);
-typedef void (*ThreadEvent_maybe_embed)(const wchar_t *, const char *, ThreadParam, bool);
-typedef void (*ThreadEvent)(const wchar_t *, const char *, ThreadParam);
-typedef bool (*OutputCallback)(const wchar_t *, const char *, ThreadParam, const wchar_t *);
-typedef void (*ConsoleHandler)(const wchar_t *);
-typedef void (*HookInsertHandler)(DWORD, uint64_t, const wchar_t *);
-typedef void (*EmbedCallback)(const wchar_t *, ThreadParam);
+typedef void (*ProcessEvent)(DWORD pid);
+typedef void (*ThreadEvent_maybe_embed)(const wchar_t *hookcode, const char *hookname, ThreadParam, bool isembedable);
+typedef void (*ThreadEvent)(const wchar_t *hookcode, const char *hookname, ThreadParam);
+typedef bool (*OutputCallback)(const wchar_t *hookcode, const char *hookname, ThreadParam, const wchar_t *text);
+typedef void (*ConsoleHandler)(const wchar_t *log);
+typedef void (*HookInsertHandler)(DWORD pid, uint64_t address, const wchar_t * hookcode);
+typedef void (*EmbedCallback)(const wchar_t *text, ThreadParam);
+typedef void (*findhookcallback_t)(wchar_t *hookcode, const wchar_t *text);
 template <typename T>
 std::optional<T> checkoption(bool check, T &&t)
 {
@@ -42,8 +43,8 @@ C_LUNA_API void Luna_Start(ProcessEvent Connect, ProcessEvent Disconnect, Thread
                     { return Output(thread.hp.hookcode, thread.hp.name, thread.tp, output.c_str()); }),
         checkoption(console, [=](const std::wstring &output)
                     { console(output.c_str()); }),
-        checkoption(hookinsert, [=](DWORD pid, uint64_t addr, const std::wstring &output)
-                    { hookinsert(pid, addr, output.c_str()); }),
+        checkoption(hookinsert, [=](DWORD pid, uint64_t addr, const std::wstring &hookcode)
+                    { hookinsert(pid, addr, hookcode.c_str()); }),
         checkoption(embed, [=](const std::wstring &output, const ThreadParam &tp)
                     { embed(output.c_str(), tp); }),
         checkoption(Warning, [=](const std::wstring &output)
@@ -87,13 +88,6 @@ C_LUNA_API void Luna_RemoveHook(DWORD pid, uint64_t addr)
 {
     Host::RemoveHook(pid, addr);
 }
-struct simplehooks
-{
-    wchar_t hookcode[HOOKCODE_LEN];
-    wchar_t *text;
-    simplehooks() : text(0) {};
-};
-typedef void (*findhookcallback_t)(wchar_t *hookcode, const wchar_t *text);
 C_LUNA_API void Luna_FindHooks(DWORD pid, SearchParam sp, findhookcallback_t findhookcallback)
 {
     Host::FindHooks(pid, sp, [=](HookParam hp, std::wstring text)
