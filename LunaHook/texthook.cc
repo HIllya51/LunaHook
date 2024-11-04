@@ -347,7 +347,7 @@ void TextHook::Send(uintptr_t lpDataBase)
 			}
 			else
 			{
-				if (hp.type & CODEC_UTF32)
+				if (hp.type & CODEC_UTF32 || hp.type& CODEC_UTF8)
 				{
 					*(uint32_t *)pbData = lpDataIn & 0xffffffff;
 				}
@@ -595,6 +595,8 @@ int TextHook::GetLength(hook_stack *stack, uintptr_t in)
 			len = 2;
 		else if (hp.type & CODEC_UTF32)
 			len = 4;
+		else if (hp.type & CODEC_UTF8)
+			len = utf8charlen((char*)&in);
 		else
 		{ // CODEC_ANSI_BE,CHAR_LITTLE_ENDIAN
 			if (hp.type & CODEC_ANSI_BE)

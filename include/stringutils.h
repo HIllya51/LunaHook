@@ -36,6 +36,7 @@ std::optional<std::wstring> StringToWideString(const std::string &text, UINT enc
 std::string wcasta(const std::wstring& x);
 std::wstring acastw(const std::string& x);
 size_t u32strlen(uint32_t *data);
+int utf8charlen(char *data);
 inline bool disable_mbwc = false;
 inline bool disable_wcmb = false;
 template <class ST>

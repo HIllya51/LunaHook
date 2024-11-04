@@ -214,7 +214,51 @@ size_t u32strlen(uint32_t *data)
     s++;
   return s;
 }
+// 检查一个字节是否是有效的 UTF-8 后续字节
+int is_valid_following_byte(unsigned char byte)
+{
+  return (byte & 0xC0) == 0x80; // 10xxxxxx
+}
+int utf8charlen(char *str)
+{
+  if ((!str) || (!*str))
+    return 0;
+  unsigned char first_byte = (unsigned char)*str;
 
+  if ((first_byte & 0x80) == 0)
+  {
+    // 0xxxxxxx - 1 byte character
+    return 1;
+  }
+  else if ((first_byte & 0xE0) == 0xC0)
+  {
+    // 110xxxxx - 2 byte character
+    if (is_valid_following_byte((unsigned char)str[1]))
+    {
+      return 2;
+    }
+  }
+  else if ((first_byte & 0xF0) == 0xE0)
+  {
+    // 1110xxxx - 3 byte character
+    if (is_valid_following_byte((unsigned char)str[1]) &&
+        is_valid_following_byte((unsigned char)str[2]))
+    {
+      return 3;
+    }
+  }
+  else if ((first_byte & 0xF8) == 0xF0)
+  {
+    // 11110xxx - 4 byte character
+    if (is_valid_following_byte((unsigned char)str[1]) &&
+        is_valid_following_byte((unsigned char)str[2]) &&
+        is_valid_following_byte((unsigned char)str[3]))
+    {
+      return 4;
+    }
+  }
+  return 0; // 不是有效的UTF-8序列
+}
 std::string wcasta(const std::wstring &x)
 {
   std::string xx;

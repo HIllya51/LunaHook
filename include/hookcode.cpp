@@ -83,6 +83,8 @@ namespace
 			break;
 		case L'W':
 			hp.type |= CODEC_UTF16;
+		case L'C':
+			hp.type |= CODEC_UTF8;
 			break;
 		case L'I':
 			hp.type |= CODEC_UTF32;
@@ -94,7 +96,7 @@ namespace
 			hp.type |= USING_STRING | CODEC_UTF16;
 			break;
 		case L'M':
-			hp.type |= SPECIAL_JIT_STRING | USING_STRING | CODEC_UTF16;
+			hp.type |= USING_STRING | CODEC_UTF16 | SPECIAL_JIT_STRING;
 			break;
 		case L'U':
 			hp.type |= USING_STRING | CODEC_UTF32;
@@ -333,6 +335,8 @@ namespace
 		{
 			if (hp.type & CODEC_UTF16)
 				HCode += L'W';
+			else if (hp.type & CODEC_UTF8)
+				HCode += L'C';
 			else if (hp.type & CODEC_UTF32)
 				HCode += L'I';
 			else if (hp.type & CODEC_ANSI_BE)
