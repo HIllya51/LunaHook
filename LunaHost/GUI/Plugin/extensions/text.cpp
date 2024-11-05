@@ -97,14 +97,6 @@ const char* MAX_HISTORY_SIZE = u8"Max history size";
 const char* CONFIG_JP_LOCALE = u8"Launch with JP locale";
 const wchar_t* CONSOLE = L"Console";
 const wchar_t* CLIPBOARD = L"Clipboard";
-const wchar_t* ABOUT = L"Textractor " ARCH L" v" VERSION LR"( made by Artikash (email: akashmozumdar@gmail.com)
-Project homepage: https://github.com/Artikash/Textractor
-Tutorial video: https://github.com/Artikash/Textractor/blob/master/docs/TUTORIAL.md
-FAQ: https://github.com/Artikash/Textractor/wiki/FAQ
-Please contact Artikash with any problems, feature requests, or questions relating to Textractor
-You can do so via the project homepage (issues section) or via email
-Source code available under GPLv3 at project homepage
-If you like this project, please tell everyone about it! It's time to put AGTH down :))";
 const wchar_t* CL_OPTIONS = LR"(usage: Textractor [-p{process ID|"process name"}]...
 example: Textractor -p4466 -p"My Game.exe" tries to inject processes with ID 4466 or with name My Game.exe)";
 const wchar_t* UPDATE_AVAILABLE = L"Update available: download it from https://github.com/Artikash/Textractor/releases";

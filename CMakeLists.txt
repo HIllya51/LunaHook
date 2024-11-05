@@ -6,16 +6,14 @@ set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
+set(CMAKE_CXX_STANDARD 17)
+add_definitions(-DUNICODE -D_UNICODE)
 add_compile_options(
-  /std:c++17
   /MP
   /wd4018 
   /wd4819 
   /wd4244
   /wd4267
-  /DVERSION="${VERSION}"
-  /DUNICODE 
-  /D_UNICODE
 )
 
 if(NOT CMAKE_BUILD_TYPE)
